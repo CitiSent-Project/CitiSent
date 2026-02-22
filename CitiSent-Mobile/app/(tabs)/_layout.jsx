@@ -1,16 +1,16 @@
 import { Tabs } from "expo-router";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/colors";
 
 function CallTabButton({ onPress }) {
   return (
     <TouchableOpacity
-      style={styles.callButton}
+      className="top-[-18px] justify-center items-center"
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={styles.callButtonInner}>
+      <View className="w-[62px] h-[62px] rounded-[31px] bg-[#2D57A0] justify-center items-center shadow-[0px_4px_8px_rgba(45,87,160,0.45)] elevation-8">
         <Ionicons name="call" size={28} color="white" />
       </View>
     </TouchableOpacity>
@@ -81,23 +81,4 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  callButton: {
-    top: -18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  callButtonInner: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: "#EF4444",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#EF4444",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});
+

@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
-      <View className="flex-row items-center justify-between bg-[#1B2D4F] px-4 py-3">
+      <View className="flex-row items-center justify-between bg-[#223D68] px-4 py-3">
         <View className="flex-row items-center gap-3">
           <View className="w-11 h-11 rounded-full bg-[#2E4A70] items-center justify-center overflow-hidden border-2 border-white/20">
             <Ionicons name="person" size={24} color="#93C5FD" />

@@ -13,8 +13,8 @@ export default function TabLayout() {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
-          height: 65,
-          paddingBottom: 8,
+          height: 85,
+          paddingBottom: 25,
           paddingTop: 4,
         },
         headerShown: false,
@@ -30,11 +30,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="nearby-reports"
+        name="NearbyReports"
         options={{
           title: "Nearby",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="location" size={size} color={color} />
+            <Ionicons name="location-outline" size={size} color={color} />
           ),
         }}
       />
@@ -42,46 +42,22 @@ export default function TabLayout() {
         name="CreateReport"
         options={{
           title: "",
-          // Use tabBarButton to render a custom button that floats above the tab bar
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              style={[
-                props.style,
-                {
-                  top: -30, // Move the button up above the tab bar
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}
-            >
-              <View 
-                className="w-[70px] h-[70px] rounded-full bg-[#2D57A0] justify-center items-center border-[4px] border-white"
-                style={{
-                  shadowColor: '#2D57A0',
-                  shadowOffset: {
-                    width: 0,
-                    height: 8,
-                  },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 5,
-                  elevation: 5
-                }}
-              >
-                <Ionicons name="add" size={35} color="white" />
-              </View>
-            </TouchableOpacity>
-          ),
           tabBarLabel: () => null,
-          title: "",
+          tabBarIcon: ({ focused }) => (
+            <View className="w-[48px] h-[48px] rounded-full bg-[#223D68] justify-center items-center mt-5">
+              <View className="w-[36px] h-[36px] rounded-full justify-center items-center">
+                <Ionicons name="add" size={32} color="white" />
+              </View>
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
-        name="view-reports"
+        name="ViewReports"
         options={{
           title: "Reports",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
+            <Ionicons name="document-text-outline" size={size} color={color} />
           ),
         }}
       />
@@ -90,7 +66,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

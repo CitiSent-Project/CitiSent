@@ -5,7 +5,7 @@ export default function NewsCard() {
     <View className="mb-6 overflow-hidden rounded-xl border border-[#ECECEC] bg-white">
       <View className="flex-row">
         <Image
-          source={{ uri: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=60" }}
+          source={require("../../assets/PublicAgencies/cityhall.png")}
           className="h-24 w-[45%]"
         />
         <View className="flex-1 justify-center px-3">

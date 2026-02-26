@@ -1,24 +1,45 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 const hotlines = [
   {
-    key: "natl-emergency",
-    name: "National Emergency Hotline",
-    number: "911",
-    icon: <Ionicons name="call" size={20} color="#0EA5E9" />,
-  },
-  {
     key: "pnp",
-    name: "Philippine National Police",
-    number: "117",
-    icon: <MaterialCommunityIcons name="police-badge" size={20} color="#1D4ED8" />,
+    nameLine1: "PHILIPPINE NATIONAL POLICE",
+    nameLine2: "STO TOMAS MUNICIPAL STATION",
+    numberLine1: "(043) 778-1610",
+    numberLine2: "0915-372-9019",
+    logo: require("../../assets/PublicAgencies/cityhall.png"),
   },
   {
     key: "bfp",
-    name: "Bureau of Fire Protection",
-    number: "(02) 8426 0219",
-    icon: <MaterialCommunityIcons name="fire-truck" size={20} color="#DC2626" />,
+    nameLine1: "BUREAU OF FIRE PROTECTION",
+    nameLine2: "STO TOMAS, BATANGAS",
+    numberLine1: "(043) 778-3243",
+    numberLine2: "0915-602-1987",
+    logo: require("../../assets/PublicAgencies/cityhall.png"),
+  },
+  {
+    key: "mdrrmo",
+    nameLine1: "MUNICIPAL DISASTER RISK REDUCTION",
+    nameLine2: "AND MANAGEMENT OFFICE",
+    numberLine1: "(043) 784-8432",
+    numberLine2: "(043) 703-2306",
+    logo: require("../../assets/PublicAgencies/cityhall.png"),
+  },
+  {
+    key: "hospital",
+    nameLine1: "STO TOMAS GENERAL HOSPITAL",
+    nameLine2: "ST. FRANCES CABRINI HOSPITAL",
+    numberLine1: "(043) 778-2140",
+    numberLine2: "(043) 778-4811",
+    logo: require("../../assets/PublicAgencies/cityhall.png"),
+  },
+  {
+    key: "tmo",
+    nameLine1: "TRAFFIC MANAGEMENT OFFICE",
+    nameLine2: "STO TOMAS BATANGAS",
+    numberLine1: "(043) 784-6544",
+    numberLine2: "0947-109-1421",
+    logo: require("../../assets/PublicAgencies/cityhall.png"),
   },
 ];
 
@@ -28,18 +49,25 @@ export default function EmergencyServicesRow() {
       {hotlines.map((hotline) => (
         <View
           key={hotline.key}
-          className="flex-row items-center rounded-2xl border border-[#DFDFDF] bg-white px-3 py-3"
+          className="flex-row items-center rounded-xl border border-[#D8D8D8] bg-white px-2 py-2"
         >
-          <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-[#EAF3FF]">
-            {hotline.icon}
+          <View className="mr-2 h-10 w-10 items-center justify-center rounded-md border border-[#D1D5DB] bg-[#F8FAFC]">
+            <Image
+              source={hotline.logo}
+              className="h-7 w-7"
+              resizeMode="contain"
+            />
           </View>
 
-          <View className="flex-1">
-            <Text className="text-sm font-bold text-[#1F2937]">{hotline.name}</Text>
-            <Text className="mt-0.5 text-sm font-semibold text-[#223D68]">{hotline.number}</Text>
+          <View className="flex-1 pr-2">
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.nameLine1}</Text>
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.nameLine2}</Text>
           </View>
 
-          <Ionicons name="call-outline" size={18} color="#94A3B8" />
+          <View className="w-[34%] items-end">
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine1}</Text>
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine2}</Text>
+          </View>
         </View>
       ))}
     </View>

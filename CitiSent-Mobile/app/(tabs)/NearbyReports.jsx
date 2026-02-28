@@ -16,7 +16,7 @@ const nearbyReports = [
     time: "6 hr. ago",
     notes: 0,
     comments: 3,
-    imageFile: require("../../assets/createReportLogo/PWD.png"),
+    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
   },
   {
     id: "2",

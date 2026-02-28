@@ -1,16 +1,16 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
-export default function IssueCard({ label, onPress }) {
+export default function IssueCard({ label, logoSource, onPress }) {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={onPress}
       className="mb-3 basis-[31.5%] rounded-2xl bg-[#C7D8E6] px-2 py-3"
     >
-      <View className="mx-auto h-16 w-16 items-center justify-center rounded-full border border-[#8CB9DD] bg-[#A9D1F0]">
+      <View className="items-center justify-center">
         <Image
-          source={require("../../assets/PublicAgencies/cityhall.png")}
-          className="h-9 w-9 rounded-full"
+          source={logoSource}
+          className="h-20 w-20 rounded-full"
           resizeMode="cover"
         />
       </View>

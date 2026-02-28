@@ -49,7 +49,7 @@ export default function EmergencyServicesRow() {
       {hotlines.map((hotline) => (
         <View
           key={hotline.key}
-          className="flex-row items-center rounded-xl border border-[#D8D8D8] bg-white px-2 py-2"
+          className="flex-row items-start rounded-xl border border-[#D8D8D8] bg-white px-2 py-2"
         >
           <View className="mr-2 h-10 w-10 items-center justify-center rounded-md border border-[#D1D5DB] bg-[#F8FAFC]">
             <Image
@@ -59,12 +59,16 @@ export default function EmergencyServicesRow() {
             />
           </View>
 
-          <View className="flex-1 pr-2">
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.nameLine1}</Text>
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.nameLine2}</Text>
+          <View className="flex-[0.58] pr-2">
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]" numberOfLines={2}>
+              {hotline.nameLine1}
+            </Text>
+            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]" numberOfLines={2}>
+              {hotline.nameLine2}
+            </Text>
           </View>
 
-          <View className="w-[34%] items-end">
+          <View className="flex-[0.42] items-end">
             <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine1}</Text>
             <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine2}</Text>
           </View>

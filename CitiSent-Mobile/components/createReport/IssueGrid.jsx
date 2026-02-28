@@ -1,20 +1,25 @@
+import { useRouter } from "expo-router";
 import { View } from "react-native";
 import IssueCard from "./IssueCard";
-
-const issues = [
-  "Business Permits and Licensing Office (BPLO)",
-  "City Treasury Office",
-  "Bureau of Fire Protection (BFP) Processing Area",
-  "City Traffic Management Division/Impounding Services",
-  "City Veterinary Office",
-  "City Agriculture Office",
-];
+import { CREATE_REPORT_ISSUES } from "../../constants/createReportIssues";
 
 export default function IssueGrid() {
+  const router = useRouter();
+
   return (
     <View className="flex-row flex-wrap justify-between">
-      {issues.map((issue) => (
-        <IssueCard key={issue} label={issue} />
+      {CREATE_REPORT_ISSUES.map((issue) => (
+        <IssueCard
+          key={issue.id}
+          label={issue.label}
+          logoSource={issue.logoSource}
+          onPress={() =>
+            router.push({
+              pathname: "/create-report/[issueId]",
+              params: { issueId: issue.id },
+            })
+          }
+        />
       ))}
     </View>
   );

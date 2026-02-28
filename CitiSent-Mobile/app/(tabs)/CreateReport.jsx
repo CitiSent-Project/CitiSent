@@ -1,16 +1,20 @@
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CreateReportFooter from "../../components/createReport/CreateReportFooter";
+import IssueGrid from "../../components/createReport/IssueGrid";
 
 export default function CreateReportScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center gap-6">
-        <Text className="text-2xl font-bold text-gray-900">Create Report</Text>
-        <Text className="text-base text-gray-500 text-center px-8">
-          Create a new report to alert authorities about issues in your area.
-        </Text>
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+      <View className="flex-1 px-3 pt-4">
+        <Text className="mb-4 text-3xl font-extrabold text-[#111827]">Select an Issue</Text>
+
+        <IssueGrid />
+
+        <CreateReportFooter />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

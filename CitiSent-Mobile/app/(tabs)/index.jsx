@@ -12,17 +12,27 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-[#ECECEC]" style={{ paddingTop: insets.top }}>
-      <HomeHeader />
-      <HomeHero />
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="pb-8"
+        showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[0]}
+      >
+        <HomeHeader />
 
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-3">
-        <SectionHeader title="Emergency Hotlines" />
-        <EmergencyServicesRow />
+        <View className="pt-3">
+          <HomeHero />
 
-        <SectionHeader title="Latest Reports" />
-        <LatestReportCard />
+          <View className="px-4">
+            <SectionHeader title="Emergency Hotlines" />
+            <EmergencyServicesRow />
 
-        <View className="h-5" />
+            <SectionHeader title="Latest Reports" />
+            <LatestReportCard />
+
+            <View className="h-5" />
+          </View>
+        </View>
       </ScrollView>
     </View>
   );

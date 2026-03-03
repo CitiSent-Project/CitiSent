@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { View, TouchableOpacity } from "react-native";
+import { Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/colors";
 
@@ -14,7 +14,7 @@ export default function TabLayout() {
           borderTopColor: Colors.border,
           borderTopWidth: 1,
           height: 85,
-          paddingBottom: 25,
+          paddingBottom: 20,
           paddingTop: 4,
         },
         headerShown: false,
@@ -41,12 +41,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="CreateReport"
         options={{
-          title: "",
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View className="w-[48px] h-[48px] rounded-full bg-[#223D68] justify-center items-center mt-5">
-              <View className="w-[36px] h-[36px] rounded-full justify-center items-center">
-                <Ionicons name="add" size={32} color="white" />
+          title: "Create",
+          tabBarLabel: ({ focused }) => (
+            <Text
+              style={{
+                fontSize: 11.5,
+                color: focused ? Colors.primary : Colors.secondary,
+              }}
+            >
+              Create
+            </Text>
+          ),
+          tabBarIcon: () => (
+            <View
+              style={{ marginTop: -50 }}
+              className="items-center justify-center"
+            >
+
+              <View className="rounded-full bg-white p-[4px] border border-[#E0E0E0]">
+
+                <View className="w-[50px] h-[50px] rounded-full bg-[#223D68] items-center justify-center">
+                  <Ionicons name="add" size={35} color="white" />
+                </View>
               </View>
             </View>
           ),

@@ -1,15 +1,32 @@
 import { Image, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import ProfileMenuItem from "../../components/profile/ProfileMenuItem";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const profileActions = [
-    { id: "reports", label: "Reports made by you", icon: "document-text-outline" },
-    { id: "notifications", label: "Notifications", icon: "notifications-outline" },
-    { id: "settings", label: "Settings", icon: "settings-outline" },
+    {
+      id: "reports",
+      label: "Reports made by you",
+      icon: "document-text-outline",
+      route: "/profile/reports",
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: "notifications-outline",
+      route: "/profile/notifications",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: "settings-outline",
+      route: "/profile/settings",
+    },
   ];
 
   return (
@@ -18,7 +35,12 @@ export default function Profile() {
 
       <View className="pt-4">
         {profileActions.map((item) => (
-          <ProfileMenuItem key={item.id} icon={item.icon} label={item.label} />
+          <ProfileMenuItem
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            onPress={() => router.push(item.route)}
+          />
         ))}
 
         <View className="mx-5 mt-2 h-[1px] bg-[#C7C7C7]" />

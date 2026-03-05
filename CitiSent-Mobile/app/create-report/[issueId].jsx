@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentSection from "../../components/createReport/details/AttachmentSection";
 import BreadcrumbsNav from "../../components/createReport/details/BreadcrumbsNav";
@@ -20,8 +20,38 @@ export default function CreateReportIssueDetailScreen() {
   const [issueLocation, setIssueLocation] = useState("");
   const [report, setReport] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const scrollViewRef = useRef(null);
+  const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
+  const reportContentHeightRef = useRef(0);
 
   const canSubmit = issueLocation.trim().length > 0 && report.trim().length > 0;
+
+  function handleInputLayout(field, y) {
+    inputPositionsRef.current[field] = y;
+  }
+
+  function handleInputFocus(field) {
+    const inputY = inputPositionsRef.current[field] ?? 0;
+    const targetY = Math.max(0, inputY - 24);
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+    }, 80);
+  }
+
+  function handleReportSizeChange(event) {
+    const newHeight = event.nativeEvent.contentSize.height;
+    if (newHeight <= reportContentHeightRef.current) return;
+    reportContentHeightRef.current = newHeight;
+
+    const reportY = inputPositionsRef.current["report"] ?? 0;
+
+    const targetY = Math.max(0, reportY + newHeight - 20);
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+    }, 50);
+  }
 
   function handleSubmitReport() {
     if (!canSubmit) {
@@ -64,22 +94,40 @@ export default function CreateReportIssueDetailScreen() {
 
       <BreadcrumbsNav items={["Create Report", issue.label]} />
 
-      <ScrollView
+      <KeyboardAvoidingView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, paddingBottom: 28 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
-        <AttachmentSection />
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            paddingBottom: insets.bottom + 36,
+            flexGrow: 1,
+          }}
+        >
+          <AttachmentSection />
 
-        <IssueReportForm
-          requestType={issue.label}
-          issueLocation={issueLocation}
-          report={report}
-          onChangeIssueLocation={setIssueLocation}
-          onChangeReport={setReport}
-        />
+          <IssueReportForm
+            requestType={issue.label}
+            issueLocation={issueLocation}
+            report={report}
+            onChangeIssueLocation={setIssueLocation}
+            onChangeReport={setReport}
+            onInputLayout={handleInputLayout}
+            onInputFocus={handleInputFocus}
+            onReportSizeChange={handleReportSizeChange}
+          />
 
-        <SubmitReportButton onPress={handleSubmitReport} disabled={!canSubmit} loading={isSubmitting} />
-      </ScrollView>
+          <SubmitReportButton onPress={handleSubmitReport} disabled={!canSubmit} loading={isSubmitting} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

@@ -11,6 +11,9 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="create-report/[issueId]" />
+        <Stack.Screen name="profile/reports" />
+        <Stack.Screen name="profile/notifications" />
+        <Stack.Screen name="profile/settings" />
       </Stack>
     </SafeAreaProvider>
   );

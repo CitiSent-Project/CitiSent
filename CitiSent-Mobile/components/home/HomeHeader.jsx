@@ -10,7 +10,7 @@ export default function HomeHeader() {
             <Ionicons name="person" size={25} color="#D1E6FF" />
           </View>
           <View>
-            <Text className="text-xs text-white/90">Hi Welcome! 👋</Text>
+            <Text className="text-xs text-white/90">Hi! Welcome,</Text>
             <Text className="text-sm font-bold text-white">Juan Dela Cruz</Text>
           </View>
         </View>

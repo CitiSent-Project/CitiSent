@@ -18,12 +18,15 @@ const priorityOptions = [
 
 export default function PriorityChips({ selectedPriority = "all", onSelectPriority }) {
   return (
+    <View className="mb-2">
+      <Text className="text-md font-bold text-gray-600 mb-3">Filter</Text>
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="mb-4"
+      className="mb-2"
       contentContainerClassName="flex-row flex-nowrap items-center gap-2 pr-2"
     >
+      
       {priorityOptions.map((option) => {
         const isSelected = selectedPriority === option.key;
         const containerClass = isSelected
@@ -46,5 +49,6 @@ export default function PriorityChips({ selectedPriority = "all", onSelectPriori
         );
       })}
     </ScrollView>
+    </View>
   );
 }

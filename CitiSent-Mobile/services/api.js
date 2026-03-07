@@ -11,11 +11,26 @@ async function request(endpoint, options = {}) {
     ...options,
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error: ${response.status}`);
+  const rawBody = await response.text();
+  let parsedBody;
+
+  if (rawBody) {
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      parsedBody = rawBody;
+    }
   }
 
-  return response.json();
+  if (!response.ok) {
+    const backendMessage =
+      typeof parsedBody === "object" && parsedBody !== null
+        ? parsedBody.message || parsedBody.error
+        : undefined;
+    throw new Error(backendMessage || `Request failed (${response.status})`);
+  }
+
+  return parsedBody ?? null;
 }
 
 export const api = {

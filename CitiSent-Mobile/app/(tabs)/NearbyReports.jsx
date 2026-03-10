@@ -1,85 +1,102 @@
-import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import NearbyGalleryView from "../../components/nearby/nearbyViewTabs/NearbyGalleryView";
-import NearbyMapView from "../../components/nearby/nearbyViewTabs/NearbyMapView";
-import NearbyReportRow from "../../components/nearby/NearbyReportRow";
-import NearbyTopBar from "../../components/nearby/NearbyTopBar";
-import NearbyViewTabs from "../../components/nearby/nearbyViewTabs/NearbyViewTabs";
+import PriorityChips from "../../components/myReports/PriorityChips";
+import ReportCard from "../../components/myReports/ReportCard";
+import SectionTitle from "../../components/myReports/SectionTitle";
+import PageTopBar from "../../components/layout/PageTopBar";
 
-const nearbyReports = [
+const latestNearbyReports = [
   {
-    id: "1",
-    title: "Fallen Tree",
-    address: "Wissahickon Bike Trail",
-    status: "COMPLETED",
-    time: "6 hr. ago",
-    notes: 0,
-    comments: 3,
-    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
+    id: "latest-1",
+    name: "Anonymous",
+    time: "19mins ago",
+    tags: ["Emergency"],
+    message: "HELP!!! The system deleted all my files and I need them NOW!!! Please fix this immediately!!!",
+    location: "Sto Tomas",
+  },
+];
+
+const otherNearbyReports = [
+  {
+    id: "other-1",
+    name: "Anonymous",
+    time: "19mins ago",
+    priority: "emergency",
+    tags: ["Emergency"],
+    message: "HELP!!! The system deleted all my files and I need them NOW!!! Please fix this immediately!!!",
+    location: "Sto Tomas",
   },
   {
-    id: "2",
-    title: "Illegal Dumping",
-    address: "517 Poplar Street",
-    status: "IN PROGRESS",
-    time: "6 hr. ago",
-    notes: 0,
-    comments: 1,
-    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
+    id: "other-2",
+    name: "Anonymous",
+    time: "12mins ago",
+    priority: "urgent",
+    tags: ["Urgent"],
+    message: "The road shoulder is collapsing near the crossing. Please send help quickly.",
+    location: "Sto Tomas",
   },
   {
-    id: "3",
-    title: "Graffiti Removal",
-    address: "530 South 5th Street",
-    status: "IN PROGRESS",
-    time: "6 hr. ago",
-    notes: 0,
-    comments: 0,
-    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
+    id: "other-3",
+    name: "Anonymous",
+    time: "8mins ago",
+    priority: "moderate",
+    tags: ["Moderate"],
+    message: "Streetlight is flickering every night and may need replacement soon.",
+    location: "Poblacion",
   },
   {
-    id: "4",
-    title: "Graffiti Removal",
-    address: "501-505  Kater Street",
-    status: "IN PROGRESS",
-    time: "6 hr. ago",
-    notes: 0,
-    comments: 0,
-    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
-  },
-  {
-    id: "5",
-    title: "Vacant House",
-    address: "5727  N Mascher St",
-    status: "IN PROGRESS",
-    time: "6 hr. ago",
-    notes: 0,
-    comments: 0,
-    imageFile: require("../../assets/PublicAgencies/cityhall.png"),
+    id: "other-4",
+    name: "Anonymous",
+    time: "5mins ago",
+    priority: "low",
+    tags: ["Low priority"],
+    message: "Small pothole near the sidewalk. Not urgent but needs repair.",
+    location: "Sto Tomas",
   },
 ];
 
 export default function NearbyReportsScreen() {
-  const [activeTab, setActiveTab] = useState("list");
   const insets = useSafeAreaInsets();
+  const [selectedPriority, setSelectedPriority] = useState("all");
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedPriority("all");
+    }, [])
+  );
+
+  const filteredOtherReports = useMemo(() => {
+    if (selectedPriority === "all") {
+      return otherNearbyReports;
+    }
+
+    return otherNearbyReports.filter((report) => report.priority === selectedPriority);
+  }, [selectedPriority]);
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
-      <NearbyTopBar />
-      <NearbyViewTabs activeTab={activeTab} onTabChange={setActiveTab} />
+    <View className="flex-1 bg-[#ECECEC]" style={{ paddingTop: insets.top }}>
+      <PageTopBar title="All Reports" />
+      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-4" showsVerticalScrollIndicator={false}>
+        <SectionTitle title="Latest Reports" />
+        {latestNearbyReports.map((report) => (
+          <ReportCard key={report.id} report={report} />
+        ))}
 
-      {activeTab === "list" && (
-        <ScrollView className="flex-1" contentContainerClassName="px-3 pb-16">
-          {nearbyReports.map((report) => (
-            <NearbyReportRow key={report.id} report={report} />
-          ))}
-          <View className="h-3" />
-        </ScrollView>
-      )}
+        <SectionTitle title="Other Reports" />
+        <PriorityChips selectedPriority={selectedPriority} onSelectPriority={setSelectedPriority} />
 
-      {activeTab === "map" && <NearbyMapView />}
-      {activeTab === "gallery" && <NearbyGalleryView />}
+        {filteredOtherReports.length > 0 ? (
+          filteredOtherReports.map((report) => <ReportCard key={report.id} report={report} />)
+        ) : (
+          <View className="mb-4 rounded-2xl border border-[#E2E2E2] bg-white px-4 py-5">
+            <Text className="text-center text-sm font-semibold text-[#4B5563]">
+              No reports found for this priority.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }

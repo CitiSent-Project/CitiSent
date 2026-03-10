@@ -51,7 +51,7 @@ export default function Profile() {
 
   return (
     <View className="flex-1 bg-[#E8E8E8]" style={{ paddingTop: insets.top }}>
-      <ProfileHeader name="John Eduard A. Madriaga" phone="09123456789" />
+      <ProfileHeader name="Juan Dela Cruz" phone="09123456789" />
 
       <View className="pt-4">
         {profileActions.map((item) => (

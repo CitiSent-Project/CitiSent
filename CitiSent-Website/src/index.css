@@ -1,0 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: 'Sora', ui-sans-serif, system-ui;
+}

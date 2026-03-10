@@ -69,9 +69,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ViewReports"
+        name="MyReports"
         options={{
-          title: "Reports",
+          title: "My Reports",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text-outline" size={size} color={color} />
           ),

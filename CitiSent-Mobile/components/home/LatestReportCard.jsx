@@ -1,4 +1,4 @@
-import ReportCard from "../viewReports/ReportCard";
+import ReportCard from "../myReports/ReportCard";
 
 const latestSampleReport = {
   id: "latest-home-1",

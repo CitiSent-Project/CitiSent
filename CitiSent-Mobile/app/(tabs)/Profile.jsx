@@ -15,7 +15,7 @@ export default function Profile() {
   const profileActions = [
     {
       id: "reports",
-      label: "Reports made by you",
+      label: "Manage Reports",
       icon: "document-text-outline",
       route: "/profile/reports",
     },

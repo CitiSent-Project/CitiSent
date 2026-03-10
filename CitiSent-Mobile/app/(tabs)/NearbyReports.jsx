@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PriorityChips from "../../components/myReports/PriorityChips";
 import ReportCard from "../../components/myReports/ReportCard";
+import ReportsFeedSkeleton from "../../components/myReports/ReportsFeedSkeleton";
 import SectionTitle from "../../components/myReports/SectionTitle";
 import PageTopBar from "../../components/layout/PageTopBar";
 
@@ -59,7 +60,16 @@ const otherNearbyReports = [
 
 export default function NearbyReportsScreen() {
   const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedPriority, setSelectedPriority] = useState("all");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,22 +89,28 @@ export default function NearbyReportsScreen() {
     <View className="flex-1 bg-[#ECECEC]" style={{ paddingTop: insets.top }}>
       <PageTopBar title="All Reports" />
       <ScrollView className="flex-1" contentContainerClassName="px-4 pb-8 pt-4" showsVerticalScrollIndicator={false}>
-        <SectionTitle title="Latest Reports" />
-        {latestNearbyReports.map((report) => (
-          <ReportCard key={report.id} report={report} />
-        ))}
-
-        <SectionTitle title="Other Reports" />
-        <PriorityChips selectedPriority={selectedPriority} onSelectPriority={setSelectedPriority} />
-
-        {filteredOtherReports.length > 0 ? (
-          filteredOtherReports.map((report) => <ReportCard key={report.id} report={report} />)
+        {isLoading ? (
+          <ReportsFeedSkeleton />
         ) : (
-          <View className="mb-4 rounded-2xl border border-[#E2E2E2] bg-white px-4 py-5">
-            <Text className="text-center text-sm font-semibold text-[#4B5563]">
-              No reports found for this priority.
-            </Text>
-          </View>
+          <>
+            <SectionTitle title="Latest Reports" />
+            {latestNearbyReports.map((report) => (
+              <ReportCard key={report.id} report={report} />
+            ))}
+
+            <SectionTitle title="Other Reports" />
+            <PriorityChips selectedPriority={selectedPriority} onSelectPriority={setSelectedPriority} />
+
+            {filteredOtherReports.length > 0 ? (
+              filteredOtherReports.map((report) => <ReportCard key={report.id} report={report} />)
+            ) : (
+              <View className="mb-4 rounded-2xl border border-[#E2E2E2] bg-white px-4 py-5">
+                <Text className="text-center text-sm font-semibold text-[#4B5563]">
+                  No reports found for this priority.
+                </Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>

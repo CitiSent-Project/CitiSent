@@ -105,10 +105,9 @@ function BrandBlock({ expanded }) {
 	)
 }
 
-export function Navbar({ children }) {
+export function Navbar({ children, activePage, onNavigate }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
-	const [selected, setSelected] = useState('Dashboard')
 
 	return (
 		<div
@@ -146,8 +145,8 @@ export function Navbar({ children }) {
 							<NavOption
 								key={item.label}
 								item={item}
-								selected={selected}
-								setSelected={setSelected}
+								selected={activePage}
+								setSelected={onNavigate}
 								expanded={expanded}
 								index={index}
 							/>

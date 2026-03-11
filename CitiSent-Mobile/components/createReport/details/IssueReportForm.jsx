@@ -44,7 +44,7 @@ export default function IssueReportForm({
   return (
     <View>
       <View className="mb-5">
-        <Text className="mb-2 text-sm font-semibold text-[#374151]">Request Type</Text>
+        <Text className="mb-2 text-sm font-semibold text-[#374151]">Issue Type</Text>
         <View className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-3">
           <Text className="text-base text-[#111827]">{requestType}</Text>
         </View>

@@ -4,17 +4,43 @@ import { formatDateTime } from "../../../utils/formatters";
 import ReportAttachmentPreview from "./ReportAttachmentPreview";
 import ReportStatusBadge from "./ReportStatusBadge";
 
+const priorityChipStyles = {
+  emergency: { container: "bg-[#FFE3E3]", text: "text-[#991B1B]", label: "Emergency" },
+  urgent: { container: "bg-[#FFE7CC]", text: "text-[#9A3412]", label: "Urgent" },
+  moderate: { container: "bg-[#FFF7BF]", text: "text-[#713F12]", label: "Moderate" },
+  low: { container: "bg-[#D8FFD1]", text: "text-[#166534]", label: "Low priority" },
+};
+
+function normalizePriority(priorityValue) {
+  const value = String(priorityValue || "").trim().toLowerCase();
+
+  if (value === "emergency") return "emergency";
+  if (value === "urgent") return "urgent";
+  if (value === "moderate") return "moderate";
+  if (value === "low" || value === "low priority") return "low";
+
+  return null;
+}
+
 function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">{text}</Text>;
 }
 
 export default function MyReportCard({ report }) {
+  const normalizedPriority = normalizePriority(report?.priority ?? report?.priorityLevel ?? report?.tags?.[0]);
+  const priorityStyle = normalizedPriority ? priorityChipStyles[normalizedPriority] : null;
+
   return (
     <View className="mb-4 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-4 shadow-sm">
       <View className="mb-3 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <FieldLabel text="Issue Type" />
           <Text className="mt-1 text-base font-extrabold text-[#203A5F]">{report.issueType}</Text>
+          {priorityStyle ? (
+            <View className={`mt-2 self-start rounded-full px-3 py-1 ${priorityStyle.container}`}>
+              <Text className={`text-[11px] font-extrabold ${priorityStyle.text}`}>{priorityStyle.label}</Text>
+            </View>
+          ) : null}
         </View>
         <ReportStatusBadge status={report.status} />
       </View>

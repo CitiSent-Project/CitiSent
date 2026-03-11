@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion'
 import { FiTrendingUp, FiTrendingDown, FiUsers, FiFileText, FiCheckCircle, FiTarget } from 'react-icons/fi'
+import { PieChart } from '../components/Dashbord-Ui/Pie-Chart'
+import { VerticalChart } from '../components/Dashbord-Ui/Vertical-Chart'
+import { reportsByCategory, reportsThisWeek } from './dashboardData'
 
 const MotionDiv = motion.div
 
@@ -37,22 +40,6 @@ function StatCard({ icon: Icon, label, value, trend, trendValue, trendDirection,
                 <div className={`rounded-full p-3 ${colorClasses[color]}`}>
                     <Icon className="text-lg" />
                 </div>
-            </div>
-        </MotionDiv>
-    )
-}
-
-function ChartPlaceholder({ title }) {
-    return (
-        <MotionDiv
-            className="rounded-lg bg-white p-6 shadow-sm border border-slate-200"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-        >
-            <h3 className="mb-4 font-semibold text-slate-900">{title}</h3>
-            <div className="flex h-80 items-center justify-center bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Chart placeholder - Ready for charting library</p>
             </div>
         </MotionDiv>
     )
@@ -142,9 +129,24 @@ export function Dashboard() {
             </div>
 
             {/* Charts Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <ChartPlaceholder title="Total Reports Per Category" />
-                <ChartPlaceholder title="Total Reports This Week" />
+            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
+                <div className="lg:col-span-5 h-105">
+                    <PieChart
+                        title={reportsByCategory.title}
+                        total={reportsByCategory.total}
+                        labels={reportsByCategory.labels}
+                        values={reportsByCategory.values}
+                        colors={reportsByCategory.colors}
+                        legend={reportsByCategory.legend}
+                    />
+                </div>
+                <div className="lg:col-span-7 h-105">
+                    <VerticalChart
+                        title={reportsThisWeek.title}
+                        labels={reportsThisWeek.labels}
+                        values={reportsThisWeek.values}
+                    />
+                </div>
             </div>
 
             {/* Tables Grid */}

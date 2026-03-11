@@ -1,12 +1,14 @@
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion'
 import { FiTrendingUp, FiTrendingDown, FiUsers, FiFileText, FiCheckCircle, FiTarget } from 'react-icons/fi'
 import { PieChart } from '../components/Dashbord-Ui/Pie-Chart'
 import { VerticalChart } from '../components/Dashbord-Ui/Vertical-Chart'
-import { reportsByCategory, reportsThisWeek } from './dashboardData'
+import { reportsByCategory, reportsThisWeek } from './Data/dashboardData'
+import { getLatestJoinedUsersRows } from './Data/usersData'
 
 const MotionDiv = motion.div
 
-function StatCard({ icon: Icon, label, value, trend, trendValue, trendDirection, color = 'blue' }) {
+function StatCard({ icon: Icon, label, value, trendValue, trendDirection, color = 'blue' }) {
     const isPositive = trendDirection === 'up'
     const colorClasses = {
         blue: 'bg-blue-50 text-blue-600',
@@ -93,20 +95,14 @@ export function Dashboard() {
     ]
 
     const adminRows = [
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'City Cooperative Development Office', activity: 'Today' },
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'Finance, Revenue and Housing Office (DPO)', activity: 'Yesterday' },
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'Social, Deployment Service Office', activity: '3 March, 2026' },
+        { name: 'Jiti Chazan', email: 'jitu@example.com', department: 'City Cooperative Development Office', activity: 'Today' },
+        { name: 'Tiu Chapman', email: 'jitu@example.com', department: 'Finance, Revenue and Housing Office (DPO)', activity: 'Yesterday' },
+        { name: 'Situ Chazan', email: 'jitu@example.com', department: 'Social, Deployment Service Office', activity: '3 March, 2026' },
         { name: 'Amanda Darrell', email: 'amanda@example.com', department: 'City Cooperative Office', activity: '3 March, 2026' },
         { name: 'Amanda Darrell', email: 'amanda@example.com', department: 'City Veterinary Office', activity: '3 March, 2026' },
     ]
 
-    const newUsersRows = [
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-    ]
+    const newUsersRows = getLatestJoinedUsersRows()
 
     return (
         <div className="min-h-screen bg-slate-50 p-8">
@@ -130,7 +126,7 @@ export function Dashboard() {
 
             {/* Charts Grid */}
             <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
-                <div className="lg:col-span-5 h-105">
+                <div className="lg:col-span-5 h-125">
                     <PieChart
                         title={reportsByCategory.title}
                         total={reportsByCategory.total}
@@ -140,7 +136,7 @@ export function Dashboard() {
                         legend={reportsByCategory.legend}
                     />
                 </div>
-                <div className="lg:col-span-7 h-105">
+                <div className="lg:col-span-7 h-125">
                     <VerticalChart
                         title={reportsThisWeek.title}
                         labels={reportsThisWeek.labels}

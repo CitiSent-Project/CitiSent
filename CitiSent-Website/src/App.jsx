@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navbar } from './components/Navbar'
 import { Dashboard } from './frontend/Dashboard'
 import { Users } from './frontend/Users'
-import { Reports } from './frontend/Reports'
+import { Reports } from './frontend/Reports/Reports'
 import { UpdateNews } from './frontend/UpdateNews'
 import { Settings } from './frontend/Settings'
 
@@ -16,7 +16,11 @@ function App() {
             case 'Users':
                 return <Users />
             case 'Reports':
-                return <Reports />
+                return <Reports section="category" />
+            case 'Reports:By Category':
+                return <Reports section="category" />
+            case 'Reports:By Urgency Levels':
+                return <Reports section="urgency" />
             case 'Update News':
                 return <UpdateNews />
             case 'Settings':

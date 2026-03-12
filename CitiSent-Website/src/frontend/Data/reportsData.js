@@ -67,6 +67,8 @@ export const categoryAgencyCards = [
   { id: 'pwd', label: 'Senior Citizens / PWD Accessibility Services', tone: 'bg-violet-100' },
 ]
 
+export const allCategoryFilterId = 'all-categories'
+
 export const urgencyLevelsData = {
   title: 'Reports By Urgency Levels',
   total: '186',
@@ -111,14 +113,10 @@ const barangays = [
   'Villa Aurora',
 ]
 
-const categories = [
-  'Road Concern',
-  'Account Verification',
-  'Permit Processing',
-  'Waste Collection',
-  'Emergency Assistance',
-  'Traffic Issue',
-]
+const categories = categoryAgencyCards.map((agency) => ({
+  id: agency.id,
+  label: agency.label,
+}))
 
 const sources = ['Mobile App', 'Website', 'Helpdesk', 'Walk-in Desk']
 
@@ -171,6 +169,7 @@ function createUrgencyReportRow(index) {
   const first = randomItem(firstNames)
   const last = randomItem(lastNames)
   const urgency = randomItem(urgencyTypes)
+  const selectedCategory = randomItem(categories)
   const dateInfo = randomDateWithinDays(40)
   const name = `${first} ${last}`
 
@@ -181,7 +180,8 @@ function createUrgencyReportRow(index) {
     location: `${randomItem(barangays)}, Sto. Tomas Batangas`,
     date: dateInfo.date,
     dateValue: dateInfo.value,
-    category: randomItem(categories),
+    categoryId: selectedCategory.id,
+    category: selectedCategory.label,
     source: randomItem(sources),
     message: randomItem(reportMessages[urgency]),
     urgency,

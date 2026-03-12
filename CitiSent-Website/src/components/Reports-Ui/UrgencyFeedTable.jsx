@@ -6,6 +6,22 @@ const urgencyBadgeStyles = {
   Calm: 'bg-blue-100 text-blue-700',
 }
 
+function ReporterAvatar({ name }) {
+  const initials = String(name)
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join('')
+
+  return (
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cyan-100 text-xs font-semibold text-cyan-700">
+      {initials || 'U'}
+    </span>
+  )
+}
+
 export function UrgencyFeedTable({ rows }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -19,11 +35,15 @@ export function UrgencyFeedTable({ rows }) {
         {rows.length ? (
           rows.map((row) => (
             <article key={row.id} className="grid grid-cols-[1.2fr_1.2fr_0.6fr] gap-4 px-5 py-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{row.name}</p>
-                <p className="text-xs text-slate-500">{row.location}</p>
-                <p className="text-xs text-slate-500">{row.email}</p>
-                <p className="text-xs text-slate-400">{row.date}</p>
+              <div className="flex items-start gap-3">
+                <ReporterAvatar name={row.name} />
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{row.name}</p>
+                  <p className="text-xs text-slate-500">{row.location}</p>
+                  <p className="text-xs text-slate-500">{row.email}</p>
+                  <p className="text-xs text-slate-400">{row.date}</p>
+                </div>
               </div>
 
               <div className="space-y-1">

@@ -6,7 +6,6 @@ import {
 	FiBarChart,
 	FiUsers,
 	FiFileText,
-	FiMessageSquare,
 	FiSettings,
 	FiLogOut,
 } from 'react-icons/fi'
@@ -23,7 +22,7 @@ const navItems = [
 			{ label: 'By Urgency Levels', pageKey: 'Reports:By Urgency Levels' },
 		],
 	},
-	{ label: 'Update News', pageKey: 'Update News', icon: FiMessageSquare },
+	{ label: 'Admin Profile', pageKey: 'Admin Profile', icon: FiUser },
 	{ label: 'Settings', pageKey: 'Settings', icon: FiSettings },
 	{ label: 'Logout', pageKey: 'Logout', icon: FiLogOut, danger: true },
 ]
@@ -159,7 +158,7 @@ function BrandBlock({ expanded }) {
 	)
 }
 
-export function Navbar({ children, activePage, onNavigate }) {
+export function Navbar({ children, activePage, onNavigate, unreadNotifications = 0 }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
 
@@ -265,14 +264,29 @@ export function Navbar({ children, activePage, onNavigate }) {
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-500"
+								onClick={() => onNavigate('Notifications')}
+								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
+									activePage === 'Notifications'
+										? 'border-cyan-300 text-cyan-700'
+										: 'border-slate-200 text-slate-500 hover:border-slate-300'
+								}`}
 								aria-label="Notifications"
 							>
 								<FiBell className="text-base" />
+								{unreadNotifications > 0 ? (
+									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+										{unreadNotifications}
+									</span>
+								) : null}
 							</button>
 							<button
 								type="button"
-								className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700"
+								onClick={() => onNavigate('Admin Profile')}
+								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
+									activePage === 'Admin Profile'
+										? 'border-cyan-300 bg-cyan-100 text-cyan-700'
+										: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300'
+								}`}
 								aria-label="User profile"
 							>
 								<FiUser className="text-base" />

@@ -1,14 +1,83 @@
+import { useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashbord-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashbord-Ui/Vertical-Chart'
-import { AgencyCardsGrid, ReportsStatCards } from '../../components/Reports-Ui'
+import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable } from '../../components/Reports-Ui'
 import {
+  allCategoryFilterId,
   categoryAgencyCards,
   reportsByCategoryData,
   reportsSummaryStats,
   reportsThisWeekData,
+  urgencyFeedRows,
 } from '../Data/reportsData'
 
 export function ByCategory() {
+  const pageSize = 6
+  const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const cardsWithAllFilter = useMemo(
+    () => [
+      {
+        id: allCategoryFilterId,
+        label: 'All Agencies',
+        tone: 'bg-slate-100',
+      },
+      ...categoryAgencyCards,
+    ],
+    []
+  )
+
+  const filteredRows = useMemo(() => {
+    const rows =
+      selectedAgencyId === allCategoryFilterId
+        ? urgencyFeedRows
+        : urgencyFeedRows.filter((row) => row.categoryId === selectedAgencyId)
+
+    return [...rows].sort((a, b) => b.dateValue - a.dateValue)
+  }, [selectedAgencyId])
+
+  const selectedAgencyLabel =
+    cardsWithAllFilter.find((agency) => agency.id === selectedAgencyId)?.label || 'All Agencies'
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const startIndex = (safeCurrentPage - 1) * pageSize
+  const visibleRows = filteredRows.slice(startIndex, startIndex + pageSize)
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 3) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+
+    if (safeCurrentPage <= 2) {
+      return [1, 2, 3]
+    }
+
+    if (safeCurrentPage >= totalPages - 1) {
+      return [totalPages - 2, totalPages - 1, totalPages]
+    }
+
+    return [safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1]
+  }, [safeCurrentPage, totalPages])
+
+  function handleSelectAgency(agencyId) {
+    setSelectedAgencyId(agencyId)
+    setCurrentPage(1)
+  }
+
+  function handlePageChange(page) {
+    setCurrentPage(page)
+  }
+
+  function handleNextPage() {
+    setCurrentPage((previousPage) => Math.min(previousPage + 1, totalPages))
+  }
+
+  function handlePreviousPage() {
+    setCurrentPage((previousPage) => Math.max(previousPage - 1, 1))
+  }
+
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
@@ -44,7 +113,30 @@ export function ByCategory() {
           </div>
         </section>
 
-        <AgencyCardsGrid items={categoryAgencyCards} />
+        <AgencyCardsGrid
+          items={cardsWithAllFilter}
+          selectedItemId={selectedAgencyId}
+          onSelectItem={handleSelectAgency}
+        />
+
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <h2 className="text-base font-semibold text-slate-900">Report Feed by Agency</h2>
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
+              {selectedAgencyLabel}
+            </span>
+          </div>
+          <UrgencyFeedTable rows={visibleRows} />
+        </section>
+
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          visiblePages={visiblePages}
+          onPageChange={handlePageChange}
+          onNext={handleNextPage}
+          onPrevious={handlePreviousPage}
+        />
       </div>
     </main>
   )

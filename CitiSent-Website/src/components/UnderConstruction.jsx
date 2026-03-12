@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion'
 import { FiTool } from 'react-icons/fi'
 
+const MotionDiv = motion.div
+
 export function UnderConstruction({ pageName }) {
 	return (
 		<main className="mx-auto max-w-350 flex-1 p-4 md:p-6 lg:p-8 flex items-center justify-center min-h-[80vh]">
-			<motion.div
+			<MotionDiv
 				initial={{ opacity: 0, scale: 0.95 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: 0.3 }}
@@ -20,7 +22,7 @@ export function UnderConstruction({ pageName }) {
 					We're currently working hard to bring you the {pageName} features. 
 					Check back soon to see the updates!
 				</p>
-			</motion.div>
+			</MotionDiv>
 		</main>
 	)
 }

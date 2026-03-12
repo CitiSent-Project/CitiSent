@@ -1,9 +1,33 @@
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion'
 import { FiTrendingUp, FiTrendingDown, FiUsers, FiFileText, FiCheckCircle, FiTarget } from 'react-icons/fi'
+import { PieChart } from '../components/Dashbord-Ui/Pie-Chart'
+import { VerticalChart } from '../components/Dashbord-Ui/Vertical-Chart'
+import { reportsByCategory, reportsThisWeek } from './Data/dashboardData'
+import { getLatestJoinedUsersRows } from './Data/usersData'
 
 const MotionDiv = motion.div
 
-function StatCard({ icon: Icon, label, value, trend, trendValue, trendDirection, color = 'blue' }) {
+function ProfilePill({ label }) {
+    const initials = String(label)
+        .trim()
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0]?.toUpperCase())
+        .join('')
+
+    return (
+        <div className="inline-flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-100 text-xs font-semibold text-cyan-700">
+                {initials || 'U'}
+            </span>
+            <span>{label}</span>
+        </div>
+    )
+}
+
+function StatCard({ icon: Icon, label, value, trendValue, trendDirection, color = 'blue' }) {
     const isPositive = trendDirection === 'up'
     const colorClasses = {
         blue: 'bg-blue-50 text-blue-600',
@@ -42,22 +66,6 @@ function StatCard({ icon: Icon, label, value, trend, trendValue, trendDirection,
     )
 }
 
-function ChartPlaceholder({ title }) {
-    return (
-        <MotionDiv
-            className="rounded-lg bg-white p-6 shadow-sm border border-slate-200"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-        >
-            <h3 className="mb-4 font-semibold text-slate-900">{title}</h3>
-            <div className="flex h-80 items-center justify-center bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">Chart placeholder - Ready for charting library</p>
-            </div>
-        </MotionDiv>
-    )
-}
-
 function TablePlaceholder({ title, columns, rows }) {
     return (
         <MotionDiv
@@ -85,7 +93,7 @@ function TablePlaceholder({ title, columns, rows }) {
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
                                 {Object.values(row).map((cell, cellIdx) => (
                                     <td key={cellIdx} className="px-6 py-4 text-sm text-slate-700">
-                                        {cell}
+                                        {cellIdx === 0 ? <ProfilePill label={cell} /> : cell}
                                     </td>
                                 ))}
                             </tr>
@@ -106,20 +114,14 @@ export function Dashboard() {
     ]
 
     const adminRows = [
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'City Cooperative Development Office', activity: 'Today' },
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'Finance, Revenue and Housing Office (DPO)', activity: 'Yesterday' },
-        { name: 'Jitu Chauhan', email: 'jitu@example.com', department: 'Social, Deployment Service Office', activity: '3 March, 2026' },
+        { name: 'Jiti Chazan', email: 'jitu@example.com', department: 'City Cooperative Development Office', activity: 'Today' },
+        { name: 'Tiu Chapman', email: 'jitu@example.com', department: 'Finance, Revenue and Housing Office (DPO)', activity: 'Yesterday' },
+        { name: 'Situ Chazan', email: 'jitu@example.com', department: 'Social, Deployment Service Office', activity: '3 March, 2026' },
         { name: 'Amanda Darrell', email: 'amanda@example.com', department: 'City Cooperative Office', activity: '3 March, 2026' },
         { name: 'Amanda Darrell', email: 'amanda@example.com', department: 'City Veterinary Office', activity: '3 March, 2026' },
     ]
 
-    const newUsersRows = [
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-        { username: 'Jitu Chauhan', email: 'jitu@example.com', joined: '3 March, 2026' },
-    ]
+    const newUsersRows = getLatestJoinedUsersRows()
 
     return (
         <div className="min-h-screen bg-slate-50 p-8">
@@ -142,9 +144,24 @@ export function Dashboard() {
             </div>
 
             {/* Charts Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <ChartPlaceholder title="Total Reports Per Category" />
-                <ChartPlaceholder title="Total Reports This Week" />
+            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
+                <div className="lg:col-span-5 h-125">
+                    <PieChart
+                        title={reportsByCategory.title}
+                        total={reportsByCategory.total}
+                        labels={reportsByCategory.labels}
+                        values={reportsByCategory.values}
+                        colors={reportsByCategory.colors}
+                        legend={reportsByCategory.legend}
+                    />
+                </div>
+                <div className="lg:col-span-7 h-125">
+                    <VerticalChart
+                        title={reportsThisWeek.title}
+                        labels={reportsThisWeek.labels}
+                        values={reportsThisWeek.values}
+                    />
+                </div>
             </div>
 
             {/* Tables Grid */}

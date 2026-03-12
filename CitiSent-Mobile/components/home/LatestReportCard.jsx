@@ -1,14 +1,6 @@
 import ReportCard from "../myReports/ReportCard";
+import { LATEST_HOME_REPORT } from "../../constants/homeData";
 
-const latestSampleReport = {
-  id: "latest-home-1",
-  name: "Juan dela cruz",
-  time: "19mins ago",
-  tags: ["Emergency"],
-  message: "HELP!!! The system deleted all my files and I need them NOW!!! Please fix this immediately!!",
-  location: "Sto Tomas",
-};
-
-export default function LatestReportCard() {
-  return <ReportCard report={latestSampleReport} containerClassName="mb-7" />;
+export default function LatestReportCard({ report = LATEST_HOME_REPORT }) {
+  return <ReportCard report={report} containerClassName="mb-7" />;
 }

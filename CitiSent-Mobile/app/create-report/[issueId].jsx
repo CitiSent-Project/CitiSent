@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentSection from "../../components/createReport/details/AttachmentSection";
 import BreadcrumbsNav from "../../components/createReport/details/BreadcrumbsNav";
 import IssueReportForm from "../../components/createReport/details/IssueReportForm";
 import SubmitReportButton from "../../components/createReport/details/SubmitReportButton";
 import PageTopBar from "../../components/layout/PageTopBar";
+import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import { getCreateReportIssueById } from "../../constants/createReportIssues";
+import usePullToRefresh from "../../hooks/usePullToRefresh";
 
 export default function CreateReportIssueDetailScreen() {
   const { issueId } = useLocalSearchParams();
@@ -20,6 +22,7 @@ export default function CreateReportIssueDetailScreen() {
   const [issueLocation, setIssueLocation] = useState("");
   const [report, setReport] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { refreshing, onRefresh } = usePullToRefresh();
   const scrollViewRef = useRef(null);
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
   const reportContentHeightRef = useRef(0);
@@ -99,12 +102,14 @@ export default function CreateReportIssueDetailScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
-        <ScrollView
+        <RefreshableScrollView
           ref={scrollViewRef}
           className="flex-1"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingVertical: 16,
@@ -126,7 +131,7 @@ export default function CreateReportIssueDetailScreen() {
           />
 
           <SubmitReportButton onPress={handleSubmitReport} disabled={!canSubmit} loading={isSubmitting} />
-        </ScrollView>
+        </RefreshableScrollView>
       </KeyboardAvoidingView>
     </View>
   );

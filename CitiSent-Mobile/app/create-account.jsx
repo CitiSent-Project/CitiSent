@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import AuthActionButton from "../components/auth/AuthActionButton";
 import AuthBrandMark from "../components/auth/AuthBrandMark";
 import AuthCityFooter from "../components/auth/AuthCityFooter";
 import AuthInputField from "../components/auth/AuthInputField";
+import RefreshableScrollView from "../components/ui/RefreshableScrollView";
+import usePullToRefresh from "../hooks/usePullToRefresh";
 import { authApi } from "../services/auth";
 
 export default function CreateAccountScreen() {
@@ -19,6 +21,7 @@ export default function CreateAccountScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const { refreshing, onRefresh } = usePullToRefresh();
   const [fieldErrors, setFieldErrors] = useState({
     username: "",
     email: "",
@@ -146,11 +149,13 @@ export default function CreateAccountScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={24}
       >
-        <ScrollView
+        <RefreshableScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerClassName="px-8 pb-44 pt-16"
           keyboardShouldPersistTaps="handled"
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         >
           <View className="items-center">
             <AuthBrandMark />
@@ -231,7 +236,7 @@ export default function CreateAccountScreen() {
               <Text className="text-[13px] text-[#8CA8C9]">Already have an account? Login</Text>
             </Pressable>
           </View>
-        </ScrollView>
+        </RefreshableScrollView>
       </KeyboardAvoidingView>
 
       <AuthCityFooter />

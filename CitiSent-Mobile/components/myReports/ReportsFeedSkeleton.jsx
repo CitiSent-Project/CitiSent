@@ -33,7 +33,6 @@ export default function ReportsFeedSkeleton() {
       <ReportCardSkeleton />
       <ReportCardSkeleton />
       <ReportCardSkeleton />
-      <ReportCardSkeleton />
     </View>
   );
 }

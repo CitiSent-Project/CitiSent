@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ProfileSummaryCard } from '../components/Account-Ui'
 import { formatDateTime } from './Data/adminPortalData'
 
-export function UpdateNews({ profile, activityLog, onUpdateProfile }) {
+export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState({
     fullName: profile.fullName,

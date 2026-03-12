@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { FiMoreHorizontal } from 'react-icons/fi'
 import { UserStatusPill } from './UserStatusPill'
 
@@ -13,10 +13,16 @@ function UserInitialsAvatar({ name }) {
   )
 }
 
-function UsersTableHeader() {
+function UsersTableHeader({ allSelected, onToggleAll }) {
   return (
     <div className="grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-      <span />
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-slate-300"
+        checked={allSelected}
+        onChange={onToggleAll}
+        aria-label="Select all users on page"
+      />
       <span>User Details</span>
       <span>Address</span>
       <span>Account Status</span>
@@ -26,28 +32,32 @@ function UsersTableHeader() {
   )
 }
 
-function UsersTableRow({ user, onViewUser, onEditUser, onBanUser }) {
+function UsersTableRow({
+  user,
+  isSelected,
+  onToggleSelected,
+  onViewUser,
+  onEditUser,
+  onBanUser,
+}) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
 
   function handleAction(action) {
-    if (action === 'view') {
-      onViewUser(user)
-    }
-
-    if (action === 'edit') {
-      onEditUser(user)
-    }
-
-    if (action === 'ban') {
-      onBanUser(user)
-    }
-
+    if (action === 'view') onViewUser(user)
+    if (action === 'edit') onEditUser(user)
+    if (action === 'ban') onBanUser(user)
     setIsActionMenuOpen(false)
   }
 
   return (
     <div className="grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 px-4 py-3 hover:bg-slate-50">
-      <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-slate-300"
+        checked={isSelected}
+        onChange={() => onToggleSelected(user.id)}
+        aria-label={`Select ${user.name}`}
+      />
       <div className="flex items-center gap-3">
         <UserInitialsAvatar name={user.name} />
         <div>
@@ -97,11 +107,22 @@ function UsersTableRow({ user, onViewUser, onEditUser, onBanUser }) {
   )
 }
 
-export function UsersTable({ users, onViewUser, onEditUser, onBanUser }) {
+export function UsersTable({
+  users,
+  selectedUserIds = [],
+  onToggleSelectUser,
+  onToggleSelectAllUsers,
+  onViewUser,
+  onEditUser,
+  onBanUser,
+}) {
+  const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
+  const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
+
   return (
     <div className="overflow-x-auto">
       <div className="min-w-190">
-        <UsersTableHeader />
+        <UsersTableHeader allSelected={allSelected} onToggleAll={onToggleSelectAllUsers} />
 
         <div className="divide-y divide-slate-200">
           {users.length ? (
@@ -109,6 +130,8 @@ export function UsersTable({ users, onViewUser, onEditUser, onBanUser }) {
               <UsersTableRow
                 key={user.id}
                 user={user}
+                isSelected={selectedSet.has(user.id)}
+                onToggleSelected={onToggleSelectUser}
                 onViewUser={onViewUser}
                 onEditUser={onEditUser}
                 onBanUser={onBanUser}

@@ -8,6 +8,8 @@ import {
 	FiFileText,
 	FiSettings,
 	FiLogOut,
+	FiChevronDown,
+	FiChevronUp,
 } from 'react-icons/fi'
 import CitiSentLogo from '../assets/CitiSentLogo.svg'
 
@@ -92,7 +94,9 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 				)}
 
 				{hasChildren && expanded ? (
-					<span className="ml-auto pr-1 text-xs text-cyan-100/90">{submenuOpen ? '˄' : '˅'}</span>
+					<span className="ml-auto pr-1 text-cyan-100/90">
+						{submenuOpen ? <FiChevronUp className="text-lg" /> : <FiChevronDown className="text-lg" />}
+					</span>
 				) : null}
 
 				{item.notifications && expanded && (

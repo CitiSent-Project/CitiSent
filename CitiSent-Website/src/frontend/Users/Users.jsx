@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { usersFilters, usersRows, usersStats } from './Data/usersData'
+import { usersFilters, usersRows, usersStats } from '../Data/usersData'
+import { notifyError, notifySuccess } from '../../components/ui/Toasters'
 import {
   AddUserFormModal,
   EditUserFormModal,
@@ -8,9 +9,9 @@ import {
   UsersPagination,
   UsersTable,
   UsersToolbar,
-} from '../components/Users-Ui'
+} from '../../components/Users-Ui'
 
-export function Users() {
+export function Users({ onViewUserProfile }) {
   const pageSize = 8
   const [users, setUsers] = useState(usersRows)
   const [searchTerm, setSearchTerm] = useState('')
@@ -21,6 +22,7 @@ export function Users() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [selectedUserIds, setSelectedUserIds] = useState([])
 
   const filteredAndSortedUsers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -96,6 +98,24 @@ export function Users() {
   }
 
   function handleAddUserSubmit(formData) {
+    const name = formData.name?.trim()
+    const email = formData.email?.trim().toLowerCase()
+    const address = formData.address?.trim()
+
+    if (!name || !email || !address) {
+      notifyError(
+        'Add user failed.',
+        'Complete all required fields (name, email, address) before submitting.'
+      )
+      return
+    }
+
+    const isDuplicateEmail = users.some((user) => user.email.toLowerCase() === email)
+    if (isDuplicateEmail) {
+      notifyError('Add user failed.', 'Use a different email. This email is already registered.')
+      return
+    }
+
     const createdAt = Date.now()
     const registeredAt = new Date(createdAt).toLocaleDateString('en-US', {
       month: 'long',
@@ -106,9 +126,9 @@ export function Users() {
     setUsers((previousUsers) => [
       {
         id: buildUserId(previousUsers),
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        address: formData.address.trim(),
+        name,
+        email,
+        address,
         status: formData.status,
         registeredAt,
         registeredAtValue: createdAt,
@@ -118,6 +138,7 @@ export function Users() {
 
     setIsAddUserModalOpen(false)
     setCurrentPage(1)
+    notifySuccess(`User added successfully (${email}).`)
   }
 
   function handlePageChange(page) {
@@ -134,6 +155,10 @@ export function Users() {
 
   function handleViewUser(user) {
     setSelectedUser(user)
+    if (onViewUserProfile) {
+      onViewUserProfile(user)
+      return
+    }
     setIsViewProfileOpen(true)
   }
 
@@ -144,6 +169,30 @@ export function Users() {
 
   function handleEditUserSubmit(formData) {
     if (!selectedUser) {
+      notifyError('Edit user failed.', 'Select a user first, then try editing again.')
+      return
+    }
+
+    const name = formData.name?.trim()
+    const email = formData.email?.trim().toLowerCase()
+    const address = formData.address?.trim()
+
+    if (!name || !email || !address) {
+      notifyError(
+        'Edit user failed.',
+        'Complete all required fields (name, email, address) before saving.'
+      )
+      return
+    }
+
+    const isDuplicateEmail = users.some(
+      (user) => user.id !== selectedUser.id && user.email.toLowerCase() === email
+    )
+    if (isDuplicateEmail) {
+      notifyError(
+        'Edit user failed.',
+        'Use a different email. Another user is already using this email.'
+      )
       return
     }
 
@@ -152,9 +201,9 @@ export function Users() {
         user.id === selectedUser.id
           ? {
               ...user,
-              name: formData.name,
-              email: formData.email,
-              address: formData.address,
+              name,
+              email,
+              address,
               status: formData.status,
             }
           : user
@@ -163,9 +212,20 @@ export function Users() {
 
     setIsEditUserOpen(false)
     setSelectedUser(null)
+    notifySuccess('User details updated successfully.')
   }
 
   function handleBanUser(targetUser) {
+    if (!targetUser) {
+      notifyError('Ban user failed.', 'Select a valid user and try again.')
+      return
+    }
+
+    if (targetUser.status === 'Banned') {
+      notifyError('Ban user failed.', 'This user is already banned. No further action is needed.')
+      return
+    }
+
     setUsers((previousUsers) =>
       previousUsers.map((user) =>
         user.id === targetUser.id
@@ -176,6 +236,61 @@ export function Users() {
           : user
       )
     )
+
+    notifySuccess(`${targetUser.name} was banned successfully.`)
+  }
+
+  function handleToggleSelectUser(userId) {
+    setSelectedUserIds((previous) =>
+      previous.includes(userId)
+        ? previous.filter((id) => id !== userId)
+        : [...previous, userId]
+    )
+  }
+
+  function handleToggleSelectAllVisibleUsers() {
+    const visibleIds = visibleUsers.map((user) => user.id)
+    const allVisibleSelected = visibleIds.every((id) => selectedUserIds.includes(id))
+
+    setSelectedUserIds((previous) => {
+      if (allVisibleSelected) {
+        return previous.filter((id) => !visibleIds.includes(id))
+      }
+      const merged = new Set([...previous, ...visibleIds])
+      return Array.from(merged)
+    })
+  }
+
+  function handleBulkStatusUpdate(status) {
+    if (!selectedUserIds.length) {
+      notifyError('Bulk update failed.', 'Select one or more users first.')
+      return
+    }
+
+    setUsers((previousUsers) =>
+      previousUsers.map((user) =>
+        selectedUserIds.includes(user.id) ? { ...user, status } : user
+      )
+    )
+
+    notifySuccess(`Updated status to ${status} for ${selectedUserIds.length} user(s).`)
+    setSelectedUserIds([])
+  }
+
+  function handleBulkBanUsers() {
+    if (!selectedUserIds.length) {
+      notifyError('Bulk ban failed.', 'Select one or more users first.')
+      return
+    }
+
+    setUsers((previousUsers) =>
+      previousUsers.map((user) =>
+        selectedUserIds.includes(user.id) ? { ...user, status: 'Banned' } : user
+      )
+    )
+
+    notifySuccess(`Banned ${selectedUserIds.length} user(s) successfully.`)
+    setSelectedUserIds([])
   }
 
   return (
@@ -208,8 +323,39 @@ export function Users() {
             onFilterChange={handleFilterChange}
             onAddUserClick={() => setIsAddUserModalOpen(true)}
           />
+          {selectedUserIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 px-4 mt-3 pb-3">
+              <span className="text-sm text-slate-600">
+                {selectedUserIds.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => handleBulkStatusUpdate('Verified')}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Set Verified
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkStatusUpdate('Unverified')}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Set Unverified
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkBanUsers}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+              >
+                Ban Selected
+              </button>
+            </div>
+          )}
           <UsersTable
             users={visibleUsers}
+            selectedUserIds={selectedUserIds}
+            onToggleSelectUser={handleToggleSelectUser}
+            onToggleSelectAllUsers={handleToggleSelectAllVisibleUsers}
             onViewUser={handleViewUser}
             onEditUser={handleEditUser}
             onBanUser={handleBanUser}

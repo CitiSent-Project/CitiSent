@@ -215,7 +215,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
               const isLast = index === timeline.length - 1
               return (
                 <li key={entry.id} className={`relative ${isLast ? '' : 'pb-6'}`}>
-                  <span className="absolute -left-[33px] grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-100">
+                  <span className="absolute -left-8.25 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-100">
                     <EntryIcon className="text-xs text-slate-600" />
                   </span>
                   <div>

@@ -13,12 +13,19 @@ import {
 import CitiSentLogo from '../assets/CitiSentLogo.svg'
 
 const navItems = [
-	{ label: 'Dashboard', icon: FiBarChart },
-	{ label: 'Users', icon: FiUsers },
-	{ label: 'Reports', icon: FiFileText },
-	{ label: 'Update News', icon: FiMessageSquare },
-	{ label: 'Settings', icon: FiSettings },
-	{ label: 'Logout', icon: FiLogOut, danger: true },
+	{ label: 'Dashboard', pageKey: 'Dashboard', icon: FiBarChart },
+	{ label: 'Users', pageKey: 'Users', icon: FiUsers },
+	{
+		label: 'Reports',
+		icon: FiFileText,
+		children: [
+			{ label: 'By Category', pageKey: 'Reports:By Category' },
+			{ label: 'By Urgency Levels', pageKey: 'Reports:By Urgency Levels' },
+		],
+	},
+	{ label: 'Update News', pageKey: 'Update News', icon: FiMessageSquare },
+	{ label: 'Settings', pageKey: 'Settings', icon: FiSettings },
+	{ label: 'Logout', pageKey: 'Logout', icon: FiLogOut, danger: true },
 ]
 
 const MotionNav = motion.nav
@@ -32,51 +39,98 @@ function CitiSentLogoIcon({ className = '' }) {
 	return <img src={CitiSentLogo} alt="CitiSent logo" className={className} />
 }
 
-function NavOption({ item, selected, setSelected, expanded, index }) {
-	const isSelected = selected === item.label
+function NavOption({ item, activePage, onNavigate, expanded, index }) {
+	const hasChildren = Boolean(item.children?.length)
+	const isReportsSection = activePage.startsWith('Reports:')
+	const isSelected = hasChildren ? isReportsSection : activePage === item.pageKey
 	const Icon = item.icon
+	const [submenuOpen, setSubmenuOpen] = useState(hasChildren && isReportsSection)
+
+	function handleClick() {
+		if (hasChildren) {
+			if (!isReportsSection) {
+				onNavigate('Reports:By Category')
+				setSubmenuOpen(true)
+				return
+			}
+
+			setSubmenuOpen((previousValue) => !previousValue)
+			return
+		}
+
+		onNavigate(item.pageKey)
+	}
 
 	return (
-		<MotionButton
-			type="button"
-			onClick={() => setSelected(item.label)}
-			className={`relative flex h-11 w-full items-center rounded-lg px-2 transition-colors ${
-				isSelected
-					? 'bg-white/14 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]'
-					: item.danger
-						? 'text-rose-300 hover:bg-white/8 hover:text-rose-200'
-						: 'text-slate-100/90 hover:bg-white/8 hover:text-white'
-			}`}
-			initial={{ opacity: 0, x: -12 }}
-			animate={{ opacity: 1, x: 0 }}
-			transition={{ delay: 0.05 * index, duration: 0.26 }}
-		>
-			<MotionDiv className="grid h-full w-10 place-content-center text-lg">
-				<Icon />
-			</MotionDiv>
+		<div>
+			<MotionButton
+				type="button"
+				onClick={handleClick}
+				className={`relative flex h-11 w-full items-center rounded-lg px-2 transition-colors ${
+					isSelected
+						? 'bg-white/14 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]'
+						: item.danger
+							? 'text-rose-300 hover:bg-white/8 hover:text-rose-200'
+							: 'text-slate-100/90 hover:bg-white/8 hover:text-white'
+				}`}
+				initial={{ opacity: 0, x: -12 }}
+				animate={{ opacity: 1, x: 0 }}
+				transition={{ delay: 0.05 * index, duration: 0.26 }}
+			>
+				<MotionDiv className="grid h-full w-10 place-content-center text-lg">
+					<Icon />
+				</MotionDiv>
 
-			{expanded && (
-				<MotionSpan
-					initial={{ opacity: 0, y: 10 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.1 }}
-					className="text-sm font-medium"
-				>
-					{item.label}
-				</MotionSpan>
-			)}
+				{expanded && (
+					<MotionSpan
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.1 }}
+						className="text-sm font-medium"
+					>
+						{item.label}
+					</MotionSpan>
+				)}
 
-			{item.notifications && expanded && (
-				<MotionSpan
-					initial={{ scale: 0.5, opacity: 0 }}
-					animate={{ scale: 1, opacity: 1 }}
-					transition={{ delay: 0.2 }}
-					className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67]"
-				>
-					{item.notifications}
-				</MotionSpan>
-			)}
-		</MotionButton>
+				{hasChildren && expanded ? (
+					<span className="ml-auto pr-1 text-xs text-cyan-100/90">{submenuOpen ? '˄' : '˅'}</span>
+				) : null}
+
+				{item.notifications && expanded && (
+					<MotionSpan
+						initial={{ scale: 0.5, opacity: 0 }}
+						animate={{ scale: 1, opacity: 1 }}
+						transition={{ delay: 0.2 }}
+						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67]"
+					>
+						{item.notifications}
+					</MotionSpan>
+				)}
+			</MotionButton>
+
+			{hasChildren && expanded && submenuOpen ? (
+				<div className="mt-1 space-y-1 border-l border-cyan-100/25 pl-5">
+					{item.children.map((child) => {
+						const childSelected = activePage === child.pageKey
+
+						return (
+							<button
+								type="button"
+								key={child.pageKey}
+								onClick={() => onNavigate(child.pageKey)}
+								className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+									childSelected
+										? 'bg-white/14 text-white'
+										: 'text-cyan-100/90 hover:bg-white/8 hover:text-white'
+								}`}
+							>
+								{child.label}
+							</button>
+						)
+					})}
+				</div>
+			) : null}
+		</div>
 	)
 }
 
@@ -105,10 +159,9 @@ function BrandBlock({ expanded }) {
 	)
 }
 
-export function Navbar({ children }) {
+export function Navbar({ children, activePage, onNavigate }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
-	const [selected, setSelected] = useState('Dashboard')
 
 	return (
 		<div
@@ -146,8 +199,8 @@ export function Navbar({ children }) {
 							<NavOption
 								key={item.label}
 								item={item}
-								selected={selected}
-								setSelected={setSelected}
+								activePage={activePage}
+								onNavigate={onNavigate}
 								expanded={expanded}
 								index={index}
 							/>

@@ -8,6 +8,25 @@ import { getLatestJoinedUsersRows } from './Data/usersData'
 
 const MotionDiv = motion.div
 
+function ProfilePill({ label }) {
+    const initials = String(label)
+        .trim()
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0]?.toUpperCase())
+        .join('')
+
+    return (
+        <div className="inline-flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-100 text-xs font-semibold text-cyan-700">
+                {initials || 'U'}
+            </span>
+            <span>{label}</span>
+        </div>
+    )
+}
+
 function StatCard({ icon: Icon, label, value, trendValue, trendDirection, color = 'blue' }) {
     const isPositive = trendDirection === 'up'
     const colorClasses = {
@@ -74,7 +93,7 @@ function TablePlaceholder({ title, columns, rows }) {
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
                                 {Object.values(row).map((cell, cellIdx) => (
                                     <td key={cellIdx} className="px-6 py-4 text-sm text-slate-700">
-                                        {cell}
+                                        {cellIdx === 0 ? <ProfilePill label={cell} /> : cell}
                                     </td>
                                 ))}
                             </tr>

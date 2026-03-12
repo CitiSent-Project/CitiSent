@@ -21,6 +21,7 @@ import {
     loadFromStorage,
     saveToStorage,
 } from './frontend/Data/adminPortalData'
+import { ReportDetailPage } from './frontend/Reports/ReportDetailPage/ReportDetailPage'
 
 function App() {
     const [activePage, setActivePage] = useState('Dashboard')
@@ -48,6 +49,8 @@ function App() {
         loadFromStorage(ADMIN_STORAGE_KEYS.rememberEmail, '')
     )
     const [selectedUserProfile, setSelectedUserProfile] = useState(null)
+    const [selectedReport, setSelectedReport] = useState(null)
+    const [reportStatusMap, setReportStatusMap] = useState({})
 
     useEffect(() => {
         saveToStorage(ADMIN_STORAGE_KEYS.profile, profile)
@@ -189,6 +192,20 @@ function App() {
         setActivePage(nextPage)
     }
 
+    function handleViewReport(report) {
+        const merged = { ...report, status: reportStatusMap[report.id] || report.status || 'Pending' }
+        setSelectedReport(merged)
+        setIsPageLoading(true)
+        setActivePage('Report Detail')
+    }
+
+    function handleReportStatusUpdate(reportId, newStatus) {
+        setReportStatusMap((prev) => ({ ...prev, [reportId]: newStatus }))
+        setSelectedReport((prev) =>
+            prev && prev.id === reportId ? { ...prev, status: newStatus } : prev
+        )
+    }
+
     const unreadNotifications = notifications.filter((notification) => !notification.read).length
 
     const renderAuthPage = () => {
@@ -224,11 +241,11 @@ function App() {
                     />
                 )
             case 'Reports':
-                return <Reports section="category" />
+                return <Reports section="category" onViewReport={handleViewReport} />
             case 'Reports:By Category':
-                return <Reports section="category" />
+                return <Reports section="category" onViewReport={handleViewReport} />
             case 'Reports:By Urgency Levels':
-                return <Reports section="urgency" />
+                return <Reports section="urgency" onViewReport={handleViewReport} />
             case 'Admin Profile':
                 return (
                     <ProfileInformation
@@ -267,6 +284,14 @@ function App() {
                     <UserProfilePage
                         user={selectedUserProfile}
                         onBackToUsers={() => setActivePage('Users')}
+                    />
+                )
+            case 'Report Detail':
+                return (
+                    <ReportDetailPage
+                        report={selectedReport}
+                        onBackToReports={() => setActivePage('Reports:By Category')}
+                        onUpdateStatus={handleReportStatusUpdate}
                     />
                 )
             default:

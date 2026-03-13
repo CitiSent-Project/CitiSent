@@ -26,12 +26,12 @@ function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">{text}</Text>;
 }
 
-export default function MyReportCard({ report }) {
+export default function MyReportCard({ report, containerClassName = "mb-4" }) {
   const normalizedPriority = normalizePriority(report?.priority ?? report?.priorityLevel ?? report?.tags?.[0]);
   const priorityStyle = normalizedPriority ? priorityChipStyles[normalizedPriority] : null;
 
   return (
-    <View className="mb-4 rounded-2xl border border-[#E5E7EB] bg-white px-4 py-4 shadow-sm">
+    <View className={`${containerClassName} rounded-2xl border border-[#E5E7EB] bg-white px-4 py-4 shadow-sm`}>
       <View className="mb-3 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <FieldLabel text="Issue Type" />

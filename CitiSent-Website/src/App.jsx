@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Navbar } from './components/Navbar'
 import { Dashboard } from './frontend/Dashboard'
-import { Users } from './frontend/Users'
+import { Users } from './frontend/Users/Users'
+import { UserProfilePage } from './frontend/Users/UserProfilePage/UserProfilePage'
 import { Reports } from './frontend/Reports/Reports'
 import { LoginPage } from './frontend/Login-Page'
 import { RegisterPage } from './frontend/Register-Page'
 import { Notifications } from './frontend/Notifications'
 import { Logout } from './frontend/Logout'
-import { UpdateNews } from './frontend/UpdateNews'
+import { ProfileInformation } from './frontend/ProfilePage'
 import { Settings } from './frontend/Settings'
 import { PageSkeleton } from './components/ui/PageSkeleton'
+import Toasters, { notifyError, notifySuccess } from './components/ui/Toasters'
 import {
     ADMIN_STORAGE_KEYS,
     createActivityEntry,
@@ -19,6 +21,7 @@ import {
     loadFromStorage,
     saveToStorage,
 } from './frontend/Data/adminPortalData'
+import { ReportDetailPage } from './frontend/Reports/ReportDetailPage/ReportDetailPage'
 
 function App() {
     const [activePage, setActivePage] = useState('Dashboard')
@@ -45,6 +48,9 @@ function App() {
     const [rememberedEmail, setRememberedEmail] = useState(() =>
         loadFromStorage(ADMIN_STORAGE_KEYS.rememberEmail, '')
     )
+    const [selectedUserProfile, setSelectedUserProfile] = useState(null)
+    const [selectedReport, setSelectedReport] = useState(null)
+    const [reportStatusMap, setReportStatusMap] = useState({})
 
     useEffect(() => {
         saveToStorage(ADMIN_STORAGE_KEYS.profile, profile)
@@ -101,11 +107,16 @@ function App() {
         setRememberedEmail(payload.email)
         addActivity('Registration', `Admin account created for ${payload.email}`)
 
+        notifySuccess('Registration successful. You can now sign in.')
         return { ok: true, message: 'Registration complete. You can now sign in.' }
     }
 
     function handleLogin(payload) {
         if (payload.email !== profile.email || payload.password !== profile.password) {
+            notifyError(
+                'Login failed.',
+                'Use the registered admin email and password. Check for typing errors and try again.'
+            )
             return {
                 ok: false,
                 message: 'Invalid credentials. Use the registered admin email and password.',
@@ -124,6 +135,7 @@ function App() {
             setRememberedEmail('')
         }
 
+        notifySuccess('Login successful. Welcome back.')
         return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
     }
 
@@ -131,6 +143,7 @@ function App() {
         setIsAuthenticated(false)
         setAuthPage('Login')
         addActivity('Logout', 'Signed out from admin workspace')
+        notifySuccess('Logout successful.')
     }
 
     function handleProfileUpdate(updates) {
@@ -145,11 +158,13 @@ function App() {
         }
 
         addActivity('Profile update', 'Updated admin profile information')
+        notifySuccess('Profile updated successfully.')
     }
 
     function handlePreferenceUpdate(updates) {
         setPreferences((previous) => ({ ...previous, ...updates }))
         addActivity('Settings update', 'Updated account preferences')
+        notifySuccess('Settings updated successfully.')
     }
 
     function handleToggleNotification(notificationId) {
@@ -165,6 +180,7 @@ function App() {
     function handleClearNotifications() {
         setNotifications([])
         addActivity('Notification cleanup', 'Cleared all notifications')
+        notifySuccess('All notifications were cleared.')
     }
 
     function handleNavigate(nextPage) {
@@ -174,6 +190,20 @@ function App() {
 
         setIsPageLoading(true)
         setActivePage(nextPage)
+    }
+
+    function handleViewReport(report) {
+        const merged = { ...report, status: reportStatusMap[report.id] || report.status || 'Pending' }
+        setSelectedReport(merged)
+        setIsPageLoading(true)
+        setActivePage('Report Detail')
+    }
+
+    function handleReportStatusUpdate(reportId, newStatus) {
+        setReportStatusMap((prev) => ({ ...prev, [reportId]: newStatus }))
+        setSelectedReport((prev) =>
+            prev && prev.id === reportId ? { ...prev, status: newStatus } : prev
+        )
     }
 
     const unreadNotifications = notifications.filter((notification) => !notification.read).length
@@ -202,16 +232,23 @@ function App() {
             case 'Dashboard':
                 return <Dashboard />
             case 'Users':
-                return <Users />
+                return (
+                    <Users
+                        onViewUserProfile={(user) => {
+                            setSelectedUserProfile(user)
+                            setActivePage('User Profile')
+                        }}
+                    />
+                )
             case 'Reports':
-                return <Reports section="category" />
+                return <Reports section="category" onViewReport={handleViewReport} />
             case 'Reports:By Category':
-                return <Reports section="category" />
+                return <Reports section="category" onViewReport={handleViewReport} />
             case 'Reports:By Urgency Levels':
-                return <Reports section="urgency" />
+                return <Reports section="urgency" onViewReport={handleViewReport} />
             case 'Admin Profile':
                 return (
-                    <UpdateNews
+                    <ProfileInformation
                         profile={profile}
                         activityLog={activityLog}
                         onUpdateProfile={handleProfileUpdate}
@@ -242,23 +279,46 @@ function App() {
                         onCancel={() => setActivePage('Dashboard')}
                     />
                 )
+            case 'User Profile':
+                return (
+                    <UserProfilePage
+                        user={selectedUserProfile}
+                        onBackToUsers={() => setActivePage('Users')}
+                    />
+                )
+            case 'Report Detail':
+                return (
+                    <ReportDetailPage
+                        report={selectedReport}
+                        onBackToReports={() => setActivePage('Reports:By Category')}
+                        onUpdateStatus={handleReportStatusUpdate}
+                    />
+                )
             default:
                 return <Dashboard />
         }
     }
 
     if (!isAuthenticated) {
-        return renderAuthPage()
+        return (
+            <>
+                <Toasters />
+                {renderAuthPage()}
+            </>
+        )
     }
 
     return (
-        <Navbar
-            activePage={activePage}
-            onNavigate={handleNavigate}
-            unreadNotifications={unreadNotifications}
-        >
-            {isPageLoading ? <PageSkeleton pageKey={activePage} /> : renderPage()}
-        </Navbar>
+        <>
+            <Toasters />
+            <Navbar
+                activePage={activePage}
+                onNavigate={handleNavigate}
+                unreadNotifications={unreadNotifications}
+            >
+                {isPageLoading ? <PageSkeleton pageKey={activePage} /> : renderPage()}
+            </Navbar>
+        </>
     )
 }
 

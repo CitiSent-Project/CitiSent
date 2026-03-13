@@ -62,18 +62,6 @@ export default function SettingsPage() {
         value={settings.emailUpdates}
         onValueChange={setSetting("emailUpdates")}
       />
-      <SettingsToggleRow
-        title="Enhanced map contrast"
-        description="Use stronger map contrast for better road visibility."
-        value={settings.darkMapStyle}
-        onValueChange={setSetting("darkMapStyle")}
-      />
-      <SettingsToggleRow
-        title="Location access"
-        description="Allow the app to suggest nearby location details."
-        value={settings.locationAccess}
-        onValueChange={setSetting("locationAccess")}
-      />
 
       <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide text-[#64748B]">Account & Security</Text>
       <SettingsActionRow icon="lock-closed-outline" label="Change password" onPress={showComingSoon} />

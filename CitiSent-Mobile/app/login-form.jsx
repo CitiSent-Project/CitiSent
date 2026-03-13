@@ -8,30 +8,29 @@ import AuthCityFooter from "../components/auth/AuthCityFooter";
 import AuthInputField from "../components/auth/AuthInputField";
 import RememberMeToggle from "../components/auth/RememberMeToggle";
 import { authApi } from "../services/auth";
+import { isEmptyIdentifier, parseLoginIdentifier } from "../utils/authIdentifier";
 
 export default function LoginFormScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
-    username: "",
+    identifier: "",
     password: "",
   });
 
   const validateFields = () => {
     const nextErrors = {
-      username: "",
+      identifier: "",
       password: "",
     };
 
-    const trimmedUsername = username.trim();
-
-    if (!trimmedUsername) {
-      nextErrors.username = "Username is required.";
+    if (isEmptyIdentifier(identifier)) {
+      nextErrors.identifier = "Username or phone number is required.";
     }
 
     if (!password) {
@@ -40,15 +39,14 @@ export default function LoginFormScreen() {
 
     setFieldErrors(nextErrors);
     return {
-      isValid: !nextErrors.username && !nextErrors.password,
-      trimmedUsername,
+      isValid: !nextErrors.identifier && !nextErrors.password,
     };
   };
 
-  const handleUsernameChange = (value) => {
-    setUsername(value);
-    if (fieldErrors.username) {
-      setFieldErrors((prev) => ({ ...prev, username: "" }));
+  const handleIdentifierChange = (value) => {
+    setIdentifier(value);
+    if (fieldErrors.identifier) {
+      setFieldErrors((prev) => ({ ...prev, identifier: "" }));
     }
     if (errorMessage) {
       setErrorMessage("");
@@ -70,10 +68,10 @@ export default function LoginFormScreen() {
       return;
     }
 
-    const { isValid, trimmedUsername } = validateFields();
+    const { isValid } = validateFields();
 
     if (!isValid) {
-      setErrorMessage("Please enter your username and password.");
+      setErrorMessage("Please enter your username/phone number and password.");
       return;
     }
 
@@ -81,8 +79,12 @@ export default function LoginFormScreen() {
     setIsSubmitting(true);
 
     try {
+      const parsedIdentifier = parseLoginIdentifier(identifier);
+
       await authApi.login({
-        username: trimmedUsername,
+        identifier: parsedIdentifier.raw,
+        username: parsedIdentifier.username,
+        phoneNumber: parsedIdentifier.phoneNumber,
         password,
         rememberMe,
       });
@@ -114,14 +116,14 @@ export default function LoginFormScreen() {
 
           <View className="mt-12">
             <AuthInputField
-              value={username}
-              onChangeText={handleUsernameChange}
-              placeholder="Username"
+              value={identifier}
+              onChangeText={handleIdentifierChange}
+              placeholder="Username or Phone Number"
               icon="person-outline"
               autoComplete="username"
               textContentType="username"
               returnKeyType="next"
-              error={fieldErrors.username}
+              error={fieldErrors.identifier}
             />
 
             <AuthInputField

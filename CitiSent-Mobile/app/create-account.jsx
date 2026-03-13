@@ -4,16 +4,43 @@ import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import AuthActionButton from "../components/auth/AuthActionButton";
 import AuthBrandMark from "../components/auth/AuthBrandMark";
+import AuthChoiceField from "../components/auth/AuthChoiceField";
 import AuthCityFooter from "../components/auth/AuthCityFooter";
 import AuthInputField from "../components/auth/AuthInputField";
 import RefreshableScrollView from "../components/ui/RefreshableScrollView";
 import usePullToRefresh from "../hooks/usePullToRefresh";
 import { authApi } from "../services/auth";
 
+const GENDER_OPTIONS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+];
+
+const CLIENT_TYPE_OPTIONS = [
+  { label: "Business", value: "business" },
+  { label: "Government", value: "government" },
+  { label: "Citizen", value: "citizen" },
+];
+
+const INITIAL_FIELD_ERRORS = {
+  username: "",
+  email: "",
+  phoneNumber: "",
+  age: "",
+  gender: "",
+  clientType: "",
+  password: "",
+  confirmPassword: "",
+};
+
 export default function CreateAccountScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [clientType, setClientType] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,22 +49,25 @@ export default function CreateAccountScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const { refreshing, onRefresh } = usePullToRefresh();
-  const [fieldErrors, setFieldErrors] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
+
+  const fieldSetters = {
+    username: setUsername,
+    email: setEmail,
+    phoneNumber: setPhoneNumber,
+    age: setAge,
+    gender: setGender,
+    clientType: setClientType,
+    password: setPassword,
+    confirmPassword: setConfirmPassword,
+  };
 
   const validateFields = () => {
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
-    const nextErrors = {
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    };
+    const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
+    const parsedAge = Number.parseInt(age.trim(), 10);
+    const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
     if (!trimmedUsername) {
       nextErrors.username = "Username is required.";
@@ -51,6 +81,26 @@ export default function CreateAccountScreen() {
       nextErrors.email = "Email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       nextErrors.email = "Please enter a valid email address.";
+    }
+
+    if (!trimmedPhoneNumber) {
+      nextErrors.phoneNumber = "Phone number is required.";
+    } else if (trimmedPhoneNumber.length < 10 || trimmedPhoneNumber.length > 15) {
+      nextErrors.phoneNumber = "Please enter a valid phone number.";
+    }
+
+    if (!age.trim()) {
+      nextErrors.age = "Age is required.";
+    } else if (!Number.isInteger(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+      nextErrors.age = "Please enter a valid age.";
+    }
+
+    if (!gender) {
+      nextErrors.gender = "Gender is required.";
+    }
+
+    if (!clientType) {
+      nextErrors.clientType = "Client type is required.";
     }
 
     if (!password) {
@@ -73,10 +123,16 @@ export default function CreateAccountScreen() {
       isValid:
         !nextErrors.username &&
         !nextErrors.email &&
+        !nextErrors.phoneNumber &&
+        !nextErrors.age &&
+        !nextErrors.gender &&
+        !nextErrors.clientType &&
         !nextErrors.password &&
         !nextErrors.confirmPassword,
       trimmedUsername,
       trimmedEmail,
+      trimmedPhoneNumber,
+      parsedAge,
     };
   };
 
@@ -85,7 +141,13 @@ export default function CreateAccountScreen() {
       return;
     }
 
-    const { isValid, trimmedUsername, trimmedEmail } = validateFields();
+    const {
+      isValid,
+      trimmedUsername,
+      trimmedEmail,
+      trimmedPhoneNumber,
+      parsedAge,
+    } = validateFields();
 
     if (!isValid) {
       setSuccessMessage("");
@@ -101,6 +163,10 @@ export default function CreateAccountScreen() {
       await authApi.register({
         username: trimmedUsername,
         email: trimmedEmail,
+        phoneNumber: trimmedPhoneNumber,
+        age: parsedAge,
+        gender,
+        clientType,
         password,
       });
 
@@ -116,14 +182,10 @@ export default function CreateAccountScreen() {
   };
 
   const handleFieldChange = (field) => (value) => {
-    if (field === "username") {
-      setUsername(value);
-    } else if (field === "email") {
-      setEmail(value);
-    } else if (field === "password") {
-      setPassword(value);
-    } else if (field === "confirmPassword") {
-      setConfirmPassword(value);
+    const setFieldValue = fieldSetters[field];
+
+    if (setFieldValue) {
+      setFieldValue(value);
     }
 
     setFieldErrors((prev) => ({
@@ -159,7 +221,7 @@ export default function CreateAccountScreen() {
         >
           <View className="items-center">
             <AuthBrandMark />
-            <Text className="mt-8 text-[34px] text-[#CFDAEA]">Create account</Text>
+            <Text className="mt-8 text-[34px] text-[#CFDAEA]">Create Account!</Text>
           </View>
 
           <View className="mt-10">
@@ -184,6 +246,44 @@ export default function CreateAccountScreen() {
               textContentType="emailAddress"
               returnKeyType="next"
               error={fieldErrors.email}
+            />
+
+            <AuthInputField
+              value={phoneNumber}
+              onChangeText={(value) => handleFieldChange("phoneNumber")(value.replace(/\D/g, ""))}
+              placeholder="Phone Number"
+              icon="call-outline"
+              keyboardType="phone-pad"
+              autoComplete="tel"
+              textContentType="telephoneNumber"
+              returnKeyType="next"
+              error={fieldErrors.phoneNumber}
+            />
+
+            <AuthInputField
+              value={age}
+              onChangeText={(value) => handleFieldChange("age")(value.replace(/\D/g, ""))}
+              placeholder="Age"
+              icon="calendar-outline"
+              keyboardType="number-pad"
+              returnKeyType="next"
+              error={fieldErrors.age}
+            />
+
+            <AuthChoiceField
+              label="Gender"
+              options={GENDER_OPTIONS}
+              value={gender}
+              onChange={handleFieldChange("gender")}
+              error={fieldErrors.gender}
+            />
+
+            <AuthChoiceField
+              label="Client Type"
+              options={CLIENT_TYPE_OPTIONS}
+              value={clientType}
+              onChange={handleFieldChange("clientType")}
+              error={fieldErrors.clientType}
             />
 
             <AuthInputField

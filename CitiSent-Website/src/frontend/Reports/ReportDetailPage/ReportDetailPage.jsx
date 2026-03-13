@@ -1,29 +1,22 @@
 import { useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../../../components/ui/Toasters'
-
-const STATUS_OPTIONS = ['Pending', 'Under Review', 'Resolved', 'Unresolved']
-
-const STATUS_STYLES = {
-  Pending: 'bg-amber-100 text-amber-700 border-amber-300',
-  'Under Review': 'bg-blue-100 text-blue-700 border-blue-300',
-  Resolved: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  Unresolved: 'bg-rose-100 text-rose-700 border-rose-300',
-}
+import {
+  REPORT_STATUS_BADGE_CLASSES,
+  REPORT_STATUS_OPTIONS,
+  REPORT_URGENCY_BADGE_CLASSES,
+  normalizeReportStatus,
+} from '../../../models/reportStatusModel'
+import {
+  createReportTimelineEntry,
+  validateReportStatusChange,
+} from '../../../controllers/reportStatusController'
 
 const STATUS_ICONS = {
   Pending: FiClock,
   'Under Review': FiFileText,
   Resolved: FiCheckCircle,
   Unresolved: FiAlertCircle,
-}
-
-const URGENCY_COLORS = {
-  Emergency: 'bg-red-100 text-red-700',
-  Urgent: 'bg-orange-100 text-orange-700',
-  Moderate: 'bg-yellow-100 text-yellow-700',
-  'Low Priority': 'bg-green-100 text-green-700',
-  Calm: 'bg-sky-100 text-sky-700',
 }
 
 export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
@@ -54,43 +47,34 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
     )
   }
 
-  const currentStatus = report.status || 'Pending'
+  const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
 
   function handleStatusChange(newStatus) {
-    if (newStatus === currentStatus) {
-      notifyError('Status unchanged.', 'Select a different status to update this report.')
-      return
-    }
-
-    if (!adminNotes.trim() && (newStatus === 'Resolved' || newStatus === 'Unresolved')) {
-      notifyError(
-        'Notes required.',
-        `Add admin notes before marking a report as ${newStatus}. This helps track the resolution.`
-      )
-      return
-    }
-
-    const now = new Date().toLocaleDateString('en-US', {
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
+    const validation = validateReportStatusChange({
+      currentStatus,
+      nextStatus: newStatus,
+      adminNotes,
     })
+
+    if (!validation.ok) {
+      notifyError(validation.title, validation.message)
+      return
+    }
 
     setTimeline((prev) => [
       ...prev,
       {
         id: prev.length + 1,
-        action: `Status changed to ${newStatus}`,
-        status: newStatus,
-        note: adminNotes.trim() || `Status updated to ${newStatus}.`,
-        date: now,
-        actor: 'Admin',
+        ...createReportTimelineEntry({
+          nextStatus: validation.nextStatus,
+          adminNotes,
+        }),
       },
     ])
 
-    onUpdateStatus(report.id, newStatus)
-    notifySuccess(`Report ${report.id} marked as ${newStatus}.`)
+    onUpdateStatus(report.id, validation.nextStatus)
+    notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
     setAdminNotes('')
   }
 
@@ -115,11 +99,11 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
             <p className="mt-1 text-sm text-slate-500">Submitted on {report.date}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${STATUS_STYLES[currentStatus]}`}>
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[currentStatus]}`}>
               <StatusIcon className="text-sm" />
               {currentStatus}
             </span>
-            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${URGENCY_COLORS[report.urgency] || 'bg-slate-100 text-slate-600'}`}>
+            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-slate-100 text-slate-600'}`}>
               {report.urgency}
             </span>
           </div>
@@ -179,7 +163,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
           </label>
 
           <div className="flex flex-wrap gap-2">
-            {STATUS_OPTIONS.map((status) => {
+            {REPORT_STATUS_OPTIONS.map((status) => {
               const isActive = status === currentStatus
               return (
                 <button

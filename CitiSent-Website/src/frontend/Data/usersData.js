@@ -98,7 +98,7 @@ function buildEmail(name) {
 	return `${name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`
 }
 
-function nextUserId(existingUsers = []) {
+export function generateNextUserId(existingUsers = []) {
 	if (!existingUsers.length) {
 		return 'USR-1201'
 	}
@@ -120,7 +120,7 @@ export function createRandomUser(existingUsers = []) {
 	const createdDate = new Date(createdAt)
 
 	return {
-		id: nextUserId(existingUsers),
+		id: generateNextUserId(existingUsers),
 		name,
 		email: buildEmail(name),
 		address: randomItem(addressPool),

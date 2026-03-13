@@ -30,8 +30,8 @@ export function AuthPasswordField({ id, label, value, onChange, placeholder, err
         />
         <button
           type="button"
-          className={`absolute inset-y-0 right-0 grid w-10 place-items-center ${
-            isFigmaLogin ? 'text-slate-600' : 'text-slate-500'
+          className={`absolute inset-y-1 right-1 grid w-8 place-items-center text-blue-900 ${
+            isFigmaLogin ? 'hover:bg-blue-100' : 'hover:bg-blue-100'
           }`}
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? 'Hide password' : 'Show password'}

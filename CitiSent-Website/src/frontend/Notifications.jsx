@@ -39,7 +39,7 @@ export function Notifications({ notifications, onToggleRead, onClearAll }) {
             <button
               type="button"
               onClick={onClearAll}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+              className="rounded-lg border border-blue-900 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 transition hover:bg-blue-50"
             >
               Clear all
             </button>

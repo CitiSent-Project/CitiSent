@@ -10,8 +10,8 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
           onClick={() => onSelectItem(item.id)}
           className={`rounded-xl border px-4 py-3 text-left transition ${item.tone} ${
             selectedItemId === item.id
-              ? 'border-slate-500 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.25)]'
-              : 'border-slate-200 hover:border-slate-300'
+              ? 'border-blue-900 shadow-[inset_0_0_0_1px_rgba(30,58,138,0.3)]'
+              : 'border-blue-200 hover:border-blue-400'
           }`}
           aria-pressed={selectedItemId === item.id}
         >

@@ -30,7 +30,7 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors"
+        className="grid h-8 w-8 place-items-center rounded-lg border border-blue-900 bg-white text-blue-900 hover:bg-blue-50 transition-colors"
       >
         <FiMoreVertical className="text-sm" />
       </button>
@@ -40,31 +40,31 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
           <button
             type="button"
             onClick={() => { onViewReport?.(report); setOpen(false) }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-900 hover:bg-blue-50"
           >
-            <FiEye className="text-slate-400" /> View Details
+            <FiEye className="text-blue-700" /> View Details
           </button>
           <hr className="my-1 border-slate-100" />
           <button
             type="button"
             onClick={() => handleQuickStatus('Under Review')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-900 hover:bg-blue-50"
           >
-            <FiClock className="text-blue-400" /> Mark Under Review
+            <FiClock className="text-blue-700" /> Mark Under Review
           </button>
           <button
             type="button"
             onClick={() => handleQuickStatus('Resolved')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-900 hover:bg-blue-50"
           >
-            <FiCheckCircle className="text-emerald-400" /> Mark Resolved
+            <FiCheckCircle className="text-blue-700" /> Mark Resolved
           </button>
           <button
             type="button"
             onClick={() => handleQuickStatus('Unresolved')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-900 hover:bg-blue-50"
           >
-            <FiXCircle className="text-rose-400" /> Mark Unresolved
+            <FiXCircle className="text-blue-700" /> Mark Unresolved
           </button>
         </div>
       )}

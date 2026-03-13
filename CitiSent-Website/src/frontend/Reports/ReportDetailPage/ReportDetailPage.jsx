@@ -37,7 +37,13 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <nav className="mb-4 flex items-center gap-1 text-sm text-slate-500">
-            <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors">Reports</button>
+            <button
+              type="button"
+              onClick={onBackToReports}
+              className="rounded-md border border-blue-900 bg-white px-2 py-1 text-blue-900 transition-colors hover:bg-blue-50"
+            >
+              Reports
+            </button>
             <FiChevronRight className="text-xs" />
             <span className="text-slate-700">Report Detail</span>
           </nav>
@@ -83,7 +89,11 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
       <div className="flex flex-col gap-5">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-sm text-slate-500">
-          <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors">
+          <button
+            type="button"
+            onClick={onBackToReports}
+            className="rounded-md border border-blue-900 bg-white px-2 py-1 text-blue-900 transition-colors hover:bg-blue-50"
+          >
             Reports
           </button>
           <FiChevronRight className="text-xs" />
@@ -173,14 +183,8 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
                   disabled={isActive}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                      : status === 'Resolved'
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                        : status === 'Unresolved'
-                          ? 'bg-rose-600 text-white hover:bg-rose-500'
-                          : status === 'Under Review'
-                            ? 'bg-blue-600 text-white hover:bg-blue-500'
-                            : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      ? 'cursor-not-allowed border border-blue-200 bg-blue-100 text-blue-400'
+                      : 'border border-blue-900 bg-blue-900 text-white hover:bg-blue-800'
                   }`}
                 >
                   {isActive ? `● ${status} (Current)` : status}

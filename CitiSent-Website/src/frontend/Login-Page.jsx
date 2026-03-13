@@ -49,7 +49,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 					<button
 						type="button"
 						onClick={onSwitchToRegister}
-						className="font-semibold text-white underline decoration-cyan-200 underline-offset-4"
+						className="px-2 py-0.5 font-semibold text-white underline decoration-blue-200 underline-offset-4 hover:bg-blue-900/45"
 					>
 						Register here
 					</button>
@@ -101,7 +101,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 
 				<button
 					type="submit"
-					className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-[26px] font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
+					className="w-full rounded-xl bg-blue-900 px-4 py-2.5 text-[26px] font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-300/70"
 				>
 					Sign-in
 				</button>

@@ -7,7 +7,9 @@ export function UrgencyFilterChips({ chips, selectedChip, onSelectChip }) {
           key={chip}
           onClick={() => onSelectChip(chip)}
           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-            selectedChip === chip ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'
+            selectedChip === chip
+              ? 'border border-blue-900 bg-blue-900 text-white'
+              : 'border border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100'
           }`}
         >
           {chip}

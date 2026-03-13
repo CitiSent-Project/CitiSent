@@ -171,7 +171,7 @@ export function Settings({ profile, preferences, onUpdateProfile, onUpdatePrefer
           <button
             type="button"
             onClick={onRequestLogout}
-            className="mt-3 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+            className="mt-3 rounded-lg bg-blue-900 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
           >
             Sign out now
           </button>
@@ -198,8 +198,8 @@ export function Settings({ profile, preferences, onUpdateProfile, onUpdatePrefer
               onClick={() => setActiveTab(tab)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 activeTab === tab
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                  ? 'bg-blue-900 text-white'
+                  : 'border border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
               }`}
             >
               {tab}

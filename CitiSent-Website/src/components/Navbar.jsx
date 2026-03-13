@@ -10,6 +10,7 @@ import {
 	FiLogOut,
 	FiChevronDown,
 	FiChevronUp,
+	FiSearch,
 } from 'react-icons/fi'
 import CitiSentLogo from '../assets/CitiSentLogo.svg'
 
@@ -244,19 +245,19 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 lg:hidden"
+								className="grid h-10 w-10 place-items-center rounded-lg border border-blue-900 bg-blue-900 text-white hover:bg-blue-800 lg:hidden"
 								onClick={() => setMobileOpen((prev) => !prev)}
 								aria-label="Open navigation menu"
 							>
 								<span className="space-y-1">
-									<span className="block h-0.5 w-4 bg-slate-700" />
-									<span className="block h-0.5 w-4 bg-slate-700" />
-									<span className="block h-0.5 w-4 bg-slate-700" />
+									<span className="block h-0.5 w-4 bg-white" />
+									<span className="block h-0.5 w-4 bg-white" />
+									<span className="block h-0.5 w-4 bg-white" />
 								</span>
 							</button>
 
 							<label className="hidden items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 md:flex md:min-w-75">
-								<span className="mr-2 text-xs uppercase tracking-wider text-slate-400">Search</span>
+								<FiSearch className="mr-2 text-slate-400" />
 								<input
 									type="text"
 									placeholder="Search"
@@ -269,10 +270,10 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 							<button
 								type="button"
 								onClick={() => onNavigate('Notifications')}
-								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
+								className={`relative grid h-9 w-9 place-items-center rounded-full border transition ${
 									activePage === 'Notifications'
-										? 'border-cyan-300 text-cyan-700'
-										: 'border-slate-200 text-slate-500 hover:border-slate-300'
+										? 'border-blue-900 bg-blue-900 text-white'
+										: 'border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
 								}`}
 								aria-label="Notifications"
 							>
@@ -288,8 +289,8 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								onClick={() => onNavigate('Admin Profile')}
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === 'Admin Profile'
-										? 'border-cyan-300 bg-cyan-100 text-cyan-700'
-										: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300'
+										? 'border-blue-900 bg-blue-900 text-white'
+										: 'border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
 								}`}
 								aria-label="User profile"
 							>

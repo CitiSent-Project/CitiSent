@@ -1,8 +1,10 @@
 import { api } from "./api";
+import { parseLoginIdentifier } from "../utils/authIdentifier";
 
 // TODO: Remove this temporary local test account before production release.
 const TEMP_TEST_ACCOUNT = {
   username: "admin",
+  phoneNumber: "09123456789",
   password: "admin123",
 };
 
@@ -10,6 +12,7 @@ const TEMP_TEST_LOGIN_RESPONSE = {
   token: "temp-test-token",
   user: {
     username: TEMP_TEST_ACCOUNT.username,
+    phoneNumber: TEMP_TEST_ACCOUNT.phoneNumber,
     role: "admin",
   },
 };
@@ -54,14 +57,32 @@ export const authApi = {
 
   // TODO: Remove this temporary local test account before production release.
   login: async (payload) => {
+    const parsedIdentifier = parseLoginIdentifier(
+      payload?.identifier || payload?.username || payload?.phoneNumber,
+    );
+    const normalizedUsername = (
+      payload?.username ||
+      parsedIdentifier.username ||
+      ""
+    ).trim();
+    const normalizedPhoneNumber =
+      parsedIdentifier.phoneNumber ||
+      String(payload?.phoneNumber || "").replace(/\D/g, "");
+
     if (
-      payload?.username?.trim() === TEMP_TEST_ACCOUNT.username &&
+      (normalizedUsername === TEMP_TEST_ACCOUNT.username ||
+        normalizedPhoneNumber === TEMP_TEST_ACCOUNT.phoneNumber) &&
       payload?.password === TEMP_TEST_ACCOUNT.password
     ) {
       return TEMP_TEST_LOGIN_RESPONSE;
     }
 
-    return api.post("/auth/login", payload);
+    return api.post("/auth/login", {
+      ...payload,
+      identifier: parsedIdentifier.raw,
+      username: normalizedUsername,
+      phoneNumber: normalizedPhoneNumber,
+    });
   },
   register: async (payload) => {
     try {

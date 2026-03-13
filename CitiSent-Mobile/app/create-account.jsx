@@ -221,7 +221,7 @@ export default function CreateAccountScreen() {
         >
           <View className="items-center">
             <AuthBrandMark />
-            <Text className="mt-8 text-[34px] text-[#CFDAEA]">Create account</Text>
+            <Text className="mt-8 text-[34px] text-[#CFDAEA]">Create Account!</Text>
           </View>
 
           <View className="mt-10">

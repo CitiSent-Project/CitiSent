@@ -17,7 +17,7 @@ export default function IssueCard({ label, logoSource, onPress }) {
         />
       </View>
 
-      <Text className="mt-2 text-center text-[11px] font-semibold leading-4 text-[#111827]">
+      <Text className="mt-2 text-center text-[11px] font-semibold leading-4" style={{ color: Colors.text.primary }}>
         {label}
       </Text>
     </TouchableOpacity>

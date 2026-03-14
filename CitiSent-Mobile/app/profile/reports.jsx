@@ -53,21 +53,21 @@ export default function ReportsMadePage() {
         className="mb-4 rounded-2xl border px-4 py-4"
         style={{ borderColor: Colors.ui.infoSurfaceBorder, backgroundColor: Colors.ui.infoSurface }}
       >
-        <Text className="text-sm font-semibold text-[#1E3A8A]">Your submissions overview</Text>
-        <Text className="mt-1 text-xs text-[#1E40AF]">Pull down anytime to refresh this list.</Text>
+        <Text className="text-sm font-semibold" style={{ color: Colors.text.infoHeading }}>Your submissions overview</Text>
+        <Text className="mt-1 text-xs" style={{ color: Colors.text.link }}>Pull down anytime to refresh this list.</Text>
 
         <View className="mt-4 flex-row gap-2">
           <View className="flex-1 rounded-xl bg-white px-3 py-3">
-            <Text className="text-xl font-extrabold text-[#0F172A]">{pendingCount}</Text>
-            <Text className="text-xs font-semibold text-[#64748B]">Pending</Text>
+            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{pendingCount}</Text>
+            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Pending</Text>
           </View>
           <View className="flex-1 rounded-xl bg-white px-3 py-3">
-            <Text className="text-xl font-extrabold text-[#0F172A]">{inProgressCount}</Text>
-            <Text className="text-xs font-semibold text-[#64748B]">In Progress</Text>
+            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{inProgressCount}</Text>
+            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>In Progress</Text>
           </View>
           <View className="flex-1 rounded-xl bg-white px-3 py-3">
-            <Text className="text-xl font-extrabold text-[#0F172A]">{completedCount}</Text>
-            <Text className="text-xs font-semibold text-[#64748B]">Completed</Text>
+            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{completedCount}</Text>
+            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Completed</Text>
           </View>
         </View>
       </View>
@@ -80,10 +80,10 @@ export default function ReportsMadePage() {
             <Pressable
               key={filter.key}
               onPress={() => setSelectedStatus(filter.key)}
-              className={`rounded-full border px-4 py-2 ${active ? "border-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
-              style={active ? { backgroundColor: Colors.primaryStrong } : undefined}
+              className={`rounded-full border px-4 py-2 ${active ? "" : "bg-white"}`}
+              style={{ borderColor: active ? Colors.primaryStrong : Colors.borderMuted, ...(active ? { backgroundColor: Colors.primaryStrong } : {}) }}
             >
-              <Text className={`text-xs font-bold ${active ? "text-white" : "text-[#334155]"}`}>{filter.label}</Text>
+              <Text className="text-xs font-bold" style={{ color: active ? Colors.text.inverse : Colors.text.body }}>{filter.label}</Text>
             </Pressable>
           );
         })}
@@ -99,14 +99,14 @@ export default function ReportsMadePage() {
                 className="rounded-lg border px-3 py-2"
                 style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
               >
-                <Text className="text-xs font-bold text-[#1D4ED8]">Edit Report</Text>
+                <Text className="text-xs font-bold" style={{ color: Colors.primaryStrong }}>Edit Report</Text>
               </Pressable>
             </View>
           </View>
         ))
       ) : (
-        <View className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-8">
-          <Text className="text-center text-sm font-semibold text-[#475569]">No reports for this status yet.</Text>
+        <View className="rounded-2xl border bg-white px-4 py-8" style={{ borderColor: Colors.borderSoft }}>
+          <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No reports for this status yet.</Text>
         </View>
       )}
 

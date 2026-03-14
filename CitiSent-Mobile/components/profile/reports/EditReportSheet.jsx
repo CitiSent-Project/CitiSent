@@ -45,43 +45,46 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
           </View>
 
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-lg font-extrabold text-[#0F172A]">Edit report</Text>
+            <Text className="text-lg font-extrabold" style={{ color: Colors.text.heading }}>Edit report</Text>
             <Pressable onPress={onClose} className="rounded-lg px-3 py-2" style={{ backgroundColor: Colors.ui.neutralMuted }}>
-              <Text className="text-xs font-bold text-[#334155]">Close</Text>
+              <Text className="text-xs font-bold" style={{ color: Colors.text.body }}>Close</Text>
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-[#64748B]">Issue Type</Text>
+            <Text className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Issue Type</Text>
             <TextInput
               value={issueType}
               onChangeText={setIssueType}
               placeholder="Issue type"
-              className="mb-3 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-sm text-[#0F172A]"
-              placeholderTextColor="#94A3B8"
+              className="mb-3 rounded-xl border bg-white px-3 py-3 text-sm"
+              style={{ borderColor: Colors.borderMuted, color: Colors.text.heading }}
+              placeholderTextColor={Colors.icon.muted}
             />
 
-            <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-[#64748B]">Location</Text>
+            <Text className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Location</Text>
             <TextInput
               value={location}
               onChangeText={setLocation}
               placeholder="Issue location"
-              className="mb-3 rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-sm text-[#0F172A]"
-              placeholderTextColor="#94A3B8"
+              className="mb-3 rounded-xl border bg-white px-3 py-3 text-sm"
+              style={{ borderColor: Colors.borderMuted, color: Colors.text.heading }}
+              placeholderTextColor={Colors.icon.muted}
             />
 
-            <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-[#64748B]">Description</Text>
+            <Text className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Description</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Describe the issue"
               multiline
               textAlignVertical="top"
-              className="mb-3 min-h-[110px] rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-sm text-[#0F172A]"
-              placeholderTextColor="#94A3B8"
+              className="mb-3 min-h-[110px] rounded-xl border bg-white px-3 py-3 text-sm"
+              style={{ borderColor: Colors.borderMuted, color: Colors.text.heading }}
+              placeholderTextColor={Colors.icon.muted}
             />
 
-            {errorMessage ? <Text className="mt-2 text-xs font-semibold text-[#B91C1C]">{errorMessage}</Text> : null}
+            {errorMessage ? <Text className="mt-2 text-xs font-semibold" style={{ color: Colors.text.danger }}>{errorMessage}</Text> : null}
           </ScrollView>
 
           <Pressable

@@ -8,7 +8,7 @@ export default function HomeHeader() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.headerAvatarDark }}>
-            <Ionicons name="person" size={25} color="#D1E6FF" />
+            <Ionicons name="person" size={25} color={Colors.ui.heroSoft} />
           </View>
           <View>
             <Text className="text-xs text-white/90">Hi! Welcome,</Text>

@@ -82,10 +82,10 @@ export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, botto
               accessibilityLabel="Close logout confirmation"
               className="h-8 w-8 items-center justify-center"
             >
-              <Ionicons name="close" size={24} color="#111827" />
+              <Ionicons name="close" size={24} color={Colors.text.primary} />
             </Pressable>
 
-            <Text className="flex-1 text-center text-[24px] font-bold text-[#EF4444]">Logout</Text>
+            <Text className="flex-1 text-center text-[24px] font-bold" style={{ color: Colors.error }}>Logout</Text>
 
             <View className="h-8 w-8" />
           </View>
@@ -93,7 +93,7 @@ export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, botto
           <View className="h-[1px]" style={{ backgroundColor: Colors.border }} />
 
           <View className="py-6">
-            <Text className="text-center text-[20px] font-semibold text-[#111827]">Are you sure want to Logout?</Text>
+            <Text className="text-center text-[20px] font-semibold" style={{ color: Colors.text.primary }}>Are you sure want to Logout?</Text>
           </View>
 
           <View className="flex-row items-center gap-3 pb-2">
@@ -103,7 +103,7 @@ export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, botto
               onPress={onCancel}
               accessibilityRole="button"
             >
-              <Text className="text-[16px] font-semibold text-[#3B82F6]">Cancel</Text>
+              <Text className="text-[16px] font-semibold" style={{ color: Colors.primary }}>Cancel</Text>
             </Pressable>
 
             <Pressable

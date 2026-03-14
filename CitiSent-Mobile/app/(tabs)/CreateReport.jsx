@@ -15,8 +15,8 @@ export default function CreateReportScreen() {
       <CreateReportTopBar />
 
       <View className="flex-1 px-3 pt-4" style={{ paddingBottom: 160 }}>
-        <Text className="mb-4 text-3xl font-extrabold text-[#111827]">Select an Issue</Text>
-        <Text className="mb-4 text-sm text-[#4B5563]">Click the selected issue to continue</Text>
+        <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select an Issue</Text>
+        <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>Click the selected issue to continue</Text>
 
         <IssueGrid />
       </View>

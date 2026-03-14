@@ -13,7 +13,7 @@ export default function SubmitReportButton({ onPress, disabled = false, loading 
       style={{ backgroundColor: isDisabled ? Colors.primarySoft : Colors.ui.headerDark }}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#FFFFFF" />
+        <ActivityIndicator size="small" color={Colors.text.inverse} />
       ) : (
         <Text className="text-base font-semibold text-white">Submit Report</Text>
       )}

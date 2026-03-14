@@ -71,11 +71,11 @@ export default function ReportAttachmentPreview({ attachment }) {
     return (
       <View
         className="mt-3 rounded-xl border border-dashed px-3 py-2"
-        style={{ borderColor: "#D1D5DB", backgroundColor: Colors.background }}
+        style={{ borderColor: Colors.borderDashed, backgroundColor: Colors.background }}
       >
         <View className="flex-row items-center gap-1.5">
-          <Ionicons name="image-outline" size={14} color="#9CA3AF" />
-          <Text className="text-xs font-semibold text-[#6B7280]">No image attached</Text>
+          <Ionicons name="image-outline" size={14} color={Colors.icon.muted} />
+          <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>No image attached</Text>
         </View>
       </View>
     );
@@ -83,7 +83,7 @@ export default function ReportAttachmentPreview({ attachment }) {
 
   return (
     <View className="mt-3">
-      <Text className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Attached Image</Text>
+      <Text className="mb-1 text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Attached Image</Text>
       <Pressable
         onPress={() => setIsPreviewOpen(true)}
         className="overflow-hidden rounded-xl"
@@ -97,7 +97,7 @@ export default function ReportAttachmentPreview({ attachment }) {
       >
         <Image source={imageSource} className="h-full w-full" resizeMode="contain" />
       </Pressable>
-      <Text className="mt-1 text-center text-[11px] font-medium text-[#6B7280]">Tap image to preview</Text>
+      <Text className="mt-1 text-center text-[11px] font-medium" style={{ color: Colors.text.secondary }}>Tap image to preview</Text>
 
       <Modal visible={isPreviewOpen} animationType="fade" transparent onRequestClose={() => setIsPreviewOpen(false)}>
         <View className="flex-1 bg-black/85">
@@ -106,7 +106,7 @@ export default function ReportAttachmentPreview({ attachment }) {
               onPress={() => setIsPreviewOpen(false)}
               className="h-10 w-10 items-center justify-center rounded-full bg-white/20"
             >
-              <Ionicons name="close" size={22} color="#FFFFFF" />
+              <Ionicons name="close" size={22} color={Colors.text.inverse} />
             </Pressable>
           </View>
 

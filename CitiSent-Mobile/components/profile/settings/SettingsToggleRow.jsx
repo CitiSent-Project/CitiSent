@@ -1,4 +1,5 @@
 import { Switch, Text, View } from "react-native";
+import { Colors } from "../../../constants/colors";
 
 export default function SettingsToggleRow({
   title,
@@ -7,18 +8,18 @@ export default function SettingsToggleRow({
   onValueChange,
 }) {
   return (
-    <View className="mb-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-4">
+    <View className="mb-3 rounded-2xl border bg-white px-4 py-4" style={{ borderColor: Colors.borderSoft }}>
       <View className="flex-row items-start justify-between gap-3">
         <View className="flex-1 pr-2">
-          <Text className="text-base font-bold text-[#1E293B]">{title}</Text>
-          {description ? <Text className="mt-1 text-sm text-[#64748B]">{description}</Text> : null}
+          <Text className="text-base font-bold" style={{ color: Colors.text.settingsTitle }}>{title}</Text>
+          {description ? <Text className="mt-1 text-sm" style={{ color: Colors.text.secondary }}>{description}</Text> : null}
         </View>
 
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: "#CBD5E1", true: "#93C5FD" }}
-          thumbColor={value ? "#1D4ED8" : "#F8FAFC"}
+          trackColor={{ false: Colors.borderMuted, true: Colors.primarySoft }}
+          thumbColor={value ? Colors.primaryStrong : Colors.ui.slateSoft}
         />
       </View>
     </View>

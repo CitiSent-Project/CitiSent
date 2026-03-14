@@ -79,7 +79,7 @@ export default function Profile() {
             />
           ))}
 
-          <View className="mx-5 mt-2 h-[1px] bg-[#C7C7C7]" />
+          <View className="mx-5 mt-2 h-[1px]" style={{ backgroundColor: Colors.divider }} />
 
           <View className="pt-2">
             <ProfileMenuItem icon="log-out-outline" label="Logout" danger onPress={() => setIsLogoutVisible(true)} />

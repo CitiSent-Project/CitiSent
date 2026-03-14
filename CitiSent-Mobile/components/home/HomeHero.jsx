@@ -17,7 +17,7 @@ export default function HomeHero() {
             resizeMode="contain"
             className="h-20 w-20"
           />
-          <Text className="mt-1 text-3xl font-extrabold text-[#223D68]">CitiSent</Text>
+          <Text className="mt-1 text-3xl font-extrabold" style={{ color: Colors.text.headingBrand }}>CitiSent</Text>
         </View>
       </ImageBackground>
     </View>

@@ -6,7 +6,7 @@ export default function AttachmentSection() {
   return (
     <View className="mb-5">
       <View className="h-44 items-center justify-center rounded-xl" style={{ backgroundColor: Colors.ui.graySoft }}>
-        <Ionicons name="camera-outline" size={64} color="#9CA3AF" />
+        <Ionicons name="camera-outline" size={64} color={Colors.icon.muted} />
       </View>
 
       <View className="mt-3 flex-row justify-end">
@@ -19,7 +19,7 @@ export default function AttachmentSection() {
         </TouchableOpacity>
       </View>
 
-      <Text className="mt-2 text-xs text-[#6B7280]">Attach a photo of the issue (optional)</Text>
+      <Text className="mt-2 text-xs" style={{ color: Colors.text.secondary }}>Attach a photo of the issue (optional)</Text>
     </View>
   );
 }

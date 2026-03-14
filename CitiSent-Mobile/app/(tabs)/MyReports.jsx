@@ -34,7 +34,7 @@ export default function MyReportsScreen() {
         ) : (
           <>
             <SectionTitle title="My Submitted Reports" />
-            <Text className="mb-3 text-sm text-[#64748B]">
+            <Text className="mb-3 text-sm" style={{ color: Colors.text.secondary }}>
               Track the status and details of every concern you have submitted.
             </Text>
 

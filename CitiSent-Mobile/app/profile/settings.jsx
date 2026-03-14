@@ -17,18 +17,18 @@ function SettingsActionRow({ icon, label, onPress, danger = false }) {
   return (
     <Pressable
       onPress={onPress}
-      className={`mb-3 flex-row items-center rounded-2xl border px-4 py-4 ${danger ? "border-[#FECACA]" : "border-[#E2E8F0] bg-white"}`}
-      style={danger ? { backgroundColor: Colors.ui.dangerSoft } : undefined}
+      className={`mb-3 flex-row items-center rounded-2xl border px-4 py-4 ${danger ? "" : "bg-white"}`}
+      style={{ borderColor: danger ? Colors.borderDanger : Colors.borderSoft, ...(danger ? { backgroundColor: Colors.ui.dangerSoft } : {}) }}
     >
       <View
         className="mr-3 h-9 w-9 items-center justify-center rounded-full"
         style={{ backgroundColor: danger ? Colors.ui.dangerMuted : Colors.ui.brandSoft }}
       >
-        <Ionicons name={icon} size={18} color={danger ? "#B91C1C" : "#1E40AF"} />
+        <Ionicons name={icon} size={18} color={danger ? Colors.text.danger : Colors.text.link} />
       </View>
 
-      <Text className={`flex-1 text-base font-semibold ${danger ? "text-[#7F1D1D]" : "text-[#0F172A]"}`}>{label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={danger ? "#B91C1C" : "#475569"} />
+      <Text className="flex-1 text-base font-semibold" style={{ color: danger ? Colors.text.dangerDark : Colors.text.heading }}>{label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={danger ? Colors.text.danger : Colors.text.bodySoft} />
     </Pressable>
   );
 }
@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
   return (
     <ProfileSubpageLayout title="Settings" refreshing={refreshing} onRefresh={onRefresh}>
-      <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-[#64748B]">Preferences</Text>
+      <Text className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Preferences</Text>
 
       <SettingsToggleRow
         title="Push notifications"
@@ -68,11 +68,11 @@ export default function SettingsPage() {
         onValueChange={setSetting("emailUpdates")}
       />
 
-      <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide text-[#64748B]">Account & Security</Text>
+      <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Account & Security</Text>
       <SettingsActionRow icon="lock-closed-outline" label="Change password" onPress={showComingSoon} />
       <SettingsActionRow icon="shield-checkmark-outline" label="Privacy controls" onPress={showComingSoon} />
 
-      <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide text-[#991B1B]">Danger Zone</Text>
+      <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.dangerLabel }}>Danger Zone</Text>
       <SettingsActionRow icon="trash-outline" label="Delete account" onPress={showComingSoon} danger />
     </ProfileSubpageLayout>
   );

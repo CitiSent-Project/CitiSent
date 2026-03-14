@@ -4,27 +4,27 @@ import { Colors } from "../../../constants/colors";
 const statusStyles = {
   Completed: {
     backgroundColor: Colors.ui.successSoft,
-    text: "text-[#2C8A5A]",
+    textColor: Colors.text.statusComplete,
   },
   "In Progress": {
     backgroundColor: Colors.ui.progressSoft,
-    text: "text-[#2D6FA9]",
+    textColor: Colors.text.statusProgress,
   },
   Pending: {
     backgroundColor: Colors.ui.warningSoft,
-    text: "text-[#B86A08]",
+    textColor: Colors.text.statusPending,
   },
 };
 
 export default function ReportStatusBadge({ status }) {
   const style = statusStyles[status] || {
     backgroundColor: Colors.ui.graySoft,
-    text: "text-[#4B5563]",
+    textColor: Colors.text.slate,
   };
 
   return (
     <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: style.backgroundColor }}>
-      <Text className={`text-[11px] font-bold ${style.text}`}>{status}</Text>
+      <Text className="text-[11px] font-bold" style={{ color: style.textColor }}>{status}</Text>
     </View>
   );
 }

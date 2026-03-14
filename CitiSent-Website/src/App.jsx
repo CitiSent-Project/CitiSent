@@ -1,36 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Navbar } from './components/Navbar'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import Toasters, { notifyError, notifySuccess } from './components/ui/Toasters'
 import {
     ADMIN_STORAGE_KEYS,
-    createActivityEntry,
     DEFAULT_ADMIN_PROFILE,
     DEFAULT_NOTIFICATIONS,
     DEFAULT_PREFERENCES,
 } from './frontend/Data/adminPortalData'
-import { loadFromStorage, saveToStorage } from './services/storageService'
+import { loadFromStorage } from './services/storageService'
+import { usePersistToStorage } from './hooks/usePersistToStorage'
+import { usePageLoadingState } from './hooks/usePageLoadingState'
 import {
-    buildLoginState,
     buildPreferenceUpdateState,
     buildProfileUpdateState,
-    buildRegistrationState,
-    validateLoginCredentials,
-} from './controllers/authController'
-import {
-    buildClearNotificationsTransition,
-    countUnreadNotifications,
-    toggleNotificationReadState,
-} from './controllers/notificationsController'
+} from './controllers/profileController'
+import { buildNextActivityLog } from './controllers/activityController'
 import {
     buildNextReportStatusMap,
     buildNextSelectedReport,
 } from './controllers/reportStateController'
 import { renderActivePage, renderAuthPage } from './controllers/pageRouterController'
 import {
-    buildPostLoginTransition,
-    buildPostLogoutTransition,
-    buildPostRegistrationTransition,
     buildPageNavigationTransition,
     buildReportDetailTransition,
     buildUserProfileTransition,
@@ -41,6 +32,8 @@ import {
     getReportsCategoryPage,
     getUsersPage,
 } from './controllers/navigationController'
+import { useAuthSession } from './hooks/useAuthSession'
+import { useNotificationsState } from './hooks/useNotificationsState'
 import { APP_PAGES, AUTH_PAGES } from './models/pageModel'
 
 function App() {
@@ -72,92 +65,37 @@ function App() {
     const [selectedReport, setSelectedReport] = useState(null)
     const [reportStatusMap, setReportStatusMap] = useState({})
 
-    useEffect(() => {
-        saveToStorage(ADMIN_STORAGE_KEYS.profile, profile)
-    }, [profile])
+    usePersistToStorage(ADMIN_STORAGE_KEYS.profile, profile)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.preferences, preferences)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.notifications, notifications)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.activity, activityLog)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.rememberEmail, rememberedEmail)
 
-    useEffect(() => {
-        saveToStorage(ADMIN_STORAGE_KEYS.preferences, preferences)
-    }, [preferences])
-
-    useEffect(() => {
-        saveToStorage(ADMIN_STORAGE_KEYS.notifications, notifications)
-    }, [notifications])
-
-    useEffect(() => {
-        saveToStorage(ADMIN_STORAGE_KEYS.activity, activityLog)
-    }, [activityLog])
-
-    useEffect(() => {
-        saveToStorage(ADMIN_STORAGE_KEYS.rememberEmail, rememberedEmail)
-    }, [rememberedEmail])
-
-    useEffect(() => {
-        if (!isAuthenticated || !isPageLoading) {
-            return undefined
-        }
-
-        const loadingTimer = window.setTimeout(() => {
-            setIsPageLoading(false)
-        }, 420)
-
-        return () => window.clearTimeout(loadingTimer)
-    }, [activePage, isAuthenticated, isPageLoading])
+    usePageLoadingState({
+        activePage,
+        isAuthenticated,
+        isPageLoading,
+        setIsPageLoading,
+    })
 
     function addActivity(action, detail) {
-        setActivityLog((previous) => [createActivityEntry(action, detail), ...previous].slice(0, 25))
+        setActivityLog((previous) =>
+            buildNextActivityLog({ previousActivityLog: previous, action, detail })
+        )
     }
 
-    function handleRegister(payload) {
-        const registrationState = buildRegistrationState({
-            currentProfile: profile,
-            payload,
-        })
-
-        setProfile(registrationState.nextProfile)
-        setPreferences((previous) => ({
-            ...previous,
-            ...registrationState.nextPreferencesPatch,
-        }))
-        setAuthPage(buildPostRegistrationTransition().nextAuthPage)
-        setRememberedEmail(registrationState.rememberedEmail)
-        addActivity(registrationState.activity.action, registrationState.activity.detail)
-
-        notifySuccess('Registration successful. You can now sign in.')
-        return { ok: true, message: 'Registration complete. You can now sign in.' }
-    }
-
-    function handleLogin(payload) {
-        const loginValidation = validateLoginCredentials({ profile, payload })
-
-        if (!loginValidation.ok) {
-            notifyError(loginValidation.title, loginValidation.message)
-            return {
-                ok: false,
-                message: loginValidation.resultMessage,
-            }
-        }
-
-        const loginState = buildLoginState({ payload })
-        const transition = buildPostLoginTransition({ nextActivePage: loginState.nextActivePage })
-
-        setProfile((previous) => ({ ...previous, lastLoginAt: loginState.loginAt }))
-        setIsAuthenticated(transition.isAuthenticated)
-        setActivePage(transition.nextActivePage)
-        addActivity(loginState.activity.action, loginState.activity.detail)
-        setRememberedEmail(loginState.rememberedEmail)
-
-        notifySuccess('Login successful. Welcome back.')
-        return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
-    }
-
-    function handleLogout() {
-        const transition = buildPostLogoutTransition()
-        setIsAuthenticated(transition.isAuthenticated)
-        setAuthPage(transition.nextAuthPage)
-        addActivity('Logout', 'Signed out from admin workspace')
-        notifySuccess('Logout successful.')
-    }
+    const { handleRegister, handleLogin, handleLogout } = useAuthSession({
+        profile,
+        setProfile,
+        setPreferences,
+        setActivePage,
+        setIsAuthenticated,
+        setAuthPage,
+        setRememberedEmail,
+        addActivity,
+        notifySuccess,
+        notifyError,
+    })
 
     function handleProfileUpdate(updates) {
         const profileUpdateState = buildProfileUpdateState({
@@ -185,18 +123,16 @@ function App() {
         notifySuccess('Settings updated successfully.')
     }
 
-    function handleToggleNotification(notificationId) {
-        setNotifications((previous) =>
-            toggleNotificationReadState({ notifications: previous, notificationId })
-        )
-    }
-
-    function handleClearNotifications() {
-        const transition = buildClearNotificationsTransition()
-        setNotifications(transition.nextNotifications)
-        addActivity(transition.activity.action, transition.activity.detail)
-        notifySuccess(transition.successMessage)
-    }
+    const {
+        unreadNotifications,
+        handleToggleNotification,
+        handleClearNotifications,
+    } = useNotificationsState({
+        notifications,
+        setNotifications,
+        addActivity,
+        notifySuccess,
+    })
 
     function handleNavigate(nextPage) {
         const transition = buildPageNavigationTransition({ currentPage: activePage, nextPage })
@@ -249,8 +185,6 @@ function App() {
             })
         )
     }
-
-    const unreadNotifications = countUnreadNotifications(notifications)
 
     if (!isAuthenticated) {
         return (

@@ -1,34 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
-const PRIORITY_OPTIONS = ["low", "moderate", "urgent", "emergency"];
-const STATUS_OPTIONS = ["Pending", "In Progress", "Completed"];
-
-function titleCase(value = "") {
-  return value
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function SelectChip({ label, active, onPress }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className={`rounded-full border px-3 py-2 ${active ? "border-[#1D4ED8] bg-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
-    >
-      <Text className={`text-xs font-bold ${active ? "text-white" : "text-[#334155]"}`}>{label}</Text>
-    </Pressable>
-  );
-}
-
 export default function EditReportSheet({ visible, report, onClose, onSave }) {
   const [issueType, setIssueType] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("moderate");
-  const [status, setStatus] = useState("Pending");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -39,8 +15,6 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
     setIssueType(report.issueType || "");
     setLocation(report.location || "");
     setDescription(report.description || "");
-    setPriority(String(report.priority || "moderate").toLowerCase());
-    setStatus(report.status || "Pending");
     setErrorMessage("");
   }, [report]);
 
@@ -58,8 +32,6 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
       issueType: issueType.trim(),
       location: location.trim(),
       description: description.trim(),
-      priority,
-      status,
     });
   };
 
@@ -107,25 +79,6 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
               className="mb-3 min-h-[110px] rounded-xl border border-[#CBD5E1] bg-white px-3 py-3 text-sm text-[#0F172A]"
               placeholderTextColor="#94A3B8"
             />
-
-            <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-[#64748B]">Priority</Text>
-            <View className="mb-3 flex-row flex-wrap gap-2">
-              {PRIORITY_OPTIONS.map((value) => (
-                <SelectChip
-                  key={value}
-                  label={titleCase(value === "low" ? "low priority" : value)}
-                  active={priority === value}
-                  onPress={() => setPriority(value)}
-                />
-              ))}
-            </View>
-
-            <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-[#64748B]">Status</Text>
-            <View className="mb-2 flex-row flex-wrap gap-2">
-              {STATUS_OPTIONS.map((value) => (
-                <SelectChip key={value} label={value} active={status === value} onPress={() => setStatus(value)} />
-              ))}
-            </View>
 
             {errorMessage ? <Text className="mt-2 text-xs font-semibold text-[#B91C1C]">{errorMessage}</Text> : null}
           </ScrollView>

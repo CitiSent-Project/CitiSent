@@ -7,7 +7,6 @@ export default function AuthCityFooter() {
         source={require("../../assets/logo/cityhall.png")}
         className="h-full w-full opacity-25"
         resizeMode="cover"
-        blurRadius={2}
       />
     </View>
   );

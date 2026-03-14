@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ProfileHeader from "../../components/profile/ProfileHeader";
@@ -7,6 +7,7 @@ import LogoutConfirmSheet from "../../components/profile/LogoutConfirmSheet";
 import ProfileMenuItem from "../../components/profile/ProfileMenuItem";
 import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
+import AuthCityFooter from "../../components/auth/AuthCityFooter";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -58,7 +59,7 @@ export default function Profile() {
     <View className="flex-1 bg-[#E8E8E8]" style={{ paddingTop: insets.top }}>
       <RefreshableScrollView
         className="flex-1"
-        contentContainerClassName="flex-grow"
+        contentContainerClassName="flex-grow pb-44"
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={onRefresh}
@@ -81,15 +82,9 @@ export default function Profile() {
             <ProfileMenuItem icon="log-out-outline" label="Logout" danger onPress={() => setIsLogoutVisible(true)} />
           </View>
         </View>
-
-        <View className="mt-auto overflow-hidden">
-          <Image
-            source={require("../../assets/logo/cityhall.png")}
-            resizeMode="cover"
-            className="h-40 w-full opacity-55"
-          />
-        </View>
       </RefreshableScrollView>
+
+      <AuthCityFooter />
 
       <LogoutConfirmSheet
         visible={isLogoutVisible}

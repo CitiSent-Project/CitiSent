@@ -57,15 +57,15 @@ export default function ReportsMadePage() {
         <Text className="mt-1 text-xs" style={{ color: Colors.text.link }}>Pull down anytime to refresh this list.</Text>
 
         <View className="mt-4 flex-row gap-2">
-          <View className="flex-1 rounded-xl bg-white px-3 py-3">
+          <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
             <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{pendingCount}</Text>
             <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Pending</Text>
           </View>
-          <View className="flex-1 rounded-xl bg-white px-3 py-3">
+          <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
             <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{inProgressCount}</Text>
             <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>In Progress</Text>
           </View>
-          <View className="flex-1 rounded-xl bg-white px-3 py-3">
+          <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
             <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{completedCount}</Text>
             <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Completed</Text>
           </View>
@@ -80,8 +80,11 @@ export default function ReportsMadePage() {
             <Pressable
               key={filter.key}
               onPress={() => setSelectedStatus(filter.key)}
-              className={`rounded-full border px-4 py-2 ${active ? "" : "bg-white"}`}
-              style={{ borderColor: active ? Colors.primaryStrong : Colors.borderMuted, ...(active ? { backgroundColor: Colors.primaryStrong } : {}) }}
+              className="rounded-full border px-4 py-2"
+              style={{
+                borderColor: active ? Colors.primaryStrong : Colors.borderMuted,
+                backgroundColor: active ? Colors.primaryStrong : Colors.background,
+              }}
             >
               <Text className="text-xs font-bold" style={{ color: active ? Colors.text.inverse : Colors.text.body }}>{filter.label}</Text>
             </Pressable>
@@ -105,7 +108,7 @@ export default function ReportsMadePage() {
           </View>
         ))
       ) : (
-        <View className="rounded-2xl border bg-white px-4 py-8" style={{ borderColor: Colors.borderSoft }}>
+        <View className="rounded-2xl border px-4 py-8" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
           <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No reports for this status yet.</Text>
         </View>
       )}

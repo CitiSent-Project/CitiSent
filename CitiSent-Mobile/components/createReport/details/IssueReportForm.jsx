@@ -24,8 +24,8 @@ function LabeledInput({
         multiline={multiline}
         numberOfLines={numberOfLines}
         textAlignVertical={multiline ? "top" : "center"}
-        className={`rounded-lg border bg-white px-3 py-3 text-base ${multiline ? "min-h-[120px]" : ""}`}
-        style={{ borderColor: Colors.border, color: Colors.text.primary }}
+        className={`rounded-lg border px-3 py-3 text-base ${multiline ? "min-h-[120px]" : ""}`}
+        style={{ borderColor: Colors.border, color: Colors.text.primary, backgroundColor: Colors.background }}
         placeholderTextColor={Colors.icon.muted}
         scrollEnabled={false}
       />

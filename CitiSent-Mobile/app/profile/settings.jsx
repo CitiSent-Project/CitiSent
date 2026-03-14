@@ -17,8 +17,11 @@ function SettingsActionRow({ icon, label, onPress, danger = false }) {
   return (
     <Pressable
       onPress={onPress}
-      className={`mb-3 flex-row items-center rounded-2xl border px-4 py-4 ${danger ? "" : "bg-white"}`}
-      style={{ borderColor: danger ? Colors.borderDanger : Colors.borderSoft, ...(danger ? { backgroundColor: Colors.ui.dangerSoft } : {}) }}
+      className="mb-3 flex-row items-center rounded-2xl border px-4 py-4"
+      style={{
+        borderColor: danger ? Colors.borderDanger : Colors.borderSoft,
+        backgroundColor: danger ? Colors.ui.dangerSoft : Colors.background,
+      }}
     >
       <View
         className="mr-3 h-9 w-9 items-center justify-center rounded-full"

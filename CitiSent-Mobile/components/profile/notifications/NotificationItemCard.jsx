@@ -16,7 +16,7 @@ export default function NotificationItemCard({ item }) {
   return (
     <View
       className="mb-3 rounded-2xl border px-4 py-4"
-      style={{ borderColor: isRead ? Colors.borderSoft : Colors.ui.infoSurfaceBorderStrong, backgroundColor: isRead ? Colors.surface : Colors.ui.infoSurface }}
+      style={{ borderColor: isRead ? Colors.borderSoft : Colors.ui.infoSurfaceBorderStrong, backgroundColor: isRead ? Colors.background : Colors.ui.infoSurface }}
     >
       <View className="flex-row items-start gap-3">
         <View

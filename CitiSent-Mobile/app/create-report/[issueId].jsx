@@ -8,6 +8,7 @@ import IssueReportForm from "../../components/createReport/details/IssueReportFo
 import SubmitReportButton from "../../components/createReport/details/SubmitReportButton";
 import PageTopBar from "../../components/layout/PageTopBar";
 import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
+import { Colors } from "../../constants/colors";
 import { getCreateReportIssueById } from "../../constants/createReportIssues";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
 
@@ -81,7 +82,7 @@ export default function CreateReportIssueDetailScreen() {
 
   if (!issue) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-5">
+      <View className="flex-1 items-center justify-center px-5" style={{ backgroundColor: Colors.screen.tabs }}>
         <Text className="mb-2 text-lg font-semibold text-[#111827]">Issue not found</Text>
         <Text className="text-center text-sm text-[#6B7280]">Please go back and select an issue again.</Text>
         <Text className="mt-4 text-sm font-semibold text-[#223D68]" onPress={() => router.back()}>
@@ -92,7 +93,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
       <PageTopBar title="Create Report" />
 
       <BreadcrumbsNav items={["Create Report", issue.label]} />

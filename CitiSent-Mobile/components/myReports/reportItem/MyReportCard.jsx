@@ -11,7 +11,7 @@ function FieldLabel({ text }) {
 
 export default function MyReportCard({ report, containerClassName = "mb-4" }) {
   return (
-    <View className={`${containerClassName} rounded-2xl border bg-white px-4 py-4 shadow-sm`} style={{ borderColor: Colors.border }}>
+    <View className={`${containerClassName} rounded-2xl border px-4 py-4 shadow-sm`} style={{ borderColor: Colors.border, backgroundColor: Colors.background }}>
       <View className="mb-3 flex-row items-start justify-between gap-3">
         <View className="flex-1">
           <FieldLabel text="Issue Type" />

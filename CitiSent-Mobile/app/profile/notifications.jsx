@@ -31,7 +31,7 @@ export default function NotificationsPage() {
 
   return (
     <ProfileSubpageLayout title="Notifications" refreshing={refreshing} onRefresh={onRefresh}>
-      <View className="mb-4 rounded-2xl border bg-white px-4 py-4" style={{ borderColor: Colors.borderSoft }}>
+      <View className="mb-4 rounded-2xl border px-4 py-4" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-base font-extrabold" style={{ color: Colors.text.heading }}>Inbox</Text>
@@ -46,16 +46,22 @@ export default function NotificationsPage() {
         <View className="mt-4 flex-row gap-2">
           <Pressable
             onPress={() => setFilterMode("all")}
-            className={`rounded-full border px-4 py-2 ${filterMode === "all" ? "" : "bg-white"}`}
-            style={{ borderColor: filterMode === "all" ? Colors.primaryStrong : Colors.borderMuted, ...(filterMode === "all" ? { backgroundColor: Colors.primaryStrong } : {}) }}
+            className="rounded-full border px-4 py-2"
+            style={{
+              borderColor: filterMode === "all" ? Colors.primaryStrong : Colors.borderMuted,
+              backgroundColor: filterMode === "all" ? Colors.primaryStrong : Colors.background,
+            }}
           >
             <Text className="text-xs font-bold" style={{ color: filterMode === "all" ? Colors.text.inverse : Colors.text.body }}>All</Text>
           </Pressable>
 
           <Pressable
             onPress={() => setFilterMode("unread")}
-            className={`rounded-full border px-4 py-2 ${filterMode === "unread" ? "" : "bg-white"}`}
-            style={{ borderColor: filterMode === "unread" ? Colors.primaryStrong : Colors.borderMuted, ...(filterMode === "unread" ? { backgroundColor: Colors.primaryStrong } : {}) }}
+            className="rounded-full border px-4 py-2"
+            style={{
+              borderColor: filterMode === "unread" ? Colors.primaryStrong : Colors.borderMuted,
+              backgroundColor: filterMode === "unread" ? Colors.primaryStrong : Colors.background,
+            }}
           >
             <Text className="text-xs font-bold" style={{ color: filterMode === "unread" ? Colors.text.inverse : Colors.text.body }}>Unread</Text>
           </Pressable>
@@ -65,7 +71,7 @@ export default function NotificationsPage() {
       {visibleNotifications.length > 0 ? (
         visibleNotifications.map((item) => <NotificationItemCard key={item.id} item={item} />)
       ) : (
-        <View className="rounded-2xl border bg-white px-4 py-8" style={{ borderColor: Colors.borderSoft }}>
+        <View className="rounded-2xl border px-4 py-8" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
           <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No notifications to show.</Text>
         </View>
       )}

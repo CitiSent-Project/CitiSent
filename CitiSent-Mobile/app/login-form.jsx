@@ -100,6 +100,8 @@ export default function LoginFormScreen() {
     <View className="flex-1 bg-[#1B2D4F]">
       <StatusBar style="light" />
 
+      <AuthCityFooter />
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -173,8 +175,6 @@ export default function LoginFormScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-
-      <AuthCityFooter />
     </View>
   );
 }

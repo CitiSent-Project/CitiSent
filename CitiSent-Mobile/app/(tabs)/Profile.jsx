@@ -8,6 +8,7 @@ import ProfileMenuItem from "../../components/profile/ProfileMenuItem";
 import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
 import AuthCityFooter from "../../components/auth/AuthCityFooter";
+import { Colors } from "../../constants/colors";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -56,7 +57,9 @@ export default function Profile() {
   }, []);
 
   return (
-    <View className="flex-1 bg-[#E8E8E8]" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.profile }}>
+      <AuthCityFooter backgroundColor={Colors.screen.profile} />
+
       <RefreshableScrollView
         className="flex-1"
         contentContainerClassName="flex-grow pb-44"
@@ -76,15 +79,13 @@ export default function Profile() {
             />
           ))}
 
-          <View className="mx-5 mt-2 h-[1px] bg-[#C7C7C7]" />
+          <View className="mx-5 mt-2 h-[1px]" style={{ backgroundColor: Colors.divider }} />
 
           <View className="pt-2">
             <ProfileMenuItem icon="log-out-outline" label="Logout" danger onPress={() => setIsLogoutVisible(true)} />
           </View>
         </View>
       </RefreshableScrollView>
-
-      <AuthCityFooter />
 
       <LogoutConfirmSheet
         visible={isLogoutVisible}

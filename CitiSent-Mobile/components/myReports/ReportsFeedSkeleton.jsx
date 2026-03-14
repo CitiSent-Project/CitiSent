@@ -1,9 +1,10 @@
 import { View } from "react-native";
 import SkeletonBlock from "../ui/SkeletonBlock";
+import { Colors } from "../../constants/colors";
 
 function ReportCardSkeleton() {
   return (
-    <View className="mb-4 rounded-2xl border border-[#E2E2E2] bg-white px-4 py-4">
+    <View className="mb-4 rounded-2xl border bg-white px-4 py-4" style={{ borderColor: Colors.borderCard }}>
       <View className="mb-3 flex-row items-center justify-between">
         <SkeletonBlock className="h-3 w-24 rounded-full" />
         <SkeletonBlock className="h-3 w-16 rounded-full" />

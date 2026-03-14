@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Animated, Easing, Modal, Pressable, Text, View } from "react-native";
+import { Colors } from "../../constants/colors";
 
 export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, bottomInset = 0 }) {
   const translateY = useRef(new Animated.Value(320)).current;
@@ -71,7 +72,7 @@ export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, botto
           }}
         >
           <View className="items-center pb-3">
-            <View className="h-1 w-11 rounded-full bg-[#E5E7EB]" />
+            <View className="h-1 w-11 rounded-full" style={{ backgroundColor: Colors.border }} />
           </View>
 
           <View className="flex-row items-center pb-3">
@@ -81,31 +82,33 @@ export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, botto
               accessibilityLabel="Close logout confirmation"
               className="h-8 w-8 items-center justify-center"
             >
-              <Ionicons name="close" size={24} color="#111827" />
+              <Ionicons name="close" size={24} color={Colors.text.primary} />
             </Pressable>
 
-            <Text className="flex-1 text-center text-[24px] font-bold text-[#EF4444]">Logout</Text>
+            <Text className="flex-1 text-center text-[24px] font-bold" style={{ color: Colors.error }}>Logout</Text>
 
             <View className="h-8 w-8" />
           </View>
 
-          <View className="h-[1px] bg-[#E5E7EB]" />
+          <View className="h-[1px]" style={{ backgroundColor: Colors.border }} />
 
           <View className="py-6">
-            <Text className="text-center text-[20px] font-semibold text-[#111827]">Are you sure want to Logout?</Text>
+            <Text className="text-center text-[20px] font-semibold" style={{ color: Colors.text.primary }}>Are you sure want to Logout?</Text>
           </View>
 
           <View className="flex-row items-center gap-3 pb-2">
             <Pressable
-              className="flex-1 items-center rounded-full bg-[#EAF2FF] py-3"
+              className="flex-1 items-center rounded-full py-3"
+              style={{ backgroundColor: Colors.ui.progressSoft }}
               onPress={onCancel}
               accessibilityRole="button"
             >
-              <Text className="text-[16px] font-semibold text-[#3B82F6]">Cancel</Text>
+              <Text className="text-[16px] font-semibold" style={{ color: Colors.primary }}>Cancel</Text>
             </Pressable>
 
             <Pressable
-              className="flex-1 items-center rounded-full bg-[#3B82F6] py-3"
+              className="flex-1 items-center rounded-full py-3"
+              style={{ backgroundColor: Colors.primary }}
               onPress={onConfirm}
               accessibilityRole="button"
             >

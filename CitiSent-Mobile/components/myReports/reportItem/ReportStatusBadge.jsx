@@ -1,29 +1,30 @@
 import { Text, View } from "react-native";
+import { Colors } from "../../../constants/colors";
 
 const statusStyles = {
   Completed: {
-    container: "bg-[#E9F8EF]",
-    text: "text-[#2C8A5A]",
+    backgroundColor: Colors.ui.successSoft,
+    textColor: Colors.text.statusComplete,
   },
   "In Progress": {
-    container: "bg-[#EAF4FF]",
-    text: "text-[#2D6FA9]",
+    backgroundColor: Colors.ui.progressSoft,
+    textColor: Colors.text.statusProgress,
   },
   Pending: {
-    container: "bg-[#FFF5E8]",
-    text: "text-[#B86A08]",
+    backgroundColor: Colors.ui.warningSoft,
+    textColor: Colors.text.statusPending,
   },
 };
 
 export default function ReportStatusBadge({ status }) {
   const style = statusStyles[status] || {
-    container: "bg-[#F3F4F6]",
-    text: "text-[#4B5563]",
+    backgroundColor: Colors.ui.graySoft,
+    textColor: Colors.text.slate,
   };
 
   return (
-    <View className={`rounded-full px-2.5 py-1 ${style.container}`}>
-      <Text className={`text-[11px] font-bold ${style.text}`}>{status}</Text>
+    <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: style.backgroundColor }}>
+      <Text className="text-[11px] font-bold" style={{ color: style.textColor }}>{status}</Text>
     </View>
   );
 }

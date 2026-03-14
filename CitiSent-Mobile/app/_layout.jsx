@@ -11,9 +11,9 @@ export default function RootLayout() {
       <AnimatedSplashLayout>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="login-form" />
-          <Stack.Screen name="create-account" />
+          <Stack.Screen name="auth/Login" />
+          <Stack.Screen name="auth/LoginForm" />
+          <Stack.Screen name="auth/CreateAccount" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="create-report/[issueId]" />
           <Stack.Screen name="profile/reports" />

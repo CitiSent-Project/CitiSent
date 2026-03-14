@@ -2,14 +2,14 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../components/auth/AuthActionButton";
-import AuthBrandMark from "../components/auth/AuthBrandMark";
-import AuthChoiceField from "../components/auth/AuthChoiceField";
-import AuthCityFooter from "../components/auth/AuthCityFooter";
-import AuthInputField from "../components/auth/AuthInputField";
-import RefreshableScrollView from "../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../hooks/usePullToRefresh";
-import { authApi } from "../services/auth";
+import AuthActionButton from "../../components/auth/AuthActionButton";
+import AuthBrandMark from "../../components/auth/AuthBrandMark";
+import AuthChoiceField from "../../components/auth/AuthChoiceField";
+import AuthCityFooter from "../../components/auth/AuthCityFooter";
+import AuthInputField from "../../components/auth/AuthInputField";
+import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
+import usePullToRefresh from "../../hooks/usePullToRefresh";
+import { authApi } from "../../services/auth";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -334,7 +334,7 @@ export default function CreateAccountScreen() {
               <Text className="mt-1 text-center text-[13px] text-[#86EFAC]">{successMessage}</Text>
             ) : null}
 
-            <Pressable className="mt-6 items-center" onPress={() => router.push("/login-form")} accessibilityRole="button">
+            <Pressable className="mt-6 items-center" onPress={() => router.push("/auth/LoginForm")} accessibilityRole="button">
               <Text className="text-[13px] text-[#8CA8C9]">Already have an account? Login</Text>
             </Pressable>
           </View>

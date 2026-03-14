@@ -44,7 +44,7 @@ export default function Profile() {
     setIsLogoutVisible(false);
 
     logoutTimerRef.current = setTimeout(() => {
-      router.replace("/login");
+      router.replace("/auth/Login");
     }, 220);
   };
 

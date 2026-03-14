@@ -72,7 +72,7 @@ function UsersTableRow({
         <button
           type="button"
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-          className="grid h-9 w-9 place-items-center rounded-full border border-blue-900 bg-blue-50 text-blue-900 hover:bg-blue-100"
+          className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500"
         >
           <FiMoreHorizontal />
         </button>
@@ -82,21 +82,21 @@ function UsersTableRow({
             <button
               type="button"
               onClick={() => handleAction('view')}
-              className="block w-full px-3 py-2 text-left text-sm text-blue-900 hover:bg-blue-50"
+              className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
             >
               View Profile
             </button>
             <button
               type="button"
               onClick={() => handleAction('edit')}
-              className="block w-full px-3 py-2 text-left text-sm text-blue-900 hover:bg-blue-50"
+              className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
             >
               Edit User
             </button>
             <button
               type="button"
               onClick={() => handleAction('ban')}
-              className="block w-full px-3 py-2 text-left text-sm text-blue-900 hover:bg-blue-50"
+              className="block w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
             >
               Ban User
             </button>

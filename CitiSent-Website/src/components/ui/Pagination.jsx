@@ -16,7 +16,7 @@ export function Pagination({
         type="button"
         onClick={onPrevious}
         disabled={isPreviousDisabled}
-        className="rounded-full border border-blue-900 bg-white px-3 py-1 font-medium text-blue-900 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full border border-slate-200 bg-white px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Previous
       </button>
@@ -28,8 +28,8 @@ export function Pagination({
           onClick={() => onPageChange(page)}
           className={`h-8 w-8 rounded-full border ${
             page === currentPage
-              ? 'border-blue-900 bg-blue-900 text-white'
-              : 'border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
+              ? 'border-slate-300 bg-blue-900 text-white'
+              : 'border-slate-200 bg-white text-slate-600'
           }`}
         >
           {page}
@@ -43,7 +43,7 @@ export function Pagination({
         type="button"
         onClick={onNext}
         disabled={isNextDisabled}
-        className="rounded-full border border-blue-900 bg-white px-3 py-1 font-medium text-blue-900 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full border border-slate-200 bg-white px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Next
       </button>

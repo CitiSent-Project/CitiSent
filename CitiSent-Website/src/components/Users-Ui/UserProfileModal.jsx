@@ -36,7 +36,7 @@ export function UserProfileModal({ user, isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
           >
             Close
           </button>

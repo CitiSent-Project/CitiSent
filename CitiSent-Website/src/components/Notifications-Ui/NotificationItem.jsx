@@ -22,7 +22,7 @@ export function NotificationItem({ notification, onToggleRead }) {
 
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded-lg border border-blue-900 bg-white px-2 py-1 text-xs font-semibold text-blue-900 hover:bg-blue-50"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
           onClick={() => onToggleRead(notification.id)}
         >
           <FiCheckCircle />

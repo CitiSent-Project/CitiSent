@@ -322,21 +322,21 @@ export function Users({ onViewUserProfile }) {
               <button
                 type="button"
                 onClick={() => handleBulkStatusUpdate('Verified')}
-                className="rounded-lg border border-blue-900 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 hover:bg-blue-50"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Set Verified
               </button>
               <button
                 type="button"
                 onClick={() => handleBulkStatusUpdate('Unverified')}
-                className="rounded-lg border border-blue-900 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 hover:bg-blue-50"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 Set Unverified
               </button>
               <button
                 type="button"
                 onClick={handleBulkBanUsers}
-                className="rounded-lg bg-blue-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
               >
                 Ban Selected
               </button>

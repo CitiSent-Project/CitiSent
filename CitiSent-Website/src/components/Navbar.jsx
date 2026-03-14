@@ -10,24 +10,24 @@ import {
 	FiLogOut,
 	FiChevronDown,
 	FiChevronUp,
-	FiSearch,
 } from 'react-icons/fi'
 import CitiSentLogo from '../assets/CitiSentLogo.svg'
+import { APP_PAGES } from '../models/pageModel'
 
 const navItems = [
-	{ label: 'Dashboard', pageKey: 'Dashboard', icon: FiBarChart },
-	{ label: 'Users', pageKey: 'Users', icon: FiUsers },
+	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
+	{ label: 'Users', pageKey: APP_PAGES.USERS, icon: FiUsers },
 	{
 		label: 'Reports',
 		icon: FiFileText,
 		children: [
-			{ label: 'By Category', pageKey: 'Reports:By Category' },
-			{ label: 'By Urgency Levels', pageKey: 'Reports:By Urgency Levels' },
+			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY },
+			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY },
 		],
 	},
-	{ label: 'Admin Profile', pageKey: 'Admin Profile', icon: FiUser },
-	{ label: 'Settings', pageKey: 'Settings', icon: FiSettings },
-	{ label: 'Logout', pageKey: 'Logout', icon: FiLogOut, danger: true },
+	{ label: 'Admin Profile', pageKey: APP_PAGES.ADMIN_PROFILE, icon: FiUser },
+	{ label: 'Settings', pageKey: APP_PAGES.SETTINGS, icon: FiSettings },
+	{ label: 'Logout', pageKey: APP_PAGES.LOGOUT, icon: FiLogOut, danger: true },
 ]
 
 const MotionNav = motion.nav
@@ -43,7 +43,7 @@ function CitiSentLogoIcon({ className = '' }) {
 
 function NavOption({ item, activePage, onNavigate, expanded, index }) {
 	const hasChildren = Boolean(item.children?.length)
-	const isReportsSection = activePage.startsWith('Reports:')
+	const isReportsSection = activePage.startsWith(`${APP_PAGES.REPORTS}:`)
 	const isSelected = hasChildren ? isReportsSection : activePage === item.pageKey
 	const Icon = item.icon
 	const [submenuOpen, setSubmenuOpen] = useState(hasChildren && isReportsSection)
@@ -51,7 +51,7 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 	function handleClick() {
 		if (hasChildren) {
 			if (!isReportsSection) {
-				onNavigate('Reports:By Category')
+				onNavigate(APP_PAGES.REPORTS_BY_CATEGORY)
 				setSubmenuOpen(true)
 				return
 			}
@@ -245,19 +245,19 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								className="grid h-10 w-10 place-items-center rounded-lg border border-blue-900 bg-blue-900 text-white hover:bg-blue-800 lg:hidden"
+								className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 lg:hidden"
 								onClick={() => setMobileOpen((prev) => !prev)}
 								aria-label="Open navigation menu"
 							>
 								<span className="space-y-1">
-									<span className="block h-0.5 w-4 bg-white" />
-									<span className="block h-0.5 w-4 bg-white" />
-									<span className="block h-0.5 w-4 bg-white" />
+									<span className="block h-0.5 w-4 bg-slate-700" />
+									<span className="block h-0.5 w-4 bg-slate-700" />
+									<span className="block h-0.5 w-4 bg-slate-700" />
 								</span>
 							</button>
 
 							<label className="hidden items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 md:flex md:min-w-75">
-								<FiSearch className="mr-2 text-slate-400" />
+								<span className="mr-2 text-xs uppercase tracking-wider text-slate-400">Search</span>
 								<input
 									type="text"
 									placeholder="Search"
@@ -269,11 +269,11 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								onClick={() => onNavigate('Notifications')}
-								className={`relative grid h-9 w-9 place-items-center rounded-full border transition ${
-									activePage === 'Notifications'
-										? 'border-blue-900 bg-blue-900 text-white'
-										: 'border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
+								onClick={() => onNavigate(APP_PAGES.NOTIFICATIONS)}
+								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
+									activePage === APP_PAGES.NOTIFICATIONS
+										? 'border-cyan-300 text-cyan-700'
+										: 'border-slate-200 text-slate-500 hover:border-slate-300'
 								}`}
 								aria-label="Notifications"
 							>
@@ -286,11 +286,11 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 							</button>
 							<button
 								type="button"
-								onClick={() => onNavigate('Admin Profile')}
+								onClick={() => onNavigate(APP_PAGES.ADMIN_PROFILE)}
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
-									activePage === 'Admin Profile'
-										? 'border-blue-900 bg-blue-900 text-white'
-										: 'border-blue-900 bg-white text-blue-900 hover:bg-blue-50'
+									activePage === APP_PAGES.ADMIN_PROFILE
+										? 'border-cyan-300 bg-cyan-100 text-cyan-700'
+										: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300'
 								}`}
 								aria-label="User profile"
 							>

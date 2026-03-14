@@ -177,7 +177,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 
 					<button
 						type="submit"
-						className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-base font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
+							className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-base font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
 					>
 						Register Admin
 					</button>

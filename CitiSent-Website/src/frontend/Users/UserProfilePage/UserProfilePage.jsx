@@ -6,14 +6,7 @@ export function UserProfilePage({ user, onBackToUsers }) {
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 text-sm text-slate-500">
-            <button
-              type="button"
-              onClick={onBackToUsers}
-              className="rounded-md border border-blue-900 bg-white px-2 py-1 text-blue-900 hover:bg-blue-50"
-            >
-              Users
-            </button>{' '}
-            / <span>User Profile</span>
+            <button onClick={onBackToUsers} className="hover:text-slate-700">Users</button> / <span>User Profile</span>
           </div>
           <h1 className="text-xl font-semibold text-slate-900">User not found</h1>
         </div>
@@ -24,14 +17,7 @@ export function UserProfilePage({ user, onBackToUsers }) {
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="mb-4 text-sm text-slate-500">
-        <button
-          type="button"
-          onClick={onBackToUsers}
-          className="rounded-md border border-blue-900 bg-white px-2 py-1 text-blue-900 hover:bg-blue-50"
-        >
-          Users
-        </button>{' '}
-        / <span className="text-slate-700">User Profile</span>
+        <button onClick={onBackToUsers} className="hover:text-slate-700">Users</button> / <span className="text-slate-700">User Profile</span>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

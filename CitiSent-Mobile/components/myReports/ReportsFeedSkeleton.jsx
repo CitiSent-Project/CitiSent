@@ -22,14 +22,6 @@ export default function ReportsFeedSkeleton() {
       <SkeletonBlock className="mb-4 h-5 w-36 rounded-full" />
       <ReportCardSkeleton />
 
-      <SkeletonBlock className="mb-4 mt-3 h-5 w-40 rounded-full" />
-      <View className="mb-4 flex-row gap-2">
-        <SkeletonBlock className="h-8 w-16 rounded-full" />
-        <SkeletonBlock className="h-8 w-16 rounded-full" />
-        <SkeletonBlock className="h-8 w-16 rounded-full" />
-        <SkeletonBlock className="h-8 w-16 rounded-full" />
-      </View>
-
       <ReportCardSkeleton />
       <ReportCardSkeleton />
       <ReportCardSkeleton />

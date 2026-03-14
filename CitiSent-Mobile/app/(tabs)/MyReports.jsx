@@ -3,21 +3,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MyReportsList from "../../components/myReports/MyReportsList";
 import ReportsFeedSkeleton from "../../components/myReports/ReportsFeedSkeleton";
 import SectionTitle from "../../components/myReports/SectionTitle";
-import StatusFilterChips from "../../components/myReports/StatusFilterChips";
 import MyReportsTopBar from "../../components/myReports/MyReportsTopBar";
 import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import useMyReports from "../../hooks/useMyReports";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
+import AuthCityFooter from "../../components/auth/AuthCityFooter";
 
 export default function MyReportsScreen() {
   const insets = useSafeAreaInsets();
-  const {
-    selectedStatus,
-    setSelectedStatus,
-    filteredReports,
-    reloadMyReports,
-    isInitialLoading,
-  } = useMyReports();
+  const { reports, reloadMyReports, isInitialLoading } = useMyReports();
 
   const { refreshing, onRefresh } = usePullToRefresh(reloadMyReports);
 
@@ -41,12 +35,11 @@ export default function MyReportsScreen() {
               Track the status and details of every concern you have submitted.
             </Text>
 
-            <StatusFilterChips selectedStatus={selectedStatus} onSelectStatus={setSelectedStatus} />
-
-            <MyReportsList reports={filteredReports} />
+            <MyReportsList reports={reports} />
           </>
         )}
       </RefreshableScrollView>
+      <AuthCityFooter />
     </View>
   );
 }

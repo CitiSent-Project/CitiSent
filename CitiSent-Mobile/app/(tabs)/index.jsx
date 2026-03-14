@@ -5,11 +5,11 @@ import EmergencyServicesRow from "../../components/home/EmergencyServicesRow";
 import HomeHeader from "../../components/home/HomeHeader";
 import HomeHero from "../../components/home/HomeHero";
 import LatestReportCard from "../../components/home/LatestReportCard";
-import NewsCard from "../../components/home/NewsCard";
 import SectionHeader from "../../components/home/SectionHeader";
 import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
 import { reportsApi } from "../../services/reports";
+import AuthCityFooter from "../../components/auth/AuthCityFooter";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -52,6 +52,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </RefreshableScrollView>
+      <AuthCityFooter />
     </View>
   );
 }

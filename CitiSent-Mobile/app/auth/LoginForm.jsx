@@ -2,13 +2,13 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../components/auth/AuthActionButton";
-import AuthBrandMark from "../components/auth/AuthBrandMark";
-import AuthCityFooter from "../components/auth/AuthCityFooter";
-import AuthInputField from "../components/auth/AuthInputField";
-import RememberMeToggle from "../components/auth/RememberMeToggle";
-import { authApi } from "../services/auth";
-import { isEmptyIdentifier, parseLoginIdentifier } from "../utils/authIdentifier";
+import AuthActionButton from "../../components/auth/AuthActionButton";
+import AuthBrandMark from "../../components/auth/AuthBrandMark";
+import AuthCityFooter from "../../components/auth/AuthCityFooter";
+import AuthInputField from "../../components/auth/AuthInputField";
+import RememberMeToggle from "../../components/auth/RememberMeToggle";
+import { authApi } from "../../services/auth";
+import { isEmptyIdentifier, parseLoginIdentifier } from "../../utils/authIdentifier";
 
 export default function LoginFormScreen() {
   const router = useRouter();
@@ -167,7 +167,7 @@ export default function LoginFormScreen() {
 
             <Pressable
               className="mt-4 items-center"
-              onPress={() => router.push("/create-account")}
+              onPress={() => router.push("/auth/CreateAccount")}
               accessibilityRole="button"
             >
               <Text className="text-[13px] text-[#8CA8C9]">Don&apos;t have an account? Sign up</Text>

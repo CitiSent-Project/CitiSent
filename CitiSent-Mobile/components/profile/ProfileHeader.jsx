@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "../../constants/colors";
 
 export default function ProfileHeader({ name, phone, onEditProfile }) {
   return (
-    <View className="bg-[#223D68] px-5 pb-7 pt-6">
+    <View className="px-5 pb-7 pt-6" style={{ backgroundColor: Colors.ui.headerDark }}>
       <View className="flex-row items-center">
-        <View className="h-[58px] w-[58px] items-center justify-center rounded-full bg-[#B8BCC2]">
+        <View className="h-[58px] w-[58px] items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.profileAvatarSoft }}>
           <Ionicons name="person" size={34} color="#6B7280" />
         </View>
 

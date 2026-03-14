@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { formatDateTime } from "../../../utils/formatters";
 import ReportAttachmentPreview from "./ReportAttachmentPreview";
 import ReportStatusBadge from "./ReportStatusBadge";
+import { Colors } from "../../../constants/colors";
 
 function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">{text}</Text>;
@@ -24,7 +25,7 @@ export default function MyReportCard({ report, containerClassName = "mb-4" }) {
         <Text className="flex-1 text-sm font-semibold text-[#374151]">{report.location}</Text>
       </View>
 
-      <View className="mt-2 rounded-xl bg-[#F8FAFC] px-3 py-3">
+      <View className="mt-2 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.ui.slateSoft }}>
         <FieldLabel text="Description" />
         <Text className="mt-1 text-sm leading-5 text-[#1F2937]">{report.description}</Text>
       </View>

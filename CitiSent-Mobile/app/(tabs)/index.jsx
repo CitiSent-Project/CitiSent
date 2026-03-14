@@ -10,6 +10,7 @@ import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
 import { reportsApi } from "../../services/reports";
 import AuthCityFooter from "../../components/auth/AuthCityFooter";
+import { Colors } from "../../constants/colors";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -27,10 +28,12 @@ export default function HomeScreen() {
   }, [loadLatestReport]);
 
   return (
-    <View className="flex-1 bg-[#ECECEC]" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+      <AuthCityFooter backgroundColor={Colors.screen.tabs} />
+
       <RefreshableScrollView
         className="flex-1"
-        contentContainerClassName="pb-8"
+        contentContainerClassName="pb-44"
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
         refreshing={refreshing}
@@ -52,7 +55,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </RefreshableScrollView>
-      <AuthCityFooter />
     </View>
   );
 }

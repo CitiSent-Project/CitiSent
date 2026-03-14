@@ -83,6 +83,8 @@ export default function LoginScreen() {
     <View className="flex-1 bg-[#1B2D4F]">
       <StatusBar style="light" />
 
+      <AuthCityFooter />
+
       <View className="flex-1 px-10">
         <Animated.View
           className="items-center"
@@ -110,8 +112,6 @@ export default function LoginScreen() {
           </View>
         </Animated.View>
       </View>
-
-      <AuthCityFooter />
     </View>
   );
 }

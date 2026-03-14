@@ -4,6 +4,7 @@ import NotificationItemCard from "../../components/profile/notifications/Notific
 import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
 import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
+import { Colors } from "../../constants/colors";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(PROFILE_NOTIFICATIONS);
@@ -37,7 +38,7 @@ export default function NotificationsPage() {
             <Text className="mt-1 text-sm text-[#64748B]">{unreadCount} unread notification(s)</Text>
           </View>
 
-          <Pressable onPress={handleMarkAllAsRead} className="rounded-lg bg-[#E2E8F0] px-3 py-2">
+          <Pressable onPress={handleMarkAllAsRead} className="rounded-lg px-3 py-2" style={{ backgroundColor: Colors.ui.neutralSoft }}>
             <Text className="text-xs font-bold text-[#334155]">Mark all read</Text>
           </Pressable>
         </View>
@@ -45,14 +46,16 @@ export default function NotificationsPage() {
         <View className="mt-4 flex-row gap-2">
           <Pressable
             onPress={() => setFilterMode("all")}
-            className={`rounded-full border px-4 py-2 ${filterMode === "all" ? "border-[#1D4ED8] bg-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+            className={`rounded-full border px-4 py-2 ${filterMode === "all" ? "border-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+            style={filterMode === "all" ? { backgroundColor: Colors.primaryStrong } : undefined}
           >
             <Text className={`text-xs font-bold ${filterMode === "all" ? "text-white" : "text-[#334155]"}`}>All</Text>
           </Pressable>
 
           <Pressable
             onPress={() => setFilterMode("unread")}
-            className={`rounded-full border px-4 py-2 ${filterMode === "unread" ? "border-[#1D4ED8] bg-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+            className={`rounded-full border px-4 py-2 ${filterMode === "unread" ? "border-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+            style={filterMode === "unread" ? { backgroundColor: Colors.primaryStrong } : undefined}
           >
             <Text className={`text-xs font-bold ${filterMode === "unread" ? "text-white" : "text-[#334155]"}`}>Unread</Text>
           </Pressable>

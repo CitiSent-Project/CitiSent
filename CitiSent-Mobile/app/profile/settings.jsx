@@ -4,6 +4,7 @@ import { useState } from "react";
 import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
 import SettingsToggleRow from "../../components/profile/settings/SettingsToggleRow";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
+import { Colors } from "../../constants/colors";
 
 const DEFAULT_SETTINGS = {
   pushNotifications: true,
@@ -16,9 +17,13 @@ function SettingsActionRow({ icon, label, onPress, danger = false }) {
   return (
     <Pressable
       onPress={onPress}
-      className={`mb-3 flex-row items-center rounded-2xl border px-4 py-4 ${danger ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#E2E8F0] bg-white"}`}
+      className={`mb-3 flex-row items-center rounded-2xl border px-4 py-4 ${danger ? "border-[#FECACA]" : "border-[#E2E8F0] bg-white"}`}
+      style={danger ? { backgroundColor: Colors.ui.dangerSoft } : undefined}
     >
-      <View className={`mr-3 h-9 w-9 items-center justify-center rounded-full ${danger ? "bg-[#FEE2E2]" : "bg-[#EEF2FF]"}`}>
+      <View
+        className="mr-3 h-9 w-9 items-center justify-center rounded-full"
+        style={{ backgroundColor: danger ? Colors.ui.dangerMuted : Colors.ui.brandSoft }}
+      >
         <Ionicons name={icon} size={18} color={danger ? "#B91C1C" : "#1E40AF"} />
       </View>
 

@@ -5,6 +5,7 @@ import EditReportSheet from "../../components/profile/reports/EditReportSheet";
 import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
 import usePullToRefresh from "../../hooks/usePullToRefresh";
 import { MY_REPORTS } from "../../constants/myReportsData";
+import { Colors } from "../../constants/colors";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -48,7 +49,10 @@ export default function ReportsMadePage() {
 
   return (
     <ProfileSubpageLayout title="Manage Reports" refreshing={refreshing} onRefresh={onRefresh}>
-      <View className="mb-4 rounded-2xl border border-[#DBEAFE] bg-[#EFF6FF] px-4 py-4">
+      <View
+        className="mb-4 rounded-2xl border px-4 py-4"
+        style={{ borderColor: Colors.ui.infoSurfaceBorder, backgroundColor: Colors.ui.infoSurface }}
+      >
         <Text className="text-sm font-semibold text-[#1E3A8A]">Your submissions overview</Text>
         <Text className="mt-1 text-xs text-[#1E40AF]">Pull down anytime to refresh this list.</Text>
 
@@ -76,7 +80,8 @@ export default function ReportsMadePage() {
             <Pressable
               key={filter.key}
               onPress={() => setSelectedStatus(filter.key)}
-              className={`rounded-full border px-4 py-2 ${active ? "border-[#1D4ED8] bg-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+              className={`rounded-full border px-4 py-2 ${active ? "border-[#1D4ED8]" : "border-[#CBD5E1] bg-white"}`}
+              style={active ? { backgroundColor: Colors.primaryStrong } : undefined}
             >
               <Text className={`text-xs font-bold ${active ? "text-white" : "text-[#334155]"}`}>{filter.label}</Text>
             </Pressable>
@@ -91,7 +96,8 @@ export default function ReportsMadePage() {
             <View className="mb-4 flex-row justify-end">
               <Pressable
                 onPress={() => setEditingReportId(report.id)}
-                className="rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2"
+                className="rounded-lg border px-3 py-2"
+                style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
               >
                 <Text className="text-xs font-bold text-[#1D4ED8]">Edit Report</Text>
               </Pressable>

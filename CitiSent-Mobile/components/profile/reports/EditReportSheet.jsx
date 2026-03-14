@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Colors } from "../../../constants/colors";
 
 export default function EditReportSheet({ visible, report, onClose, onSave }) {
   const [issueType, setIssueType] = useState("");
@@ -40,12 +41,12 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
       <View className="flex-1 justify-end bg-black/40">
         <View className="max-h-[86%] rounded-t-3xl bg-white px-4 pb-6 pt-4">
           <View className="mb-3 items-center">
-            <View className="h-1.5 w-14 rounded-full bg-[#CBD5E1]" />
+            <View className="h-1.5 w-14 rounded-full" style={{ backgroundColor: Colors.ui.neutralSoft }} />
           </View>
 
           <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-lg font-extrabold text-[#0F172A]">Edit report</Text>
-            <Pressable onPress={onClose} className="rounded-lg bg-[#EEF2F7] px-3 py-2">
+            <Pressable onPress={onClose} className="rounded-lg px-3 py-2" style={{ backgroundColor: Colors.ui.neutralMuted }}>
               <Text className="text-xs font-bold text-[#334155]">Close</Text>
             </Pressable>
           </View>
@@ -85,7 +86,8 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
 
           <Pressable
             onPress={handleSave}
-            className={`mt-4 rounded-xl px-4 py-3 ${canSave ? "bg-[#1D4ED8]" : "bg-[#93C5FD]"}`}
+            className="mt-4 rounded-xl px-4 py-3"
+            style={{ backgroundColor: canSave ? Colors.primaryStrong : Colors.primarySoft }}
           >
             <Text className="text-center text-sm font-bold text-white">Save Changes</Text>
           </Pressable>

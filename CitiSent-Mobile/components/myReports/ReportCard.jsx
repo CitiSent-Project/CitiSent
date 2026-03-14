@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
+import { Colors } from "../../constants/colors";
 
 export default function ReportCard({ report, containerClassName = "mb-4" }) {
   return (
     <View className={`${containerClassName} rounded-2xl border border-[#E2E2E2] bg-white px-3 py-3 shadow-sm`}>
       <View className="flex-row items-start">
-        <View className="mr-2 h-10 w-10 items-center justify-center rounded-full bg-[#E5E5E5]">
+        <View className="mr-2 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.grayAvatar }}>
           <Ionicons name="person" size={21} color="#A3A3A3" />
         </View>
 

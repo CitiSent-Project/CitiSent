@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Image, Modal, Pressable, Text, View } from "react-native";
+import { Colors } from "../../../constants/colors";
 
 function resolveImageSource(attachment) {
   if (!attachment || attachment.kind !== "image") return null;
@@ -68,7 +69,10 @@ export default function ReportAttachmentPreview({ attachment }) {
 
   if (!imageSource) {
     return (
-      <View className="mt-3 rounded-xl border border-dashed border-[#D1D5DB] bg-[#F9FAFB] px-3 py-2">
+      <View
+        className="mt-3 rounded-xl border border-dashed px-3 py-2"
+        style={{ borderColor: "#D1D5DB", backgroundColor: Colors.background }}
+      >
         <View className="flex-row items-center gap-1.5">
           <Ionicons name="image-outline" size={14} color="#9CA3AF" />
           <Text className="text-xs font-semibold text-[#6B7280]">No image attached</Text>
@@ -82,8 +86,9 @@ export default function ReportAttachmentPreview({ attachment }) {
       <Text className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Attached Image</Text>
       <Pressable
         onPress={() => setIsPreviewOpen(true)}
-        className="overflow-hidden rounded-xl bg-[#F3F4F6]"
+        className="overflow-hidden rounded-xl"
         style={{
+          backgroundColor: Colors.ui.graySoft,
           width: "80%",
           alignSelf: "center",
           aspectRatio: getContainerAspectRatio(imageAspectRatio),

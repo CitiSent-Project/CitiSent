@@ -1,4 +1,5 @@
 import { Text, TextInput, View } from "react-native";
+import { Colors } from "../../../constants/colors";
 
 function LabeledInput({
   label,
@@ -45,7 +46,7 @@ export default function IssueReportForm({
     <View>
       <View className="mb-5">
         <Text className="mb-2 text-sm font-semibold text-[#374151]">Issue Type</Text>
-        <View className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-3">
+        <View className="rounded-lg border px-3 py-3" style={{ borderColor: Colors.border, backgroundColor: Colors.background }}>
           <Text className="text-base text-[#111827]">{requestType}</Text>
         </View>
       </View>

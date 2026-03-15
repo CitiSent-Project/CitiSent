@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { APP_PAGES } from '../../models/pageModel'
 
 const MotionDiv = motion.div
 
@@ -7,8 +8,8 @@ function SkeletonBlock({ className }) {
 }
 
 export function PageSkeleton({ pageKey }) {
-  const isDashboard = pageKey === 'Dashboard'
-  const isListHeavy = pageKey === 'Users' || pageKey === 'Notifications'
+  const isDashboard = pageKey === APP_PAGES.DASHBOARD
+  const isListHeavy = pageKey === APP_PAGES.USERS || pageKey === APP_PAGES.NOTIFICATIONS
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">

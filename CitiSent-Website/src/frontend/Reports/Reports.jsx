@@ -2,16 +2,16 @@ import { useState } from 'react'
 import { urgencyFeedRows as initialRows } from '../Data/reportsData'
 import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
+import {
+  initializeReportRows,
+  updateReportStatusInRows,
+} from '../../controllers/reportStatusController'
 
 export function Reports({ section = 'category', onViewReport }) {
-  const [rows, setRows] = useState(() =>
-    initialRows.map((r) => ({ ...r, status: r.status || 'Pending' }))
-  )
+  const [rows, setRows] = useState(() => initializeReportRows(initialRows))
 
   function handleUpdateStatus(reportId, newStatus) {
-    setRows((prev) =>
-      prev.map((r) => (r.id === reportId ? { ...r, status: newStatus } : r))
-    )
+    setRows((prev) => updateReportStatusInRows(prev, reportId, newStatus))
   }
 
   if (section === 'urgency') {

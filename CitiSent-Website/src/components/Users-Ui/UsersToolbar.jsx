@@ -65,7 +65,7 @@ export function UsersToolbar({
       <button
         type="button"
         onClick={onAddUserClick}
-        className="ml-auto inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+        className="ml-auto inline-flex items-center gap-2 rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white"
       >
         <FiPlus />
         {primaryAction}

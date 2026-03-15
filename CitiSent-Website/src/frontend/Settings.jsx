@@ -198,7 +198,7 @@ export function Settings({ profile, preferences, onUpdateProfile, onUpdatePrefer
               onClick={() => setActiveTab(tab)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 activeTab === tab
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-blue-900 text-white'
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
               }`}
             >

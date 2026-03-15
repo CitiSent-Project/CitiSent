@@ -28,7 +28,7 @@ export function Pagination({
           onClick={() => onPageChange(page)}
           className={`h-8 w-8 rounded-full border ${
             page === currentPage
-              ? 'border-slate-900 bg-slate-900 text-white'
+              ? 'border-slate-300 bg-blue-900 text-white'
               : 'border-slate-200 bg-white text-slate-600'
           }`}
         >

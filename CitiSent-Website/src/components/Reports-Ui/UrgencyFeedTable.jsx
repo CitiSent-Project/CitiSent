@@ -1,21 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { FiMoreVertical, FiEye, FiCheckCircle, FiXCircle, FiClock } from 'react-icons/fi'
 import { notifySuccess } from '../ui/Toasters'
-
-const URGENCY_BADGE = {
-  Emergency: 'bg-red-100 text-red-700',
-  Urgent: 'bg-orange-100 text-orange-700',
-  Moderate: 'bg-yellow-100 text-yellow-700',
-  'Low Priority': 'bg-green-100 text-green-700',
-  Calm: 'bg-sky-100 text-sky-700',
-}
-
-const STATUS_BADGE = {
-  Pending: 'bg-amber-100 text-amber-700',
-  'Under Review': 'bg-blue-100 text-blue-700',
-  Resolved: 'bg-emerald-100 text-emerald-700',
-  Unresolved: 'bg-rose-100 text-rose-700',
-}
+import {
+  REPORT_STATUS_BADGE_CLASSES,
+  REPORT_URGENCY_BADGE_CLASSES,
+  normalizeReportStatus,
+} from '../../models/reportStatusModel'
 
 function ActionMenu({ report, onViewReport, onUpdateStatus }) {
   const [open, setOpen] = useState(false)
@@ -106,19 +96,22 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const normalizedStatus = normalizeReportStatus(row.status)
+
+            return (
             <tr key={row.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/60">
               <td className="px-4 py-3 font-medium text-slate-700">{row.id}</td>
               <td className="px-4 py-3 text-slate-800">{row.name}</td>
               <td className="px-4 py-3 hidden md:table-cell text-slate-600">{row.location}</td>
               <td className="px-4 py-3">
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${URGENCY_BADGE[row.urgency] || ''}`}>
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ''}`}>
                   {row.urgency}
                 </span>
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[row.status || 'Pending'] || ''}`}>
-                  {row.status || 'Pending'}
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ''}`}>
+                  {normalizedStatus}
                 </span>
               </td>
               <td className="px-4 py-3 hidden lg:table-cell text-slate-500">{row.date}</td>
@@ -130,7 +123,8 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
                 />
               </td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>

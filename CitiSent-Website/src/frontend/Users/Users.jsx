@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { usersFilters, usersRows, usersStats } from '../Data/usersData'
+import { generateNextUserId, usersFilters, usersRows, usersStats } from '../Data/usersData'
 import { notifyError, notifySuccess } from '../../components/ui/Toasters'
 import {
   AddUserFormModal,
@@ -88,15 +88,6 @@ export function Users({ onViewUserProfile }) {
     setCurrentPage(1)
   }
 
-  function buildUserId(previousUsers) {
-    const maxNumericId = previousUsers.reduce((max, user) => {
-      const numericPart = Number(user.id.replace('USR-', ''))
-      return Number.isNaN(numericPart) ? max : Math.max(max, numericPart)
-    }, 1200)
-
-    return `USR-${String(maxNumericId + 1)}`
-  }
-
   function handleAddUserSubmit(formData) {
     const name = formData.name?.trim()
     const email = formData.email?.trim().toLowerCase()
@@ -125,7 +116,7 @@ export function Users({ onViewUserProfile }) {
 
     setUsers((previousUsers) => [
       {
-        id: buildUserId(previousUsers),
+        id: generateNextUserId(previousUsers),
         name,
         email,
         address,

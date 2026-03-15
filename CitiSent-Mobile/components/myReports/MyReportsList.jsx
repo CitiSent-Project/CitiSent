@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 import MyReportCard from "./reportItem/MyReportCard";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function MyReportsList({ reports }) {
   if (!reports.length) {

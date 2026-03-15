@@ -1,5 +1,5 @@
 import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
-import { Colors } from "../../../constants/colors";
+import { Colors } from "../../../modules/shared";
 
 export default function SubmitReportButton({ onPress, disabled = false, loading = false }) {
   const isDisabled = disabled || loading;

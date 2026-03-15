@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import EmergencyServicesRow from "../../components/home/EmergencyServicesRow";
-import HomeHeader from "../../components/home/HomeHeader";
-import HomeHero from "../../components/home/HomeHero";
-import LatestReportCard from "../../components/home/LatestReportCard";
-import SectionHeader from "../../components/home/SectionHeader";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { reportsApi } from "../../services/reports";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import { Colors } from "../../constants/colors";
+import {
+  EmergencyServicesRow,
+  HomeHeader,
+  HomeHero,
+  LatestReportCard,
+  SectionHeader,
+  reportsApi,
+} from "../../modules/home";
+import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { AuthCityFooter } from "../../modules/auth";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();

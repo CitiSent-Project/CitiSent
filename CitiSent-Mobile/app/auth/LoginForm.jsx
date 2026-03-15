@@ -2,13 +2,16 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../../components/auth/AuthActionButton";
-import AuthBrandMark from "../../components/auth/AuthBrandMark";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import AuthInputField from "../../components/auth/AuthInputField";
-import RememberMeToggle from "../../components/auth/RememberMeToggle";
-import { authApi } from "../../services/auth";
-import { isEmptyIdentifier, parseLoginIdentifier } from "../../utils/authIdentifier";
+import {
+  AuthActionButton,
+  AuthBrandMark,
+  AuthCityFooter,
+  AuthInputField,
+  RememberMeToggle,
+  authApi,
+  isEmptyIdentifier,
+  parseLoginIdentifier,
+} from "../../modules/auth";
 
 export default function LoginFormScreen() {
   const router = useRouter();

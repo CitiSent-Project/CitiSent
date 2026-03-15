@@ -1,9 +1,8 @@
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import CreateReportTopBar from "../../components/createReport/CreateReportTopBar";
-import IssueGrid from "../../components/createReport/IssueGrid";
-import { Colors } from "../../constants/colors";
+import { AuthCityFooter } from "../../modules/auth";
+import { CreateReportTopBar, IssueGrid } from "../../modules/createReport";
+import { Colors } from "../../modules/shared";
 
 export default function CreateReportScreen() {
   const insets = useSafeAreaInsets();

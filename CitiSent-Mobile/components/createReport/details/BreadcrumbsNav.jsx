@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Colors } from "../../../constants/colors";
+import { Colors } from "../../../modules/shared";
 
 export default function BreadcrumbsNav({ items = [] }) {
   return (

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Image, Modal, Pressable, Text, View } from "react-native";
-import { Colors } from "../../../constants/colors";
+import { Colors } from "../../../modules/shared";
 
 function resolveImageSource(attachment) {
   if (!attachment || attachment.kind !== "image") return null;

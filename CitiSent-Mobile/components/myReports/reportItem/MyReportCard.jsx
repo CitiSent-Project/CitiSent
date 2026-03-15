@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
-import { formatDateTime } from "../../../utils/formatters";
+import { formatDateTime } from "../../../modules/shared";
 import ReportAttachmentPreview from "./ReportAttachmentPreview";
 import ReportStatusBadge from "./ReportStatusBadge";
-import { Colors } from "../../../constants/colors";
+import { Colors } from "../../../modules/shared";
 
 function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>{text}</Text>;

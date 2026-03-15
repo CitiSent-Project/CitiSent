@@ -2,14 +2,15 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../../components/auth/AuthActionButton";
-import AuthBrandMark from "../../components/auth/AuthBrandMark";
-import AuthChoiceField from "../../components/auth/AuthChoiceField";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import AuthInputField from "../../components/auth/AuthInputField";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { authApi } from "../../services/auth";
+import {
+  AuthActionButton,
+  AuthBrandMark,
+  AuthChoiceField,
+  AuthCityFooter,
+  AuthInputField,
+  authApi,
+} from "../../modules/auth";
+import { RefreshableScrollView, usePullToRefresh } from "../../modules/shared";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },

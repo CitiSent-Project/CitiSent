@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function ReportCard({ report, containerClassName = "mb-4" }) {
   return (

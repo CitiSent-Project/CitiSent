@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ProfileHeader from "../../components/profile/ProfileHeader";
-import LogoutConfirmSheet from "../../components/profile/LogoutConfirmSheet";
-import ProfileMenuItem from "../../components/profile/ProfileMenuItem";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import { Colors } from "../../constants/colors";
+import {
+  ProfileHeader,
+  LogoutConfirmSheet,
+  ProfileMenuItem,
+} from "../../modules/profile";
+import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { AuthCityFooter } from "../../modules/auth";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();

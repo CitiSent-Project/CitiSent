@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function ProfileMenuItem({ icon, label, iconColor = Colors.icon.primary, onPress, danger = false }) {
   return (

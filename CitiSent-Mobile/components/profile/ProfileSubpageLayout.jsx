@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PageTopBar from "../layout/PageTopBar";
 import RefreshableScrollView from "../ui/RefreshableScrollView";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function ProfileSubpageLayout({ title, refreshing, onRefresh, children }) {
   const insets = useSafeAreaInsets();

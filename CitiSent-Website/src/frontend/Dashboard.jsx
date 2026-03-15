@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion'
 import { FiTrendingUp, FiTrendingDown, FiUsers, FiFileText, FiCheckCircle, FiTarget } from 'react-icons/fi'
-import { PieChart } from '../components/Dashbord-Ui/Pie-Chart'
-import { VerticalChart } from '../components/Dashbord-Ui/Vertical-Chart'
+import { PieChart } from '../components/Dashboard-Ui/Pie-Chart'
+import { VerticalChart } from '../components/Dashboard-Ui/Vertical-Chart'
 import { reportsByCategory, reportsThisWeek } from './Data/dashboardData'
 import { getLatestJoinedUsersRows } from './Data/usersData'
 

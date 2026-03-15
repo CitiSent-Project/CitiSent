@@ -30,7 +30,7 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors"
+        className="grid h-8 w-8 place-items-center rounded-full border border-blue-200 bg-white text-blue-500 hover:bg-blue-100 transition-colors"
       >
         <FiMoreVertical className="text-sm" />
       </button>

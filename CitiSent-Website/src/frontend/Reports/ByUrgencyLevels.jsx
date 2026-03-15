@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { VerticalChart } from '../../components/Dashbord-Ui/Vertical-Chart'
+import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import {
   Pagination,
   ReportsStatCards,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
 	FiBell,
@@ -10,6 +10,7 @@ import {
 	FiLogOut,
 	FiChevronDown,
 	FiChevronUp,
+	FiSearch,
 } from 'react-icons/fi'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../models/pageModel'
@@ -30,12 +31,24 @@ const navItems = [
 	{ label: 'Logout', pageKey: APP_PAGES.LOGOUT, icon: FiLogOut, danger: true },
 ]
 
-const MotionNav = motion.nav
+const SIDEBAR_WIDTH_CLASSES = {
+	expanded: 'w-60',
+	collapsed: 'w-[4.5rem]',
+}
+
+const CONTENT_OFFSET_CLASSES = {
+	expanded: 'lg:ml-60',
+	collapsed: 'lg:ml-[4.5rem]',
+}
+
 const MotionAside = motion.aside
 const MotionButton = motion.button
 const MotionDiv = motion.div
 const MotionSpan = motion.span
-const MotionSection = motion.section
+
+const MainContentSlot = memo(function MainContentSlot({ children }) {
+	return children
+})
 
 function CitiSentLogoIcon({ className = '' }) {
 	return <img src={CitiSentLogo} alt="CitiSent logo" className={className} />
@@ -167,6 +180,11 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
 
+	function handleNavigate(nextPage) {
+		onNavigate(nextPage)
+		setMobileOpen(false)
+	}
+
 	return (
 		<div
 			className="flex min-h-screen bg-[#eef2f8] text-slate-900"
@@ -176,7 +194,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 				{mobileOpen && (
 					<MotionButton
 						type="button"
-						className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-[1px] lg:hidden"
+						className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-[1px] pointer-events-auto lg:hidden"
 						onClick={() => setMobileOpen(false)}
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
@@ -187,15 +205,9 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 			</AnimatePresence>
 
 			<MotionAside
-				className={`fixed left-0 top-0 z-40 h-full bg-[#2f4f80] text-white shadow-2xl transition-[width,transform] duration-300 ease-in-out lg:translate-x-0 ${expanded ? 'w-68' : 'w-22'} ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
-				initial={{ x: -28, opacity: 0 }}
-				animate={{ x: 0, opacity: 1 }}
-				transition={{ duration: 0.28, ease: 'easeOut' }}
+				className={`fixed left-0 top-0 z-40 h-full bg-[#2f4f80] text-white shadow-2xl transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 ${expanded ? SIDEBAR_WIDTH_CLASSES.expanded : SIDEBAR_WIDTH_CLASSES.collapsed} ${mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'}`}
 			>
-				<div
-					className={`flex h-full flex-col pb-20 pt-5 ${expanded ? 'px-4' : 'px-2'}`}
-					onMouseLeave={() => setMobileOpen(false)}
-				>
+				<div className={`flex h-full flex-col pb-20 pt-5 ${expanded ? 'px-4' : 'px-2'}`}>
 					<BrandBlock expanded={expanded} />
 
 					<nav className="flex-1 space-y-2">
@@ -204,7 +216,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								key={item.label}
 								item={item}
 								activePage={activePage}
-								onNavigate={onNavigate}
+								onNavigate={handleNavigate}
 								expanded={expanded}
 								index={index}
 							/>
@@ -236,12 +248,12 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 			</MotionAside>
 
 			<div
-				className={`flex-1 transition-[margin] duration-300 ease-in-out ${
-					expanded ? 'lg:ml-68' : 'lg:ml-22'
+				className={`flex-1 transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
+					expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
 				}`}
 			>
 				<header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/85 px-4 py-3 backdrop-blur md:px-6 lg:px-8">
-					<div className="mx-auto flex max-w-350 items-center justify-between gap-4">
+					<div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
@@ -256,8 +268,9 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								</span>
 							</button>
 
-							<label className="hidden items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 md:flex md:min-w-75">
-								<span className="mr-2 text-xs uppercase tracking-wider text-slate-400">Search</span>
+							<label className="hidden items-center rounded-lg border border-blue-100 bg-slate-50 px-3 py-2 md:flex md:min-w-75">
+								<FiSearch className="mr-2 text-sm text-blue-400" aria-hidden="true" />
+								<span className="sr-only">Search</span>
 								<input
 									type="text"
 									placeholder="Search"
@@ -269,11 +282,11 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								onClick={() => onNavigate(APP_PAGES.NOTIFICATIONS)}
+								onClick={() => handleNavigate(APP_PAGES.NOTIFICATIONS)}
 								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
 									activePage === APP_PAGES.NOTIFICATIONS
 										? 'border-blue-900 text-blue-900'
-										: 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-blue-100 transition duration-300'
+										: 'border-blue-100 text-blue-500 hover:border-blue-300 hover:bg-blue-100 transition duration-300'
 								}`}
 								aria-label="Notifications"
 							>
@@ -286,7 +299,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 							</button>
 							<button
 								type="button"
-								onClick={() => onNavigate(APP_PAGES.ADMIN_PROFILE)}
+								onClick={() => handleNavigate(APP_PAGES.ADMIN_PROFILE)}
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === APP_PAGES.ADMIN_PROFILE
 										? 'border-blue-700 bg-blue-100 text-blue-900'
@@ -299,7 +312,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						</div>
 					</div>
 				</header>
-				{children}
+				<MainContentSlot>{children}</MainContentSlot>
 			</div>
 		</div>
 	)

@@ -8,10 +8,10 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
           type="button"
           key={item.id}
           onClick={() => onSelectItem(item.id)}
-          className={`rounded-xl border px-4 py-3 text-left transition ${item.tone} ${
+          className={`rounded-xl border-2 px-4 py-3 text-left transition bg-blue-500 ${
             selectedItemId === item.id
-              ? 'border-slate-500 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.25)]'
-              : 'border-slate-200 hover:border-slate-300'
+              ? 'border-blue-700 shadow-md bg-blue-500'
+              : 'border-blue-100 hover:border-blue-700'
           }`}
           aria-pressed={selectedItemId === item.id}
         >
@@ -19,7 +19,7 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
             <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-300/60 bg-white/70 text-slate-700">
               <FiLayers />
             </div>
-            <p className="text-sm font-semibold text-slate-800">{item.label}</p>
+            <p className="text-sm font-semibold text-white">{item.label}</p>
           </div>
         </button>
       ))}

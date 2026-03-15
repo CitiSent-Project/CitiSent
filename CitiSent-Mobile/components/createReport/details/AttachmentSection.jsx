@@ -5,21 +5,18 @@ import { Colors } from "../../../modules/shared";
 export default function AttachmentSection() {
   return (
     <View className="mb-5">
-      <View className="h-44 items-center justify-center rounded-xl" style={{ backgroundColor: Colors.ui.graySoft }}>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Attach a photo of the issue"
+        className="h-44 items-center justify-center rounded-xl"
+        style={{ backgroundColor: Colors.ui.graySoft }}
+      >
         <Ionicons name="camera-outline" size={64} color={Colors.icon.muted} />
-      </View>
-
-      <View className="mt-3 flex-row justify-end">
-        <TouchableOpacity
-          activeOpacity={0.8}
-          className="h-12 w-12 items-center justify-center rounded-full"
-          style={{ backgroundColor: Colors.ui.accentCyan }}
-        >
-          <Ionicons name="camera" size={22} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      <Text className="mt-2 text-xs" style={{ color: Colors.text.secondary }}>Attach a photo of the issue (optional)</Text>
+        <Text className="mt-2 text-xs" style={{ color: Colors.text.secondary }}>
+          Attach a photo of the issue (optional)
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

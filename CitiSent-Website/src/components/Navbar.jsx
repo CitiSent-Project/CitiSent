@@ -11,7 +11,7 @@ import {
 	FiChevronDown,
 	FiChevronUp,
 } from 'react-icons/fi'
-import CitiSentLogo from '../assets/CitiSentLogo.svg'
+import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../models/pageModel'
 
 const navItems = [
@@ -272,8 +272,8 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								onClick={() => onNavigate(APP_PAGES.NOTIFICATIONS)}
 								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
 									activePage === APP_PAGES.NOTIFICATIONS
-										? 'border-cyan-300 text-cyan-700'
-										: 'border-slate-200 text-slate-500 hover:border-slate-300'
+										? 'border-blue-900 text-blue-900'
+										: 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-blue-100 transition duration-300'
 								}`}
 								aria-label="Notifications"
 							>
@@ -289,8 +289,8 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								onClick={() => onNavigate(APP_PAGES.ADMIN_PROFILE)}
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === APP_PAGES.ADMIN_PROFILE
-										? 'border-cyan-300 bg-cyan-100 text-cyan-700'
-										: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300'
+										? 'border-blue-700 bg-blue-100 text-blue-900'
+										: 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300'
 								}`}
 								aria-label="User profile"
 							>

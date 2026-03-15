@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import CitiSentLogo from '../../assets/CitiSentLogo.svg'
+import CitiSentLogo from '/assets/CitiSentLogo.svg'
 
 const MotionSection = motion.section
 

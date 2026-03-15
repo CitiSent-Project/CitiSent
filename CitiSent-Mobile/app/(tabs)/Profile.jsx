@@ -67,7 +67,11 @@ export default function Profile() {
         refreshing={refreshing}
         onRefresh={onRefresh}
       >
-        <ProfileHeader name="Juan Dela Cruz" phone="09123456789" />
+        <ProfileHeader
+          name="Juan Dela Cruz"
+          phone="09123456789"
+          onEditProfile={() => router.push("/profile/edit")}
+        />
 
         <View className="pt-4">
           {profileActions.map((item) => (

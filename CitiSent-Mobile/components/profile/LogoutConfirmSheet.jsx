@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Animated, Easing, Modal, Pressable, Text, View } from "react-native";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function LogoutConfirmSheet({ visible, onCancel, onConfirm, bottomInset = 0 }) {
   const translateY = useRef(new Animated.Value(320)).current;

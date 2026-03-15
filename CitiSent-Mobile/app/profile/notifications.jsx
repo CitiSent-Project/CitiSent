@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import NotificationItemCard from "../../components/profile/notifications/NotificationItemCard";
-import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
-import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { Colors } from "../../constants/colors";
+import {
+  NotificationItemCard,
+  ProfileSubpageLayout,
+  PROFILE_NOTIFICATIONS,
+} from "../../modules/profile";
+import { usePullToRefresh, Colors } from "../../modules/shared";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(PROFILE_NOTIFICATIONS);

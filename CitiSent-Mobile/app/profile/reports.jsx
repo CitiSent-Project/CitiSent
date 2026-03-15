@@ -1,11 +1,8 @@
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import MyReportCard from "../../components/myReports/reportItem/MyReportCard";
-import EditReportSheet from "../../components/profile/reports/EditReportSheet";
-import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { MY_REPORTS } from "../../constants/myReportsData";
-import { Colors } from "../../constants/colors";
+import { MyReportCard, MY_REPORTS } from "../../modules/myReports";
+import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
+import { usePullToRefresh, Colors } from "../../modules/shared";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },

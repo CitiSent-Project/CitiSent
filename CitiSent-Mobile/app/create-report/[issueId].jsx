@@ -2,15 +2,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AttachmentSection from "../../components/createReport/details/AttachmentSection";
-import BreadcrumbsNav from "../../components/createReport/details/BreadcrumbsNav";
-import IssueReportForm from "../../components/createReport/details/IssueReportForm";
-import SubmitReportButton from "../../components/createReport/details/SubmitReportButton";
-import PageTopBar from "../../components/layout/PageTopBar";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import { Colors } from "../../constants/colors";
-import { getCreateReportIssueById } from "../../constants/createReportIssues";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
+import {
+  AttachmentSection,
+  BreadcrumbsNav,
+  IssueReportForm,
+  SubmitReportButton,
+  getCreateReportIssueById,
+} from "../../modules/createReport";
+import { PageTopBar, RefreshableScrollView, Colors, usePullToRefresh } from "../../modules/shared";
 
 export default function CreateReportIssueDetailScreen() {
   const { issueId } = useLocalSearchParams();

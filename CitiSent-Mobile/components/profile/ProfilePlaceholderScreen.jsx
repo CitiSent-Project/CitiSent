@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PageTopBar from "../layout/PageTopBar";
 import UnderConstructionContent from "./UnderConstructionContent";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 export default function ProfilePlaceholderScreen({ title }) {
   const insets = useSafeAreaInsets();

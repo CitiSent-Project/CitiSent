@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { Colors } from "../../../constants/colors";
+import { Colors } from "../../../modules/shared";
 
 export default function EditReportSheet({ visible, report, onClose, onSave }) {
   const [issueType, setIssueType] = useState("");

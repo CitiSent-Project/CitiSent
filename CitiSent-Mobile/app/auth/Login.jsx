@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View, useWindowDimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../../components/auth/AuthActionButton";
-import AuthBrandMark from "../../components/auth/AuthBrandMark";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import { useSplashTransition } from "../../components/layout/AnimatedSplashLayout";
+import {
+  AuthActionButton,
+  AuthBrandMark,
+  AuthCityFooter,
+} from "../../modules/auth";
+import { useSplashTransition } from "../../modules/shared";
 
 export default function LoginScreen() {
   const router = useRouter();

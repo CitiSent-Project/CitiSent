@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { View } from "react-native";
 import IssueCard from "./IssueCard";
-import { CREATE_REPORT_ISSUES } from "../../constants/createReportIssues";
+import { CREATE_REPORT_ISSUES } from "../../modules/createReport/data";
 
 export default function IssueGrid() {
   const router = useRouter();

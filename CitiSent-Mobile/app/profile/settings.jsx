@@ -1,10 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useState } from "react";
-import ProfileSubpageLayout from "../../components/profile/ProfileSubpageLayout";
-import SettingsToggleRow from "../../components/profile/settings/SettingsToggleRow";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { Colors } from "../../constants/colors";
+import { ProfileSubpageLayout, SettingsToggleRow } from "../../modules/profile";
+import { usePullToRefresh, Colors } from "../../modules/shared";
 
 const DEFAULT_SETTINGS = {
   pushNotifications: true,

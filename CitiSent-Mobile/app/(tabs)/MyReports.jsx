@@ -1,14 +1,14 @@
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MyReportsList from "../../components/myReports/MyReportsList";
-import ReportsFeedSkeleton from "../../components/myReports/ReportsFeedSkeleton";
-import SectionTitle from "../../components/myReports/SectionTitle";
-import MyReportsTopBar from "../../components/myReports/MyReportsTopBar";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import useMyReports from "../../hooks/useMyReports";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import AuthCityFooter from "../../components/auth/AuthCityFooter";
-import { Colors } from "../../constants/colors";
+import {
+  MyReportsList,
+  ReportsFeedSkeleton,
+  SectionTitle,
+  MyReportsTopBar,
+  useMyReports,
+} from "../../modules/myReports";
+import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { AuthCityFooter } from "../../modules/auth";
 
 export default function MyReportsScreen() {
   const insets = useSafeAreaInsets();

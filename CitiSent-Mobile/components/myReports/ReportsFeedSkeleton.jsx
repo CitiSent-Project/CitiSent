@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import SkeletonBlock from "../ui/SkeletonBlock";
-import { Colors } from "../../constants/colors";
+import { Colors } from "../../modules/shared";
 
 function ReportCardSkeleton() {
   return (

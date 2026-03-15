@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View, useWindowDimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import AuthActionButton from "../components/auth/AuthActionButton";
-import AuthBrandMark from "../components/auth/AuthBrandMark";
-import AuthCityFooter from "../components/auth/AuthCityFooter";
-import { useSplashTransition } from "../components/layout/AnimatedSplashLayout";
+import {
+  AuthActionButton,
+  AuthBrandMark,
+  AuthCityFooter,
+} from "../../modules/auth";
+import { useSplashTransition } from "../../modules/shared";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -72,16 +74,18 @@ export default function LoginScreen() {
   }, [contentOpacity, contentTranslateY, height, isSplashTransitionDone, logoOpacity, logoTranslateY]);
 
   const handleLogin = () => {
-    router.push("/login-form");
+    router.push("/auth/LoginForm");
   };
 
   const handleCreateAccount = () => {
-    router.push("/create-account");
+    router.push("/auth/CreateAccount");
   };
 
   return (
     <View className="flex-1 bg-[#1B2D4F]">
       <StatusBar style="light" />
+
+      <AuthCityFooter />
 
       <View className="flex-1 px-10">
         <Animated.View
@@ -110,8 +114,6 @@ export default function LoginScreen() {
           </View>
         </Animated.View>
       </View>
-
-      <AuthCityFooter />
     </View>
   );
 }

@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import EmergencyServicesRow from "../../components/home/EmergencyServicesRow";
-import HomeHeader from "../../components/home/HomeHeader";
-import HomeHero from "../../components/home/HomeHero";
-import LatestReportCard from "../../components/home/LatestReportCard";
-import NewsCard from "../../components/home/NewsCard";
-import SectionHeader from "../../components/home/SectionHeader";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
-import { reportsApi } from "../../services/reports";
+import {
+  EmergencyServicesRow,
+  HomeHeader,
+  HomeHero,
+  LatestReportCard,
+  SectionHeader,
+  reportsApi,
+} from "../../modules/home";
+import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { AuthCityFooter } from "../../modules/auth";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -27,10 +28,12 @@ export default function HomeScreen() {
   }, [loadLatestReport]);
 
   return (
-    <View className="flex-1 bg-[#ECECEC]" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+      <AuthCityFooter backgroundColor={Colors.screen.tabs} />
+
       <RefreshableScrollView
         className="flex-1"
-        contentContainerClassName="pb-8"
+        contentContainerClassName="pb-44"
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
         refreshing={refreshing}

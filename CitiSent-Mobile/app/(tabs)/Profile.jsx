@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ProfileHeader from "../../components/profile/ProfileHeader";
-import LogoutConfirmSheet from "../../components/profile/LogoutConfirmSheet";
-import ProfileMenuItem from "../../components/profile/ProfileMenuItem";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
+import {
+  ProfileHeader,
+  LogoutConfirmSheet,
+  ProfileMenuItem,
+} from "../../modules/profile";
+import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { AuthCityFooter } from "../../modules/auth";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -42,7 +44,7 @@ export default function Profile() {
     setIsLogoutVisible(false);
 
     logoutTimerRef.current = setTimeout(() => {
-      router.replace("/login");
+      router.replace("/auth/Login");
     }, 220);
   };
 
@@ -55,10 +57,12 @@ export default function Profile() {
   }, []);
 
   return (
-    <View className="flex-1 bg-[#E8E8E8]" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.profile }}>
+      <AuthCityFooter backgroundColor={Colors.screen.profile} />
+
       <RefreshableScrollView
         className="flex-1"
-        contentContainerClassName="flex-grow"
+        contentContainerClassName="flex-grow pb-44"
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={onRefresh}
@@ -75,19 +79,11 @@ export default function Profile() {
             />
           ))}
 
-          <View className="mx-5 mt-2 h-[1px] bg-[#C7C7C7]" />
+          <View className="mx-5 mt-2 h-[1px]" style={{ backgroundColor: Colors.divider }} />
 
           <View className="pt-2">
             <ProfileMenuItem icon="log-out-outline" label="Logout" danger onPress={() => setIsLogoutVisible(true)} />
           </View>
-        </View>
-
-        <View className="mt-auto overflow-hidden">
-          <Image
-            source={require("../../assets/logo/cityhall.png")}
-            resizeMode="cover"
-            className="h-40 w-full opacity-55"
-          />
         </View>
       </RefreshableScrollView>
 

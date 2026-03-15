@@ -1,4 +1,5 @@
 import { Image, Text, View } from "react-native";
+import { Colors } from "../../modules/shared";
 
 const hotlines = [
   {
@@ -49,7 +50,8 @@ export default function EmergencyServicesRow() {
       {hotlines.map((hotline) => (
         <View
           key={hotline.key}
-          className="flex-row items-start rounded-xl border border-[#D8D8D8] bg-white px-2 py-2"
+          className="flex-row items-start rounded-xl border bg-white px-2 py-2"
+          style={{ borderColor: Colors.borderNeutral }}
         >
           <View className="mr-4 h-14 w-14 shrink-0 items-center justify-center self-center">
             <Image
@@ -60,17 +62,17 @@ export default function EmergencyServicesRow() {
           </View>
 
           <View className="flex-[0.58] pr-2">
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]" numberOfLines={2}>
+            <Text className="text-[11px] font-extrabold leading-4" style={{ color: Colors.text.primary }} numberOfLines={2}>
               {hotline.nameLine1}
             </Text>
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]" numberOfLines={2}>
+            <Text className="text-[11px] font-extrabold leading-4" style={{ color: Colors.text.primary }} numberOfLines={2}>
               {hotline.nameLine2}
             </Text>
           </View>
 
           <View className="flex-[0.42] items-end">
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine1}</Text>
-            <Text className="text-[11px] font-extrabold leading-4 text-[#111827]">{hotline.numberLine2}</Text>
+            <Text className="text-[11px] font-extrabold leading-4" style={{ color: Colors.text.primary }}>{hotline.numberLine1}</Text>
+            <Text className="text-[11px] font-extrabold leading-4" style={{ color: Colors.text.primary }}>{hotline.numberLine2}</Text>
           </View>
         </View>
       ))}

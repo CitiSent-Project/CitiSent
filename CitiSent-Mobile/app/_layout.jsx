@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import AnimatedSplashLayout from "../components/layout/AnimatedSplashLayout";
+import { AnimatedSplashLayout } from "../modules/shared";
 import "../globals.css";
 
 export default function RootLayout() {
@@ -11,9 +11,9 @@ export default function RootLayout() {
       <AnimatedSplashLayout>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="login-form" />
-          <Stack.Screen name="create-account" />
+          <Stack.Screen name="auth/Login" />
+          <Stack.Screen name="auth/LoginForm" />
+          <Stack.Screen name="auth/CreateAccount" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="create-report/[issueId]" />
           <Stack.Screen name="profile/reports" />

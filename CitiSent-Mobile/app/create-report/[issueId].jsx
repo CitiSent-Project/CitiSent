@@ -2,14 +2,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AttachmentSection from "../../components/createReport/details/AttachmentSection";
-import BreadcrumbsNav from "../../components/createReport/details/BreadcrumbsNav";
-import IssueReportForm from "../../components/createReport/details/IssueReportForm";
-import SubmitReportButton from "../../components/createReport/details/SubmitReportButton";
-import PageTopBar from "../../components/layout/PageTopBar";
-import RefreshableScrollView from "../../components/ui/RefreshableScrollView";
-import { getCreateReportIssueById } from "../../constants/createReportIssues";
-import usePullToRefresh from "../../hooks/usePullToRefresh";
+import {
+  AttachmentSection,
+  BreadcrumbsNav,
+  IssueReportForm,
+  SubmitReportButton,
+  getCreateReportIssueById,
+} from "../../modules/createReport";
+import { PageTopBar, RefreshableScrollView, Colors, usePullToRefresh } from "../../modules/shared";
 
 export default function CreateReportIssueDetailScreen() {
   const { issueId } = useLocalSearchParams();
@@ -81,7 +81,7 @@ export default function CreateReportIssueDetailScreen() {
 
   if (!issue) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-5">
+      <View className="flex-1 items-center justify-center px-5" style={{ backgroundColor: Colors.screen.tabs }}>
         <Text className="mb-2 text-lg font-semibold text-[#111827]">Issue not found</Text>
         <Text className="text-center text-sm text-[#6B7280]">Please go back and select an issue again.</Text>
         <Text className="mt-4 text-sm font-semibold text-[#223D68]" onPress={() => router.back()}>
@@ -92,7 +92,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
       <PageTopBar title="Create Report" />
 
       <BreadcrumbsNav items={["Create Report", issue.label]} />

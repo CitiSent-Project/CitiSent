@@ -47,10 +47,10 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
           <hr className="my-1 border-slate-100" />
           <button
             type="button"
-            onClick={() => handleQuickStatus('Under Review')}
+            onClick={() => handleQuickStatus('In Progress')}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
           >
-            <FiClock className="text-blue-400" /> Mark Under Review
+            <FiClock className="text-blue-400" /> Mark In Progress
           </button>
           <button
             type="button"

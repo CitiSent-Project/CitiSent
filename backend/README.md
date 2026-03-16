@@ -105,6 +105,16 @@ Use this as your baseline whenever you add new domains like `notifications`, `us
 - JSON body size limit (`1mb`) to reduce payload abuse.
 - Auth middleware validates Supabase JWT (`Bearer <token>`).
 
+## Caching
+
+- `GET /api/v1/reports` responses are cached by user + query filters (`limit`, `offset`, `status`).
+- TTL is controlled by `CACHE_TTL_SECONDS` (default: `60`).
+- `POST /api/v1/reports` invalidates the cached report-list entries for that user.
+- Cache driver selection:
+  - `CACHE_DRIVER=auto` (default): uses Redis if `REDIS_URL` is set, otherwise in-memory cache.
+  - `CACHE_DRIVER=redis`: forces Redis usage (falls back to memory if Redis is unavailable).
+  - `CACHE_DRIVER=memory`: uses in-memory cache only.
+
 ## Setup
 
 1. Copy `.env.example` to `.env` and fill your Supabase values.

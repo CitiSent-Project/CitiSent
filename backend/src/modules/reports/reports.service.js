@@ -1,8 +1,23 @@
 import { reportsRepository } from "./reports.repository.js";
 import { toReportResponse } from "./reports.mapper.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
+import {
+  buildReportsListCacheKey,
+  buildReportsUserCachePrefix,
+} from "./reports.cache.js";
 
 export const reportsService = {
   async listReports({ userId, limit, offset, status }) {
+    const cacheKey = buildReportsListCacheKey({
+      userId,
+      limit,
+      offset,
+      status,
+    });
+
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
+
     const result = await reportsRepository.list({
       userId,
       limit,
@@ -10,7 +25,7 @@ export const reportsService = {
       status,
     });
 
-    return {
+    const response = {
       data: result.rows.map(toReportResponse),
       pagination: {
         total: result.count,
@@ -18,6 +33,10 @@ export const reportsService = {
         offset,
       },
     };
+
+    await cacheService.setJSON(cacheKey, response);
+
+    return response;
   },
 
   async createReport({
@@ -37,6 +56,8 @@ export const reportsService = {
       sentiment_label: sentimentLabel ?? null,
       status: "pending",
     });
+
+    await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
 
     return toReportResponse(created);
   },

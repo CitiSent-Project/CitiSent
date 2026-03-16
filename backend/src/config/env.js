@@ -15,6 +15,10 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  CACHE_DRIVER: z.enum(["auto", "memory", "redis"]).default("auto"),
+  CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+  CACHE_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
+  REDIS_URL: z.string().url().optional(),
   RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { PieChart } from '../../components/Dashbord-Ui/Pie-Chart'
-import { VerticalChart } from '../../components/Dashbord-Ui/Vertical-Chart'
+import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
+import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable } from '../../components/Reports-Ui'
 import {
   allCategoryFilterId,

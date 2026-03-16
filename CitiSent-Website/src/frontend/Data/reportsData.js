@@ -56,15 +56,15 @@ export const reportsThisWeekData = {
 }
 
 export const categoryAgencyCards = [
-  { id: 'bplo', label: 'Business Permits and Licensing Office (BPLO)', tone: 'bg-blue-100' },
-  { id: 'cto', label: 'City Treasury Office', tone: 'bg-emerald-100' },
-  { id: 'bfp', label: 'Bureau of Fire Protection (BFP) Processing Area', tone: 'bg-rose-100' },
-  { id: 'ctmd', label: 'City Traffic Management Division/Impounding Services', tone: 'bg-amber-100' },
-  { id: 'cvo', label: 'City Veterinary Office', tone: 'bg-cyan-100' },
-  { id: 'cao', label: 'City Agriculture Office', tone: 'bg-sky-100' },
-  { id: 'ccdo', label: 'City Cooperative Development Office', tone: 'bg-indigo-100' },
-  { id: 'peso', label: 'Public Employment Service Office (PESO)', tone: 'bg-teal-100' },
-  { id: 'pwd', label: 'Senior Citizens / PWD Accessibility Services', tone: 'bg-violet-100' },
+  { id: 'bplo', label: 'Business Permits and Licensing Office (BPLO)'},
+  { id: 'cto', label: 'City Treasury Office'},
+  { id: 'bfp', label: 'Bureau of Fire Protection (BFP) Processing Area'},
+  { id: 'ctmd', label: 'City Traffic Management Division/Impounding Services'},
+  { id: 'cvo', label: 'City Veterinary Office'},
+  { id: 'cao', label: 'City Agriculture Office'},
+  { id: 'ccdo', label: 'City Cooperative Development Office' },
+  { id: 'peso', label: 'Public Employment Service Office (PESO)' },
+  { id: 'pwd', label: 'Senior Citizens / PWD Accessibility Services' },
 ]
 
 export const allCategoryFilterId = 'all-categories'

@@ -22,10 +22,10 @@ describe('reportStateController', () => {
     const result = buildNextReportStatusMap({
       reportStatusMap: previous,
       reportId: 'R-2',
-      nextStatus: 'Under Review',
+      nextStatus: 'In Progress',
     })
 
-    expect(result).toEqual({ 'R-1': 'Pending', 'R-2': 'Under Review' })
+    expect(result).toEqual({ 'R-1': 'Pending', 'R-2': 'In Progress' })
     expect(previous).toEqual({ 'R-1': 'Pending' })
   })
 

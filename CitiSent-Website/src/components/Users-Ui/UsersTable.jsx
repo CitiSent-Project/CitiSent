@@ -72,7 +72,7 @@ function UsersTableRow({
         <button
           type="button"
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-          className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 text-slate-500"
+          className="grid h-9 w-9 place-items-center rounded-full border border-blue-200 text-blue-500 hover:bg-blue-100 transition-colors"
         >
           <FiMoreHorizontal />
         </button>

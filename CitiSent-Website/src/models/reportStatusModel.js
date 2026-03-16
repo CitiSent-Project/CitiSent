@@ -1,8 +1,8 @@
-export const REPORT_STATUS_OPTIONS = ['Pending', 'Under Review', 'Resolved', 'Unresolved']
+export const REPORT_STATUS_OPTIONS = ['Pending', 'In Progress', 'Resolved', 'Unresolved']
 
 export const REPORT_STATUS_BADGE_CLASSES = {
   Pending: 'bg-amber-100 text-amber-700 border-amber-300',
-  'Under Review': 'bg-blue-100 text-blue-700 border-blue-300',
+  'In Progress': 'bg-blue-100 text-blue-700 border-blue-300',
   Resolved: 'bg-emerald-100 text-emerald-700 border-emerald-300',
   Unresolved: 'bg-rose-100 text-rose-700 border-rose-300',
 }

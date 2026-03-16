@@ -90,13 +90,13 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700"
+              className="rounded-lg border border-slate-300 hover:bg-blue-100 transition duration-300 px-4 py-2 text-sm text-slate-700"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
             >
               Save User
             </button>

@@ -10,8 +10,8 @@ export function NotificationFilterChips({ activeFilter, onFilterChange }) {
           onClick={() => onFilterChange(filter)}
           className={`rounded-full px-3 py-1 text-xs font-medium transition ${
             activeFilter === filter
-              ? 'bg-slate-900 text-white'
-              : 'border border-slate-300 bg-white text-slate-600 hover:bg-slate-100'
+              ? 'bg-blue-700 text-white'
+              : 'border border-slate-300 bg-white text-slate-600 hover:bg-blue-200'
           }`}
         >
           {filter}

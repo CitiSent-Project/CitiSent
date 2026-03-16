@@ -14,7 +14,7 @@ import {
 
 const STATUS_ICONS = {
   Pending: FiClock,
-  'Under Review': FiFileText,
+  'In Progress': FiFileText,
   Resolved: FiCheckCircle,
   Unresolved: FiAlertCircle,
 }
@@ -178,7 +178,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
                         ? 'bg-emerald-600 text-white hover:bg-emerald-500'
                         : status === 'Unresolved'
                           ? 'bg-rose-600 text-white hover:bg-rose-500'
-                          : status === 'Under Review'
+                          : status === 'In Progress'
                             ? 'bg-blue-600 text-white hover:bg-blue-500'
                             : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}

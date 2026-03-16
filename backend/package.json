@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js",
+    "lint": "npm run check",
+    "test": "node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",

@@ -14,7 +14,7 @@ export function NotificationItem({ notification, onToggleRead }) {
             </span>
           </div>
           <p className="text-sm text-slate-600">{notification.message}</p>
-          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
+          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500 font-numeric">
             <FiClock />
             {formatDateTime(notification.createdAt)}
           </p>

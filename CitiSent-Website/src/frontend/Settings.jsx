@@ -199,7 +199,7 @@ export function Settings({ profile, preferences, onUpdateProfile, onUpdatePrefer
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 activeTab === tab
                   ? 'bg-blue-900 text-white'
-                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-blue-100'
               }`}
             >
               {tab}

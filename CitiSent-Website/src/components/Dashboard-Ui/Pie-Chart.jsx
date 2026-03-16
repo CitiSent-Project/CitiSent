@@ -41,7 +41,7 @@ export function PieChart({ title, total, labels, values, colors, legend }) {
 				<div className="relative w-full max-w-[320px] flex-1 min-h-55">
 					<Doughnut data={data} options={options} />
 					<div className="absolute inset-0 flex items-center justify-center">
-						<span className="text-lg font-semibold text-slate-800">{total}</span>
+						<span className="text-lg font-semibold text-slate-800 font-numeric">{total}</span>
 					</div>
 				</div>
 				<div className="grid max-h-40 w-full grid-cols-1 gap-2 overflow-y-auto pr-1 text-xs text-slate-600 md:grid-cols-2">

@@ -25,7 +25,7 @@ export function UserProfilePage({ user, onBackToUsers }) {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">User ID</p>
-            <p className="text-slate-900">{user.id}</p>
+            <p className="text-slate-900 font-numeric">{user.id}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Full Name</p>
@@ -45,7 +45,7 @@ export function UserProfilePage({ user, onBackToUsers }) {
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Registered At</p>
-            <p className="text-slate-900">{user.registeredAt}</p>
+            <p className="text-slate-900 font-numeric">{user.registeredAt}</p>
           </div>
         </div>
       </section>

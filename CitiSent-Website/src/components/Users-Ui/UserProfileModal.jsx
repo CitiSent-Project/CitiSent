@@ -13,7 +13,7 @@ export function UserProfileModal({ user, isOpen, onClose }) {
 
         <div className="space-y-3 px-5 py-4 text-sm text-slate-700">
           <p>
-            <span className="font-medium text-slate-900">User ID:</span> {user.id}
+            <span className="font-medium text-slate-900">User ID:</span> <span className="font-numeric">{user.id}</span>
           </p>
           <p>
             <span className="font-medium text-slate-900">Name:</span> {user.name}
@@ -28,7 +28,7 @@ export function UserProfileModal({ user, isOpen, onClose }) {
             <span className="font-medium text-slate-900">Status:</span> {user.status}
           </p>
           <p>
-            <span className="font-medium text-slate-900">Registered:</span> {user.registeredAt}
+            <span className="font-medium text-slate-900">Registered:</span> <span className="font-numeric">{user.registeredAt}</span>
           </p>
         </div>
 

@@ -101,7 +101,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
 
             return (
             <tr key={row.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/60">
-              <td className="px-4 py-3 font-medium text-slate-700">{row.id}</td>
+              <td className="px-4 py-3 font-medium text-slate-700 font-numeric">{row.id}</td>
               <td className="px-4 py-3 text-slate-800">{row.name}</td>
               <td className="px-4 py-3 hidden md:table-cell text-slate-600">{row.location}</td>
               <td className="px-4 py-3">
@@ -114,7 +114,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
                   {normalizedStatus}
                 </span>
               </td>
-              <td className="px-4 py-3 hidden lg:table-cell text-slate-500">{row.date}</td>
+              <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric">{row.date}</td>
               <td className="px-4 py-3 text-right">
                 <ActionMenu
                   report={row}

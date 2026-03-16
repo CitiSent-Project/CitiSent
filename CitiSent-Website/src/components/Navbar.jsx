@@ -118,7 +118,7 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 						initial={{ scale: 0.5, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1 }}
 						transition={{ delay: 0.2 }}
-						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67]"
+						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67] font-numeric"
 					>
 						{item.notifications}
 					</MotionSpan>
@@ -186,10 +186,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 	}
 
 	return (
-		<div
-			className="flex min-h-screen bg-[#eef2f8] text-slate-900"
-			style={{ fontFamily: 'Sora, Montserrat, ui-sans-serif, system-ui' }}
-		>
+		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900">
 			<AnimatePresence>
 				{mobileOpen && (
 					<MotionButton
@@ -292,7 +289,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 							>
 								<FiBell className="text-base" />
 								{unreadNotifications > 0 ? (
-									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white font-numeric">
 										{unreadNotifications}
 									</span>
 								) : null}

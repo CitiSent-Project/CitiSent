@@ -46,14 +46,14 @@ function StatCard({ icon: Icon, label, value, trendValue, trendDirection, color 
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900 font-numeric">{value}</p>
                     <div className="mt-2 flex items-center gap-1">
                         {isPositive ? (
                             <FiTrendingUp className="text-xs text-green-600" />
                         ) : (
                             <FiTrendingDown className="text-xs text-red-600" />
                         )}
-                        <span className={`text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`text-xs font-semibold font-numeric ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                             {trendValue}
                         </span>
                     </div>
@@ -92,7 +92,10 @@ function TablePlaceholder({ title, columns, rows }) {
                         {rows.map((row, idx) => (
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
                                 {Object.values(row).map((cell, cellIdx) => (
-                                    <td key={cellIdx} className="px-6 py-4 text-sm text-slate-700">
+                                    <td
+                                        key={cellIdx}
+                                        className={`px-6 py-4 text-sm text-slate-700 ${cellIdx !== 0 && /\d/.test(String(cell)) ? 'font-numeric' : ''}`}
+                                    >
                                         {cellIdx === 0 ? <ProfilePill label={cell} /> : cell}
                                     </td>
                                 ))}

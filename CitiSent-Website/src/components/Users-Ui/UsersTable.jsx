@@ -67,7 +67,7 @@ function UsersTableRow({
       </div>
       <p className="text-sm text-slate-700">{user.address}</p>
       <UserStatusPill status={user.status} />
-      <p className="text-sm text-slate-700">{user.registeredAt}</p>
+      <p className="text-sm text-slate-700 font-numeric">{user.registeredAt}</p>
       <div className="relative">
         <button
           type="button"

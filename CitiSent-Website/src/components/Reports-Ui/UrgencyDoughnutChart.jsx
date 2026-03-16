@@ -32,7 +32,7 @@ export function UrgencyDoughnutChart({ title, total, labels, values, colors, leg
         <div className="relative mx-auto h-72 w-72">
           <Doughnut data={data} options={options} />
           <div className="absolute inset-0 grid place-items-center">
-            <span className="text-3xl font-bold text-slate-900">{total}</span>
+            <span className="text-3xl font-bold text-slate-900 font-numeric">{total}</span>
           </div>
         </div>
 

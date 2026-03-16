@@ -28,7 +28,7 @@ export function ReportsStatCards({ stats }) {
             </div>
             <div>
               <p className="text-sm text-slate-500">{stat.label}</p>
-              <p className="text-4xl font-bold leading-none text-slate-900">{stat.value}</p>
+              <p className="text-4xl font-bold leading-none text-slate-900 font-numeric">{stat.value}</p>
             </div>
           </div>
         )

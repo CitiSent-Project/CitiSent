@@ -83,10 +83,10 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 				onClick={handleClick}
 				className={`relative flex h-11 w-full items-center rounded-lg px-2 transition-colors ${
 					isSelected
-						? 'bg-white/14 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]'
+						? 'bg-blue-900/40 text-white shadow-[inset_0_0_0_1px_rgba(96,165,250,0.35)]'
 						: item.danger
-							? 'text-rose-300 hover:bg-white/8 hover:text-rose-200'
-							: 'text-slate-100/90 hover:bg-white/8 hover:text-white'
+							? 'text-rose-200 hover:bg-rose-900/30 hover:text-rose-100'
+							: 'text-slate-100/90 hover:bg-blue-900/30 hover:text-white'
 				}`}
 				initial={{ opacity: 0, x: -12 }}
 				animate={{ opacity: 1, x: 0 }}
@@ -118,7 +118,7 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 						initial={{ scale: 0.5, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1 }}
 						transition={{ delay: 0.2 }}
-						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67]"
+						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67] font-numeric"
 					>
 						{item.notifications}
 					</MotionSpan>
@@ -126,7 +126,7 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 			</MotionButton>
 
 			{hasChildren && expanded && submenuOpen ? (
-				<div className="mt-1 space-y-1 border-l border-cyan-100/25 pl-5">
+				<div className="mt-1 space-y-1 border-l border-blue-200/30 pl-5">
 					{item.children.map((child) => {
 						const childSelected = activePage === child.pageKey
 
@@ -137,8 +137,8 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 								onClick={() => onNavigate(child.pageKey)}
 								className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
 									childSelected
-										? 'bg-white/14 text-white'
-										: 'text-cyan-100/90 hover:bg-white/8 hover:text-white'
+										? 'bg-blue-900/40 text-white'
+										: 'text-cyan-100/90 hover:bg-blue-900/30 hover:text-white'
 								}`}
 							>
 								{child.label}
@@ -186,10 +186,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 	}
 
 	return (
-		<div
-			className="flex min-h-screen bg-[#eef2f8] text-slate-900"
-			style={{ fontFamily: 'Sora, Montserrat, ui-sans-serif, system-ui' }}
-		>
+		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900">
 			<AnimatePresence>
 				{mobileOpen && (
 					<MotionButton
@@ -257,7 +254,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 lg:hidden"
+								className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 lg:hidden"
 								onClick={() => setMobileOpen((prev) => !prev)}
 								aria-label="Open navigation menu"
 							>
@@ -268,8 +265,8 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								</span>
 							</button>
 
-							<label className="hidden items-center rounded-lg border border-blue-100 bg-slate-50 px-3 py-2 md:flex md:min-w-75">
-								<FiSearch className="mr-2 text-sm text-blue-400" aria-hidden="true" />
+							<label className="hidden items-center rounded-lg border border-slate-200 bg-white px-3 py-2 md:flex md:min-w-75">
+								<FiSearch className="mr-2 text-sm text-slate-400" aria-hidden="true" />
 								<span className="sr-only">Search</span>
 								<input
 									type="text"
@@ -285,14 +282,14 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								onClick={() => handleNavigate(APP_PAGES.NOTIFICATIONS)}
 								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
 									activePage === APP_PAGES.NOTIFICATIONS
-										? 'border-blue-900 text-blue-900'
-										: 'border-blue-100 text-blue-500 hover:border-blue-300 hover:bg-blue-100 transition duration-300'
+										? 'border-blue-800 bg-blue-50 text-blue-900'
+										: 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-100 transition duration-300'
 								}`}
 								aria-label="Notifications"
 							>
 								<FiBell className="text-base" />
 								{unreadNotifications > 0 ? (
-									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white font-numeric">
 										{unreadNotifications}
 									</span>
 								) : null}
@@ -303,7 +300,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === APP_PAGES.ADMIN_PROFILE
 										? 'border-blue-700 bg-blue-100 text-blue-900'
-										: 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300'
+										: 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100'
 								}`}
 								aria-label="User profile"
 							>

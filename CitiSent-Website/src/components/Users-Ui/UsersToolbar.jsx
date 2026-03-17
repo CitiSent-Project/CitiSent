@@ -2,14 +2,14 @@ import { FiChevronDown, FiPlus, FiSearch, FiSliders } from 'react-icons/fi'
 
 function ToolbarDropdown({ label, value, options, onChange }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600">
+    <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
       <FiSliders className="text-sm" />
       <label className="inline-flex items-center gap-1">
         <span>{label}:</span>
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="appearance-none bg-transparent pr-5 font-medium text-slate-700 focus:outline-none"
+          className="appearance-none border-none bg-transparent pr-5 font-medium text-slate-700 focus:outline-none"
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -38,7 +38,7 @@ export function UsersToolbar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
-      <div className="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
         <FiSearch className="text-slate-400" />
         <input
           className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"

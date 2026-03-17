@@ -1,4 +1,4 @@
-const filters = ['All', 'Unread', 'Read']
+const filters = ["All", "Unread", "Read"];
 
 export function NotificationFilterChips({ activeFilter, onFilterChange }) {
   return (
@@ -10,13 +10,13 @@ export function NotificationFilterChips({ activeFilter, onFilterChange }) {
           onClick={() => onFilterChange(filter)}
           className={`rounded-full px-3 py-1 text-xs font-medium transition ${
             activeFilter === filter
-              ? 'bg-blue-700 text-white'
-              : 'border border-slate-300 bg-white text-slate-600 hover:bg-blue-200'
+              ? "bg-blue-700 text-white"
+              : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-100"
           }`}
         >
           {filter}
         </button>
       ))}
     </div>
-  )
+  );
 }

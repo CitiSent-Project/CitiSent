@@ -33,7 +33,7 @@ export function Notifications({ notifications, onToggleRead, onClearAll }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700">
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 font-numeric">
               {unreadCount} unread
             </span>
             <button

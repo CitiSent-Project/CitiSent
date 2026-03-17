@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
-import { notifySuccess, notifyError } from '../../../components/ui/Toasters'
+import { notifySuccess, notifyError } from '../../../components/ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
@@ -89,14 +89,14 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
           <FiChevronRight className="text-xs" />
           <span className="text-slate-700 font-medium">Report Detail</span>
           <FiChevronRight className="text-xs" />
-          <span className="text-slate-400">{report.id}</span>
+          <span className="text-slate-400 font-numeric">{report.id}</span>
         </nav>
 
         {/* Header */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Report {report.id}</h1>
-            <p className="mt-1 text-sm text-slate-500">Submitted on {report.date}</p>
+            <h1 className="text-2xl font-semibold text-slate-900">Report <span className="font-numeric">{report.id}</span></h1>
+            <p className="mt-1 text-sm text-slate-500">Submitted on <span className="font-numeric">{report.date}</span></p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[currentStatus]}`}>
@@ -115,7 +115,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Report ID</p>
-              <p className="mt-0.5 text-slate-900">{report.id}</p>
+              <p className="mt-0.5 text-slate-900 font-numeric">{report.id}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Reported By</p>
@@ -204,7 +204,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
                   </span>
                   <div>
                     <p className="text-sm font-medium text-slate-900">{entry.action}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{entry.date} — by {entry.actor}</p>
+                    <p className="mt-0.5 text-xs text-slate-500"><span className="font-numeric">{entry.date}</span> — by {entry.actor}</p>
                     {entry.note && (
                       <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                         {entry.note}

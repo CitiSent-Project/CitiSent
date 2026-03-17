@@ -1,15 +1,18 @@
-import { motion } from 'framer-motion'
-import { APP_PAGES } from '../../models/pageModel'
+import { motion } from "framer-motion";
+import { APP_PAGES } from "../../models/pageModel";
 
-const MotionDiv = motion.div
+const MotionDiv = motion.div;
 
 function SkeletonBlock({ className }) {
-  return <div className={`animate-pulse rounded-xl bg-slate-200/80 ${className}`} />
+  return (
+    <div className={`animate-pulse rounded-xl bg-slate-200/80 ${className}`} />
+  );
 }
 
 export function PageSkeleton({ pageKey }) {
-  const isDashboard = pageKey === APP_PAGES.DASHBOARD
-  const isListHeavy = pageKey === APP_PAGES.USERS || pageKey === APP_PAGES.NOTIFICATIONS
+  const isDashboard = pageKey === APP_PAGES.DASHBOARD;
+  const isListHeavy =
+    pageKey === APP_PAGES.USERS || pageKey === APP_PAGES.NOTIFICATIONS;
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -28,7 +31,10 @@ export function PageSkeleton({ pageKey }) {
           <>
             <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div
+                  key={index}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
                   <SkeletonBlock className="h-4 w-24" />
                   <SkeletonBlock className="mt-4 h-8 w-16" />
                   <SkeletonBlock className="mt-3 h-4 w-20" />
@@ -75,5 +81,5 @@ export function PageSkeleton({ pageKey }) {
         ) : null}
       </MotionDiv>
     </main>
-  )
+  );
 }

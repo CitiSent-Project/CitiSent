@@ -13,7 +13,7 @@ export function UserStatCard({ label, value, icon, accent }) {
       </div>
       <div>
         <p className="text-sm text-slate-500">{label}</p>
-        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        <p className="text-2xl font-bold text-slate-900 font-numeric">{value}</p>
       </div>
     </div>
   )

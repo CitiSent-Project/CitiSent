@@ -7,5 +7,5 @@ export function SettingsSectionCard({ title, description, children }) {
       </header>
       <div className="space-y-4">{children}</div>
     </section>
-  )
+  );
 }

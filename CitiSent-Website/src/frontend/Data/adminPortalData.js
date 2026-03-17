@@ -4,6 +4,9 @@ export const ADMIN_STORAGE_KEYS = {
   notifications: 'citisent.admin.notifications',
   activity: 'citisent.admin.activity',
   rememberEmail: 'citisent.admin.rememberEmail',
+  authSession: 'citisent.admin.authSession',
+  activePage: 'citisent.admin.activePage',
+  settingsActiveTab: 'citisent.admin.settingsActiveTab',
 }
 
 export const DEFAULT_ADMIN_PROFILE = {
@@ -25,7 +28,7 @@ export const DEFAULT_PREFERENCES = {
   digestFrequency: 'Weekly',
   reportStatusUpdates: true,
   adminInvitations: true,
-  theme: 'Light',
+  theme: 'System',
   fontSize: 'Medium',
   animationsEnabled: true,
   sessionTimeout: 30,

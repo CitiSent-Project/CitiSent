@@ -12,8 +12,8 @@ export function UnderConstruction({ pageName }) {
 				transition={{ duration: 0.3 }}
 				className="text-center flex flex-col items-center justify-center max-w-md"
 			>
-				<div className="bg-cyan-100/50 p-6 rounded-full mb-6">
-					<FiTool className="text-4xl text-cyan-600" />
+					<div className="mb-6 rounded-full border border-slate-200 bg-slate-100 p-6">
+						<FiTool className="text-4xl text-blue-600" />
 				</div>
 				<h1 className="text-2xl font-bold text-slate-900 mb-3">
 					{pageName} Page Under Construction

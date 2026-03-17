@@ -1,7 +1,27 @@
-import { SettingsSectionCard } from '../Account-Ui'
-import { FormInputField } from './FormInputField'
+import { SettingsSectionCard } from "../Account-Ui";
+import { FormInputField } from "./FormInputField";
 
-export function AccountSettingsTab({ profile, preferences, onUpdatePreference, onUpdateProfile }) {
+export function AccountSettingsTab({
+  profile,
+  preferences,
+  onUpdatePreference,
+  onUpdateProfile,
+}) {
+  const displayName = preferences?.displayName ?? "";
+  const department = preferences?.department ?? "";
+  const email = profile?.email ?? "";
+  const role = profile?.role ?? "";
+
+  function handleDisplayNameChange(event) {
+    onUpdatePreference("displayName", event.target.value);
+  }
+
+  function handleDepartmentChange(event) {
+    const nextDepartment = event.target.value;
+    onUpdatePreference("department", nextDepartment);
+    onUpdateProfile({ department: nextDepartment });
+  }
+
   return (
     <SettingsSectionCard
       title="Account settings"
@@ -10,23 +30,28 @@ export function AccountSettingsTab({ profile, preferences, onUpdatePreference, o
       <div className="grid gap-4 md:grid-cols-2">
         <FormInputField
           label="Display name"
-          value={preferences.displayName}
-          onChange={(event) => onUpdatePreference('displayName', event.target.value)}
+          value={displayName}
+          onChange={handleDisplayNameChange}
         />
 
         <FormInputField
           label="Department"
-          value={preferences.department}
-          onChange={(event) => {
-            onUpdatePreference('department', event.target.value)
-            onUpdateProfile({ department: event.target.value })
-          }}
+          value={department}
+          onChange={handleDepartmentChange}
         />
 
-        <FormInputField label="Email (read-only)" value={profile.email} disabled />
+        <FormInputField
+          label="Email (read-only)"
+          value={email}
+          disabled
+        />
 
-        <FormInputField label="Role (read-only)" value={profile.role} disabled />
+        <FormInputField
+          label="Role (read-only)"
+          value={role}
+          disabled
+        />
       </div>
     </SettingsSectionCard>
-  )
+  );
 }

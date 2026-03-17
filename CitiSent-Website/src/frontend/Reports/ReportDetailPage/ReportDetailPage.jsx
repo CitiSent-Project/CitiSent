@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
-import { notifySuccess, notifyError } from '../../../components/ui/Toasters'
+import { notifySuccess, notifyError } from '../../../components/ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,

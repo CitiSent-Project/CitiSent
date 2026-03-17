@@ -7,12 +7,14 @@ export function UrgencyFilterChips({ chips, selectedChip, onSelectChip }) {
           key={chip}
           onClick={() => onSelectChip(chip)}
           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-            selectedChip === chip ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-blue-100 transition duration-300'
+            selectedChip === chip
+              ? "bg-blue-700 text-white"
+              : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 transition duration-300"
           }`}
         >
           {chip}
         </button>
       ))}
     </div>
-  )
+  );
 }

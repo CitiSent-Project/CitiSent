@@ -1,28 +1,34 @@
-import { useState, useRef, useEffect } from 'react'
-import { FiMoreVertical, FiEye, FiCheckCircle, FiXCircle, FiClock } from 'react-icons/fi'
-import { notifySuccess } from '../ui/Toasters'
+import { useState, useRef, useEffect } from "react";
+import {
+  FiMoreVertical,
+  FiEye,
+  FiCheckCircle,
+  FiXCircle,
+  FiClock,
+} from "react-icons/fi";
+import { notifySuccess } from "../ui/toastHelpers";
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,
   normalizeReportStatus,
-} from '../../models/reportStatusModel'
+} from "../../models/reportStatusModel";
 
 function ActionMenu({ report, onViewReport, onUpdateStatus }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
   useEffect(() => {
     function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [])
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   function handleQuickStatus(status) {
-    onUpdateStatus?.(report.id, status)
-    notifySuccess(`Report ${report.id} set to ${status}.`)
-    setOpen(false)
+    onUpdateStatus?.(report.id, status);
+    notifySuccess(`Report ${report.id} set to ${status}.`);
+    setOpen(false);
   }
 
   return (
@@ -30,7 +36,7 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="grid h-8 w-8 place-items-center rounded-full border border-blue-200 bg-white text-blue-500 hover:bg-blue-100 transition-colors"
+        className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors"
       >
         <FiMoreVertical className="text-sm" />
       </button>
@@ -39,7 +45,10 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
         <div className="absolute right-0 top-9 z-30 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
           <button
             type="button"
-            onClick={() => { onViewReport?.(report); setOpen(false) }}
+            onClick={() => {
+              onViewReport?.(report);
+              setOpen(false);
+            }}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             <FiEye className="text-slate-400" /> View Details
@@ -47,29 +56,29 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
           <hr className="my-1 border-slate-100" />
           <button
             type="button"
-            onClick={() => handleQuickStatus('In Progress')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
+            onClick={() => handleQuickStatus("In Progress")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-slate-100"
           >
             <FiClock className="text-blue-400" /> Mark In Progress
           </button>
           <button
             type="button"
-            onClick={() => handleQuickStatus('Resolved')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50"
+            onClick={() => handleQuickStatus("Resolved")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-slate-100"
           >
             <FiCheckCircle className="text-emerald-400" /> Mark Resolved
           </button>
           <button
             type="button"
-            onClick={() => handleQuickStatus('Unresolved')}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+            onClick={() => handleQuickStatus("Unresolved")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-slate-100"
           >
             <FiXCircle className="text-rose-400" /> Mark Unresolved
           </button>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
@@ -78,7 +87,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
       <div className="px-4 py-10 text-center text-sm text-slate-400">
         No reports to display.
       </div>
-    )
+    );
   }
 
   return (
@@ -97,36 +106,49 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
         </thead>
         <tbody>
           {rows.map((row) => {
-            const normalizedStatus = normalizeReportStatus(row.status)
+            const normalizedStatus = normalizeReportStatus(row.status);
 
             return (
-            <tr key={row.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/60">
-              <td className="px-4 py-3 font-medium text-slate-700 font-numeric">{row.id}</td>
-              <td className="px-4 py-3 text-slate-800">{row.name}</td>
-              <td className="px-4 py-3 hidden md:table-cell text-slate-600">{row.location}</td>
-              <td className="px-4 py-3">
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ''}`}>
-                  {row.urgency}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ''}`}>
-                  {normalizedStatus}
-                </span>
-              </td>
-              <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric">{row.date}</td>
-              <td className="px-4 py-3 text-right">
-                <ActionMenu
-                  report={row}
-                  onViewReport={onViewReport}
-                  onUpdateStatus={onUpdateStatus}
-                />
-              </td>
-            </tr>
-            )
+              <tr
+                key={row.id}
+                className="border-b border-slate-100 transition-colors hover:bg-slate-100"
+              >
+                <td className="px-4 py-3 font-medium text-slate-700 font-numeric">
+                  {row.id}
+                </td>
+                <td className="px-4 py-3 text-slate-800">{row.name}</td>
+                <td className="px-4 py-3 hidden md:table-cell text-slate-600">
+                  {row.location}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}
+                  >
+                    {row.urgency}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}
+                  >
+                    {normalizedStatus}
+                  </span>
+                </td>
+                <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric">
+                  {row.date}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <ActionMenu
+                    report={row}
+                    onViewReport={onViewReport}
+                    onUpdateStatus={onUpdateStatus}
+                  />
+                </td>
+              </tr>
+            );
           })}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

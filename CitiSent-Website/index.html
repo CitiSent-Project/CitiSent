@@ -5,6 +5,37 @@
     <link rel="icon" type="image/svg+xml" href="/assets/CitiSentLogo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>citisent-website</title>
+    <script>
+      (function () {
+        try {
+          const root = document.documentElement
+          const rawPreferences = window.localStorage.getItem('citisent.admin.preferences')
+          const preferences = rawPreferences ? JSON.parse(rawPreferences) : null
+
+          const themePreference = preferences?.theme || 'System'
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const effectiveTheme =
+            themePreference === 'Dark'
+              ? 'dark'
+              : themePreference === 'Light'
+                ? 'light'
+                : systemPrefersDark
+                  ? 'dark'
+                  : 'light'
+
+          root.dataset.theme = effectiveTheme
+
+          const fontSizeMap = { Small: 14, Medium: 16, Large: 18 }
+          root.style.fontSize = `${fontSizeMap[preferences?.fontSize] || 16}px`
+
+          if (preferences?.animationsEnabled === false) {
+            root.classList.add('reduced-motion')
+          }
+        } catch {
+          // Keep first paint resilient even if localStorage is malformed.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

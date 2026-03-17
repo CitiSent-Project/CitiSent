@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navbar } from './components/Navbar'
 import { PageSkeleton } from './components/ui/PageSkeleton'
-import Toasters, { notifyError, notifySuccess } from './components/ui/Toasters'
+import Toasters from './components/ui/Toasters'
+import { notifyError, notifySuccess } from './components/ui/toastHelpers'
 import {
     ADMIN_STORAGE_KEYS,
     DEFAULT_ADMIN_PROFILE,
@@ -15,6 +16,7 @@ import {
     buildPreferenceUpdateState,
     buildProfileUpdateState,
 } from './controllers/profileController'
+import { buildAppearanceState } from './controllers/appearanceController'
 import { buildNextActivityLog } from './controllers/activityController'
 import {
     buildNextReportStatusMap,
@@ -37,10 +39,15 @@ import { useNotificationsState } from './hooks/useNotificationsState'
 import { APP_PAGES, AUTH_PAGES } from './models/pageModel'
 
 function App() {
-    const [activePage, setActivePage] = useState(APP_PAGES.DASHBOARD)
+    const [activePage, setActivePage] = useState(() => {
+        const storedPage = loadFromStorage(ADMIN_STORAGE_KEYS.activePage, APP_PAGES.DASHBOARD)
+        return Object.values(APP_PAGES).includes(storedPage) ? storedPage : APP_PAGES.DASHBOARD
+    })
     const [isPageLoading, setIsPageLoading] = useState(false)
     const [authPage, setAuthPage] = useState(AUTH_PAGES.LOGIN)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(() =>
+        loadFromStorage(ADMIN_STORAGE_KEYS.authSession, false)
+    )
     const [profile, setProfile] = useState(() =>
         loadFromStorage(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
     )
@@ -70,6 +77,41 @@ function App() {
     usePersistToStorage(ADMIN_STORAGE_KEYS.notifications, notifications)
     usePersistToStorage(ADMIN_STORAGE_KEYS.activity, activityLog)
     usePersistToStorage(ADMIN_STORAGE_KEYS.rememberEmail, rememberedEmail)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.authSession, isAuthenticated)
+    usePersistToStorage(ADMIN_STORAGE_KEYS.activePage, activePage)
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function applyAppearance(systemPrefersDark) {
+            const appearanceState = buildAppearanceState({
+                themePreference: preferences.theme,
+                fontSizePreference: preferences.fontSize,
+                animationsEnabled: preferences.animationsEnabled,
+                systemPrefersDark,
+            })
+
+            const root = document.documentElement
+            root.dataset.theme = appearanceState.effectiveTheme
+            root.style.fontSize = `${appearanceState.rootFontSizePx}px`
+            root.classList.toggle('reduced-motion', !appearanceState.animationsEnabled)
+        }
+
+        applyAppearance(mediaQuery.matches)
+
+        if (preferences.theme !== 'System') {
+            return undefined
+        }
+
+        function handleSystemThemeChange(event) {
+            applyAppearance(event.matches)
+        }
+
+        mediaQuery.addEventListener('change', handleSystemThemeChange)
+        return () => {
+            mediaQuery.removeEventListener('change', handleSystemThemeChange)
+        }
+    }, [preferences.theme, preferences.fontSize, preferences.animationsEnabled])
 
     usePageLoadingState({
         activePage,

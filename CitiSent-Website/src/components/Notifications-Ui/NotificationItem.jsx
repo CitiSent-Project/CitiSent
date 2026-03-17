@@ -1,5 +1,5 @@
-import { FiCheckCircle, FiClock } from 'react-icons/fi'
-import { formatDateTime } from '../../frontend/Data/adminPortalData'
+import { FiCheckCircle, FiClock } from "react-icons/fi";
+import { formatDateTime } from "../../frontend/Data/adminPortalData";
 
 export function NotificationItem({ notification, onToggleRead }) {
   return (
@@ -7,8 +7,12 @@ export function NotificationItem({ notification, onToggleRead }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            {!notification.read && <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />}
-            <p className="text-sm font-semibold text-slate-800">{notification.title}</p>
+            {!notification.read && (
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
+            )}
+            <p className="text-sm font-semibold text-slate-800">
+              {notification.title}
+            </p>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] uppercase text-slate-500">
               {notification.type}
             </span>
@@ -22,13 +26,13 @@ export function NotificationItem({ notification, onToggleRead }) {
 
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:bg-slate-100"
           onClick={() => onToggleRead(notification.id)}
         >
           <FiCheckCircle />
-          {notification.read ? 'Mark unread' : 'Mark read'}
+          {notification.read ? "Mark unread" : "Mark read"}
         </button>
       </div>
     </article>
-  )
+  );
 }

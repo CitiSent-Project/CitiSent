@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
+import { clearAuthToken, setAuthToken } from "./authSession";
 
 // TODO: Remove this temporary local test account before production release.
 const TEMP_TEST_ACCOUNT = {
@@ -74,15 +75,19 @@ export const authApi = {
         normalizedPhoneNumber === TEMP_TEST_ACCOUNT.phoneNumber) &&
       payload?.password === TEMP_TEST_ACCOUNT.password
     ) {
+      setAuthToken(TEMP_TEST_LOGIN_RESPONSE.token);
       return TEMP_TEST_LOGIN_RESPONSE;
     }
 
-    return api.post("/auth/login", {
+    const response = await api.post("/auth/login", {
       ...payload,
       identifier: parsedIdentifier.raw,
       username: normalizedUsername,
       phoneNumber: normalizedPhoneNumber,
     });
+
+    setAuthToken(response?.token);
+    return response;
   },
   register: async (payload) => {
     try {
@@ -95,5 +100,9 @@ export const authApi = {
       const corePayload = pickCoreRegisterPayload(payload);
       return api.post("/auth/register", corePayload);
     }
+  },
+
+  logout: () => {
+    clearAuthToken();
   },
 };

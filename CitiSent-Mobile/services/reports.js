@@ -2,6 +2,8 @@ import { LATEST_HOME_REPORT } from "../constants/homeData";
 import { MY_REPORTS } from "../constants/myReportsData";
 import { api } from "./api";
 
+const reportedFallbackWarnings = new Set();
+
 function readArray(payload, key, fallback) {
   if (Array.isArray(payload)) {
     return payload;
@@ -26,16 +28,25 @@ function readObject(payload, key, fallback) {
   return fallback;
 }
 
+function warnFallbackOnce(label, error) {
+  const message = error?.message || String(error || "Unknown error");
+  const dedupeKey = `${label}:${message}`;
+
+  if (reportedFallbackWarnings.has(dedupeKey)) {
+    return;
+  }
+
+  reportedFallbackWarnings.add(dedupeKey);
+  console.warn(label, message);
+}
+
 export const reportsApi = {
   getMyReports: async () => {
     try {
       const response = await api.get("/reports/mine");
       return readArray(response, "reports", MY_REPORTS);
     } catch (error) {
-      console.warn(
-        "Falling back to local my reports data:",
-        error?.message || error,
-      );
+      warnFallbackOnce("Falling back to local my reports data:", error);
       return MY_REPORTS;
     }
   },
@@ -45,10 +56,7 @@ export const reportsApi = {
       const response = await api.get("/reports/latest");
       return readObject(response, "report", LATEST_HOME_REPORT);
     } catch (error) {
-      console.warn(
-        "Falling back to local home report data:",
-        error?.message || error,
-      );
+      warnFallbackOnce("Falling back to local home report data:", error);
       return LATEST_HOME_REPORT;
     }
   },

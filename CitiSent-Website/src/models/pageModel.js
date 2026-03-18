@@ -1,5 +1,6 @@
 export const APP_PAGES = {
   DASHBOARD: 'Dashboard',
+  ADMIN_MANAGEMENT: 'Admin Management',
   USERS: 'Users',
   USER_PROFILE: 'User Profile',
   REPORTS: 'Reports',

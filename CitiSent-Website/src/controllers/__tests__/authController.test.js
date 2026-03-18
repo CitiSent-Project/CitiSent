@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   buildLoginState,
   buildRegistrationState,
+  resolveAuthenticatedAdmin,
   validateLoginCredentials,
 } from '../authController'
 import { APP_PAGES } from '../../models/pageModel'
@@ -67,12 +68,14 @@ describe('authController', () => {
 
     const rememberState = buildLoginState({
       payload: { email: 'admin@citisent.gov', rememberMe: true },
+      authenticatedAdmin: { id: 'admin-1' },
     })
 
     expect(rememberState).toEqual({
       loginAt: '2026-03-14T11:20:00.000Z',
       rememberedEmail: 'admin@citisent.gov',
       nextActivePage: APP_PAGES.DASHBOARD,
+      authenticatedAdmin: { id: 'admin-1' },
       activity: {
         action: 'Login',
         detail: 'Signed in as admin@citisent.gov',
@@ -83,5 +86,26 @@ describe('authController', () => {
       payload: { email: 'admin@citisent.gov', rememberMe: false },
     })
     expect(noRememberState.rememberedEmail).toBe('')
+  })
+
+  it('resolves an authenticated admin by email and password', () => {
+    const admins = [
+      { id: 'a-1', email: 'superadmin@citisent.gov', password: 'superadmin123' },
+      { id: 'a-2', email: 'office@citisent.gov', password: 'office123' },
+    ]
+
+    expect(
+      resolveAuthenticatedAdmin({
+        adminAccounts: admins,
+        payload: { email: 'OFFICE@citisent.gov', password: 'office123' },
+      })
+    ).toEqual(admins[1])
+
+    expect(
+      resolveAuthenticatedAdmin({
+        adminAccounts: admins,
+        payload: { email: 'OFFICE@citisent.gov', password: 'wrong' },
+      })
+    ).toBeNull()
   })
 })

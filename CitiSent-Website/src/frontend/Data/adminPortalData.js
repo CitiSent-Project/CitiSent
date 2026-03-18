@@ -1,25 +1,80 @@
+import { USER_ROLES } from '../../models/roleAccessModel'
+
 export const ADMIN_STORAGE_KEYS = {
   profile: 'citisent.admin.profile',
+  adminAccounts: 'citisent.admin.adminAccounts',
   preferences: 'citisent.admin.preferences',
   notifications: 'citisent.admin.notifications',
+  notificationsByAdmin: 'citisent.admin.notificationsByAdmin',
   activity: 'citisent.admin.activity',
+  transferRequests: 'citisent.admin.transferRequests',
   rememberEmail: 'citisent.admin.rememberEmail',
   authSession: 'citisent.admin.authSession',
   activePage: 'citisent.admin.activePage',
   settingsActiveTab: 'citisent.admin.settingsActiveTab',
 }
 
+export const DEPARTMENT_OPTIONS = [
+  { id: 'bplo', label: 'Business Permits and Licensing Office (BPLO)' },
+  { id: 'cto', label: 'City Treasury Office' },
+  { id: 'bfp', label: 'Bureau of Fire Protection (BFP) Processing Area' },
+  { id: 'ctmd', label: 'City Traffic Management Division/Impounding Services' },
+  { id: 'cvo', label: 'City Veterinary Office' },
+  { id: 'cao', label: 'City Agriculture Office' },
+  { id: 'ccdo', label: 'City Cooperative Development Office' },
+  { id: 'peso', label: 'Public Employment Service Office (PESO)' },
+  { id: 'pwd', label: 'Senior Citizens / PWD Accessibility Services' },
+]
+
+export function getDepartmentLabelById(departmentId) {
+  return DEPARTMENT_OPTIONS.find((department) => department.id === departmentId)?.label || ''
+}
+
 export const DEFAULT_ADMIN_PROFILE = {
-  fullName: 'City Operations Admin',
-  email: 'admin@citisent.gov',
-  department: 'City Operations Office',
-  role: 'Administrator',
+  id: 'admin-super-001',
+  fullName: 'City Superadmin',
+  email: 'superadmin@citisent.gov',
+  departmentId: 'all',
+  department: 'All Departments',
+  role: USER_ROLES.SUPERADMIN,
   phone: '+63 900 000 0000',
   address: 'City Hall Building, Main District',
-  password: 'admin123',
+  password: 'superadmin123',
   joinedAt: '2026-03-01T08:30:00.000Z',
   lastLoginAt: '',
 }
+
+export const DEFAULT_ADMIN_ACCOUNTS = [
+  {
+    ...DEFAULT_ADMIN_PROFILE,
+  },
+  {
+    id: 'admin-office-001',
+    fullName: 'BPLO Office Admin',
+    email: 'bplo.admin@citisent.gov',
+    departmentId: 'bplo',
+    department: getDepartmentLabelById('bplo'),
+    role: USER_ROLES.OFFICE_ADMIN,
+    phone: '+63 900 111 0001',
+    address: 'City Hall Annex, BPLO Wing',
+    password: 'officeadmin123',
+    joinedAt: '2026-03-02T09:15:00.000Z',
+    lastLoginAt: '',
+  },
+  {
+    id: 'admin-office-002',
+    fullName: 'Treasury Office Admin',
+    email: 'treasury.admin@citisent.gov',
+    departmentId: 'cto',
+    department: getDepartmentLabelById('cto'),
+    role: USER_ROLES.OFFICE_ADMIN,
+    phone: '+63 900 111 0002',
+    address: 'City Treasury Building, Downtown',
+    password: 'officeadmin123',
+    joinedAt: '2026-03-04T10:10:00.000Z',
+    lastLoginAt: '',
+  },
+]
 
 export const DEFAULT_PREFERENCES = {
   displayName: 'City Operations Admin',
@@ -60,6 +115,18 @@ export const DEFAULT_NOTIFICATIONS = [
     read: false,
   },
 ]
+
+export const DEFAULT_TRANSFER_REQUESTS = []
+
+export function buildDefaultNotificationsByAdmin(adminAccounts = DEFAULT_ADMIN_ACCOUNTS) {
+  return adminAccounts.reduce((accumulator, admin) => {
+    accumulator[admin.id] = DEFAULT_NOTIFICATIONS.map((notification) => ({
+      ...notification,
+      id: `${notification.id}-${admin.id}`,
+    }))
+    return accumulator
+  }, {})
+}
 
 export function formatDateTime(value) {
   if (!value) {

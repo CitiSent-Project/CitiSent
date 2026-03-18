@@ -9,31 +9,39 @@ import {
   reportsSummaryStats,
   reportsThisWeekData,
 } from '../Data/reportsData'
+import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
+import { isSuperadmin } from '../../models/roleAccessModel'
 
-export function ByCategory({ rows, onViewReport, onUpdateStatus }) {
+export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
   const pageSize = 6
   const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
   const [currentPage, setCurrentPage] = useState(1)
+  const hasAllAccess = isSuperadmin(profile?.role)
 
-  const cardsWithAllFilter = useMemo(
-    () => [
-      { id: allCategoryFilterId, label: 'All Agencies', tone: 'bg-slate-100' },
-      ...categoryAgencyCards,
-    ],
-    []
-  )
+  const cardsWithAllFilter = useMemo(() => {
+    const scopedAgencies = getScopedAgencyFilters({ agencies: categoryAgencyCards, profile })
+    if (hasAllAccess) {
+      return [{ id: allCategoryFilterId, label: 'All Agencies', tone: 'bg-slate-100' }, ...scopedAgencies]
+    }
+
+    return scopedAgencies
+  }, [hasAllAccess, profile])
+
+  const effectiveSelectedAgencyId = cardsWithAllFilter.some((agency) => agency.id === selectedAgencyId)
+    ? selectedAgencyId
+    : cardsWithAllFilter[0]?.id || allCategoryFilterId
 
   const filteredRows = useMemo(() => {
     const filtered =
-      selectedAgencyId === allCategoryFilterId
+      hasAllAccess && effectiveSelectedAgencyId === allCategoryFilterId
         ? rows
-        : rows.filter((row) => row.categoryId === selectedAgencyId)
+        : rows.filter((row) => row.categoryId === effectiveSelectedAgencyId)
 
     return [...filtered].sort((a, b) => b.dateValue - a.dateValue)
-  }, [selectedAgencyId, rows])
+  }, [effectiveSelectedAgencyId, hasAllAccess, rows])
 
   const selectedAgencyLabel =
-    cardsWithAllFilter.find((a) => a.id === selectedAgencyId)?.label || 'All Agencies'
+    cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize))
   const safeCurrentPage = Math.min(currentPage, totalPages)
@@ -90,7 +98,7 @@ export function ByCategory({ rows, onViewReport, onUpdateStatus }) {
 
         <AgencyCardsGrid
           items={cardsWithAllFilter}
-          selectedItemId={selectedAgencyId}
+          selectedItemId={effectiveSelectedAgencyId}
           onSelectItem={handleSelectAgency}
         />
 
@@ -105,6 +113,7 @@ export function ByCategory({ rows, onViewReport, onUpdateStatus }) {
             rows={visibleRows}
             onViewReport={onViewReport}
             onUpdateStatus={onUpdateStatus}
+            canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
           />
         </section>
 

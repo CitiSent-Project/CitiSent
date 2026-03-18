@@ -1,14 +1,31 @@
-import { Config } from "../constants/config";
+import { resolveApiBaseUrl } from "./apiConfig";
+import { getAuthToken } from "./authSession";
 
-const BASE_URL = Config.API_BASE_URL;
+const BASE_URL = resolveApiBaseUrl();
+
+function buildRequestUrl(endpoint) {
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
+  return `${BASE_URL}${normalizedEndpoint}`;
+}
+
+function buildHeaders(customHeaders) {
+  const token = getAuthToken();
+
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...customHeaders,
+  };
+}
 
 async function request(endpoint, options = {}) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
+  const { headers, ...requestOptions } = options;
+
+  const response = await fetch(buildRequestUrl(endpoint), {
+    headers: buildHeaders(headers),
+    ...requestOptions,
   });
 
   const rawBody = await response.text();

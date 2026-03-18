@@ -1,8 +1,10 @@
 import { LATEST_HOME_REPORT } from "../constants/homeData";
 import { MY_REPORTS } from "../constants/myReportsData";
 import { api } from "./api";
+import { getAuthToken } from "./authSession";
 
 const reportedFallbackWarnings = new Set();
+const TEMP_TOKEN_PREFIX = "temp-";
 
 function readArray(payload, key, fallback) {
   if (Array.isArray(payload)) {
@@ -40,8 +42,22 @@ function warnFallbackOnce(label, error) {
   console.warn(label, message);
 }
 
+function shouldUseLocalReportsData() {
+  const token = getAuthToken();
+
+  if (!token) {
+    return true;
+  }
+
+  return token.startsWith(TEMP_TOKEN_PREFIX);
+}
+
 export const reportsApi = {
   getMyReports: async () => {
+    if (shouldUseLocalReportsData()) {
+      return MY_REPORTS;
+    }
+
     try {
       const response = await api.get("/reports/mine");
       return readArray(response, "reports", MY_REPORTS);
@@ -52,6 +68,10 @@ export const reportsApi = {
   },
 
   getLatestHomeReport: async () => {
+    if (shouldUseLocalReportsData()) {
+      return LATEST_HOME_REPORT;
+    }
+
     try {
       const response = await api.get("/reports/latest");
       return readObject(response, "report", LATEST_HOME_REPORT);

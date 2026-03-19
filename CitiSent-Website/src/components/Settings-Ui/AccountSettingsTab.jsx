@@ -1,5 +1,6 @@
 import { SettingsSectionCard } from "../Account-Ui";
 import { FormInputField } from "./FormInputField";
+import { USER_ROLES } from "../../models/roleAccessModel";
 
 export function AccountSettingsTab({
   profile,
@@ -11,6 +12,7 @@ export function AccountSettingsTab({
   const department = preferences?.department ?? "";
   const email = profile?.email ?? "";
   const role = profile?.role ?? "";
+  const isOfficeAdmin = role === USER_ROLES.OFFICE_ADMIN;
 
   function handleDisplayNameChange(event) {
     onUpdatePreference("displayName", event.target.value);
@@ -38,7 +40,14 @@ export function AccountSettingsTab({
           label="Department"
           value={department}
           onChange={handleDepartmentChange}
+          disabled={isOfficeAdmin}
         />
+
+        {isOfficeAdmin ? (
+          <p className="text-xs text-slate-500 md:col-span-2">
+            Department changes require a transfer request in the Transfers tab.
+          </p>
+        ) : null}
 
         <FormInputField
           label="Email (read-only)"

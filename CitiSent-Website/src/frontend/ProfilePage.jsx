@@ -1,9 +1,31 @@
 import { useState } from 'react'
 import { ProfileSummaryCard } from '../components/Account-Ui'
 import { formatDateTime } from './Data/adminPortalData'
+import { categoryAgencyCards } from './Data/reportsData'
+import { buildProfileSubmissionState } from '../controllers/profileController'
+import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
+import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
 
-export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
+export function ProfileInformation({
+  profile,
+  activityLog,
+  transferRequests,
+  onUpdateProfile,
+  onSubmitTransferRequest,
+}) {
+  const departmentCatalog = categoryAgencyCards.map((agency) => ({
+    id: agency.id,
+    label: agency.label,
+  }))
+  const departmentOptions = departmentCatalog.map((agency) => agency.label)
+  const isOfficeAdmin = normalizeUserRole(profile.role) === USER_ROLES.OFFICE_ADMIN
+  const hasPendingTransferRequest = transferRequests.some(
+    (request) =>
+      request.adminId === profile.id && request.status === TRANSFER_REQUEST_STATUS.PENDING
+  )
   const [editing, setEditing] = useState(false)
+  const [transferReason, setTransferReason] = useState('')
+  const [submissionFeedback, setSubmissionFeedback] = useState(null)
   const [draft, setDraft] = useState({
     fullName: profile.fullName,
     department: profile.department,
@@ -22,11 +44,49 @@ export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
       phone: profile.phone,
       address: profile.address,
     })
+    setTransferReason('')
+    setSubmissionFeedback(null)
     setEditing(true)
   }
 
   function saveProfile() {
-    onUpdateProfile(draft)
+    const submissionState = buildProfileSubmissionState({
+      profile,
+      draft,
+      transferReason,
+      departmentCatalog,
+      hasPendingTransferRequest,
+    })
+
+    if (!submissionState.ok) {
+      setSubmissionFeedback({
+        type: 'error',
+        message: submissionState.message,
+      })
+      return
+    }
+
+    if (submissionState.shouldUpdateProfile) {
+      onUpdateProfile(submissionState.profileUpdates)
+    }
+
+    if (submissionState.transferRequestPayload) {
+      const requestResult = onSubmitTransferRequest(submissionState.transferRequestPayload)
+      if (requestResult && requestResult.ok === false) {
+        setSubmissionFeedback({
+          type: 'error',
+          message: requestResult.message,
+        })
+        return
+      }
+
+      setSubmissionFeedback({
+        type: 'success',
+        message:
+          'Department change request submitted. Your current department remains active until superadmin approval.',
+      })
+    }
+
     setEditing(false)
   }
 
@@ -50,7 +110,10 @@ export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setEditing(false)}
+                onClick={() => {
+                  setEditing(false)
+                  setSubmissionFeedback(null)
+                }}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
               >
                 Cancel
@@ -71,6 +134,17 @@ export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
         {editing ? (
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Editable details</h2>
+            {submissionFeedback ? (
+              <p
+                className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
+                  submissionFeedback.type === 'error'
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                }`}
+              >
+                {submissionFeedback.message}
+              </p>
+            ) : null}
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Full name</label>
@@ -82,11 +156,31 @@ export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
               </div>
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Department</label>
-                <input
+                <select
                   value={draft.department}
                   onChange={(event) => updateDraft('department', event.target.value)}
+                  disabled={isOfficeAdmin && hasPendingTransferRequest}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                />
+                >
+                  {!departmentOptions.includes(draft.department) ? (
+                    <option value={draft.department}>{draft.department}</option>
+                  ) : null}
+                  {departmentOptions.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
+                </select>
+                {isOfficeAdmin ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Department changes are processed as transfer requests and require superadmin approval.
+                  </p>
+                ) : null}
+                {isOfficeAdmin && hasPendingTransferRequest ? (
+                  <p className="mt-1 text-xs text-amber-700">
+                    You already have a pending transfer request. Department edits are temporarily locked.
+                  </p>
+                ) : null}
               </div>
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Phone</label>
@@ -104,6 +198,20 @@ export function ProfileInformation({ profile, activityLog, onUpdateProfile }) {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 />
               </div>
+              {isOfficeAdmin && draft.department !== profile.department ? (
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm text-slate-700">
+                    Transfer request reason
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={transferReason}
+                    onChange={(event) => setTransferReason(event.target.value)}
+                    placeholder="Explain why you are requesting a department change."
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  />
+                </div>
+              ) : null}
             </div>
           </section>
         ) : null}

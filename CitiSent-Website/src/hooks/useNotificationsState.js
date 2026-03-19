@@ -1,24 +1,36 @@
 import {
-  buildClearNotificationsTransition,
+  buildClearAdminNotificationsTransition,
   countUnreadNotifications,
-  toggleNotificationReadState,
+  getAdminNotifications,
+  toggleAdminNotificationReadState,
 } from '../controllers/notificationsController'
 
 export function useNotificationsState({
-  notifications,
-  setNotifications,
+  notificationsByAdmin,
+  activeAdminId,
+  setNotificationsByAdmin,
   addActivity,
   notifySuccess,
 }) {
+  const notifications = getAdminNotifications({ notificationsByAdmin, adminId: activeAdminId })
+
   function handleToggleNotification(notificationId) {
-    setNotifications((previous) =>
-      toggleNotificationReadState({ notifications: previous, notificationId })
+    setNotificationsByAdmin((previous) =>
+      toggleAdminNotificationReadState({
+        notificationsByAdmin: previous,
+        adminId: activeAdminId,
+        notificationId,
+      })
     )
   }
 
   function handleClearNotifications() {
-    const transition = buildClearNotificationsTransition()
-    setNotifications(transition.nextNotifications)
+    const transition = buildClearAdminNotificationsTransition({
+      notificationsByAdmin,
+      adminId: activeAdminId,
+    })
+
+    setNotificationsByAdmin(transition.nextNotificationsByAdmin)
     addActivity(transition.activity.action, transition.activity.detail)
     notifySuccess(transition.successMessage)
   }
@@ -26,6 +38,7 @@ export function useNotificationsState({
   const unreadNotifications = countUnreadNotifications(notifications)
 
   return {
+    notifications,
     unreadNotifications,
     handleToggleNotification,
     handleClearNotifications,

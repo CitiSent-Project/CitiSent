@@ -9,6 +9,7 @@ import { ProfileInformation } from '../frontend/ProfilePage'
 import { Settings } from '../frontend/Settings'
 import { UserProfilePage } from '../frontend/Users/UserProfilePage/UserProfilePage'
 import { ReportDetailPage } from '../frontend/Reports/ReportDetailPage/ReportDetailPage'
+import { AdminManagement } from '../frontend/AdminManagement'
 import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 
 export function renderAuthPage({ authPage, onRegister, onSwitchToLogin, onLogin, onSwitchToRegister, rememberedEmail }) {
@@ -32,6 +33,7 @@ export function renderActivePage({
     profile,
     activityLog,
     onUpdateProfile,
+    notificationsByAdmin,
     notifications,
     onToggleRead,
     onClearAll,
@@ -45,24 +47,44 @@ export function renderActivePage({
     selectedReport,
     onBackToReports,
     onUpdateReportStatus,
+    transferRequests,
+    adminAccounts,
+    onSubmitTransferRequest,
+    onAssignOfficeDepartment,
+    onApproveTransfer,
+    onRejectTransfer,
 }) {
     switch (activePage) {
         case APP_PAGES.DASHBOARD:
             return <Dashboard />
+        case APP_PAGES.ADMIN_MANAGEMENT:
+            return (
+                <AdminManagement
+                    profile={profile}
+                    adminAccounts={adminAccounts}
+                    notificationsByAdmin={notificationsByAdmin}
+                    transferRequests={transferRequests}
+                    onAssignOfficeDepartment={onAssignOfficeDepartment}
+                    onApproveTransfer={onApproveTransfer}
+                    onRejectTransfer={onRejectTransfer}
+                />
+            )
         case APP_PAGES.USERS:
             return <Users onViewUserProfile={onViewUserProfile} />
         case APP_PAGES.REPORTS:
-            return <Reports section={REPORT_SECTIONS.CATEGORY} onViewReport={onViewReport} />
+            return <Reports section={REPORT_SECTIONS.CATEGORY} profile={profile} onViewReport={onViewReport} />
         case APP_PAGES.REPORTS_BY_CATEGORY:
-            return <Reports section={REPORT_SECTIONS.CATEGORY} onViewReport={onViewReport} />
+            return <Reports section={REPORT_SECTIONS.CATEGORY} profile={profile} onViewReport={onViewReport} />
         case APP_PAGES.REPORTS_BY_URGENCY:
-            return <Reports section={REPORT_SECTIONS.URGENCY} onViewReport={onViewReport} />
+            return <Reports section={REPORT_SECTIONS.URGENCY} profile={profile} onViewReport={onViewReport} />
         case APP_PAGES.ADMIN_PROFILE:
             return (
                 <ProfileInformation
                     profile={profile}
                     activityLog={activityLog}
+                    transferRequests={transferRequests}
                     onUpdateProfile={onUpdateProfile}
+                    onSubmitTransferRequest={onSubmitTransferRequest}
                 />
             )
         case APP_PAGES.NOTIFICATIONS:
@@ -78,9 +100,11 @@ export function renderActivePage({
                 <Settings
                     profile={profile}
                     preferences={preferences}
+                    transferRequests={transferRequests}
                     onUpdateProfile={onUpdateProfile}
                     onUpdatePreferences={onUpdatePreferences}
                     onRequestLogout={onRequestLogout}
+                    onSubmitTransferRequest={onSubmitTransferRequest}
                 />
             )
         case APP_PAGES.LOGOUT:
@@ -91,6 +115,7 @@ export function renderActivePage({
             return (
                 <ReportDetailPage
                     report={selectedReport}
+                    profile={profile}
                     onBackToReports={onBackToReports}
                     onUpdateStatus={onUpdateReportStatus}
                 />

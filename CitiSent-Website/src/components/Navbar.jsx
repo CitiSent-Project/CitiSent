@@ -14,13 +14,21 @@ import {
 } from 'react-icons/fi'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../models/pageModel'
+import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
 
 const navItems = [
 	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
-	{ label: 'Users', pageKey: APP_PAGES.USERS, icon: FiUsers },
+	{
+		label: 'Admin Management',
+		pageKey: APP_PAGES.ADMIN_MANAGEMENT,
+		icon: FiUsers,
+		roles: [USER_ROLES.SUPERADMIN],
+	},
+	{ label: 'Users', pageKey: APP_PAGES.USERS, icon: FiUsers, roles: [USER_ROLES.SUPERADMIN] },
 	{
 		label: 'Reports',
 		icon: FiFileText,
+		roles: [USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN],
 		children: [
 			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY },
 			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY },
@@ -176,9 +184,18 @@ function BrandBlock({ expanded }) {
 	)
 }
 
-export function Navbar({ children, activePage, onNavigate, unreadNotifications = 0 }) {
+export function Navbar({ children, activePage, onNavigate, profileRole, unreadNotifications = 0 }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
+	const resolvedRole = normalizeUserRole(profileRole)
+
+	const visibleNavItems = navItems.filter((item) => {
+		if (!item.roles) {
+			return true
+		}
+
+		return item.roles.includes(resolvedRole)
+	})
 
 	function handleNavigate(nextPage) {
 		onNavigate(nextPage)
@@ -208,7 +225,7 @@ export function Navbar({ children, activePage, onNavigate, unreadNotifications =
 					<BrandBlock expanded={expanded} />
 
 					<nav className="flex-1 space-y-2">
-						{navItems.map((item, index) => (
+						{visibleNavItems.map((item, index) => (
 							<NavOption
 								key={item.label}
 								item={item}

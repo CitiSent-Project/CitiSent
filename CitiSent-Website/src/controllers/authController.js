@@ -41,13 +41,25 @@ export function validateLoginCredentials({ profile, payload }) {
   }
 }
 
-export function buildLoginState({ payload }) {
+export function resolveAuthenticatedAdmin({ adminAccounts = [], payload }) {
+  const normalizedEmail = String(payload?.email || '').trim().toLowerCase()
+  const password = String(payload?.password || '')
+
+  return (
+    adminAccounts.find(
+      (admin) => admin.email.toLowerCase() === normalizedEmail && admin.password === password
+    ) || null
+  )
+}
+
+export function buildLoginState({ payload, authenticatedAdmin }) {
   const loginAt = new Date().toISOString()
 
   return {
     loginAt,
     rememberedEmail: payload.rememberMe ? payload.email : '',
     nextActivePage: APP_PAGES.DASHBOARD,
+    authenticatedAdmin,
     activity: {
       action: 'Login',
       detail: `Signed in as ${payload.email}`,

@@ -8,14 +8,24 @@ import { loadFromStorage } from '../services/storageService'
 import {
   AccountSettingsTab,
   AppearanceSettingsTab,
+  DepartmentTransferTab,
   NotificationSettingsTab,
   SecuritySettingsTab,
   SettingsTabNav,
 } from '../components/Settings-Ui'
+import { DEPARTMENT_OPTIONS } from './Data/adminPortalData'
 
-const tabs = ['Account', 'Notifications', 'Appearance', 'Security']
+const tabs = ['Account', 'Notifications', 'Appearance', 'Security', 'Transfers']
 
-export function Settings({ profile, preferences, onUpdateProfile, onUpdatePreferences, onRequestLogout }) {
+export function Settings({
+  profile,
+  preferences,
+  transferRequests,
+  onUpdateProfile,
+  onUpdatePreferences,
+  onRequestLogout,
+  onSubmitTransferRequest,
+}) {
   const [activeTab, setActiveTab] = useState(() => {
     const storedTab = loadFromStorage(ADMIN_STORAGE_KEYS.settingsActiveTab, tabs[0])
     return tabs.includes(storedTab) ? storedTab : tabs[0]
@@ -49,6 +59,14 @@ export function Settings({ profile, preferences, onUpdateProfile, onUpdatePrefer
         preferences={preferences}
         onUpdatePreference={updatePreference}
         onRequestLogout={onRequestLogout}
+      />
+    ),
+    Transfers: (
+      <DepartmentTransferTab
+        profile={profile}
+        transferRequests={transferRequests}
+        departmentOptions={DEPARTMENT_OPTIONS}
+        onSubmitTransferRequest={onSubmitTransferRequest}
       />
     ),
   }

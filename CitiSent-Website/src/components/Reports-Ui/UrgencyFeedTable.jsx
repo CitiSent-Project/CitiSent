@@ -13,7 +13,7 @@ import {
   normalizeReportStatus,
 } from "../../models/reportStatusModel";
 
-function ActionMenu({ report, onViewReport, onUpdateStatus }) {
+function ActionMenu({ report, onViewReport, onUpdateStatus, canUpdateReport }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -26,6 +26,11 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
   }, []);
 
   function handleQuickStatus(status) {
+    if (!canUpdateReport) {
+      setOpen(false)
+      return
+    }
+
     onUpdateStatus?.(report.id, status);
     notifySuccess(`Report ${report.id} set to ${status}.`);
     setOpen(false);
@@ -53,35 +58,43 @@ function ActionMenu({ report, onViewReport, onUpdateStatus }) {
           >
             <FiEye className="text-slate-400" /> View Details
           </button>
-          <hr className="my-1 border-slate-100" />
-          <button
-            type="button"
-            onClick={() => handleQuickStatus("In Progress")}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-slate-100"
-          >
-            <FiClock className="text-blue-400" /> Mark In Progress
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickStatus("Resolved")}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-slate-100"
-          >
-            <FiCheckCircle className="text-emerald-400" /> Mark Resolved
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickStatus("Unresolved")}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-slate-100"
-          >
-            <FiXCircle className="text-rose-400" /> Mark Unresolved
-          </button>
+          {canUpdateReport ? (
+            <>
+              <hr className="my-1 border-slate-100" />
+              <button
+                type="button"
+                onClick={() => handleQuickStatus("In Progress")}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-slate-100"
+              >
+                <FiClock className="text-blue-400" /> Mark In Progress
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickStatus("Resolved")}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-slate-100"
+              >
+                <FiCheckCircle className="text-emerald-400" /> Mark Resolved
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickStatus("Unresolved")}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-slate-100"
+              >
+                <FiXCircle className="text-rose-400" /> Mark Unresolved
+              </button>
+            </>
+          ) : (
+            <div className="px-3 py-2 text-xs text-slate-500">
+              Status updates are restricted to your department.
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
+export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus, canUpdateReport }) {
   if (rows.length === 0) {
     return (
       <div className="px-4 py-10 text-center text-sm text-slate-400">
@@ -142,6 +155,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus }) {
                     report={row}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateStatus}
+                    canUpdateReport={canUpdateReport?.(row)}
                   />
                 </td>
               </tr>

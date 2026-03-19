@@ -11,6 +11,7 @@ import {
   createReportTimelineEntry,
   validateReportStatusChange,
 } from '../../../controllers/reportStatusController'
+import { canAdminUpdateReport } from '../../../controllers/reportAccessController'
 
 const STATUS_ICONS = {
   Pending: FiClock,
@@ -19,7 +20,7 @@ const STATUS_ICONS = {
   Unresolved: FiAlertCircle,
 }
 
-export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
+export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
   const [timeline, setTimeline] = useState(() => [
     {
@@ -49,8 +50,14 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
 
   const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
+  const canProcessReport = canAdminUpdateReport({ profile, report })
 
   function handleStatusChange(newStatus) {
+    if (!canProcessReport) {
+      notifyError('Status update denied.', 'You can only process reports assigned to your department.')
+      return
+    }
+
     const validation = validateReportStatusChange({
       currentStatus,
       nextStatus: newStatus,
@@ -150,6 +157,11 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
           <p className="mb-3 text-sm text-slate-500">
             Update the status of this report. Adding notes is required when resolving or marking as unresolved.
           </p>
+          {!canProcessReport ? (
+            <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              You can view this report, but only admins assigned to this department can change its status.
+            </p>
+          ) : null}
 
           <label className="mb-3 block">
             <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">Admin Notes</span>
@@ -158,6 +170,7 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               placeholder="Add remarks, resolution details, or reason for status change…"
+              disabled={!canProcessReport}
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
             />
           </label>
@@ -170,9 +183,9 @@ export function ReportDetailPage({ report, onBackToReports, onUpdateStatus }) {
                   key={status}
                   type="button"
                   onClick={() => handleStatusChange(status)}
-                  disabled={isActive}
+                  disabled={isActive || !canProcessReport}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
+                    isActive || !canProcessReport
                       ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                       : status === 'Resolved'
                         ? 'bg-emerald-600 text-white hover:bg-emerald-500'

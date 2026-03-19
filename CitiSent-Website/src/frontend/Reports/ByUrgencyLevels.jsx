@@ -13,8 +13,9 @@ import {
   urgencyFilterChips,
   urgencyLevelsData,
 } from '../Data/reportsData'
+import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 
-export function ByUrgencyLevels({ rows, onViewReport, onUpdateStatus }) {
+export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus }) {
   const pageSize = 6
   const [selectedUrgency, setSelectedUrgency] = useState(urgencyFilterChips[0])
   const [currentPage, setCurrentPage] = useState(1)
@@ -84,6 +85,7 @@ export function ByUrgencyLevels({ rows, onViewReport, onUpdateStatus }) {
           rows={visibleRows}
           onViewReport={onViewReport}
           onUpdateStatus={onUpdateStatus}
+          canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
         />
         <Pagination
           currentPage={safeCurrentPage}

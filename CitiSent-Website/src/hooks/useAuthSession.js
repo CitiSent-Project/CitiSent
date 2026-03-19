@@ -1,6 +1,7 @@
 import {
   buildLoginState,
   buildRegistrationState,
+  resolveAuthenticatedAdmin,
   validateLoginCredentials,
 } from '../controllers/authController'
 import {
@@ -11,6 +12,8 @@ import {
 
 export function useAuthSession({
   profile,
+  adminAccounts,
+  setAdminAccounts,
   setProfile,
   setPreferences,
   setActivePage,
@@ -41,7 +44,11 @@ export function useAuthSession({
   }
 
   function handleLogin(payload) {
-    const loginValidation = validateLoginCredentials({ profile, payload })
+    const authenticatedAdmin = resolveAuthenticatedAdmin({ adminAccounts, payload })
+    const loginValidation = validateLoginCredentials({
+      profile: authenticatedAdmin || profile,
+      payload,
+    })
 
     if (!loginValidation.ok) {
       notifyError(loginValidation.title, loginValidation.message)
@@ -51,10 +58,35 @@ export function useAuthSession({
       }
     }
 
-    const loginState = buildLoginState({ payload })
+    const loginState = buildLoginState({ payload, authenticatedAdmin })
     const transition = buildPostLoginTransition({ nextActivePage: loginState.nextActivePage })
 
-    setProfile((previous) => ({ ...previous, lastLoginAt: loginState.loginAt }))
+    if (authenticatedAdmin) {
+      const nextProfile = {
+        ...authenticatedAdmin,
+        lastLoginAt: loginState.loginAt,
+      }
+
+      setProfile(nextProfile)
+      setPreferences((previous) => ({
+        ...previous,
+        displayName: nextProfile.fullName,
+        department: nextProfile.department,
+      }))
+      setAdminAccounts((previous) =>
+        previous.map((admin) =>
+          admin.id === authenticatedAdmin.id
+            ? {
+                ...admin,
+                lastLoginAt: loginState.loginAt,
+              }
+            : admin
+        )
+      )
+    } else {
+      setProfile((previous) => ({ ...previous, lastLoginAt: loginState.loginAt }))
+    }
+
     setIsAuthenticated(transition.isAuthenticated)
     setActivePage(transition.nextActivePage)
     addActivity(loginState.activity.action, loginState.activity.detail)

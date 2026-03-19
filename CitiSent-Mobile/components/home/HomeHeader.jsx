@@ -1,8 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useMemo } from "react";
+import { Text, View } from "react-native";
+import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
+import NotificationBellButton from "./NotificationBellButton";
 import { Colors } from "../../modules/shared";
 
 export default function HomeHeader() {
+  const router = useRouter();
+
+  const unreadNotificationCount = useMemo(
+    () => PROFILE_NOTIFICATIONS.filter((item) => !item.read).length,
+    [],
+  );
+
   return (
     <View className="px-4 pb-4 pt-2" style={{ backgroundColor: Colors.ui.headerDark }}>
       <View className="flex-row items-center justify-between">
@@ -16,9 +27,10 @@ export default function HomeHeader() {
           </View>
         </View>
 
-        <TouchableOpacity className="rounded-full p-2" activeOpacity={0.7}>
-          <Ionicons name="notifications-outline" size={30} color="white" />
-        </TouchableOpacity>
+        <NotificationBellButton
+          notificationCount={unreadNotificationCount}
+          onPress={() => router.push("/profile/notifications")}
+        />
       </View>
     </View>
   );

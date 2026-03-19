@@ -8,7 +8,7 @@ import {
   ProfileMenuItem,
 } from "../../modules/profile";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
-import { AuthCityFooter } from "../../modules/auth";
+import { AuthCityFooter, authApi } from "../../modules/auth";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -42,6 +42,8 @@ export default function Profile() {
 
   const handleConfirmLogout = () => {
     setIsLogoutVisible(false);
+
+    authApi.logout();
 
     logoutTimerRef.current = setTimeout(() => {
       router.replace("/auth/Login");

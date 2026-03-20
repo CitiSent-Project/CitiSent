@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   EmergencyServicesRow,
   HomeHeader,
@@ -13,7 +12,6 @@ import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/s
 import { AuthCityFooter } from "../../modules/auth";
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const [latestReport, setLatestReport] = useState(null);
 
   const loadLatestReport = useCallback(async () => {
@@ -28,7 +26,7 @@ export default function HomeScreen() {
   }, [loadLatestReport]);
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <AuthCityFooter backgroundColor={Colors.screen.tabs} />
 
       <RefreshableScrollView

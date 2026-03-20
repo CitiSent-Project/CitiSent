@@ -2,12 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
 import NotificationBellButton from "./NotificationBellButton";
 import { Colors } from "../../modules/shared";
 
 export default function HomeHeader() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const unreadNotificationCount = useMemo(
     () => PROFILE_NOTIFICATIONS.filter((item) => !item.read).length,
@@ -15,7 +17,13 @@ export default function HomeHeader() {
   );
 
   return (
-    <View className="px-4 pb-4 pt-2" style={{ backgroundColor: Colors.ui.headerDark }}>
+    <View 
+      className="px-4 pb-4" 
+      style={{ 
+        backgroundColor: Colors.ui.headerDark,
+        paddingTop: Math.max(insets.top, 8) + 8 // add a bit of padding below status bar
+      }}
+    >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.headerAvatarDark }}>

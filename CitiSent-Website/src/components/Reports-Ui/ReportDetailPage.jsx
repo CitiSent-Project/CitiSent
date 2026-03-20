@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
-import { notifySuccess, notifyError } from '../../../components/ui/toastHelpers'
+import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
   REPORT_URGENCY_BADGE_CLASSES,
   normalizeReportStatus,
-} from '../../../models/reportStatusModel'
+} from '../../models/reportStatusModel'
 import {
   createReportTimelineEntry,
   validateReportStatusChange,
-} from '../../../controllers/reportStatusController'
-import { canAdminUpdateReport } from '../../../controllers/reportAccessController'
+} from '../../controllers/reportStatusController'
+import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 
 const STATUS_ICONS = {
   Pending: FiClock,
@@ -110,7 +110,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <StatusIcon className="text-sm" />
               {currentStatus}
             </span>
-            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-slate-100 text-slate-600'}`}>
+            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700'}`}>
               {report.urgency}
             </span>
           </div>

@@ -5,7 +5,7 @@ import {
   FiMapPin,
   FiPhone,
 } from "react-icons/fi";
-import { formatDateTime } from "../../frontend/Data/adminPortalData";
+import { formatDateTime } from "../../models/data";
 
 const fieldConfig = [
   { key: "email", label: "Email", icon: FiMail },

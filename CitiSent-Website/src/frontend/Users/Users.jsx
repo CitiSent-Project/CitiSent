@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { generateNextUserId, usersFilters, usersRows, usersStats } from '../Data/usersData'
+import { generateNextUserId, usersFilters, usersRows, usersStats } from '../../models/data'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
 import {
   AddUserFormModal,

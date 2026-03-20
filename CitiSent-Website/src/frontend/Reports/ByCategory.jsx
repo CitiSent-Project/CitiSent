@@ -8,14 +8,14 @@ import {
   reportsByCategoryData,
   reportsSummaryStats,
   reportsThisWeekData,
-} from '../Data/reportsData'
+} from '../../models/data'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
+import { filterUserReportsByCategory } from '../../controllers/userReportsController'
+import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
 
 export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
-  const pageSize = 6
   const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
-  const [currentPage, setCurrentPage] = useState(1)
   const hasAllAccess = isSuperadmin(profile?.role)
 
   const cardsWithAllFilter = useMemo(() => {
@@ -32,37 +32,32 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
     : cardsWithAllFilter[0]?.id || allCategoryFilterId
 
   const filteredRows = useMemo(() => {
-    const filtered =
-      hasAllAccess && effectiveSelectedAgencyId === allCategoryFilterId
-        ? rows
-        : rows.filter((row) => row.categoryId === effectiveSelectedAgencyId)
-
-    return [...filtered].sort((a, b) => b.dateValue - a.dateValue)
+    return filterUserReportsByCategory({
+      reports: rows,
+      selectedCategoryId: effectiveSelectedAgencyId,
+      hasAllAccess,
+      allCategoryFilterId,
+    })
   }, [effectiveSelectedAgencyId, hasAllAccess, rows])
 
   const selectedAgencyLabel =
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize))
-  const safeCurrentPage = Math.min(currentPage, totalPages)
-  const startIndex = (safeCurrentPage - 1) * pageSize
-  const visibleRows = filteredRows.slice(startIndex, startIndex + pageSize)
-
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1)
-    if (safeCurrentPage <= 2) return [1, 2, 3]
-    if (safeCurrentPage >= totalPages - 1) return [totalPages - 2, totalPages - 1, totalPages]
-    return [safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1]
-  }, [safeCurrentPage, totalPages])
+  const {
+    totalPages,
+    safeCurrentPage,
+    visibleRows,
+    visiblePages,
+    handlePageChange,
+    handleNextPage,
+    handlePreviousPage,
+    resetToFirstPage,
+  } = useReportPaginationState({ rows: filteredRows, pageSize: 6 })
 
   function handleSelectAgency(agencyId) {
     setSelectedAgencyId(agencyId)
-    setCurrentPage(1)
+    resetToFirstPage()
   }
-
-  function handlePageChange(page) { setCurrentPage(page) }
-  function handleNextPage() { setCurrentPage((p) => Math.min(p + 1, totalPages)) }
-  function handlePreviousPage() { setCurrentPage((p) => Math.max(p - 1, 1)) }
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">

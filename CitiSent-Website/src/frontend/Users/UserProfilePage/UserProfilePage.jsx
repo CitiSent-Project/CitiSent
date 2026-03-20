@@ -1,5 +1,3 @@
-import React from 'react'
-
 export function UserProfilePage({ user, onBackToUsers }) {
   if (!user) {
     return (

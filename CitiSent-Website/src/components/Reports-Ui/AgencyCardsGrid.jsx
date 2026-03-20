@@ -27,7 +27,7 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
             key={item.id}
             onClick={() => onSelectItem(item.id)}
             className={`w-full rounded-xl px-4 py-3 text-left font-medium transition-all duration-200
-                  bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95 active:shadow-inner 
+                  bg-blue-500 text-white shadow-md hover:bg-blue-700 hover:shadow-lg active:scale-95 active:shadow-inner 
                     focus:outline-none focus:ring-2 focus:ring-blue-800
                     ${
                       selectedItemId === item.id

@@ -8,7 +8,7 @@ import { Logout } from '../frontend/Logout'
 import { ProfileInformation } from '../frontend/ProfilePage'
 import { Settings } from '../frontend/Settings'
 import { UserProfilePage } from '../frontend/Users/UserProfilePage/UserProfilePage'
-import { ReportDetailPage } from '../frontend/Reports/ReportDetailPage/ReportDetailPage'
+import { ReportDetailPage } from '../components/Reports-Ui/ReportDetailPage'
 import { AdminManagement } from '../frontend/AdminManagement'
 import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 

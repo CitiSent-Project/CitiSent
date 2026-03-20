@@ -8,7 +8,7 @@ import {
   DEFAULT_NOTIFICATIONS,
   DEFAULT_PREFERENCES,
   DEFAULT_TRANSFER_REQUESTS,
-} from '../frontend/Data/adminPortalData'
+} from '../models/data'
 import { loadFromStorageWithSchema } from '../services/storageService'
 import { usePersistToStorage } from './usePersistToStorage'
 import { usePageLoadingState } from './usePageLoadingState'

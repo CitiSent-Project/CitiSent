@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { DEPARTMENT_OPTIONS } from './Data/adminPortalData'
 import { getPendingTransferRequests } from '../controllers/departmentTransferController'
 import { getOfficeAdmins } from '../controllers/adminManagementController'
 import { USER_ROLES } from '../models/roleAccessModel'
 import { countUnreadNotifications } from '../controllers/notificationsController'
+import { notifyError } from '../components/ui/toastHelpers'
+import { useModalAccessibility } from '../hooks/useModalAccessibility'
 
 export function AdminManagement({
   profile,
@@ -35,6 +37,59 @@ export function AdminManagement({
   const [reviewModal, setReviewModal] = useState(null)
   const [reviewNotes, setReviewNotes] = useState('')
   const [reviewError, setReviewError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [departmentFilter, setDepartmentFilter] = useState('all')
+  const [unreadFilter, setUnreadFilter] = useState('all')
+  const reviewModalRef = useRef(null)
+
+  useModalAccessibility({
+    isOpen: !!reviewModal,
+    onClose: closeReviewModal,
+    containerRef: reviewModalRef,
+  })
+
+  const filteredOfficeAdmins = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+
+    return officeAdmins.filter((admin) => {
+      const matchesSearch =
+        query.length === 0
+          ? true
+          : [admin.fullName, admin.email, admin.department].some((value) =>
+              value.toLowerCase().includes(query)
+            )
+      const matchesDepartment =
+        departmentFilter === 'all' ? true : admin.departmentId === departmentFilter
+      const unreadCount = unreadByAdminId[admin.id] || 0
+      const matchesUnread = unreadFilter === 'unread-only' ? unreadCount > 0 : true
+
+      return matchesSearch && matchesDepartment && matchesUnread
+    })
+  }, [departmentFilter, officeAdmins, searchTerm, unreadByAdminId, unreadFilter])
+
+  const filteredPendingRequests = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+
+    return pendingRequests.filter((request) => {
+      const matchesSearch =
+        query.length === 0
+          ? true
+          : [
+              request.adminName,
+              request.currentDepartmentLabel,
+              request.requestedDepartmentLabel,
+              request.reason,
+            ].some((value) => value.toLowerCase().includes(query))
+
+      const matchesDepartment =
+        departmentFilter === 'all'
+          ? true
+          : request.currentDepartmentId === departmentFilter ||
+            request.requestedDepartmentId === departmentFilter
+
+      return matchesSearch && matchesDepartment
+    })
+  }, [departmentFilter, pendingRequests, searchTerm])
 
   function getSelectedDepartmentId(admin) {
     return draftDepartments[admin.id] || admin.departmentId
@@ -47,6 +102,12 @@ export function AdminManagement({
     )
 
     if (!selectedDepartment) {
+      notifyError('Assignment failed.', 'Please select a valid department before saving.')
+      return
+    }
+
+    if (selectedDepartment.id === admin.departmentId) {
+      notifyError('No assignment changes.', 'Choose a different department before saving.')
       return
     }
 
@@ -96,6 +157,7 @@ export function AdminManagement({
 
     if (reviewModal.mode === 'reject' && !reviewNotes.trim()) {
       setReviewError('Rejection reason is required.')
+      notifyError('Rejection failed.', 'Please provide a rejection reason before continuing.')
       return
     }
 
@@ -145,9 +207,50 @@ export function AdminManagement({
                 Update department assignments for office admins.
               </p>
             </div>
-            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700">
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
               {totalOfficeUnread} unread admin notifications
             </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <label className="flex flex-col gap-1 text-sm text-slate-700">
+              Search admins
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Name, email, or department"
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-slate-700">
+              Department filter
+              <select
+                value={departmentFilter}
+                onChange={(event) => setDepartmentFilter(event.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              >
+                <option value="all">All Departments</option>
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-slate-700">
+              Notification filter
+              <select
+                value={unreadFilter}
+                onChange={(event) => setUnreadFilter(event.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              >
+                <option value="all">All Admins</option>
+                <option value="unread-only">Unread Notifications Only</option>
+              </select>
+            </label>
           </div>
 
           <div className="mt-4 overflow-x-auto">
@@ -163,7 +266,7 @@ export function AdminManagement({
                 </tr>
               </thead>
               <tbody>
-                {officeAdmins.map((admin) => (
+                {filteredOfficeAdmins.map((admin) => (
                   <tr key={admin.id} className="border-b border-slate-100">
                     <td className="px-3 py-3 font-medium text-slate-800">{admin.fullName}</td>
                     <td className="px-3 py-3 text-slate-600">{admin.email}</td>
@@ -208,6 +311,14 @@ export function AdminManagement({
                     </td>
                   </tr>
                 ))}
+
+                {filteredOfficeAdmins.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-8 text-center text-sm text-slate-600">
+                      No office admins match your current filters.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -219,13 +330,13 @@ export function AdminManagement({
             Review pending transfer requests from office admins.
           </p>
 
-          {pendingRequests.length === 0 ? (
+          {filteredPendingRequests.length === 0 ? (
             <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              No pending transfer requests.
+              No pending transfer requests match your current filters.
             </p>
           ) : (
             <div className="mt-4 space-y-3">
-              {pendingRequests.map((request) => (
+              {filteredPendingRequests.map((request) => (
                 <article key={request.id} className="rounded-xl border border-slate-200 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">{request.adminName}</p>
@@ -236,7 +347,7 @@ export function AdminManagement({
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium ${
                           unreadByAdminId[request.adminId] > 0
-                            ? 'bg-cyan-100 text-cyan-700'
+                            ? 'bg-cyan-100 text-cyan-800'
                             : 'bg-slate-100 text-slate-600'
                         }`}
                       >
@@ -272,8 +383,22 @@ export function AdminManagement({
       </div>
 
       {reviewModal ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeReviewModal()
+            }
+          }}
+        >
+          <div
+            ref={reviewModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Transfer review modal"
+            tabIndex={-1}
+            className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+          >
             <div className="border-b border-slate-200 px-5 py-4">
               <h3 className="text-lg font-semibold text-slate-900">{reviewModal.title}</h3>
               <p className="mt-1 text-sm text-slate-600">

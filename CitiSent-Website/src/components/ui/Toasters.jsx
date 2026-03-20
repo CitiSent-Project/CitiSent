@@ -13,7 +13,7 @@ const Toasters = () => {
       gutter={10}
       containerStyle={{ top: 20, right: 20 }}
       toastOptions={{
-        duration: 4000,
+        duration: 2000,
         style: {
           borderRadius: "10px",
           background: "#1f2937",

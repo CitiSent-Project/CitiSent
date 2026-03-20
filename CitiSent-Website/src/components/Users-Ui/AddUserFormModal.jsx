@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 
 const initialForm = {
   name: '',
@@ -9,6 +10,13 @@ const initialForm = {
 
 export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   const [form, setForm] = useState(initialForm)
+  const dialogRef = useRef(null)
+
+  useModalAccessibility({
+    isOpen,
+    onClose: handleClose,
+    containerRef: dialogRef,
+  })
 
   if (!isOpen) {
     return null
@@ -30,8 +38,22 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          handleClose()
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add user form"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+      >
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Add New User</h2>
           <p className="mt-1 text-sm text-slate-500">Fill in the required user details below.</p>

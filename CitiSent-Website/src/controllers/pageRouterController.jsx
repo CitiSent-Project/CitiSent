@@ -27,33 +27,41 @@ export function renderAuthPage({ authPage, onRegister, onSwitchToLogin, onLogin,
 }
 
 export function renderActivePage({
-    activePage,
-    onViewUserProfile,
-    onViewReport,
-    profile,
-    activityLog,
-    onUpdateProfile,
-    notificationsByAdmin,
-    notifications,
-    onToggleRead,
-    onClearAll,
-    preferences,
-    onUpdatePreferences,
-    onRequestLogout,
-    onConfirmLogout,
-    onCancelLogout,
-    selectedUserProfile,
-    onBackToUsers,
-    selectedReport,
-    onBackToReports,
-    onUpdateReportStatus,
-    transferRequests,
-    adminAccounts,
-    onSubmitTransferRequest,
-    onAssignOfficeDepartment,
-    onApproveTransfer,
-    onRejectTransfer,
+    appState,
+    appActions,
 }) {
+    const {
+        activePage,
+        profile,
+        activityLog,
+        adminAccounts,
+        notificationsByAdmin,
+        notifications,
+        preferences,
+        selectedUserProfile,
+        selectedReport,
+        transferRequests,
+    } = appState
+
+    const {
+        onViewUserProfile,
+        onViewReport,
+        onUpdateProfile,
+        onToggleRead,
+        onClearAll,
+        onUpdatePreferences,
+        onRequestLogout,
+        onConfirmLogout,
+        onCancelLogout,
+        onBackToUsers,
+        onBackToReports,
+        onUpdateReportStatus,
+        onSubmitTransferRequest,
+        onAssignOfficeDepartment,
+        onApproveTransfer,
+        onRejectTransfer,
+    } = appActions
+
     switch (activePage) {
         case APP_PAGES.DASHBOARD:
             return <Dashboard />

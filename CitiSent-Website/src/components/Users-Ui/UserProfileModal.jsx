@@ -1,11 +1,36 @@
+import { useRef } from 'react'
+import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+
 export function UserProfileModal({ user, isOpen, onClose }) {
+  const dialogRef = useRef(null)
+
+  useModalAccessibility({
+    isOpen,
+    onClose,
+    containerRef: dialogRef,
+  })
+
   if (!isOpen || !user) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="User profile details"
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+      >
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="text-lg font-semibold text-slate-900">User Profile</h2>
           <p className="mt-1 text-sm text-slate-500">Admin view of user details.</p>

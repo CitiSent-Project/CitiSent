@@ -10,7 +10,15 @@
         try {
           const root = document.documentElement
           const rawPreferences = window.localStorage.getItem('citisent.admin.preferences')
-          const preferences = rawPreferences ? JSON.parse(rawPreferences) : null
+          const parsedPreferences = rawPreferences ? JSON.parse(rawPreferences) : null
+          const preferences =
+            parsedPreferences &&
+            typeof parsedPreferences === 'object' &&
+            !Array.isArray(parsedPreferences) &&
+            typeof parsedPreferences.schemaVersion === 'number' &&
+            'payload' in parsedPreferences
+              ? parsedPreferences.payload
+              : parsedPreferences
 
           const themePreference = preferences?.theme || 'System'
           const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

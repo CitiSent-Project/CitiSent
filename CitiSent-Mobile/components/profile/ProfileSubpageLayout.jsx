@@ -1,13 +1,10 @@
 import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PageTopBar from "../layout/PageTopBar";
 import RefreshableScrollView from "../ui/RefreshableScrollView";
 
 export default function ProfileSubpageLayout({ title, refreshing, onRefresh, children }) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top }}>
+    <View className="flex-1">
       <PageTopBar title={title} />
       <RefreshableScrollView
         className="flex-1"

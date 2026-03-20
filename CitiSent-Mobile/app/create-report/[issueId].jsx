@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AttachmentSection,
   BreadcrumbsNav,
@@ -92,7 +92,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <PageTopBar title="Create Report" />
 
       <BreadcrumbsNav items={["Create Report", issue.label]} />

@@ -1,14 +1,11 @@
 import { Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthCityFooter } from "../../modules/auth";
 import { CreateReportTopBar, IssueGrid } from "../../modules/createReport";
 import { Colors } from "../../modules/shared";
 
 export default function CreateReportScreen() {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <AuthCityFooter backgroundColor={Colors.screen.tabs} />
 
       <CreateReportTopBar />

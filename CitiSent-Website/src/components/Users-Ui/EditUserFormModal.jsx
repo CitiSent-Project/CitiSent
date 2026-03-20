@@ -1,12 +1,20 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 
 export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
+  const dialogRef = useRef(null)
   const [form, setForm] = useState(() => ({
     name: user?.name ?? '',
     email: user?.email ?? '',
     address: user?.address ?? '',
     status: user?.status ?? 'Verified',
   }))
+
+  useModalAccessibility({
+    isOpen,
+    onClose,
+    containerRef: dialogRef,
+  })
 
   if (!isOpen || !user) {
     return null
@@ -27,8 +35,22 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit user form"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+      >
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Edit User</h2>
           <p className="mt-1 text-sm text-slate-500">Update user profile details.</p>

@@ -1,0 +1,42 @@
+import { Router } from "express";
+import { asyncHandler } from "../../shared/utils/asyncHandler.js";
+import { validateRequest } from "../../middlewares/validateRequest.js";
+import { requireAuth } from "../../middlewares/auth.js";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  meSchema,
+  registerSchema,
+} from "./auth.schema.js";
+import { authController } from "./auth.controller.js";
+
+const authRouter = Router();
+
+authRouter.post(
+  "/register",
+  validateRequest(registerSchema),
+  asyncHandler(authController.register),
+);
+
+authRouter.post(
+  "/login",
+  validateRequest(loginSchema),
+  asyncHandler(authController.login),
+);
+
+authRouter.post(
+  "/forgot-password",
+  validateRequest(forgotPasswordSchema),
+  asyncHandler(authController.forgotPassword),
+);
+
+authRouter.get(
+  "/me",
+  requireAuth,
+  validateRequest(meSchema),
+  asyncHandler(authController.me),
+);
+
+authRouter.post("/logout", asyncHandler(authController.logout));
+
+export { authRouter };

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const allowedStatus = ["pending", "in_review", "resolved", "rejected"];
+const reportIdSchema = z.string().uuid();
 
 export const listReportsSchema = z.object({
   body: z.object({}).optional().default({}),
@@ -22,4 +23,45 @@ export const createReportSchema = z.object({
     attachmentUrl: z.string().url().optional(),
     sentimentLabel: z.string().max(32).optional(),
   }),
+});
+
+export const getReportByIdSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({}).optional().default({}),
+  body: z.object({}).optional().default({}),
+});
+
+export const updateReportSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({}).optional().default({}),
+  body: z
+    .object({
+      issueType: z.string().min(1).max(120).optional(),
+      description: z.string().min(10).max(3000).optional(),
+      location: z.string().min(1).max(240).optional(),
+      attachmentUrl: z.string().url().nullable().optional(),
+      sentimentLabel: z.string().max(32).nullable().optional(),
+      status: z.enum(allowedStatus).optional(),
+    })
+    .superRefine((payload, ctx) => {
+      if (Object.keys(payload).length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["body"],
+          message: "At least one field is required to update a report.",
+        });
+      }
+    }),
+});
+
+export const deleteReportSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({}).optional().default({}),
+  body: z.object({}).optional().default({}),
 });

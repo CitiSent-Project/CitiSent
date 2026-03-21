@@ -2,7 +2,13 @@ import { Router } from "express";
 import { asyncHandler } from "../../shared/utils/asyncHandler.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
-import { createReportSchema, listReportsSchema } from "./reports.schema.js";
+import {
+  createReportSchema,
+  deleteReportSchema,
+  getReportByIdSchema,
+  listReportsSchema,
+  updateReportSchema,
+} from "./reports.schema.js";
 import { reportsController } from "./reports.controller.js";
 
 const reportsRouter = Router();
@@ -19,6 +25,27 @@ reportsRouter.post(
   requireAuth,
   validateRequest(createReportSchema),
   asyncHandler(reportsController.create),
+);
+
+reportsRouter.get(
+  "/:reportId",
+  requireAuth,
+  validateRequest(getReportByIdSchema),
+  asyncHandler(reportsController.getById),
+);
+
+reportsRouter.patch(
+  "/:reportId",
+  requireAuth,
+  validateRequest(updateReportSchema),
+  asyncHandler(reportsController.update),
+);
+
+reportsRouter.delete(
+  "/:reportId",
+  requireAuth,
+  validateRequest(deleteReportSchema),
+  asyncHandler(reportsController.remove),
 );
 
 export { reportsRouter };

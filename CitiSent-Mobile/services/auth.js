@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
 import { clearAuthToken, setAuthToken } from "./authSession";
+import { runtimeFlags } from "./runtimeFlags";
 
 // TODO: Remove this temporary local test account before production release.
 const TEMP_TEST_ACCOUNT = {
@@ -71,6 +72,7 @@ export const authApi = {
       String(payload?.phoneNumber || "").replace(/\D/g, "");
 
     if (
+      runtimeFlags.allowTempAuthLogin &&
       (normalizedUsername === TEMP_TEST_ACCOUNT.username ||
         normalizedPhoneNumber === TEMP_TEST_ACCOUNT.phoneNumber) &&
       payload?.password === TEMP_TEST_ACCOUNT.password

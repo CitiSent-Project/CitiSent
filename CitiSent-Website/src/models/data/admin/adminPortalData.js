@@ -1,4 +1,4 @@
-import { USER_ROLES } from '../../models/roleAccessModel'
+import { USER_ROLES } from '../../roleAccessModel'
 
 export const ADMIN_STORAGE_KEYS = {
   profile: 'citisent.admin.profile',

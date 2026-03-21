@@ -6,7 +6,7 @@ import {
   DEFAULT_PREFERENCES,
   DEFAULT_TRANSFER_REQUESTS,
   buildDefaultNotificationsByAdmin,
-} from '../frontend/Data/adminPortalData'
+} from './data'
 import { APP_PAGES } from './pageModel'
 
 export const STORAGE_SCHEMA_VERSION = 1

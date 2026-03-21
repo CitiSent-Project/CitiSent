@@ -2,7 +2,8 @@ import { useState } from 'react'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_PREFERENCES,
-} from './Data/adminPortalData'
+  DEPARTMENT_OPTIONS,
+} from '../models/data'
 import { usePersistToStorage } from '../hooks/usePersistToStorage'
 import { loadFromStorage } from '../services/storageService'
 import {
@@ -13,7 +14,6 @@ import {
   SecuritySettingsTab,
   SettingsTabNav,
 } from '../components/Settings-Ui'
-import { DEPARTMENT_OPTIONS } from './Data/adminPortalData'
 
 const tabs = ['Account', 'Notifications', 'Appearance', 'Security', 'Transfers']
 

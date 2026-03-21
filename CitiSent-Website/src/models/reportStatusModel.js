@@ -1,18 +1,17 @@
 export const REPORT_STATUS_OPTIONS = ['Pending', 'In Progress', 'Resolved', 'Unresolved']
 
 export const REPORT_STATUS_BADGE_CLASSES = {
-  Pending: 'bg-amber-100 text-amber-700 border-amber-300',
-  'In Progress': 'bg-blue-100 text-blue-700 border-blue-300',
-  Resolved: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  Unresolved: 'bg-rose-100 text-rose-700 border-rose-300',
+  Pending: 'bg-sky-200 text-blue-900 border-blue-200 theme-dark-status-pending',
+  'In Progress': 'bg-sky-300 text-blue-900 border-blue-300 theme-dark-status-in-progress',
+  Resolved: 'bg-sky-500 text-blue-900 border-blue-400 theme-dark-status-resolved',
+  Unresolved: 'bg-sky-700 text-blue-900 border-blue-500 theme-dark-status-unresolved',
 }
 
 export const REPORT_URGENCY_BADGE_CLASSES = {
-  Emergency: 'bg-red-100 text-red-700',
-  Urgent: 'bg-orange-100 text-orange-700',
-  Moderate: 'bg-yellow-100 text-yellow-700',
-  'Low Priority': 'bg-green-100 text-green-700',
-  Calm: 'bg-sky-100 text-sky-700',
+  Emergency: 'bg-blue-900 text-white theme-dark-urgency-emergency',
+  Urgent: 'bg-blue-600 text-white theme-dark-urgency-urgent',
+  Moderate: 'bg-blue-300 text-blue-700 theme-dark-urgency-moderate',
+  Calm: 'bg-blue-200 text-blue-400 theme-dark-urgency-calm',
 }
 
 export function normalizeReportStatus(status) {

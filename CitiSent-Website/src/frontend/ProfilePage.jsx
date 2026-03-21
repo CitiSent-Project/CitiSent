@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ProfileSummaryCard } from '../components/Account-Ui'
-import { formatDateTime } from './Data/adminPortalData'
-import { categoryAgencyCards } from './Data/reportsData'
+import { formatDateTime, categoryAgencyCards } from '../models/data'
 import { buildProfileSubmissionState } from '../controllers/profileController'
 import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
 import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'

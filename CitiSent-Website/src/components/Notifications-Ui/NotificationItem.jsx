@@ -1,5 +1,5 @@
 import { FiCheckCircle, FiClock } from "react-icons/fi";
-import { formatDateTime } from "../../frontend/Data/adminPortalData";
+import { formatDateTime } from "../../models/data";
 
 export function NotificationItem({ notification, onToggleRead }) {
   return (

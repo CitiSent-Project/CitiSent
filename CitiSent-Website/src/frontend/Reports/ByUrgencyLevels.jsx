@@ -12,39 +12,40 @@ import {
   reportsThisWeekData,
   urgencyFilterChips,
   urgencyLevelsData,
-} from '../Data/reportsData'
+} from '../../models/data'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
+import {
+  ALL_URGENCY_FILTER,
+  filterUserReportsByUrgency,
+} from '../../controllers/userReportsController'
+import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
 export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus }) {
-  const pageSize = 6
   const [selectedUrgency, setSelectedUrgency] = useState(urgencyFilterChips[0])
-  const [currentPage, setCurrentPage] = useState(1)
 
   const filteredRows = useMemo(() => {
-    const filtered =
-      selectedUrgency === 'All Reports'
-        ? rows
-        : rows.filter((row) => row.urgency === selectedUrgency)
-
-    return [...filtered].sort((a, b) => b.dateValue - a.dateValue)
+    return filterUserReportsByUrgency({
+      reports: rows,
+      selectedUrgency,
+      allUrgencyFilter: ALL_URGENCY_FILTER,
+    })
   }, [selectedUrgency, rows])
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize))
-  const safeCurrentPage = Math.min(currentPage, totalPages)
-  const startIndex = (safeCurrentPage - 1) * pageSize
-  const visibleRows = filteredRows.slice(startIndex, startIndex + pageSize)
+  const {
+    totalPages,
+    safeCurrentPage,
+    visibleRows,
+    visiblePages,
+    handlePageChange,
+    handleNextPage,
+    handlePreviousPage,
+    resetToFirstPage,
+  } = useReportPaginationState({ rows: filteredRows, pageSize: 6 })
 
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1)
-    if (safeCurrentPage <= 2) return [1, 2, 3]
-    if (safeCurrentPage >= totalPages - 1) return [totalPages - 2, totalPages - 1, totalPages]
-    return [safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1]
-  }, [safeCurrentPage, totalPages])
-
-  function handleSelectUrgency(chip) { setSelectedUrgency(chip); setCurrentPage(1) }
-  function handlePageChange(page) { setCurrentPage(page) }
-  function handleNextPage() { setCurrentPage((p) => Math.min(p + 1, totalPages)) }
-  function handlePreviousPage() { setCurrentPage((p) => Math.max(p - 1, 1)) }
+  function handleSelectUrgency(chip) {
+    setSelectedUrgency(chip)
+    resetToFirstPage()
+  }
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">

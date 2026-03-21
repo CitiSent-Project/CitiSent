@@ -3,7 +3,7 @@ import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStateOrchestrator } from '../useAppStateOrchestrator'
-import { ADMIN_STORAGE_KEYS } from '../../frontend/Data/adminPortalData'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { APP_PAGES } from '../../models/pageModel'
 
 vi.mock('../../components/ui/toastHelpers', () => ({

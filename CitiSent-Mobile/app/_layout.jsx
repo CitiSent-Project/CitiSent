@@ -1,7 +1,6 @@
 import { Stack } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { View, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useColorScheme } from "react-native";
 import { AnimatedSplashLayout } from "../modules/shared";
 import "../globals.css";
 
@@ -9,7 +8,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   
   return (
-    <SafeAreaProvider>
+    <View className="flex-1" style={{ backgroundColor: colorScheme === "dark" ? "#000000" : "#ffffff" }}>
       <StatusBar 
         style={colorScheme === "dark" ? "light" : "dark"} 
         backgroundColor={colorScheme === "dark" ? "#000000" : "#ffffff"} 
@@ -28,6 +27,6 @@ export default function RootLayout() {
           <Stack.Screen name="profile/settings" />
         </Stack>
       </AnimatedSplashLayout>
-    </SafeAreaProvider>
+    </View>
   );
 }

@@ -129,8 +129,22 @@ Use this as your baseline whenever you add new domains like `notifications`, `us
 
 - `GET /` health banner
 - `GET /api/v1/health` runtime health
-- `GET /api/v1/reports` authenticated list of user reports
-- `POST /api/v1/reports` authenticated report creation
+- `GET /api/v1/health/supabase` Supabase connectivity and readiness health
+- Auth:
+  - `POST /api/v1/auth/register`
+  - `POST /api/v1/auth/login`
+  - `POST /api/v1/auth/forgot-password`
+  - `GET /api/v1/auth/me` (authenticated)
+  - `POST /api/v1/auth/logout`
+- Users:
+  - `GET /api/v1/users/me` (authenticated)
+  - `PATCH /api/v1/users/me` (authenticated)
+- Reports:
+  - `GET /api/v1/reports` authenticated list of user reports
+  - `POST /api/v1/reports` authenticated report creation
+  - `GET /api/v1/reports/:reportId` authenticated report detail
+  - `PATCH /api/v1/reports/:reportId` authenticated report update
+  - `DELETE /api/v1/reports/:reportId` authenticated report delete
 
 ## Extending the Codebase
 

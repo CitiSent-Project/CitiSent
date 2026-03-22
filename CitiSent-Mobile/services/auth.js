@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
 import { clearAuthToken, setAuthToken } from "./authSession";
+import { runtimeFlags } from "./runtimeFlags";
 
 // TODO: Remove this temporary local test account before production release.
 const TEMP_TEST_ACCOUNT = {
@@ -19,6 +20,18 @@ const TEMP_TEST_LOGIN_RESPONSE = {
 };
 
 const CORE_REGISTER_FIELDS = ["username", "email", "password"];
+
+function unwrapAuthPayload(response) {
+  if (!response || typeof response !== "object") {
+    return null;
+  }
+
+  if (response.data && typeof response.data === "object") {
+    return response.data;
+  }
+
+  return response;
+}
 
 function pickCoreRegisterPayload(payload) {
   return CORE_REGISTER_FIELDS.reduce((acc, key) => {
@@ -71,6 +84,7 @@ export const authApi = {
       String(payload?.phoneNumber || "").replace(/\D/g, "");
 
     if (
+      runtimeFlags.allowTempAuthLogin &&
       (normalizedUsername === TEMP_TEST_ACCOUNT.username ||
         normalizedPhoneNumber === TEMP_TEST_ACCOUNT.phoneNumber) &&
       payload?.password === TEMP_TEST_ACCOUNT.password
@@ -86,19 +100,23 @@ export const authApi = {
       phoneNumber: normalizedPhoneNumber,
     });
 
-    setAuthToken(response?.token);
-    return response;
+    const authPayload = unwrapAuthPayload(response);
+    setAuthToken(authPayload?.token);
+
+    return authPayload;
   },
   register: async (payload) => {
     try {
-      return await api.post("/auth/register", payload);
+      const response = await api.post("/auth/register", payload);
+      return unwrapAuthPayload(response);
     } catch (error) {
       if (!hasDemographicFields(payload) || !isLikelySchemaRejection(error)) {
         throw error;
       }
 
       const corePayload = pickCoreRegisterPayload(payload);
-      return api.post("/auth/register", corePayload);
+      const response = await api.post("/auth/register", corePayload);
+      return unwrapAuthPayload(response);
     }
   },
 

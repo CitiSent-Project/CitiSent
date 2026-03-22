@@ -2,6 +2,7 @@ import { LATEST_HOME_REPORT } from "../constants/homeData";
 import { MY_REPORTS } from "../constants/myReportsData";
 import { api } from "./api";
 import { getAuthToken } from "./authSession";
+import { runtimeFlags } from "./runtimeFlags";
 
 const reportedFallbackWarnings = new Set();
 const TEMP_TOKEN_PREFIX = "temp-";
@@ -141,6 +142,10 @@ function toLatestHomeReport(report) {
 }
 
 function shouldUseLocalReportsData() {
+  if (!runtimeFlags.allowLocalReportsFallback) {
+    return false;
+  }
+
   const token = getAuthToken();
 
   if (!token) {
@@ -163,6 +168,9 @@ export const reportsApi = {
       return mappedReports.length ? mappedReports : MY_REPORTS;
     } catch (error) {
       warnFallbackOnce("Falling back to local my reports data:", error);
+      if (!runtimeFlags.allowLocalReportsFallback) {
+        throw error;
+      }
       return MY_REPORTS;
     }
   },
@@ -180,6 +188,9 @@ export const reportsApi = {
       return mappedLatestHomeReport || LATEST_HOME_REPORT;
     } catch (error) {
       warnFallbackOnce("Falling back to local home report data:", error);
+      if (!runtimeFlags.allowLocalReportsFallback) {
+        throw error;
+      }
       return LATEST_HOME_REPORT;
     }
   },

@@ -92,7 +92,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <PageTopBar title="Create Report" />
 
       <BreadcrumbsNav items={["Create Report", issue.label]} />

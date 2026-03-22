@@ -59,7 +59,7 @@ export default function Profile() {
   }, []);
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.profile }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.profile }}>
       <AuthCityFooter backgroundColor={Colors.screen.profile} />
 
       <RefreshableScrollView

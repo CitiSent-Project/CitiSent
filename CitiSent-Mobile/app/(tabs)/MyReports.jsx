@@ -1,5 +1,4 @@
 import { Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   MyReportsList,
   ReportsFeedSkeleton,
@@ -11,13 +10,12 @@ import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/s
 import { AuthCityFooter } from "../../modules/auth";
 
 export default function MyReportsScreen() {
-  const insets = useSafeAreaInsets();
   const { reports, reloadMyReports, isInitialLoading } = useMyReports();
 
   const { refreshing, onRefresh } = usePullToRefresh(reloadMyReports);
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: Colors.screen.tabs }}>
+    <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <AuthCityFooter backgroundColor={Colors.screen.tabs} />
 
       <MyReportsTopBar />

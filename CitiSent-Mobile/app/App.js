@@ -10,7 +10,12 @@ function AppContent() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <Text className="text-2xl text-blue-500 font-bold">Hello!</Text>
       <StatusBar style="auto" />
     </View>

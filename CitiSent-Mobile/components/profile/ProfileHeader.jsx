@@ -1,10 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../modules/shared";
 
 export default function ProfileHeader({ name, phone, onEditProfile }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View className="px-5 pb-7 pt-6" style={{ backgroundColor: Colors.ui.headerDark }}>
+    <View 
+      className="px-5 pb-7" 
+      style={{ 
+        backgroundColor: Colors.ui.headerDark,
+        paddingTop: Math.max(insets.top, 10) + 16 
+      }}
+    >
       <View className="flex-row items-center">
         <View className="h-[58px] w-[58px] items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.profileAvatarSoft }}>
           <Ionicons name="person" size={34} color={Colors.text.secondary} />

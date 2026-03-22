@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from "./env.js";
 
-const baseOptions = {
+const baseOptions = Object.freeze({
   auth: {
     persistSession: false,
     autoRefreshToken: false,
   },
-};
+});
 
 export const supabase = createClient(
   env.SUPABASE_URL,
@@ -14,6 +14,25 @@ export const supabase = createClient(
   baseOptions,
 );
 
-export const supabaseAdmin = env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, baseOptions)
-  : null;
+export function createAdminSupabaseClient() {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    ...baseOptions,
+  });
+}
+
+export function createUserSupabaseClient(accessToken) {
+  const token = String(accessToken || "").trim();
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+    ...baseOptions,
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+}

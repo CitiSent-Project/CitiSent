@@ -13,8 +13,8 @@ import {
 	FiSearch,
 } from 'react-icons/fi'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
-import { APP_PAGES } from '../models/pageModel'
-import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
+import { APP_PAGES } from '../../models/pageModel'
+import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
 
 const navItems = [
 	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
@@ -317,7 +317,7 @@ export function Navbar({ children, activePage, onNavigate, profileRole, unreadNo
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === APP_PAGES.ADMIN_PROFILE
 										? 'border-blue-700 bg-blue-100 text-blue-900'
-										: 'border-slate-400 bg-blue-100 text-slate-900 hover:border-blue-300 hover:bg-blue-200'
+										: 'border-slate-400 text-slate-900 hover:border-blue-300 hover:bg-blue-200'
 								}`}
 								aria-label="User profile"
 							>

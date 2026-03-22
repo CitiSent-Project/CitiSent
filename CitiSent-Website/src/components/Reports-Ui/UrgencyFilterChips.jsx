@@ -14,7 +14,7 @@ export function UrgencyFilterChips({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         {/* Search Input */}
-        <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-blue-400 transition-colors">
+        <div className="flex flex-1 min-w-50 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-blue-400 transition-colors">
           <FiSearch className="text-slate-400" />
           <input
             className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"

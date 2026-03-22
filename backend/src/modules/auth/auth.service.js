@@ -57,7 +57,7 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
 
   if (!profileEmail) {
     throw new AppError(
-      "Unable to resolve account from the provided identifier. Please login using your email.",
+      "Unable to resolve account from username or phone number. Please check your details and try again.",
       StatusCodes.BAD_REQUEST,
     );
   }
@@ -68,33 +68,43 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
 export const authService = {
   async register(payload) {
     const normalizedEmail = normalizeEmail(payload.email);
+    const normalizedPhoneNumber = payload.phoneNumber
+      ? normalizePhoneNumber(payload.phoneNumber)
+      : null;
+    const profilePayload = {
+      email: normalizedEmail,
+      username: payload.username,
+      phone_number: normalizedPhoneNumber,
+      age: payload.age ?? null,
+      gender: payload.gender ?? null,
+      client_type: payload.clientType ?? null,
+    };
 
     const signUpData = await authRepository.registerWithEmailPassword({
       email: normalizedEmail,
       password: payload.password,
       userMetadata: {
         username: payload.username,
-        phoneNumber: payload.phoneNumber,
+        phoneNumber: normalizedPhoneNumber,
       },
     });
 
     const userId = signUpData?.user?.id;
+    const sessionToken = signUpData?.session?.access_token;
 
     let profile = null;
-    if (userId && signUpData?.session?.access_token) {
+    if (userId && sessionToken) {
       profile = await authRepository.upsertProfileByUserId(
         userId,
-        {
-          email: normalizedEmail,
-          username: payload.username,
-          phone_number: payload.phoneNumber
-            ? normalizePhoneNumber(payload.phoneNumber)
-            : null,
-          age: payload.age ?? null,
-          gender: payload.gender ?? null,
-          client_type: payload.clientType ?? null,
-        },
-        signUpData?.session?.access_token,
+        profilePayload,
+        sessionToken,
+      );
+    }
+
+    if (!profile && userId) {
+      profile = await authRepository.upsertProfileByUserIdWithAdmin(
+        userId,
+        profilePayload,
       );
     }
 

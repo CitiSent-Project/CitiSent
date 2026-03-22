@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+function optionalTrimmedString(schema) {
+  return z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmedValue = value.trim();
+    return trimmedValue.length ? trimmedValue : undefined;
+  }, schema.optional());
+}
+
 const usernameSchema = z
   .string()
   .trim()
@@ -30,10 +41,10 @@ export const loginSchema = z.object({
   query: z.object({}).optional().default({}),
   body: z
     .object({
-      identifier: z.string().trim().min(1).optional(),
-      email: z.string().trim().email().optional(),
-      username: usernameSchema.optional(),
-      phoneNumber: phoneSchema.optional(),
+      identifier: optionalTrimmedString(z.string().min(1)),
+      email: optionalTrimmedString(z.string().email()),
+      username: optionalTrimmedString(usernameSchema),
+      phoneNumber: optionalTrimmedString(phoneSchema),
       password: z.string().min(1).max(128),
     })
     .superRefine((payload, ctx) => {

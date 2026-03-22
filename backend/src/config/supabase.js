@@ -14,6 +14,16 @@ export const supabase = createClient(
   baseOptions,
 );
 
+export function createAdminSupabaseClient() {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    ...baseOptions,
+  });
+}
+
 export function createUserSupabaseClient(accessToken) {
   const token = String(accessToken || "").trim();
 

@@ -2,23 +2,25 @@ import { FiChevronDown, FiPlus, FiSearch, FiSliders } from 'react-icons/fi'
 
 function ToolbarDropdown({ label, value, options, onChange }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-      <FiSliders className="text-sm" />
-      <label className="inline-flex items-center gap-1">
-        <span>{label}:</span>
-        <select
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="appearance-none border-none bg-transparent pr-5 font-medium text-slate-700 focus:outline-none"
-        >
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-      <FiChevronDown className="text-sm" />
+    <div className="relative inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+      <FiSliders className="text-sm shrink-0" />
+      <div className="flex items-center gap-1 overflow-hidden">
+        <span className="whitespace-nowrap">{label}:</span>
+        <span className="font-medium text-slate-700 truncate">{value}</span>
+      </div>
+      <FiChevronDown className="text-sm ml-auto shrink-0" />
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+      >
+        {options.map((option) => (
+          <option key={option} value={option} className="text-black">
+            {option}
+          </option>
+        ))}
+      </select>
     </div>
   )
 }

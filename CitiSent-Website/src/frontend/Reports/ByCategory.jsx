@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
-import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable } from '../../components/Reports-Ui'
+import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips } from '../../components/Reports-Ui'
 import {
   allCategoryFilterId,
   categoryAgencyCards,
@@ -16,6 +16,9 @@ import { isSuperadmin } from '../../models/roleAccessModel'
 
 export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
   const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [urgencyFilter, setUrgencyFilter] = useState('All Urgency')
   const hasAllAccess = isSuperadmin(profile?.role)
 
   const cardsWithAllFilter = useMemo(() => {
@@ -32,16 +35,41 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
     : cardsWithAllFilter[0]?.id || allCategoryFilterId
 
   const filteredRows = useMemo(() => {
-    return filterUserReportsByCategory({
+    let result = filterUserReportsByCategory({
       reports: rows,
       selectedCategoryId: effectiveSelectedAgencyId,
       hasAllAccess,
       allCategoryFilterId,
     })
-  }, [effectiveSelectedAgencyId, hasAllAccess, rows])
+
+    // Apply Search Filter
+    if (searchTerm) {
+      const lowSearch = searchTerm.toLowerCase()
+      result = result.filter(r => 
+        r.id?.toString().toLowerCase().includes(lowSearch) ||
+        r.title?.toLowerCase().includes(lowSearch) ||
+        r.userName?.toLowerCase().includes(lowSearch) ||
+        r.issueType?.toLowerCase().includes(lowSearch)
+      )
+    }
+
+    // Apply Status Filter
+    if (statusFilter) {
+      result = result.filter(r => r.status === statusFilter)
+    }
+
+    // Apply Urgency Filter
+    if (urgencyFilter !== 'All Urgency') {
+      result = result.filter(r => r.urgency === urgencyFilter)
+    }
+
+    return result
+  }, [effectiveSelectedAgencyId, hasAllAccess, rows, searchTerm, statusFilter, urgencyFilter])
 
   const selectedAgencyLabel =
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
+
+  const urgencyChips = ['All Urgency', 'Emergency', 'Urgent', 'Moderate', 'Calm']
 
   const {
     totalPages,
@@ -56,6 +84,21 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
 
   function handleSelectAgency(agencyId) {
     setSelectedAgencyId(agencyId)
+    resetToFirstPage()
+  }
+
+  function handleSearchChange(value) {
+    setSearchTerm(value)
+    resetToFirstPage()
+  }
+
+  function handleStatusChange(value) {
+    setStatusFilter(value)
+    resetToFirstPage()
+  }
+
+  function handleUrgencyChange(value) {
+    setUrgencyFilter(value)
     resetToFirstPage()
   }
 
@@ -98,12 +141,25 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
         />
 
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <h2 className="text-base font-semibold text-slate-900">Report Feed by Agency</h2>
             <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
               {selectedAgencyLabel}
             </span>
           </div>
+
+          <div className="mb-4 px-1">
+            <UrgencyFilterChips
+              chips={urgencyChips}
+              selectedChip={urgencyFilter}
+              onSelectChip={handleUrgencyChange}
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+              statusFilter={statusFilter}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+
           <UrgencyFeedTable
             rows={visibleRows}
             onViewReport={onViewReport}

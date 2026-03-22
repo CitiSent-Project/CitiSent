@@ -1,4 +1,4 @@
-import { Navbar } from './components/Navbar'
+import { Navbar } from './components/ui/Navbar'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import Toasters from './components/ui/Toasters'
 import { renderActivePage, renderAuthPage } from './controllers/pageRouterController'

@@ -34,17 +34,113 @@ function isAccessDenied(error) {
   return code === "42501" || message.includes("permission denied");
 }
 
+function toErrorText(error) {
+  const parts = [
+    error?.message,
+    error?.code,
+    error?.name,
+    error?.details,
+    error?.hint,
+    error?.cause?.message,
+    error?.cause?.details,
+    error?.error_description,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  try {
+    parts.push(JSON.stringify(error));
+  } catch {
+  }
+
+  return parts.join(" ").toLowerCase();
+}
+
 function isDuplicateAuthError(error) {
-  const message = String(error?.message || "").toLowerCase();
+  const message = toErrorText(error);
   const code = String(error?.code || "").toUpperCase();
   const status = Number(error?.status || error?.statusCode || 0);
 
   return (
     code === "USER_ALREADY_EXISTS" ||
+    code === "23505" ||
     message.includes("already registered") ||
     message.includes("already exists") ||
+    message.includes("duplicate key") ||
+    message.includes("unique constraint") ||
     (status === StatusCodes.CONFLICT && message.includes("user"))
   );
+}
+
+function getDuplicateRegistrationMessage(error) {
+  const message = toErrorText(error);
+
+  if (
+    message.includes("username") ||
+    message.includes("profiles_username_key")
+  ) {
+    return "Username is already in use";
+  }
+
+  if (
+    message.includes("phone") ||
+    message.includes("phone_number") ||
+    message.includes("profiles_phone_number_key")
+  ) {
+    return "Phone number is already in use";
+  }
+
+  if (
+    message.includes("email") ||
+    message.includes("user_already_exists") ||
+    message.includes("already registered")
+  ) {
+    return "Email is already registered";
+  }
+
+  return "An account with the provided credentials already exists";
+}
+
+function toRegisterError(error) {
+  const message = toErrorText(error);
+  const status = Number(error?.status || error?.statusCode || 0);
+
+  if (isDuplicateAuthError(error)) {
+    return new AppError(
+      getDuplicateRegistrationMessage(error),
+      StatusCodes.CONFLICT,
+      error,
+    );
+  }
+
+  if (
+    status === StatusCodes.BAD_REQUEST ||
+    message.includes("invalid email") ||
+    message.includes("email address") ||
+    message.includes("password") ||
+    message.includes("weak") ||
+    message.includes("validation")
+  ) {
+    return new AppError(
+      "Invalid registration details. Please review your input and try again.",
+      StatusCodes.BAD_REQUEST,
+      error,
+    );
+  }
+
+  if (
+    status === StatusCodes.TOO_MANY_REQUESTS ||
+    message.includes("rate limit") ||
+    message.includes("too many")
+  ) {
+    return new AppError(
+      "Too many registration attempts. Please try again shortly.",
+      StatusCodes.TOO_MANY_REQUESTS,
+      error,
+    );
+  }
+
+  return toGatewayError("Failed to register account", error);
 }
 
 function isEmailNotConfirmedAuthError(error) {
@@ -84,15 +180,7 @@ export const authRepository = {
     });
 
     if (error) {
-      if (isDuplicateAuthError(error)) {
-        throw new AppError(
-          "Email is already registered",
-          StatusCodes.CONFLICT,
-          error,
-        );
-      }
-
-      throw toGatewayError("Failed to register account", error);
+      throw toRegisterError(error);
     }
 
     return data;

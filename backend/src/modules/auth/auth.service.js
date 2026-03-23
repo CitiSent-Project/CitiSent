@@ -12,6 +12,44 @@ function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function normalizeUsername(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+async function assertRegistrationIdentifiersAreUnique({
+  username,
+  phoneNumber,
+}) {
+  const normalizedUsername = normalizeUsername(username);
+  const normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+
+  if (normalizedUsername) {
+    const existing =
+      await authRepository.getProfileByIdentifier(normalizedUsername);
+
+    const existingUsername = normalizeUsername(existing?.username);
+    if (existingUsername && existingUsername === normalizedUsername) {
+      throw new AppError("Username is already in use", StatusCodes.CONFLICT);
+    }
+  }
+
+  if (normalizedPhoneNumber) {
+    const existing = await authRepository.getProfileByIdentifier(
+      normalizedPhoneNumber,
+    );
+
+    const existingPhoneNumber = normalizePhoneNumber(existing?.phone_number);
+    if (existingPhoneNumber && existingPhoneNumber === normalizedPhoneNumber) {
+      throw new AppError(
+        "Phone number is already in use",
+        StatusCodes.CONFLICT,
+      );
+    }
+  }
+}
+
 function toUserResponse({ user, session, profile }) {
   return {
     token: session?.access_token || null,
@@ -71,6 +109,12 @@ export const authService = {
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
       : null;
+
+    await assertRegistrationIdentifiersAreUnique({
+      username: payload.username,
+      phoneNumber: normalizedPhoneNumber,
+    });
+
     const profilePayload = {
       email: normalizedEmail,
       username: payload.username,

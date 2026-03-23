@@ -8,10 +8,7 @@ import {
   UrgencyFilterChips,
 } from '../../components/Reports-Ui'
 import {
-  reportsSummaryStats,
-  reportsThisWeekData,
   urgencyFilterChips,
-  urgencyLevelsData,
 } from '../../models/data'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import {
@@ -20,7 +17,16 @@ import {
 } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
-export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus }) {
+const URGENCY_COLORS = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#93c5fd']
+const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export function ByUrgencyLevels({
+  rows,
+  profile,
+  onViewReport,
+  onUpdateStatus,
+  isLoading = false,
+}) {
   const [selectedUrgency, setSelectedUrgency] = useState(urgencyFilterChips[0])
 
   const filteredRows = useMemo(() => {
@@ -47,6 +53,72 @@ export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus })
     resetToFirstPage()
   }
 
+  const reportStats = useMemo(() => {
+    const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
+    const unresolvedCount = rows.length - resolvedCount
+
+    return [
+      {
+        id: 'total-reports',
+        label: 'Total Reports',
+        value: String(rows.length),
+        icon: 'folder',
+        accent: 'green',
+      },
+      {
+        id: 'resolved-reports',
+        label: 'Reports Resolved',
+        value: String(resolvedCount),
+        icon: 'resolved',
+        accent: 'amber',
+      },
+      {
+        id: 'unresolved-reports',
+        label: 'Unresolved Reports',
+        value: String(unresolvedCount),
+        icon: 'unresolved',
+        accent: 'violet',
+      },
+    ]
+  }, [rows])
+
+  const urgencyLevelsData = useMemo(() => {
+    const labels = ['Emergency', 'Urgent', 'Moderate', 'Calm']
+    const values = labels.map(
+      (label) => rows.filter((row) => row.urgency === label).length
+    )
+
+    return {
+      title: 'Reports By Urgency Levels',
+      total: String(rows.length),
+      labels,
+      values,
+      colors: URGENCY_COLORS,
+      legend: labels.map((label, index) => ({
+        label,
+        color: URGENCY_COLORS[index],
+      })),
+    }
+  }, [rows])
+
+  const reportsThisWeekData = useMemo(() => {
+    const values = WEEK_LABELS.map(() => 0)
+
+    rows.forEach((row) => {
+      const parsedDate = new Date(row.createdAt || row.dateValue || 0)
+      const dayIndex = parsedDate.getDay()
+      if (!Number.isNaN(dayIndex)) {
+        values[dayIndex] += 1
+      }
+    })
+
+    return {
+      title: 'Total Reports This Week',
+      labels: WEEK_LABELS,
+      values,
+    }
+  }, [rows])
+
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
@@ -56,7 +128,7 @@ export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus })
         </header>
 
         <section className="rounded-2xl bg-[#5f82bd] p-4 md:p-6">
-          <ReportsStatCards stats={reportsSummaryStats} />
+          <ReportsStatCards stats={reportStats} />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1fr_1.45fr]">
@@ -82,8 +154,13 @@ export function ByUrgencyLevels({ rows, profile, onViewReport, onUpdateStatus })
           selectedChip={selectedUrgency}
           onSelectChip={handleSelectUrgency}
         />
+        {isLoading ? (
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500 shadow-sm">
+            Loading reports...
+          </div>
+        ) : null}
         <UrgencyFeedTable
-          rows={visibleRows}
+          rows={isLoading ? [] : visibleRows}
           onViewReport={onViewReport}
           onUpdateStatus={onUpdateStatus}
           canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}

@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStateOrchestrator } from '../useAppStateOrchestrator'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { APP_PAGES } from '../../models/pageModel'
+import { authApiService } from '../../services/authApiService'
+import { adminApiService } from '../../services/adminApiService'
 
 vi.mock('../../components/ui/toastHelpers', () => ({
   notifySuccess: vi.fn(),
@@ -21,6 +23,25 @@ vi.mock('../useAuthSession', () => ({
     handleLogin: vi.fn(),
     handleLogout: vi.fn(),
   })),
+}))
+
+vi.mock('../../services/authApiService', () => ({
+  authApiService: {
+    me: vi.fn(),
+    updateCurrentUser: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/adminApiService', () => ({
+  adminApiService: {
+    listTransferRequests: vi.fn(),
+    listOfficeAdmins: vi.fn(),
+    approveTransferRequest: vi.fn(),
+    rejectTransferRequest: vi.fn(),
+    assignOfficeDepartment: vi.fn(),
+    updateReport: vi.fn(),
+    createTransferRequest: vi.fn(),
+  },
 }))
 
 function schemaValue(payload, schemaVersion = 1) {
@@ -109,8 +130,89 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     window.localStorage.setItem(ADMIN_STORAGE_KEYS.adminAccounts, schemaValue(accounts))
     window.localStorage.setItem(ADMIN_STORAGE_KEYS.notificationsByAdmin, schemaValue(notificationsByAdmin))
     window.localStorage.setItem(ADMIN_STORAGE_KEYS.transferRequests, schemaValue([transferRequest]))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.accessToken, schemaValue('token-abc'))
     window.localStorage.setItem(ADMIN_STORAGE_KEYS.authSession, schemaValue(true))
     window.localStorage.setItem(ADMIN_STORAGE_KEYS.activePage, schemaValue(APP_PAGES.DASHBOARD))
+
+    authApiService.me.mockResolvedValue({
+      data: {
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        role: 'Superadmin',
+        accountType: 'admin',
+        departmentId: profile.departmentId,
+        departmentLabel: profile.department,
+      },
+    })
+    adminApiService.listOfficeAdmins.mockResolvedValue({
+      data: [
+        {
+          id: 'admin-office-001',
+          fullName: 'BPLO Office Admin',
+          email: 'bplo.admin@citisent.gov',
+          departmentId: 'bplo',
+          departmentLabel: 'Business Permits and Licensing Office (BPLO)',
+          role: 'Office Admin',
+        },
+      ],
+    })
+    adminApiService.listTransferRequests.mockResolvedValue({
+      data: [
+        {
+          id: 'transfer-req-001',
+          adminId: 'admin-office-001',
+          adminName: 'BPLO Office Admin',
+          currentDepartmentId: 'bplo',
+          currentDepartmentLabel: 'Business Permits and Licensing Office (BPLO)',
+          requestedDepartmentId: 'cto',
+          requestedDepartmentLabel: 'City Treasury Office',
+          reason: 'Operational reassignment',
+          status: 'pending',
+          createdAt: '2026-03-10T08:30:00.000Z',
+          reviewedAt: '',
+          reviewerId: '',
+          reviewerName: '',
+          reviewNotes: '',
+        },
+      ],
+    })
+    adminApiService.approveTransferRequest.mockResolvedValue({
+      data: {
+        id: 'transfer-req-001',
+        adminId: 'admin-office-001',
+        adminName: 'BPLO Office Admin',
+        currentDepartmentId: 'bplo',
+        currentDepartmentLabel: 'Business Permits and Licensing Office (BPLO)',
+        requestedDepartmentId: 'cto',
+        requestedDepartmentLabel: 'City Treasury Office',
+        reason: 'Operational reassignment',
+        status: 'approved',
+        createdAt: '2026-03-10T08:30:00.000Z',
+        reviewedAt: '2026-03-11T08:30:00.000Z',
+        reviewerId: 'admin-super-001',
+        reviewerName: 'City Superadmin',
+        reviewNotes: 'Approved by superadmin',
+      },
+    })
+    adminApiService.rejectTransferRequest.mockResolvedValue({
+      data: {
+        id: 'transfer-req-001',
+        adminId: 'admin-office-001',
+        adminName: 'BPLO Office Admin',
+        currentDepartmentId: 'bplo',
+        currentDepartmentLabel: 'Business Permits and Licensing Office (BPLO)',
+        requestedDepartmentId: 'cto',
+        requestedDepartmentLabel: 'City Treasury Office',
+        reason: 'Operational reassignment',
+        status: 'rejected',
+        createdAt: '2026-03-10T08:30:00.000Z',
+        reviewedAt: '2026-03-11T08:30:00.000Z',
+        reviewerId: 'admin-super-001',
+        reviewerName: 'City Superadmin',
+        reviewNotes: 'Insufficient business need',
+      },
+    })
 
     container = document.createElement('div')
     document.body.appendChild(container)
@@ -128,11 +230,12 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     container.remove()
     latestState = undefined
     globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    vi.clearAllMocks()
   })
 
-  it('keeps transfer, account, notification, and activity states consistent on approval', () => {
-    act(() => {
-      latestState.appActions.onApproveTransfer({
+  it('keeps transfer, account, notification, and activity states consistent on approval', async () => {
+    await act(async () => {
+      await latestState.appActions.onApproveTransfer({
         requestId: 'transfer-req-001',
         reviewNotes: 'Approved by superadmin',
       })
@@ -159,9 +262,9 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     expect(latestState.appState.activityLog[0].action).toBe('Department transfer approved')
   })
 
-  it('keeps transfer, notification, and activity states consistent on rejection', () => {
-    act(() => {
-      latestState.appActions.onRejectTransfer({
+  it('keeps transfer, notification, and activity states consistent on rejection', async () => {
+    await act(async () => {
+      await latestState.appActions.onRejectTransfer({
         requestId: 'transfer-req-001',
         reviewNotes: 'Insufficient business need',
       })

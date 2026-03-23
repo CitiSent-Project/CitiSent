@@ -80,11 +80,32 @@ export function renderActivePage({
         case APP_PAGES.USERS:
             return <Users onViewUserProfile={onViewUserProfile} />
         case APP_PAGES.REPORTS:
-            return <Reports section={REPORT_SECTIONS.CATEGORY} profile={profile} onViewReport={onViewReport} />
+            return (
+                <Reports
+                    section={REPORT_SECTIONS.CATEGORY}
+                    profile={profile}
+                    onViewReport={onViewReport}
+                    onUpdateStatus={onUpdateReportStatus}
+                />
+            )
         case APP_PAGES.REPORTS_BY_CATEGORY:
-            return <Reports section={REPORT_SECTIONS.CATEGORY} profile={profile} onViewReport={onViewReport} />
+            return (
+                <Reports
+                    section={REPORT_SECTIONS.CATEGORY}
+                    profile={profile}
+                    onViewReport={onViewReport}
+                    onUpdateStatus={onUpdateReportStatus}
+                />
+            )
         case APP_PAGES.REPORTS_BY_URGENCY:
-            return <Reports section={REPORT_SECTIONS.URGENCY} profile={profile} onViewReport={onViewReport} />
+            return (
+                <Reports
+                    section={REPORT_SECTIONS.URGENCY}
+                    profile={profile}
+                    onViewReport={onViewReport}
+                    onUpdateStatus={onUpdateReportStatus}
+                />
+            )
         case APP_PAGES.ADMIN_PROFILE:
             return (
                 <ProfileInformation

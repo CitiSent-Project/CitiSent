@@ -67,7 +67,7 @@ export function useAdminManagementState({
     }))
   }
 
-  function handleSaveAssignment(admin) {
+  async function handleSaveAssignment(admin) {
     const selectedDepartmentId = getSelectedDepartmentId(admin)
     const selectedDepartment = departmentOptions.find(
       (department) => department.id === selectedDepartmentId
@@ -83,7 +83,7 @@ export function useAdminManagementState({
       return
     }
 
-    onAssignOfficeDepartment({
+    await onAssignOfficeDepartment({
       adminId: admin.id,
       departmentId: selectedDepartment.id,
       departmentLabel: selectedDepartment.label,
@@ -127,7 +127,7 @@ export function useAdminManagementState({
     }
   }
 
-  function submitReviewModal(event) {
+  async function submitReviewModal(event) {
     event.preventDefault()
 
     if (!reviewModal) {
@@ -141,15 +141,21 @@ export function useAdminManagementState({
     }
 
     if (reviewModal.mode === 'approve') {
-      onApproveTransfer({
+      const result = await onApproveTransfer({
         requestId: reviewModal.request.id,
         reviewNotes,
       })
+      if (result && result.ok === false) {
+        return
+      }
     } else {
-      onRejectTransfer({
+      const result = await onRejectTransfer({
         requestId: reviewModal.request.id,
         reviewNotes,
       })
+      if (result && result.ok === false) {
+        return
+      }
     }
 
     closeReviewModal()

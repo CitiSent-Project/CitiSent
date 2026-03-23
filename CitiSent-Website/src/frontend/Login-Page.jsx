@@ -8,6 +8,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		rememberMe: Boolean(rememberedEmail),
 	})
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
+	const [submitting, setSubmitting] = useState(false)
 
 	function updateField(field, value) {
 		setForm((previous) => ({ ...previous, [field]: value }))
@@ -21,7 +22,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		return ''
 	}
 
-	function handleSubmit(event) {
+	async function handleSubmit(event) {
 		event.preventDefault()
 		const validationMessage = validateForm()
 		if (validationMessage) {
@@ -29,12 +30,13 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 			return
 		}
 
-		const result = onLogin({
+		setSubmitting(true)
+		const result = await onLogin({
 			email: form.email.trim().toLowerCase(),
 			password: form.password,
 			rememberMe: form.rememberMe,
 		})
-
+		setSubmitting(false)
 		setFeedback({ type: result.ok ? 'success' : 'error', message: result.message })
 	}
 
@@ -101,9 +103,10 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 
 				<button
 					type="submit"
+					disabled={submitting}
 					className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-[26px] font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
 				>
-					Sign-in
+					{submitting ? 'Signing in...' : 'Sign-in'}
 				</button>
 			</form>
 		</AuthPageShell>

@@ -34,6 +34,55 @@ const INITIAL_FIELD_ERRORS = {
   confirmPassword: "",
 };
 
+function mapRegisterErrorToFieldErrors(errorMessage) {
+  const rawMessage = String(errorMessage || "").trim();
+  const message = rawMessage.toLowerCase();
+  const nextErrors = { ...INITIAL_FIELD_ERRORS };
+
+  if (!rawMessage) {
+    nextErrors.email = "Unable to create account right now. Please try again.";
+    return nextErrors;
+  }
+
+  if (message.includes("username")) {
+    nextErrors.username = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("phone")) {
+    nextErrors.phoneNumber = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("email")) {
+    nextErrors.email = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("password")) {
+    nextErrors.password = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("age")) {
+    nextErrors.age = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("gender")) {
+    nextErrors.gender = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("client type") || message.includes("client_type")) {
+    nextErrors.clientType = rawMessage;
+    return nextErrors;
+  }
+
+  nextErrors.email = rawMessage;
+  return nextErrors;
+}
+
 export default function CreateAccountScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -47,7 +96,6 @@ export default function CreateAccountScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const { refreshing, onRefresh } = usePullToRefresh();
   const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
@@ -152,12 +200,10 @@ export default function CreateAccountScreen() {
 
     if (!isValid) {
       setSuccessMessage("");
-      setErrorMessage("Please fill in all required fields.");
       return;
     }
 
     setSuccessMessage("");
-    setErrorMessage("");
     setIsSubmitting(true);
 
     try {
@@ -176,7 +222,11 @@ export default function CreateAccountScreen() {
       router.replace("/(tabs)");
     } catch (error) {
       setSuccessMessage("");
-      setErrorMessage(error?.message || "Unable to create account right now. Please try again.");
+      setFieldErrors(
+        mapRegisterErrorToFieldErrors(
+          error?.message || "Unable to create account right now. Please try again.",
+        ),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -196,10 +246,6 @@ export default function CreateAccountScreen() {
 
     if (successMessage) {
       setSuccessMessage("");
-    }
-
-    if (errorMessage) {
-      setErrorMessage("");
     }
   };
 
@@ -326,10 +372,6 @@ export default function CreateAccountScreen() {
               onPress={handleCreateAccount}
               disabled={isSubmitting}
             />
-
-            {errorMessage ? (
-              <Text className="mt-1 text-center text-[13px] text-[#FCA5A5]">{errorMessage}</Text>
-            ) : null}
 
             {successMessage ? (
               <Text className="mt-1 text-center text-[13px] text-[#86EFAC]">{successMessage}</Text>

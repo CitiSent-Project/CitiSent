@@ -9,11 +9,14 @@ import {
 } from "../../modules/profile";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
+import { getAuthPhoneNumber, getAuthUsername } from "../../services/authSession";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
+  const displayUsername = getAuthUsername("Citizen");
+  const displayPhoneNumber = getAuthPhoneNumber("09123456789");
   const logoutTimerRef = useRef(null);
   const { refreshing, onRefresh } = usePullToRefresh(() => {
     setIsLogoutVisible(false);
@@ -70,8 +73,8 @@ export default function Profile() {
         onRefresh={onRefresh}
       >
         <ProfileHeader
-          name="Juan Dela Cruz"
-          phone="09123456789"
+          name={displayUsername}
+          phone={displayPhoneNumber}
           onEditProfile={() => router.push("/profile/edit")}
         />
 

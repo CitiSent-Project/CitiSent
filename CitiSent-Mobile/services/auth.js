@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
-import { clearAuthToken, setAuthToken } from "./authSession";
+import { clearAuthToken, setAuthToken, setAuthUser } from "./authSession";
 import { runtimeFlags } from "./runtimeFlags";
 
 // TODO: Remove this temporary local test account before production release.
@@ -90,6 +90,10 @@ export const authApi = {
       payload?.password === TEMP_TEST_ACCOUNT.password
     ) {
       setAuthToken(TEMP_TEST_LOGIN_RESPONSE.token);
+      setAuthUser(TEMP_TEST_LOGIN_RESPONSE.user, {
+        fallbackUsername: normalizedUsername,
+        fallbackPhoneNumber: normalizedPhoneNumber,
+      });
       return TEMP_TEST_LOGIN_RESPONSE;
     }
 
@@ -102,6 +106,10 @@ export const authApi = {
 
     const authPayload = unwrapAuthPayload(response);
     setAuthToken(authPayload?.token);
+    setAuthUser(authPayload?.user, {
+      fallbackUsername: normalizedUsername,
+      fallbackPhoneNumber: normalizedPhoneNumber,
+    });
 
     return authPayload;
   },

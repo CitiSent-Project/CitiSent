@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
+import { getAuthUsername } from "../../services/authSession";
 import NotificationBellButton from "./NotificationBellButton";
 import { Colors } from "../../modules/shared";
 
@@ -15,6 +16,7 @@ export default function HomeHeader() {
     () => PROFILE_NOTIFICATIONS.filter((item) => !item.read).length,
     [],
   );
+  const username = useMemo(() => getAuthUsername("Citizen"), []);
 
   return (
     <View 
@@ -30,8 +32,8 @@ export default function HomeHeader() {
             <Ionicons name="person" size={25} color={Colors.ui.heroSoft} />
           </View>
           <View>
-            <Text className="text-xs text-white/90">Hi! Welcome,</Text>
-            <Text className="text-sm font-bold text-white">Juan Dela Cruz</Text>
+            <Text className="text-sm text-white/90">Hi! Welcome,</Text>
+            <Text className="text-lg font-bold text-white">{username}</Text>
           </View>
         </View>
 

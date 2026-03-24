@@ -16,7 +16,7 @@ export default function HomeHeader() {
     () => PROFILE_NOTIFICATIONS.filter((item) => !item.read).length,
     [],
   );
-  const username = useMemo(() => getAuthUsername("Citizen"), []);
+  const username = useMemo(() => getAuthUsername(""), []);
 
   return (
     <View 

@@ -15,13 +15,52 @@ function buildHeaders(token, customHeaders) {
   }
 }
 
+function buildValidationDetailsSummary(details) {
+  if (!Array.isArray(details) || details.length === 0) {
+    return ''
+  }
+
+  const summary = details
+    .filter((detail) => detail && typeof detail === 'object')
+    .map((detail) => {
+      const path = String(detail.path || '').trim()
+      const message = String(detail.message || '').trim()
+
+      if (!path && !message) {
+        return ''
+      }
+
+      return path && message ? `${path}: ${message}` : path || message
+    })
+    .filter(Boolean)
+    .join(' | ')
+
+  return summary
+}
+
 async function request(endpoint, options = {}) {
   const { headers, token, ...requestOptions } = options
+  const requestUrl = buildRequestUrl(endpoint)
+  let response
 
-  const response = await fetch(buildRequestUrl(endpoint), {
-    headers: buildHeaders(token, headers),
-    ...requestOptions,
-  })
+  try {
+    response = await fetch(requestUrl, {
+      headers: buildHeaders(token, headers),
+      ...requestOptions,
+    })
+  } catch (error) {
+    const networkError =
+      error instanceof TypeError ||
+      /Failed to fetch|ERR_CONNECTION_REFUSED|NetworkError/i.test(String(error?.message || ''))
+
+    if (networkError) {
+      throw new Error(
+        `Unable to reach the API server at ${BASE_URL}. Ensure the backend is running and reachable.`
+      )
+    }
+
+    throw error
+  }
 
   const rawBody = await response.text()
   let parsedBody = null
@@ -35,12 +74,22 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-    const backendMessage =
-      parsedBody && typeof parsedBody === 'object'
-        ? parsedBody.message || parsedBody.error
-        : undefined
+    const isObjectBody = parsedBody && typeof parsedBody === 'object'
+    const backendMessage = isObjectBody ? parsedBody.message || parsedBody.error : undefined
+    const detailsSummary = isObjectBody
+      ? buildValidationDetailsSummary(parsedBody.details)
+      : ''
+    const composedMessage = [backendMessage || `Request failed (${response.status})`, detailsSummary]
+      .filter(Boolean)
+      .join(' - ')
 
-    throw new Error(backendMessage || `Request failed (${response.status})`)
+    const apiError = new Error(composedMessage)
+    apiError.name = 'ApiClientError'
+    apiError.status = response.status
+    apiError.requestId = isObjectBody ? parsedBody.requestId : undefined
+    apiError.details = isObjectBody ? parsedBody.details : undefined
+
+    throw apiError
   }
 
   return parsedBody

@@ -8,6 +8,40 @@ import {
 import { DEFAULT_ADMIN_PROFILE } from '../models/data'
 import { APP_PAGES } from '../models/pageModel'
 
+function normalizeLoginIdentifier(payload = {}) {
+  const candidate = String(payload.identifier || payload.email || '').trim()
+
+  if (!candidate) {
+    return ''
+  }
+
+  return candidate.includes('@') ? candidate.toLowerCase() : candidate
+}
+
+function buildRegistrationUsername(payload = {}) {
+  const emailLocalPart = String(payload.email || '')
+    .trim()
+    .toLowerCase()
+    .split('@')[0]
+  const fullNameCandidate = String(payload.fullName || '').trim().toLowerCase()
+  const baseCandidate = emailLocalPart || fullNameCandidate || 'admin_user'
+
+  const normalized = baseCandidate
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  if (!normalized) {
+    return 'admin_user'
+  }
+
+  if (normalized.length < 3) {
+    return `${normalized}_admin`
+  }
+
+  return normalized.slice(0, 40)
+}
+
 export function useAuthSession({
   setAccessToken,
   setProfile,
@@ -27,6 +61,7 @@ export function useAuthSession({
   async function handleRegister(payload) {
     try {
       await authApiService.register({
+        username: buildRegistrationUsername(payload),
         email: payload.email,
         password: payload.password,
         fullName: payload.fullName,
@@ -54,9 +89,10 @@ export function useAuthSession({
 
   async function handleLogin(payload) {
     try {
+      const loginIdentifier = normalizeLoginIdentifier(payload)
       const response = await authApiService.login({
-        email: payload.email,
-        identifier: payload.email,
+        ...(loginIdentifier.includes('@') ? { email: loginIdentifier } : {}),
+        identifier: loginIdentifier,
         password: payload.password,
       })
       const nextProfile = mapBackendProfileToAdminProfile(response?.data?.user)
@@ -81,8 +117,8 @@ export function useAuthSession({
       }))
       setIsAuthenticated(transition.isAuthenticated)
       setActivePage(transition.nextActivePage)
-      setRememberedEmail(payload.rememberMe ? payload.email : '')
-      addActivity('Login', `Signed in as ${payload.email}`)
+      setRememberedEmail(payload.rememberMe ? loginIdentifier : '')
+      addActivity('Login', `Signed in as ${loginIdentifier}`)
 
       notifySuccess('Login successful. Welcome back.')
       return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }

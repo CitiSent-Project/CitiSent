@@ -81,9 +81,13 @@ describe('useAuthSession', () => {
     const deps = buildDependencies()
     const { handleLogin } = useAuthSession(deps)
 
-    const result = await handleLogin({ email: 'wrong@citisent.gov', password: 'secret' })
+    const result = await handleLogin({ identifier: 'cityadmin', password: 'secret' })
 
     expect(result.ok).toBe(false)
+    expect(authApiService.login).toHaveBeenCalledWith({
+      identifier: 'cityadmin',
+      password: 'secret',
+    })
     expect(deps.notifyError).toHaveBeenCalledWith(
       'Login failed.',
       'Invalid credentials'
@@ -113,12 +117,17 @@ describe('useAuthSession', () => {
     const { handleLogin, handleLogout } = useAuthSession(deps)
 
     const loginResult = await handleLogin({
-      email: 'admin@citisent.gov',
+      identifier: 'Admin@citisent.gov',
       password: 'secret',
       rememberMe: true,
     })
 
     expect(loginResult.ok).toBe(true)
+    expect(authApiService.login).toHaveBeenCalledWith({
+      email: 'admin@citisent.gov',
+      identifier: 'admin@citisent.gov',
+      password: 'secret',
+    })
     expect(deps.setAccessToken).toHaveBeenCalledWith('token-abc')
     expect(deps.setProfile).toHaveBeenCalledTimes(1)
     expect(deps.setIsAuthenticated).toHaveBeenCalledWith(true)

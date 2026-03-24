@@ -3,7 +3,7 @@ import { AuthInputField, AuthPageShell, AuthPasswordField } from '../components/
 
 export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 	const [form, setForm] = useState({
-		email: rememberedEmail,
+		identifier: rememberedEmail,
 		password: '',
 		rememberMe: Boolean(rememberedEmail),
 	})
@@ -15,8 +15,8 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 	}
 
 	function validateForm() {
-		if (!form.email.trim() || !form.password.trim()) {
-			return 'Email and password are required.'
+		if (!form.identifier.trim() || !form.password.trim()) {
+			return 'Username or email and password are required.'
 		}
 
 		return ''
@@ -32,7 +32,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 
 		setSubmitting(true)
 		const result = await onLogin({
-			email: form.email.trim().toLowerCase(),
+			identifier: form.identifier.trim(),
 			password: form.password,
 			rememberMe: form.rememberMe,
 		})
@@ -61,12 +61,12 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		>
 			<form className="space-y-5" onSubmit={handleSubmit}>
 				<AuthInputField
-					id="login-email"
-					label="Username"
-					type="email"
-					value={form.email}
-					onChange={(value) => updateField('email', value)}
-					placeholder="username@citisent"
+					id="login-identifier"
+					label="Email"
+					type="text"
+					value={form.identifier}
+					onChange={(value) => updateField('identifier', value)}
+					placeholder="example@citisent.gov"
 					variant="figma-login"
 				/>
 
@@ -86,7 +86,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 						onChange={(event) => updateField('rememberMe', event.target.checked)}
 						className="h-4 w-4 rounded border-white/60 bg-white"
 					/>
-					Remember this username
+					Remember this sign-in
 				</label>
 
 				{feedback.message ? (

@@ -27,8 +27,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 			return 'Please complete all required fields.'
 		}
 
-		if (form.password.length < 6) {
-			return 'Password must be at least 6 characters.'
+		if (form.password.length < 8) {
+			return 'Password must be at least 8 characters.'
 		}
 
 		if (form.password !== form.confirmPassword) {

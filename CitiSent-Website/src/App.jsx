@@ -11,6 +11,15 @@ function App() {
     appActions,
   } = useAppStateOrchestrator()
 
+  if (!appState.authReady) {
+    return (
+      <>
+        <Toasters />
+        <PageSkeleton pageKey={appState.activePage} />
+      </>
+    )
+  }
+
   if (!appState.isAuthenticated) {
     return (
       <>

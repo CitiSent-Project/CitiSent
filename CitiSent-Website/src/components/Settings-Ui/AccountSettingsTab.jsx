@@ -6,7 +6,6 @@ export function AccountSettingsTab({
   profile,
   preferences,
   onUpdatePreference,
-  onUpdateProfile,
 }) {
   const displayName = preferences?.displayName ?? "";
   const department = preferences?.department ?? "";
@@ -21,7 +20,6 @@ export function AccountSettingsTab({
   function handleDepartmentChange(event) {
     const nextDepartment = event.target.value;
     onUpdatePreference("department", nextDepartment);
-    onUpdateProfile({ department: nextDepartment });
   }
 
   return (

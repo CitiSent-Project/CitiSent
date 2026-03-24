@@ -25,14 +25,16 @@ function ActionMenu({ report, onViewReport, onUpdateStatus, canUpdateReport }) {
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  function handleQuickStatus(status) {
+  async function handleQuickStatus(status) {
     if (!canUpdateReport) {
       setOpen(false)
       return
     }
 
-    onUpdateStatus?.(report.id, status);
-    notifySuccess(`Report ${report.id} set to ${status}.`);
+    const result = await onUpdateStatus?.(report.id, status)
+    if (result?.ok) {
+      notifySuccess(`Report ${report.id} set to ${status}.`)
+    }
     setOpen(false);
   }
 

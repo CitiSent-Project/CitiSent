@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { notifyError, notifySuccess } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
+  DEPARTMENT_OPTIONS,
   buildDefaultNotificationsByAdmin,
   DEFAULT_ADMIN_ACCOUNTS,
   DEFAULT_ADMIN_PROFILE,
@@ -40,15 +41,18 @@ import {
   buildNotification,
 } from '../controllers/notificationsController'
 import { buildPageAccessDecision } from '../controllers/accessControlController'
-import { buildOfficeAdminDepartmentAssignment } from '../controllers/adminManagementController'
-import {
-  buildTransferApproval,
-  buildTransferRejection,
-  buildTransferRequestCreation,
-  TRANSFER_REQUEST_STATUS,
-} from '../controllers/departmentTransferController'
+import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
 import { canReviewTransferRequest, normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
 import { getStorageSchemaRule } from '../models/storageSchemaModel'
+import { authApiService } from '../services/authApiService'
+import { adminApiService } from '../services/adminApiService'
+import {
+  mapBackendOfficeAdmin,
+  mapBackendProfileToAdminProfile,
+  mapBackendReportToUiRow,
+  mapBackendTransferRequest,
+  mapUiStatusToBackendStatus,
+} from '../services/adminApiMappers'
 
 function loadSchemaBackedValue(key, fallbackValue, overrides = {}) {
   const schemaRule = getStorageSchemaRule(key)
@@ -67,8 +71,17 @@ function getSchemaPersistenceOptions(storageKey) {
   }
 }
 
+function findDepartmentOption(value) {
+  return (
+    DEPARTMENT_OPTIONS.find(
+      (department) => department.id === value || department.label === value
+    ) || null
+  )
+}
+
 export function useAppStateOrchestrator() {
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
+  const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
 
   const [activePage, setActivePage] = useState(() => {
     const storedPage = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activePage, APP_PAGES.DASHBOARD)
@@ -85,7 +98,10 @@ export function useAppStateOrchestrator() {
   })
   const [isPageLoading, setIsPageLoading] = useState(false)
   const [authPage, setAuthPage] = useState(AUTH_PAGES.LOGIN)
+  const [accessToken, setAccessToken] = useState(() => storedAccessToken)
+  const [authReady, setAuthReady] = useState(() => !storedAccessToken)
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
+    Boolean(storedAccessToken) &&
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
   )
   const [profile, setProfile] = useState(() => storedProfile)
@@ -96,8 +112,8 @@ export function useAppStateOrchestrator() {
     const storedValue = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.preferences, DEFAULT_PREFERENCES)
     return {
       ...storedValue,
-      displayName: storedValue.displayName || profile.fullName,
-      department: storedValue.department || profile.department,
+      displayName: storedValue.displayName || storedProfile.fullName,
+      department: storedValue.department || storedProfile.department,
     }
   })
   const [notificationsByAdmin, setNotificationsByAdmin] = useState(() => {
@@ -123,10 +139,12 @@ export function useAppStateOrchestrator() {
     )
     const seededNotifications = buildDefaultNotificationsByAdmin(adminAccounts)
 
-    return {
-      ...seededNotifications,
-      [storedProfile.id]: legacyNotifications,
-    }
+    return storedProfile.id
+      ? {
+          ...seededNotifications,
+          [storedProfile.id]: legacyNotifications,
+        }
+      : seededNotifications
   })
   const [activityLog, setActivityLog] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activity, [])
@@ -145,6 +163,11 @@ export function useAppStateOrchestrator() {
     ADMIN_STORAGE_KEYS.profile,
     profile,
     getSchemaPersistenceOptions(ADMIN_STORAGE_KEYS.profile)
+  )
+  usePersistToStorage(
+    ADMIN_STORAGE_KEYS.accessToken,
+    accessToken,
+    getSchemaPersistenceOptions(ADMIN_STORAGE_KEYS.accessToken)
   )
   usePersistToStorage(
     ADMIN_STORAGE_KEYS.adminAccounts,
@@ -234,10 +257,12 @@ export function useAppStateOrchestrator() {
   }
 
   const { handleRegister, handleLogin, handleLogout } = useAuthSession({
-    profile,
-    adminAccounts,
-    setAdminAccounts,
+    setAccessToken,
     setProfile,
+    setAdminAccounts,
+    setTransferRequests,
+    setSelectedReport,
+    setSelectedUserProfile,
     setPreferences,
     setActivePage,
     setIsAuthenticated,
@@ -248,33 +273,146 @@ export function useAppStateOrchestrator() {
     notifyError,
   })
 
-  function handleProfileUpdate(updates) {
+  useEffect(() => {
+    let isCancelled = false
+
+    async function hydrateSession() {
+      if (!accessToken) {
+        setAuthReady(true)
+        return
+      }
+
+      setAuthReady(false)
+
+      try {
+        const meResponse = await authApiService.me(accessToken)
+        const nextProfile = mapBackendProfileToAdminProfile(meResponse?.data)
+
+        if (nextProfile.accountType !== 'admin' || !nextProfile.role) {
+          throw new Error('This account does not have admin workspace access.')
+        }
+
+        const [transferResponse, officeAdminsResponse] = await Promise.all([
+          adminApiService.listTransferRequests(accessToken),
+          normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
+            ? adminApiService.listOfficeAdmins(accessToken)
+            : Promise.resolve({ data: [] }),
+        ])
+
+        if (isCancelled) {
+          return
+        }
+
+        setProfile(nextProfile)
+        setIsAuthenticated(true)
+        setPreferences((previous) => ({
+          ...previous,
+          displayName: nextProfile.fullName || previous.displayName,
+          department: nextProfile.department || previous.department,
+        }))
+        setTransferRequests((transferResponse?.data || []).map(mapBackendTransferRequest))
+        setAdminAccounts((officeAdminsResponse?.data || []).map(mapBackendOfficeAdmin))
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+
+        setAccessToken('')
+        setIsAuthenticated(false)
+        setProfile(DEFAULT_ADMIN_PROFILE)
+        setAdminAccounts([])
+        setTransferRequests([])
+        setSelectedReport(null)
+        setSelectedUserProfile(null)
+        setActivePage(APP_PAGES.DASHBOARD)
+        notifyError('Session expired.', error.message)
+      } finally {
+        if (!isCancelled) {
+          setAuthReady(true)
+        }
+      }
+    }
+
+    hydrateSession()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [accessToken])
+
+  useEffect(() => {
+    const relatedAdmins = profile.id
+      ? [
+          ...adminAccounts,
+          {
+            id: profile.id,
+          },
+        ]
+      : adminAccounts
+
+    setNotificationsByAdmin((previous) => {
+      const seeded = buildDefaultNotificationsByAdmin(relatedAdmins)
+      let didChange = false
+      const next = { ...previous }
+
+      Object.entries(seeded).forEach(([adminId, notifications]) => {
+        if (!Array.isArray(next[adminId])) {
+          next[adminId] = notifications
+          didChange = true
+        }
+      })
+
+      return didChange ? next : previous
+    })
+  }, [adminAccounts, profile.id])
+
+  async function handleProfileUpdate(updates) {
+    if (!accessToken) {
+      const message = 'Your session has expired. Please sign in again.'
+      notifyError('Profile update failed.', message)
+      return { ok: false, message }
+    }
+
     const profileUpdateState = buildProfileUpdateState({
       currentPreferences: preferences,
       updates,
     })
+    const selectedDepartment = findDepartmentOption(updates.department || updates.departmentId)
 
-    setProfile((previous) => ({ ...previous, ...updates }))
-    setAdminAccounts((previous) =>
-      previous.map((admin) =>
-        admin.id === profile.id
+    try {
+      const response = await authApiService.updateCurrentUser(accessToken, {
+        ...(updates.fullName !== undefined ? { fullName: updates.fullName } : {}),
+        ...(updates.phone !== undefined ? { phoneNumber: updates.phone } : {}),
+        ...(updates.address !== undefined ? { address: updates.address } : {}),
+        ...(selectedDepartment
           ? {
-              ...admin,
-              ...updates,
+              departmentId: selectedDepartment.id,
+              departmentLabel: selectedDepartment.label,
             }
-          : admin
+          : {}),
+      })
+
+      const nextProfile = mapBackendProfileToAdminProfile(response?.data)
+
+      setProfile(nextProfile)
+      setAdminAccounts((previous) =>
+        previous.map((admin) => (admin.id === nextProfile.id ? { ...admin, ...nextProfile } : admin))
       )
-    )
 
-    if (profileUpdateState.nextPreferencesPatch) {
-      setPreferences((previous) => ({
-        ...previous,
-        ...profileUpdateState.nextPreferencesPatch,
-      }))
+      if (profileUpdateState.nextPreferencesPatch) {
+        setPreferences((previous) => ({
+          ...previous,
+          ...profileUpdateState.nextPreferencesPatch,
+        }))
+      }
+
+      addActivity(profileUpdateState.activity.action, profileUpdateState.activity.detail)
+      notifySuccess('Profile updated successfully.')
+      return { ok: true, profile: nextProfile }
+    } catch (error) {
+      notifyError('Profile update failed.', error.message)
+      return { ok: false, message: error.message }
     }
-
-    addActivity(profileUpdateState.activity.action, profileUpdateState.activity.detail)
-    notifySuccess('Profile updated successfully.')
   }
 
   function handlePreferenceUpdate(updates) {
@@ -339,7 +477,17 @@ export function useAppStateOrchestrator() {
     setActivePage(transition.nextActivePage)
   }
 
-  function handleSubmitTransferRequest({ requestedDepartmentId, requestedDepartmentLabel, reason }) {
+  async function handleSubmitTransferRequest({
+    requestedDepartmentId,
+    requestedDepartmentLabel,
+    reason,
+  }) {
+    if (!accessToken) {
+      const message = 'Your session has expired. Please sign in again.'
+      notifyError('Transfer request blocked.', message)
+      return { ok: false, message }
+    }
+
     const hasPendingRequest = transferRequests.some(
       (request) =>
         request.adminId === profile.id && request.status === TRANSFER_REQUEST_STATUS.PENDING
@@ -350,204 +498,253 @@ export function useAppStateOrchestrator() {
       return { ok: false, message }
     }
 
-    const transferState = buildTransferRequestCreation({
-      profile,
-      requestedDepartmentId,
-      requestedDepartmentLabel,
-      reason,
-    })
-
-    setTransferRequests((previous) => [transferState.request, ...previous])
-    setNotificationsByAdmin((previous) => {
-      let next = appendNotificationForAdmin({
-        notificationsByAdmin: previous,
-        adminId: profile.id,
-        notification: buildNotification({
-          title: 'Transfer request submitted',
-          message: `Your request to transfer to ${requestedDepartmentLabel} is pending review.`,
-          type: 'Account',
-        }),
+    try {
+      const response = await adminApiService.createTransferRequest(accessToken, {
+        requestedDepartmentId,
+        requestedDepartmentLabel,
+        reason,
       })
+      const createdRequest = mapBackendTransferRequest(response?.data)
 
-      if (superadminRecipientIds.length > 0) {
-        next = appendNotificationForAdmins({
-          notificationsByAdmin: next,
-          adminIds: superadminRecipientIds,
+      setTransferRequests((previous) => [createdRequest, ...previous])
+      setNotificationsByAdmin((previous) => {
+        let next = appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId: profile.id,
           notification: buildNotification({
-            title: 'New transfer request',
-            message: `${profile.fullName} requested transfer to ${requestedDepartmentLabel}.`,
+            title: 'Transfer request submitted',
+            message: `Your request to transfer to ${requestedDepartmentLabel} is pending review.`,
             type: 'Account',
           }),
         })
-      }
 
-      return next
-    })
-    addActivity(transferState.activity.action, transferState.activity.detail)
-    notifySuccess('Transfer request submitted successfully.')
-    return { ok: true, message: 'Transfer request submitted successfully.' }
+        if (superadminRecipientIds.length > 0) {
+          next = appendNotificationForAdmins({
+            notificationsByAdmin: next,
+            adminIds: superadminRecipientIds,
+            notification: buildNotification({
+              title: 'New transfer request',
+              message: `${profile.fullName} requested transfer to ${requestedDepartmentLabel}.`,
+              type: 'Account',
+            }),
+          })
+        }
+
+        return next
+      })
+      addActivity(
+        'Department transfer requested',
+        `${profile.fullName} requested transfer to ${requestedDepartmentLabel}`
+      )
+      notifySuccess('Transfer request submitted successfully.')
+      return { ok: true, message: 'Transfer request submitted successfully.' }
+    } catch (error) {
+      notifyError('Transfer request blocked.', error.message)
+      return { ok: false, message: error.message }
+    }
   }
 
-  function handleAssignOfficeDepartment({ adminId, departmentId, departmentLabel }) {
+  async function handleAssignOfficeDepartment({ adminId, departmentId, departmentLabel }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Assignment denied.', 'Only superadmins can update office-admin assignments.')
-      return
+      return { ok: false }
     }
 
-    const assignmentState = buildOfficeAdminDepartmentAssignment({
-      adminAccounts,
-      adminId,
-      nextDepartmentId: departmentId,
-      nextDepartmentLabel: departmentLabel,
-    })
-
-    if (!assignmentState) {
-      notifyError('Assignment skipped.', 'No assignment change was detected for this admin.')
-      return
+    if (!accessToken) {
+      notifyError('Assignment denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
     }
 
-    setAdminAccounts(assignmentState.nextAdminAccounts)
-
-    if (profile.id === adminId) {
-      setProfile((previous) => ({
-        ...previous,
+    try {
+      const response = await adminApiService.assignOfficeDepartment(accessToken, adminId, {
         departmentId,
-        department: departmentLabel,
-      }))
-      setPreferences((previous) => ({
-        ...previous,
-        department: departmentLabel,
-      }))
-    }
-
-    setNotificationsByAdmin((previous) =>
-      appendNotificationForAdmin({
-        notificationsByAdmin: previous,
-        adminId,
-        notification: buildNotification({
-          title: 'Department assignment updated',
-          message: `Your assigned department is now ${departmentLabel}.`,
-          type: 'Account',
-        }),
+        departmentLabel,
       })
-    )
+      const updatedAdmin = mapBackendOfficeAdmin(response?.data)
 
-    addActivity(assignmentState.activity.action, assignmentState.activity.detail)
-    notifySuccess('Office-admin assignment updated.')
+      setAdminAccounts((previous) =>
+        previous.map((admin) => (admin.id === adminId ? { ...admin, ...updatedAdmin } : admin))
+      )
+
+      if (profile.id === adminId) {
+        setProfile((previous) => ({
+          ...previous,
+          departmentId: updatedAdmin.departmentId,
+          department: updatedAdmin.department,
+        }))
+        setPreferences((previous) => ({
+          ...previous,
+          department: updatedAdmin.department,
+        }))
+      }
+
+      setNotificationsByAdmin((previous) =>
+        appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId,
+          notification: buildNotification({
+            title: 'Department assignment updated',
+            message: `Your assigned department is now ${updatedAdmin.department}.`,
+            type: 'Account',
+          }),
+        })
+      )
+
+      addActivity('Office admin reassigned', `${updatedAdmin.fullName} moved to ${updatedAdmin.department}`)
+      notifySuccess('Office-admin assignment updated.')
+      return { ok: true, admin: updatedAdmin }
+    } catch (error) {
+      notifyError('Assignment denied.', error.message)
+      return { ok: false, message: error.message }
+    }
   }
 
-  function handleApproveTransfer({ requestId, reviewNotes }) {
+  async function handleApproveTransfer({ requestId, reviewNotes }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Approval denied.', 'Only superadmins can approve transfer requests.')
-      return
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Approval denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
     }
 
     const request = transferRequests.find((entry) => entry.id === requestId)
     if (!request || request.status !== TRANSFER_REQUEST_STATUS.PENDING) {
       notifyError('Approval failed.', 'The selected request is no longer pending.')
-      return
+      return { ok: false }
     }
 
-    const transferState = buildTransferApproval({
-      request,
-      reviewerProfile: profile,
-      reviewNotes,
-    })
+    try {
+      const response = await adminApiService.approveTransferRequest(accessToken, requestId, {
+        reviewNotes,
+      })
+      const reviewedRequest = mapBackendTransferRequest(response?.data)
 
-    setTransferRequests((previous) =>
-      previous.map((entry) => (entry.id === requestId ? transferState.updatedRequest : entry))
-    )
-
-    setAdminAccounts((previous) =>
-      previous.map((admin) =>
-        admin.id === request.adminId
-          ? {
-              ...admin,
-              departmentId: request.requestedDepartmentId,
-              department: request.requestedDepartmentLabel,
-            }
-          : admin
+      setTransferRequests((previous) =>
+        previous.map((entry) => (entry.id === requestId ? reviewedRequest : entry))
       )
-    )
+      setAdminAccounts((previous) =>
+        previous.map((admin) =>
+          admin.id === request.adminId
+            ? {
+                ...admin,
+                departmentId: reviewedRequest.requestedDepartmentId,
+                department: reviewedRequest.requestedDepartmentLabel,
+              }
+            : admin
+        )
+      )
 
-    if (profile.id === request.adminId) {
-      setProfile((previous) => ({
-        ...previous,
-        departmentId: request.requestedDepartmentId,
-        department: request.requestedDepartmentLabel,
-      }))
-      setPreferences((previous) => ({
-        ...previous,
-        department: request.requestedDepartmentLabel,
-      }))
+      if (profile.id === request.adminId) {
+        setProfile((previous) => ({
+          ...previous,
+          departmentId: reviewedRequest.requestedDepartmentId,
+          department: reviewedRequest.requestedDepartmentLabel,
+        }))
+        setPreferences((previous) => ({
+          ...previous,
+          department: reviewedRequest.requestedDepartmentLabel,
+        }))
+      }
+
+      setNotificationsByAdmin((previous) => {
+        let next = appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId: request.adminId,
+          notification: buildNotification({
+            title: 'Transfer approved',
+            message: `Your transfer request to ${reviewedRequest.requestedDepartmentLabel} has been approved.`,
+            type: 'Account',
+          }),
+        })
+
+        next = appendNotificationForAdmin({
+          notificationsByAdmin: next,
+          adminId: profile.id,
+          notification: buildNotification({
+            title: 'Transfer processed',
+            message: `Approved transfer of ${reviewedRequest.adminName} to ${reviewedRequest.requestedDepartmentLabel}.`,
+            type: 'Account',
+          }),
+        })
+
+        return next
+      })
+
+      addActivity(
+        'Department transfer approved',
+        `${reviewedRequest.adminName} moved to ${reviewedRequest.requestedDepartmentLabel}`
+      )
+      notifySuccess('Transfer request approved.')
+      return { ok: true, request: reviewedRequest }
+    } catch (error) {
+      notifyError('Approval failed.', error.message)
+      return { ok: false, message: error.message }
     }
-
-    setNotificationsByAdmin((previous) => {
-      let next = appendNotificationForAdmin({
-        notificationsByAdmin: previous,
-        adminId: request.adminId,
-        notification: transferState.notification,
-      })
-
-      next = appendNotificationForAdmin({
-        notificationsByAdmin: next,
-        adminId: profile.id,
-        notification: buildNotification({
-          title: 'Transfer processed',
-          message: `Approved transfer of ${request.adminName} to ${request.requestedDepartmentLabel}.`,
-          type: 'Account',
-        }),
-      })
-
-      return next
-    })
-    addActivity(transferState.activity.action, transferState.activity.detail)
-    notifySuccess('Transfer request approved.')
   }
 
-  function handleRejectTransfer({ requestId, reviewNotes }) {
+  async function handleRejectTransfer({ requestId, reviewNotes }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Rejection denied.', 'Only superadmins can reject transfer requests.')
-      return
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Rejection denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
     }
 
     const request = transferRequests.find((entry) => entry.id === requestId)
     if (!request || request.status !== TRANSFER_REQUEST_STATUS.PENDING) {
       notifyError('Rejection failed.', 'The selected request is no longer pending.')
-      return
+      return { ok: false }
     }
 
-    const transferState = buildTransferRejection({
-      request,
-      reviewerProfile: profile,
-      reviewNotes,
-    })
+    try {
+      const response = await adminApiService.rejectTransferRequest(accessToken, requestId, {
+        reviewNotes,
+      })
+      const reviewedRequest = mapBackendTransferRequest(response?.data)
 
-    setTransferRequests((previous) =>
-      previous.map((entry) => (entry.id === requestId ? transferState.updatedRequest : entry))
-    )
+      setTransferRequests((previous) =>
+        previous.map((entry) => (entry.id === requestId ? reviewedRequest : entry))
+      )
+      setNotificationsByAdmin((previous) => {
+        let next = appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId: request.adminId,
+          notification: buildNotification({
+            title: 'Transfer rejected',
+            message: `Your transfer request to ${reviewedRequest.requestedDepartmentLabel} has been rejected.`,
+            type: 'Account',
+          }),
+        })
 
-    setNotificationsByAdmin((previous) => {
-      let next = appendNotificationForAdmin({
-        notificationsByAdmin: previous,
-        adminId: request.adminId,
-        notification: transferState.notification,
+        next = appendNotificationForAdmin({
+          notificationsByAdmin: next,
+          adminId: profile.id,
+          notification: buildNotification({
+            title: 'Transfer processed',
+            message: `Rejected transfer of ${reviewedRequest.adminName} to ${reviewedRequest.requestedDepartmentLabel}.`,
+            type: 'Account',
+          }),
+        })
+
+        return next
       })
 
-      next = appendNotificationForAdmin({
-        notificationsByAdmin: next,
-        adminId: profile.id,
-        notification: buildNotification({
-          title: 'Transfer processed',
-          message: `Rejected transfer of ${request.adminName} to ${request.requestedDepartmentLabel}.`,
-          type: 'Account',
-        }),
-      })
-
-      return next
-    })
-    addActivity(transferState.activity.action, transferState.activity.detail)
-    notifySuccess('Transfer request rejected.')
+      addActivity(
+        'Department transfer rejected',
+        `${reviewedRequest.adminName} transfer request to ${reviewedRequest.requestedDepartmentLabel} was rejected`
+      )
+      notifySuccess('Transfer request rejected.')
+      return { ok: true, request: reviewedRequest }
+    } catch (error) {
+      notifyError('Rejection failed.', error.message)
+      return { ok: false, message: error.message }
+    }
   }
 
   function handleBackToUsers() {
@@ -566,17 +763,43 @@ export function useAppStateOrchestrator() {
     setActivePage(getDashboardPage())
   }
 
-  function handleReportStatusUpdate(reportId, newStatus) {
-    setReportStatusMap((prevMap) =>
-      buildNextReportStatusMap({ reportStatusMap: prevMap, reportId, nextStatus: newStatus })
-    )
-    setSelectedReport((prevSelectedReport) =>
-      buildNextSelectedReport({
-        selectedReport: prevSelectedReport,
-        reportId,
-        nextStatus: newStatus,
+  async function handleReportStatusUpdate(reportId, newStatus) {
+    if (!accessToken) {
+      const message = 'Your session has expired. Please sign in again.'
+      notifyError('Status update failed.', message)
+      return { ok: false, message }
+    }
+
+    try {
+      const response = await adminApiService.updateReport(accessToken, reportId, {
+        status: mapUiStatusToBackendStatus(newStatus),
       })
-    )
+      const updatedReport = mapBackendReportToUiRow(response?.data)
+
+      setReportStatusMap((prevMap) =>
+        buildNextReportStatusMap({
+          reportStatusMap: prevMap,
+          reportId,
+          nextStatus: updatedReport.status,
+        })
+      )
+      setSelectedReport((prevSelectedReport) => {
+        const nextSelectedReport = buildNextSelectedReport({
+          selectedReport: prevSelectedReport,
+          reportId,
+          nextStatus: updatedReport.status,
+        })
+
+        return nextSelectedReport && nextSelectedReport.id === updatedReport.id
+          ? { ...nextSelectedReport, ...updatedReport }
+          : nextSelectedReport
+      })
+
+      return { ok: true, report: updatedReport }
+    } catch (error) {
+      notifyError('Status update failed.', error.message)
+      return { ok: false, message: error.message }
+    }
   }
 
   const appState = {
@@ -584,6 +807,7 @@ export function useAppStateOrchestrator() {
     activePage,
     isPageLoading,
     isAuthenticated,
+    authReady,
     profile,
     activityLog,
     adminAccounts,
@@ -627,6 +851,7 @@ export function useAppStateOrchestrator() {
     activePage,
     isPageLoading,
     isAuthenticated,
+    authReady,
     profile,
     activityLog,
     adminAccounts,

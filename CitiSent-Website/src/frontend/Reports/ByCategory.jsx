@@ -5,16 +5,16 @@ import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, Urgenc
 import {
   allCategoryFilterId,
   categoryAgencyCards,
-  reportsByCategoryData,
-  reportsSummaryStats,
-  reportsThisWeekData,
 } from '../../models/data'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
 import { filterUserReportsByCategory } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
 
-export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
+const CATEGORY_COLORS = ['#1650e8', '#65c98d', '#8d66d6', '#ff9082', '#39bee0', '#ffb44d', '#2f89e5', '#7a6ce5', '#4f46e5']
+const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export function ByCategory({ rows, profile, onViewReport, onUpdateStatus, isLoading = false }) {
   const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -70,6 +70,68 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
 
   const urgencyChips = ['All Urgency', 'Emergency', 'Urgent', 'Moderate', 'Calm']
+  const reportStats = useMemo(() => {
+    const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
+    const unresolvedCount = rows.length - resolvedCount
+
+    return [
+      {
+        id: 'total-reports',
+        label: 'Total Reports',
+        value: String(rows.length),
+        icon: 'folder',
+        accent: 'green',
+      },
+      {
+        id: 'resolved-reports',
+        label: 'Reports Resolved',
+        value: String(resolvedCount),
+        icon: 'resolved',
+        accent: 'amber',
+      },
+      {
+        id: 'unresolved-reports',
+        label: 'Unresolved Reports',
+        value: String(unresolvedCount),
+        icon: 'unresolved',
+        accent: 'violet',
+      },
+    ]
+  }, [rows])
+  const reportsByCategoryData = useMemo(() => {
+    const values = categoryAgencyCards.map(
+      (agency) => rows.filter((row) => row.categoryId === agency.id).length
+    )
+
+    return {
+      title: 'Total Reports Per Category',
+      total: String(rows.length),
+      labels: categoryAgencyCards.map((agency) => agency.label),
+      values,
+      colors: categoryAgencyCards.map((_, index) => CATEGORY_COLORS[index % CATEGORY_COLORS.length]),
+      legend: categoryAgencyCards.map((agency, index) => ({
+        label: agency.label,
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      })),
+    }
+  }, [rows])
+  const reportsThisWeekData = useMemo(() => {
+    const values = WEEK_LABELS.map(() => 0)
+
+    rows.forEach((row) => {
+      const parsedDate = new Date(row.createdAt || row.dateValue || 0)
+      const dayIndex = parsedDate.getDay()
+      if (!Number.isNaN(dayIndex)) {
+        values[dayIndex] += 1
+      }
+    })
+
+    return {
+      title: 'Total Reports This Week',
+      labels: WEEK_LABELS,
+      values,
+    }
+  }, [rows])
 
   const {
     totalPages,
@@ -111,7 +173,7 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
         </header>
 
         <section className="rounded-2xl bg-[#5f82bd] p-4 md:p-6">
-          <ReportsStatCards stats={reportsSummaryStats} />
+          <ReportsStatCards stats={reportStats} />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[1fr_1.45fr]">
@@ -160,8 +222,12 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus }) {
             />
           </div>
 
+          {isLoading ? (
+            <div className="px-4 py-10 text-center text-sm text-slate-500">Loading reports...</div>
+          ) : null}
+
           <UrgencyFeedTable
-            rows={visibleRows}
+            rows={isLoading ? [] : visibleRows}
             onViewReport={onViewReport}
             onUpdateStatus={onUpdateStatus}
             canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}

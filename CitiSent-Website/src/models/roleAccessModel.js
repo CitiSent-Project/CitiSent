@@ -24,7 +24,7 @@ export function normalizeUserRole(role) {
     return USER_ROLES.OFFICE_ADMIN
   }
 
-  return USER_ROLES.SUPERADMIN
+  return ''
 }
 
 export const ROLE_PAGE_ACCESS = {

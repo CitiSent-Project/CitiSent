@@ -1,20 +1,54 @@
-import {
-  buildLoginState,
-  buildRegistrationState,
-  resolveAuthenticatedAdmin,
-  validateLoginCredentials,
-} from '../controllers/authController'
+import { authApiService } from '../services/authApiService'
+import { mapBackendProfileToAdminProfile } from '../services/adminApiMappers'
 import {
   buildPostLoginTransition,
   buildPostLogoutTransition,
   buildPostRegistrationTransition,
 } from '../controllers/navigationController'
+import { DEFAULT_ADMIN_PROFILE } from '../models/data'
+import { APP_PAGES } from '../models/pageModel'
+
+function normalizeLoginIdentifier(payload = {}) {
+  const candidate = String(payload.identifier || payload.email || '').trim()
+
+  if (!candidate) {
+    return ''
+  }
+
+  return candidate.includes('@') ? candidate.toLowerCase() : candidate
+}
+
+function buildRegistrationUsername(payload = {}) {
+  const emailLocalPart = String(payload.email || '')
+    .trim()
+    .toLowerCase()
+    .split('@')[0]
+  const fullNameCandidate = String(payload.fullName || '').trim().toLowerCase()
+  const baseCandidate = emailLocalPart || fullNameCandidate || 'admin_user'
+
+  const normalized = baseCandidate
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  if (!normalized) {
+    return 'admin_user'
+  }
+
+  if (normalized.length < 3) {
+    return `${normalized}_admin`
+  }
+
+  return normalized.slice(0, 40)
+}
 
 export function useAuthSession({
-  profile,
-  adminAccounts,
-  setAdminAccounts,
+  setAccessToken,
   setProfile,
+  setAdminAccounts,
+  setTransferRequests,
+  setSelectedReport,
+  setSelectedUserProfile,
   setPreferences,
   setActivePage,
   setIsAuthenticated,
@@ -24,81 +58,90 @@ export function useAuthSession({
   notifySuccess,
   notifyError,
 }) {
-  function handleRegister(payload) {
-    const registrationState = buildRegistrationState({
-      currentProfile: profile,
-      payload,
-    })
+  async function handleRegister(payload) {
+    try {
+      await authApiService.register({
+        username: buildRegistrationUsername(payload),
+        email: payload.email,
+        password: payload.password,
+        fullName: payload.fullName,
+        phoneNumber: payload.phone,
+        address: payload.address,
+        role: payload.role,
+        departmentId: payload.departmentId,
+        departmentLabel: payload.departmentLabel,
+        accountType: 'admin',
+      })
 
-    setProfile(registrationState.nextProfile)
-    setPreferences((previous) => ({
-      ...previous,
-      ...registrationState.nextPreferencesPatch,
-    }))
-    setAuthPage(buildPostRegistrationTransition().nextAuthPage)
-    setRememberedEmail(registrationState.rememberedEmail)
-    addActivity(registrationState.activity.action, registrationState.activity.detail)
-
-    notifySuccess('Registration successful. You can now sign in.')
-    return { ok: true, message: 'Registration complete. You can now sign in.' }
-  }
-
-  function handleLogin(payload) {
-    const authenticatedAdmin = resolveAuthenticatedAdmin({ adminAccounts, payload })
-    const loginValidation = validateLoginCredentials({
-      profile: authenticatedAdmin || profile,
-      payload,
-    })
-
-    if (!loginValidation.ok) {
-      notifyError(loginValidation.title, loginValidation.message)
+      setAuthPage(buildPostRegistrationTransition().nextAuthPage)
+      setRememberedEmail(payload.email)
+      addActivity('Registration', `Admin account created for ${payload.email}`)
+      notifySuccess('Registration successful. You can now sign in.')
+      return { ok: true, message: 'Registration complete. You can now sign in.' }
+    } catch (error) {
+      notifyError('Registration failed.', error.message)
       return {
         ok: false,
-        message: loginValidation.resultMessage,
+        message: error.message || 'Unable to create the admin account.',
       }
     }
+  }
 
-    const loginState = buildLoginState({ payload, authenticatedAdmin })
-    const transition = buildPostLoginTransition({ nextActivePage: loginState.nextActivePage })
+  async function handleLogin(payload) {
+    try {
+      const loginIdentifier = normalizeLoginIdentifier(payload)
+      const response = await authApiService.login({
+        ...(loginIdentifier.includes('@') ? { email: loginIdentifier } : {}),
+        identifier: loginIdentifier,
+        password: payload.password,
+      })
+      const nextProfile = mapBackendProfileToAdminProfile(response?.data?.user)
+      const token = response?.data?.token || ''
 
-    if (authenticatedAdmin) {
-      const nextProfile = {
-        ...authenticatedAdmin,
-        lastLoginAt: loginState.loginAt,
+      if (!token) {
+        throw new Error('Login succeeded but no session token was returned.')
       }
 
+      if (nextProfile.accountType !== 'admin' || !nextProfile.role) {
+        throw new Error('This account does not have admin workspace access.')
+      }
+
+      const transition = buildPostLoginTransition({ nextActivePage: APP_PAGES.DASHBOARD })
+
+      setAccessToken(token)
       setProfile(nextProfile)
       setPreferences((previous) => ({
         ...previous,
-        displayName: nextProfile.fullName,
-        department: nextProfile.department,
+        displayName: nextProfile.fullName || previous.displayName,
+        department: nextProfile.department || previous.department,
       }))
-      setAdminAccounts((previous) =>
-        previous.map((admin) =>
-          admin.id === authenticatedAdmin.id
-            ? {
-                ...admin,
-                lastLoginAt: loginState.loginAt,
-              }
-            : admin
-        )
-      )
-    } else {
-      setProfile((previous) => ({ ...previous, lastLoginAt: loginState.loginAt }))
+      setIsAuthenticated(transition.isAuthenticated)
+      setActivePage(transition.nextActivePage)
+      setRememberedEmail(payload.rememberMe ? loginIdentifier : '')
+      addActivity('Login', `Signed in as ${loginIdentifier}`)
+
+      notifySuccess('Login successful. Welcome back.')
+      return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
+    } catch (error) {
+      notifyError('Login failed.', error.message)
+      return {
+        ok: false,
+        message: error.message || 'Unable to sign in with this account.',
+      }
     }
-
-    setIsAuthenticated(transition.isAuthenticated)
-    setActivePage(transition.nextActivePage)
-    addActivity(loginState.activity.action, loginState.activity.detail)
-    setRememberedEmail(loginState.rememberedEmail)
-
-    notifySuccess('Login successful. Welcome back.')
-    return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
   }
 
   function handleLogout() {
     const transition = buildPostLogoutTransition()
+
+    setAccessToken('')
+    setProfile(DEFAULT_ADMIN_PROFILE)
+    setAdminAccounts([])
+    setTransferRequests([])
+    setSelectedReport(null)
+    setSelectedUserProfile(null)
     setIsAuthenticated(transition.isAuthenticated)
+    setActivePage(APP_PAGES.DASHBOARD)
     setAuthPage(transition.nextAuthPage)
     addActivity('Logout', 'Signed out from admin workspace')
     notifySuccess('Logout successful.')

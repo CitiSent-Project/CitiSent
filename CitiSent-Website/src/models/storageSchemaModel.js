@@ -44,7 +44,7 @@ function normalizeAdminProfile(profile) {
     role: asString(source.role, DEFAULT_ADMIN_PROFILE.role),
     phone: asString(source.phone, DEFAULT_ADMIN_PROFILE.phone),
     address: asString(source.address, DEFAULT_ADMIN_PROFILE.address),
-    password: asString(source.password, DEFAULT_ADMIN_PROFILE.password),
+    accountType: asString(source.accountType, DEFAULT_ADMIN_PROFILE.accountType),
     joinedAt: asString(source.joinedAt, DEFAULT_ADMIN_PROFILE.joinedAt),
     lastLoginAt: asString(source.lastLoginAt, ''),
   }
@@ -97,8 +97,9 @@ function normalizeNotificationsArray(notifications) {
 function normalizeNotificationsByAdmin(notificationsByAdmin, adminAccounts) {
   const seeded = buildDefaultNotificationsByAdmin(adminAccounts)
   const source = asObject(notificationsByAdmin, {})
+  const adminIds = Array.from(new Set([...Object.keys(seeded), ...Object.keys(source)]))
 
-  return Object.keys(seeded).reduce((accumulator, adminId) => {
+  return adminIds.reduce((accumulator, adminId) => {
     accumulator[adminId] = normalizeNotificationsArray(source[adminId]).map((notification) => ({
       ...notification,
       id: notification.id || `notif-${adminId}-${Date.now()}`,
@@ -119,7 +120,7 @@ function normalizeTransferRequest(entry) {
     requestedDepartmentId: asString(source.requestedDepartmentId),
     requestedDepartmentLabel: asString(source.requestedDepartmentLabel),
     reason: asString(source.reason),
-    status: asString(source.status, 'Pending'),
+    status: asString(source.status, 'pending'),
     requestedAt: asString(source.requestedAt, new Date().toISOString()),
     reviewedAt: asString(source.reviewedAt, ''),
     reviewerId: asString(source.reviewerId, ''),
@@ -183,6 +184,11 @@ export const STORAGE_SCHEMA_RULES = {
     },
   },
   [ADMIN_STORAGE_KEYS.rememberEmail]: {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    migrate: migratePassThrough,
+    validate: (value) => asString(value, ''),
+  },
+  [ADMIN_STORAGE_KEYS.accessToken]: {
     schemaVersion: STORAGE_SCHEMA_VERSION,
     migrate: migratePassThrough,
     validate: (value) => asString(value, ''),

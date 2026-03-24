@@ -38,7 +38,9 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <nav className="mb-4 flex items-center gap-1 text-sm text-slate-500">
-            <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors">Reports</button>
+            <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors">
+              Reports
+            </button>
             <FiChevronRight className="text-xs" />
             <span className="text-slate-700">Report Detail</span>
           </nav>
@@ -52,7 +54,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
   const canProcessReport = canAdminUpdateReport({ profile, report })
 
-  function handleStatusChange(newStatus) {
+  async function handleStatusChange(newStatus) {
     if (!canProcessReport) {
       notifyError('Status update denied.', 'You can only process reports assigned to your department.')
       return
@@ -69,10 +71,15 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       return
     }
 
-    setTimeline((prev) => [
-      ...prev,
+    const result = await onUpdateStatus(report.id, validation.nextStatus)
+    if (!result?.ok) {
+      return
+    }
+
+    setTimeline((previous) => [
+      ...previous,
       {
-        id: prev.length + 1,
+        id: previous.length + 1,
         ...createReportTimelineEntry({
           nextStatus: validation.nextStatus,
           adminNotes,
@@ -80,7 +87,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       },
     ])
 
-    onUpdateStatus(report.id, validation.nextStatus)
     notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
     setAdminNotes('')
   }
@@ -88,7 +94,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
-        {/* Breadcrumbs */}
         <nav className="flex items-center gap-1 text-sm text-slate-500">
           <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors">
             Reports
@@ -99,24 +104,30 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <span className="text-slate-400 font-numeric">{report.id}</span>
         </nav>
 
-        {/* Header */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Report <span className="font-numeric">{report.id}</span></h1>
-            <p className="mt-1 text-sm text-slate-500">Submitted on <span className="font-numeric">{report.date}</span></p>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Report <span className="font-numeric">{report.id}</span>
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Submitted on <span className="font-numeric">{report.date}</span>
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[currentStatus]}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[currentStatus]}`}
+            >
               <StatusIcon className="text-sm" />
               {currentStatus}
             </span>
-            <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700'}`}>
+            <span
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700'}`}
+            >
               {report.urgency}
             </span>
           </div>
         </header>
 
-        {/* Report Information */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Report Information</h2>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -151,7 +162,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           </div>
         </section>
 
-        {/* Admin Actions */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Process Report</h2>
           <p className="mb-3 text-sm text-slate-500">
@@ -168,8 +178,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <textarea
               rows={3}
               value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Add remarks, resolution details, or reason for status change…"
+              onChange={(event) => setAdminNotes(event.target.value)}
+              placeholder="Add remarks, resolution details, or reason for status change..."
               disabled={!canProcessReport}
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
             />
@@ -178,6 +188,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <div className="flex flex-wrap gap-2">
             {REPORT_STATUS_OPTIONS.map((status) => {
               const isActive = status === currentStatus
+
               return (
                 <button
                   key={status}
@@ -196,20 +207,20 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                             : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {isActive ? `● ${status} (Current)` : status}
+                  {isActive ? `* ${status} (Current)` : status}
                 </button>
               )
             })}
           </div>
         </section>
 
-        {/* Processing Timeline */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Processing Timeline</h2>
           <ol className="relative border-l-2 border-slate-200 pl-6">
             {timeline.map((entry, index) => {
               const EntryIcon = STATUS_ICONS[entry.status] || FiClock
               const isLast = index === timeline.length - 1
+
               return (
                 <li key={entry.id} className={`relative ${isLast ? '' : 'pb-6'}`}>
                   <span className="absolute -left-8.25 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-slate-100">
@@ -217,12 +228,14 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                   </span>
                   <div>
                     <p className="text-sm font-medium text-slate-900">{entry.action}</p>
-                    <p className="mt-0.5 text-xs text-slate-500"><span className="font-numeric">{entry.date}</span> — by {entry.actor}</p>
-                    {entry.note && (
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      <span className="font-numeric">{entry.date}</span> - by {entry.actor}
+                    </p>
+                    {entry.note ? (
                       <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                         {entry.note}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </li>
               )

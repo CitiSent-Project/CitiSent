@@ -1,7 +1,6 @@
-import { USER_ROLES } from '../../roleAccessModel'
-
 export const ADMIN_STORAGE_KEYS = {
   profile: 'citisent.admin.profile',
+  accessToken: 'citisent.admin.accessToken',
   adminAccounts: 'citisent.admin.adminAccounts',
   preferences: 'citisent.admin.preferences',
   notifications: 'citisent.admin.notifications',
@@ -31,50 +30,20 @@ export function getDepartmentLabelById(departmentId) {
 }
 
 export const DEFAULT_ADMIN_PROFILE = {
-  id: 'admin-super-001',
-  fullName: 'City Superadmin',
-  email: 'superadmin@citisent.gov',
-  departmentId: 'all',
-  department: 'All Departments',
-  role: USER_ROLES.SUPERADMIN,
-  phone: '+63 900 000 0000',
-  address: 'City Hall Building, Main District',
-  password: 'superadmin123',
-  joinedAt: '2026-03-01T08:30:00.000Z',
+  id: '',
+  fullName: '',
+  email: '',
+  departmentId: '',
+  department: '',
+  role: '',
+  phone: '',
+  address: '',
+  accountType: '',
+  joinedAt: '',
   lastLoginAt: '',
 }
 
-export const DEFAULT_ADMIN_ACCOUNTS = [
-  {
-    ...DEFAULT_ADMIN_PROFILE,
-  },
-  {
-    id: 'admin-office-001',
-    fullName: 'BPLO Office Admin',
-    email: 'bplo.admin@citisent.gov',
-    departmentId: 'bplo',
-    department: getDepartmentLabelById('bplo'),
-    role: USER_ROLES.OFFICE_ADMIN,
-    phone: '+63 900 111 0001',
-    address: 'City Hall Annex, BPLO Wing',
-    password: 'officeadmin123',
-    joinedAt: '2026-03-02T09:15:00.000Z',
-    lastLoginAt: '',
-  },
-  {
-    id: 'admin-office-002',
-    fullName: 'Treasury Office Admin',
-    email: 'treasury.admin@citisent.gov',
-    departmentId: 'cto',
-    department: getDepartmentLabelById('cto'),
-    role: USER_ROLES.OFFICE_ADMIN,
-    phone: '+63 900 111 0002',
-    address: 'City Treasury Building, Downtown',
-    password: 'officeadmin123',
-    joinedAt: '2026-03-04T10:10:00.000Z',
-    lastLoginAt: '',
-  },
-]
+export const DEFAULT_ADMIN_ACCOUNTS = []
 
 export const DEFAULT_PREFERENCES = {
   displayName: 'City Operations Admin',

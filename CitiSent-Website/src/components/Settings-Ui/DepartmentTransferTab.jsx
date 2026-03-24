@@ -20,7 +20,7 @@ export function DepartmentTransferTab({
     (department) => department.id !== profile?.departmentId
   )
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     if (!requestedDepartmentId || !reason.trim()) {
       return
@@ -29,11 +29,15 @@ export function DepartmentTransferTab({
     const departmentLabel =
       departmentOptions.find((department) => department.id === requestedDepartmentId)?.label || ''
 
-    onSubmitTransferRequest({
+    const result = await onSubmitTransferRequest({
       requestedDepartmentId,
       requestedDepartmentLabel: departmentLabel,
       reason,
     })
+
+    if (result && result.ok === false) {
+      return
+    }
 
     setRequestedDepartmentId('')
     setReason('')

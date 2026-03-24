@@ -3,25 +3,26 @@ import { AuthInputField, AuthPageShell, AuthPasswordField } from '../components/
 
 export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 	const [form, setForm] = useState({
-		email: rememberedEmail,
+		identifier: rememberedEmail,
 		password: '',
 		rememberMe: Boolean(rememberedEmail),
 	})
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
+	const [submitting, setSubmitting] = useState(false)
 
 	function updateField(field, value) {
 		setForm((previous) => ({ ...previous, [field]: value }))
 	}
 
 	function validateForm() {
-		if (!form.email.trim() || !form.password.trim()) {
-			return 'Email and password are required.'
+		if (!form.identifier.trim() || !form.password.trim()) {
+			return 'Username or email and password are required.'
 		}
 
 		return ''
 	}
 
-	function handleSubmit(event) {
+	async function handleSubmit(event) {
 		event.preventDefault()
 		const validationMessage = validateForm()
 		if (validationMessage) {
@@ -29,12 +30,13 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 			return
 		}
 
-		const result = onLogin({
-			email: form.email.trim().toLowerCase(),
+		setSubmitting(true)
+		const result = await onLogin({
+			identifier: form.identifier.trim(),
 			password: form.password,
 			rememberMe: form.rememberMe,
 		})
-
+		setSubmitting(false)
 		setFeedback({ type: result.ok ? 'success' : 'error', message: result.message })
 	}
 
@@ -59,12 +61,12 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		>
 			<form className="space-y-5" onSubmit={handleSubmit}>
 				<AuthInputField
-					id="login-email"
-					label="Username"
-					type="email"
-					value={form.email}
-					onChange={(value) => updateField('email', value)}
-					placeholder="username@citisent"
+					id="login-identifier"
+					label="Email"
+					type="text"
+					value={form.identifier}
+					onChange={(value) => updateField('identifier', value)}
+					placeholder="example@citisent.gov"
 					variant="figma-login"
 				/>
 
@@ -84,7 +86,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 						onChange={(event) => updateField('rememberMe', event.target.checked)}
 						className="h-4 w-4 rounded border-white/60 bg-white"
 					/>
-					Remember this username
+					Remember this sign-in
 				</label>
 
 				{feedback.message ? (
@@ -101,9 +103,10 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 
 				<button
 					type="submit"
+					disabled={submitting}
 					className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-[26px] font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
 				>
-					Sign-in
+					{submitting ? 'Signing in...' : 'Sign-in'}
 				</button>
 			</form>
 		</AuthPageShell>

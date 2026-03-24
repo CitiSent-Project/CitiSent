@@ -48,7 +48,7 @@ export function ProfileInformation({
     setEditing(true)
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     const submissionState = buildProfileSubmissionState({
       profile,
       draft,
@@ -66,11 +66,18 @@ export function ProfileInformation({
     }
 
     if (submissionState.shouldUpdateProfile) {
-      onUpdateProfile(submissionState.profileUpdates)
+      const profileUpdateResult = await onUpdateProfile(submissionState.profileUpdates)
+      if (profileUpdateResult && profileUpdateResult.ok === false) {
+        setSubmissionFeedback({
+          type: 'error',
+          message: profileUpdateResult.message,
+        })
+        return
+      }
     }
 
     if (submissionState.transferRequestPayload) {
-      const requestResult = onSubmitTransferRequest(submissionState.transferRequestPayload)
+      const requestResult = await onSubmitTransferRequest(submissionState.transferRequestPayload)
       if (requestResult && requestResult.ok === false) {
         setSubmissionFeedback({
           type: 'error',

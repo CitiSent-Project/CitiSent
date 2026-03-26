@@ -14,8 +14,8 @@ export default function ProfileHeader({ name, phone, onEditProfile }) {
       }}
     >
       <View className="flex-row items-center">
-        <View className="h-[58px] w-[58px] items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.profileAvatarSoft }}>
-          <Ionicons name="person" size={34} color={Colors.text.secondary} />
+        <View className="h-[58px] w-[58px] items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.headerAvatarDark }}>
+          <Ionicons name="person" size={34} color={Colors.ui.heroSoft} />
         </View>
 
         <View className="ml-4 flex-1">

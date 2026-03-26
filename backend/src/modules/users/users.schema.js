@@ -17,6 +17,12 @@ export const getCurrentUserSchema = z.object({
   query: z.object({}).optional().default({}),
 });
 
+export const deleteCurrentUserSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+});
+
 export const updateCurrentUserSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),

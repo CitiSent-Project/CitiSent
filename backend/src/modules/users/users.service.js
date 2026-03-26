@@ -54,4 +54,13 @@ export const usersService = {
     );
     return toCurrentUserResponse(authUser, profile);
   },
+
+  async deleteCurrentUser(authUser) {
+    await usersRepository.deleteAccountByUserId(authUser.id);
+
+    return {
+      deleted: true,
+      userId: authUser.id,
+    };
+  },
 };

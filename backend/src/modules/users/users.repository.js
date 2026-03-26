@@ -1,5 +1,9 @@
 import { StatusCodes } from "http-status-codes";
-import { createUserSupabaseClient, supabase } from "../../config/supabase.js";
+import {
+  createAdminSupabaseClient,
+  createUserSupabaseClient,
+  supabase,
+} from "../../config/supabase.js";
 import { AppError } from "../../shared/errors/appError.js";
 
 const PROFILES_TABLE = "profiles";
@@ -72,5 +76,25 @@ export const usersRepository = {
     }
 
     return data;
+  },
+
+  async deleteAccountByUserId(userId) {
+    const adminDb = createAdminSupabaseClient();
+
+    if (!adminDb) {
+      throw new AppError(
+        "Account deletion is currently unavailable",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const { error: authError } = await adminDb.auth.admin.deleteUser(
+      userId,
+      false,
+    );
+
+    if (authError) {
+      throw toGatewayError("Failed to delete account", authError);
+    }
   },
 };

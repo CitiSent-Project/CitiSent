@@ -23,4 +23,13 @@ export const usersController = {
       data: result,
     });
   },
+
+  async deleteCurrentUser(req, res) {
+    const result = await usersService.deleteCurrentUser(req.user);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
 };

@@ -10,6 +10,7 @@ import {
 } from "../../modules/home";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter } from "../../modules/auth";
+import YourLatestReportSection from "../../components/home/YourLatestReportSection";
 
 export default function HomeScreen() {
   const [latestReport, setLatestReport] = useState(null);
@@ -46,7 +47,7 @@ export default function HomeScreen() {
             <SectionHeader title="Emergency Hotlines" />
             <EmergencyServicesRow />
 
-            <SectionHeader title="Latest Reports" />
+            <YourLatestReportSection title="Your Latest Report(s)" />
             <LatestReportCard report={latestReport ?? undefined} />
 
             <View className="h-5" />

@@ -16,6 +16,12 @@ function getDbClient(accessToken) {
   return createUserSupabaseClient(accessToken);
 }
 
+function normalizeEmail(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
 function isMissingProfilesTable(error) {
   const message = String(error?.message || "").toLowerCase();
   const code = String(error?.code || "").toUpperCase();
@@ -50,8 +56,7 @@ function toErrorText(error) {
 
   try {
     parts.push(JSON.stringify(error));
-  } catch {
-  }
+  } catch {}
 
   return parts.join(" ").toLowerCase();
 }
@@ -169,21 +174,183 @@ async function queryProfileByIdentifier(db, identifier) {
   return { data, error };
 }
 
-export const authRepository = {
-  async registerWithEmailPassword({ email, password, userMetadata }) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userMetadata,
-      },
+async function queryProfileByEmail(db, email) {
+  const { data, error } = await db
+    .from(PROFILES_TABLE)
+    .select("user_id")
+    .eq("email", email)
+    .limit(1)
+    .maybeSingle();
+
+  return { data, error };
+}
+
+async function profileExistsByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return false;
+  }
+
+  const { data, error } = await queryProfileByEmail(
+    getDbClient(),
+    normalizedEmail,
+  );
+
+  const adminDb = createAdminSupabaseClient();
+
+  if (!error) {
+    if (data || !adminDb) {
+      return Boolean(data);
+    }
+
+    const { data: adminData, error: adminError } = await queryProfileByEmail(
+      adminDb,
+      normalizedEmail,
+    );
+
+    if (adminError) {
+      if (isMissingProfilesTable(adminError)) {
+        return false;
+      }
+
+      throw toGatewayError("Failed to verify existing profile", adminError);
+    }
+
+    return Boolean(adminData);
+  }
+
+  if (isMissingProfilesTable(error)) {
+    return false;
+  }
+
+  if (!isAccessDenied(error)) {
+    throw toGatewayError("Failed to verify existing profile", error);
+  }
+
+  if (!adminDb) {
+    return false;
+  }
+
+  const { data: adminData, error: adminError } = await queryProfileByEmail(
+    adminDb,
+    normalizedEmail,
+  );
+
+  if (adminError) {
+    if (isMissingProfilesTable(adminError)) {
+      return false;
+    }
+
+    throw toGatewayError("Failed to verify existing profile", adminError);
+  }
+
+  return Boolean(adminData);
+}
+
+async function findAuthUserByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const adminDb = createAdminSupabaseClient();
+  if (!adminDb) {
+    return null;
+  }
+
+  const perPage = 200;
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await adminDb.auth.admin.listUsers({
+      page,
+      perPage,
     });
 
     if (error) {
-      throw toRegisterError(error);
+      throw toGatewayError("Failed to inspect authentication users", error);
     }
 
-    return data;
+    const users = Array.isArray(data?.users) ? data.users : [];
+
+    const matchedUser = users.find(
+      (user) => normalizeEmail(user?.email) === normalizedEmail,
+    );
+
+    if (matchedUser) {
+      return matchedUser;
+    }
+
+    if (users.length < perPage) {
+      return null;
+    }
+
+    page += 1;
+  }
+}
+
+async function tryReconcileOrphanedAuthEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return false;
+  }
+
+  const adminDb = createAdminSupabaseClient();
+  if (!adminDb) {
+    return false;
+  }
+
+  const existingProfile = await profileExistsByEmail(normalizedEmail);
+  if (existingProfile) {
+    return false;
+  }
+
+  const authUser = await findAuthUserByEmail(normalizedEmail);
+  if (!authUser?.id) {
+    return false;
+  }
+
+  const { error } = await adminDb.auth.admin.deleteUser(authUser.id, false);
+
+  if (error) {
+    throw toGatewayError("Failed to reconcile account records", error);
+  }
+
+  return true;
+}
+
+export const authRepository = {
+  async registerWithEmailPassword({ email, password, userMetadata }) {
+    const signUp = () =>
+      supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userMetadata,
+        },
+      });
+
+    let { data, error } = await signUp();
+
+    if (!error) {
+      return data;
+    }
+
+    if (isDuplicateAuthError(error)) {
+      const reconciled = await tryReconcileOrphanedAuthEmail(email);
+
+      if (reconciled) {
+        const retryResult = await signUp();
+        data = retryResult.data;
+        error = retryResult.error;
+
+        if (!error) {
+          return data;
+        }
+      }
+    }
+
+    throw toRegisterError(error);
   },
 
   async loginWithEmailPassword({ email, password }) {

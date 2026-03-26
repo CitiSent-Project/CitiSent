@@ -139,6 +139,7 @@ Use this as your baseline whenever you add new domains like `notifications`, `us
 - Users:
   - `GET /api/v1/users/me` (authenticated)
   - `PATCH /api/v1/users/me` (authenticated)
+  - `DELETE /api/v1/users/me` (authenticated)
 - Reports:
   - `GET /api/v1/reports` authenticated list of user reports
   - `POST /api/v1/reports` authenticated report creation

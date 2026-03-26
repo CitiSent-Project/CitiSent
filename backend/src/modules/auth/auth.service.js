@@ -1,6 +1,15 @@
 import { AppError } from "../../shared/errors/appError.js";
 import { StatusCodes } from "http-status-codes";
 import { authRepository } from "./auth.repository.js";
+import {
+  buildActor,
+  normalizeAccountType,
+  normalizeUserRole,
+} from "../../shared/auth/roleAccess.js";
+import {
+  resolveDepartmentId,
+  resolveDepartmentLabel,
+} from "../../shared/data/departments.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -12,23 +21,33 @@ function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function normalizeOptionalString(value) {
+  const normalizedValue = String(value || "").trim();
+  return normalizedValue || null;
+}
+
+async function resolveProfileEmailFromCandidates(candidates) {
+  const dedupedCandidates = [...new Set(candidates.filter(Boolean))];
+
+  for (const candidate of dedupedCandidates) {
+    const profile = await authRepository.getProfileByIdentifier(candidate);
+    const profileEmail = normalizeEmail(profile?.email);
+
+    if (profileEmail) {
+      return profileEmail;
+    }
+  }
+
+  return "";
+}
+
 function toUserResponse({ user, session, profile }) {
   return {
     token: session?.access_token || null,
-    user: {
-      id: user?.id,
-      email: user?.email || profile?.email || null,
-      role: user?.role || "authenticated",
-      username: profile?.username || user?.user_metadata?.username || null,
-      phoneNumber:
-        profile?.phone_number ||
-        user?.phone ||
-        user?.user_metadata?.phoneNumber ||
-        null,
-      age: profile?.age ?? null,
-      gender: profile?.gender ?? null,
-      clientType: profile?.client_type ?? null,
-    },
+    user: buildActor({
+      authUser: user,
+      profile,
+    }),
   };
 }
 
@@ -43,22 +62,28 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
     return normalizeEmail(normalizedIdentifier);
   }
 
+  const normalizedUsername = String(username || "").trim();
   const normalizedPhone = normalizePhoneNumber(phoneNumber);
+  const normalizedIdentifierPhone = normalizePhoneNumber(normalizedIdentifier);
+
   const candidateIdentifier =
-    normalizedIdentifier || username || normalizedPhone;
+    normalizedIdentifier || normalizedUsername || normalizedPhone;
 
   if (!candidateIdentifier) {
     throw new AppError("Login identifier is required", StatusCodes.BAD_REQUEST);
   }
 
-  const profile =
-    await authRepository.getProfileByIdentifier(candidateIdentifier);
-  const profileEmail = normalizeEmail(profile?.email);
+  const profileEmail = await resolveProfileEmailFromCandidates([
+    candidateIdentifier,
+    normalizedUsername,
+    normalizedPhone,
+    normalizedIdentifierPhone,
+  ]);
 
   if (!profileEmail) {
     throw new AppError(
-      "Unable to resolve account from username or phone number. Please check your details and try again.",
-      StatusCodes.BAD_REQUEST,
+      "Invalid credentials",
+      StatusCodes.UNAUTHORIZED,
     );
   }
 
@@ -71,10 +96,23 @@ export const authService = {
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
       : null;
+    const normalizedRole = normalizeUserRole(payload.role);
+    const accountType = normalizeAccountType(payload.accountType, normalizedRole);
+    const rawDepartmentValue = payload.departmentLabel || payload.departmentId;
     const profilePayload = {
       email: normalizedEmail,
       username: payload.username,
+      full_name: normalizeOptionalString(payload.fullName),
       phone_number: normalizedPhoneNumber,
+      address: normalizeOptionalString(payload.address),
+      role: normalizedRole || null,
+      account_type: accountType,
+      department_id:
+        resolveDepartmentId(rawDepartmentValue) ||
+        normalizeOptionalString(payload.departmentId),
+      department_label:
+        resolveDepartmentLabel(rawDepartmentValue) ||
+        normalizeOptionalString(payload.departmentLabel),
       age: payload.age ?? null,
       gender: payload.gender ?? null,
       client_type: payload.clientType ?? null,
@@ -159,15 +197,9 @@ export const authService = {
       accessToken,
     );
 
-    return {
-      id: authUser.id,
-      email: authUser.email || profile?.email || null,
-      role: authUser.role || "authenticated",
-      username: profile?.username || null,
-      phoneNumber: profile?.phone_number || null,
-      age: profile?.age ?? null,
-      gender: profile?.gender ?? null,
-      clientType: profile?.client_type ?? null,
-    };
+    return buildActor({
+      authUser,
+      profile,
+    });
   },
 };

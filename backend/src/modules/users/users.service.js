@@ -1,21 +1,15 @@
 import { usersRepository } from "./users.repository.js";
+import { buildActor } from "../../shared/auth/roleAccess.js";
 
 function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
 function toCurrentUserResponse(authUser, profile) {
-  return {
-    id: authUser.id,
-    email: authUser.email || profile?.email || null,
-    role: authUser.role || "authenticated",
-    username: profile?.username || null,
-    phoneNumber: profile?.phone_number || null,
-    age: profile?.age ?? null,
-    gender: profile?.gender ?? null,
-    clientType: profile?.client_type ?? null,
-    avatarUrl: profile?.avatar_url ?? null,
-  };
+  return buildActor({
+    authUser,
+    profile,
+  });
 }
 
 export const usersService = {

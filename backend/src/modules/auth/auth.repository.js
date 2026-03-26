@@ -56,6 +56,25 @@ function isEmailNotConfirmedAuthError(error) {
   );
 }
 
+function isInvalidCredentialsAuthError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+
+  return (
+    code === "invalid_credentials" ||
+    code === "invalid_grant" ||
+    message.includes("invalid login credentials") ||
+    message.includes("invalid credentials")
+  );
+}
+
+function isInvalidApiKeyAuthError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+
+  return code === "invalid_api_key" || message.includes("invalid api key");
+}
+
 function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
@@ -70,7 +89,18 @@ async function queryProfileByIdentifier(db, identifier) {
     .limit(1)
     .maybeSingle();
 
-  return { data, error };
+  if (error || data) {
+    return { data, error };
+  }
+
+  const fallback = await db
+    .from(PROFILES_TABLE)
+    .select("user_id, email, username, phone_number")
+    .or(`email.ilike.${identifier},username.ilike.${identifier}`)
+    .limit(1)
+    .maybeSingle();
+
+  return fallback;
 }
 
 export const authRepository = {
@@ -113,11 +143,22 @@ export const authRepository = {
         );
       }
 
-      throw new AppError(
-        "Invalid credentials",
-        StatusCodes.UNAUTHORIZED,
-        error,
-      );
+      if (isInvalidCredentialsAuthError(error)) {
+        throw new AppError(
+          "Invalid credentials",
+          StatusCodes.UNAUTHORIZED,
+          error,
+        );
+      }
+
+      if (isInvalidApiKeyAuthError(error)) {
+        throw toGatewayError(
+          "Authentication provider is misconfigured (invalid API key).",
+          error,
+        );
+      }
+
+      throw toGatewayError("Authentication provider is currently unavailable", error);
     }
 
     return data;

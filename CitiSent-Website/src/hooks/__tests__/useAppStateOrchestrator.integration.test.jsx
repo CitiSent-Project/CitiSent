@@ -285,3 +285,97 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     expect(latestState.appState.activityLog[0].action).toBe('Department transfer rejected')
   })
 })
+
+describe('useAppStateOrchestrator access recovery integration', () => {
+  let container
+  let root
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    window.localStorage.clear()
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+
+    const officeAdminProfile = {
+      id: 'admin-office-003',
+      fullName: 'Traffic Office Admin',
+      email: 'traffic.admin@citisent.gov',
+      departmentId: 'traffic',
+      department: 'Traffic Management Office',
+      role: 'Office Admin',
+      phone: '+63 900 000 0003',
+      address: 'City Annex',
+      joinedAt: '2026-03-01T08:30:00.000Z',
+      lastLoginAt: '',
+      accountType: 'admin',
+    }
+
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.profile, schemaValue(officeAdminProfile))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.adminAccounts, schemaValue([officeAdminProfile]))
+    window.localStorage.setItem(
+      ADMIN_STORAGE_KEYS.notificationsByAdmin,
+      schemaValue({ [officeAdminProfile.id]: [] })
+    )
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.transferRequests, schemaValue([]))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.accessToken, schemaValue('token-access-recovery'))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.authSession, schemaValue(true))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.activePage, schemaValue(APP_PAGES.DASHBOARD))
+
+    authApiService.me
+      .mockResolvedValueOnce({
+        data: {
+          id: officeAdminProfile.id,
+          fullName: officeAdminProfile.fullName,
+          email: officeAdminProfile.email,
+          role: 'Office Admin',
+          accountType: 'admin',
+          departmentId: officeAdminProfile.departmentId,
+          departmentLabel: officeAdminProfile.department,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          id: officeAdminProfile.id,
+          fullName: officeAdminProfile.fullName,
+          email: officeAdminProfile.email,
+          role: 'Superadmin',
+          accountType: 'admin',
+          departmentId: officeAdminProfile.departmentId,
+          departmentLabel: officeAdminProfile.department,
+        },
+      })
+
+    adminApiService.listTransferRequests.mockResolvedValue({ data: [] })
+
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+
+    act(() => {
+      root.render(<HookHarness />)
+    })
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    latestState = undefined
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    vi.clearAllMocks()
+  })
+
+  it('revalidates profile before denying navigation when access data changes server-side', async () => {
+    await act(async () => {
+      await latestState.appActions.onNavigate(APP_PAGES.USERS)
+    })
+
+    expect(authApiService.me).toHaveBeenCalledTimes(2)
+    expect(latestState.appState.profile.role).toBe('Superadmin')
+    expect(latestState.appState.activePage).toBe(APP_PAGES.USERS)
+  })
+})

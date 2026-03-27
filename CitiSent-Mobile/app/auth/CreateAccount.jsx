@@ -207,6 +207,18 @@ export default function CreateAccountScreen() {
     setIsSubmitting(true);
 
     try {
+
+      // Assign default profile image based on gender
+      let profileImage = null;
+      try {
+        const { DEFAULT_PROFILE_IMAGES } = require("../../constants/profileImages");
+        if (gender === "male") {
+          profileImage = DEFAULT_PROFILE_IMAGES.male;
+        } else if (gender === "female") {
+          profileImage = DEFAULT_PROFILE_IMAGES.female;
+        }
+      } catch (e) {}
+
       await authApi.register({
         username: trimmedUsername,
         email: trimmedEmail,
@@ -215,6 +227,7 @@ export default function CreateAccountScreen() {
         gender,
         clientType,
         password,
+        profileImage,
       });
 
       setSuccessMessage("Account created successfully! Redirecting...");

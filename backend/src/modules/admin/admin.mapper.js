@@ -62,6 +62,40 @@ function resolveReporterName(profile) {
   );
 }
 
+function resolveManagedUserStatus(activeBan) {
+  return activeBan ? "banned" : "active";
+}
+
+export function toAdminUserResponse({ profile, activeBan }) {
+  const role = normalizeUserRole(profile?.role);
+  const status = resolveManagedUserStatus(activeBan);
+
+  return {
+    id: profile?.user_id || "",
+    email: profile?.email || null,
+    username: profile?.username || null,
+    fullName: profile?.full_name || profile?.username || profile?.email || "",
+    phoneNumber: profile?.phone_number || null,
+    address: profile?.address || null,
+    role: role || null,
+    accountType: profile?.account_type || "citizen",
+    departmentId:
+      profile?.department_id || resolveDepartmentId(profile?.department_label),
+    departmentLabel:
+      profile?.department_label || resolveDepartmentLabel(profile?.department_id),
+    status,
+    joinedAt: profile?.created_at || null,
+    updatedAt: profile?.updated_at || null,
+    ban: activeBan
+      ? {
+          reason: activeBan.reason || null,
+          bannedAt: activeBan.banned_at || null,
+          bannedByUserId: activeBan.banned_by_user_id || null,
+        }
+      : null,
+  };
+}
+
 export function toAdminReportResponse({ reportRow, reporterProfile }) {
   const normalizedStatus = normalizeStatusValue(reportRow?.status);
 

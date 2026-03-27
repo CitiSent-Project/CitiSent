@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { USER_ROLES } from "../../shared/auth/roleAccess.js";
 
 const reportIdSchema = z.string().uuid();
+const userIdSchema = z.string().uuid();
 const transferRequestIdSchema = z.string().uuid();
 const persistedStatusSchema = z.enum([
   "pending",
@@ -8,6 +10,100 @@ const persistedStatusSchema = z.enum([
   "resolved",
   "rejected",
 ]);
+const profileStatusSchema = z.enum(["active", "banned"]);
+const accountTypeSchema = z.enum(["admin", "citizen"]);
+const adminRoleSchema = z.enum([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]);
+const usernameSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(40)
+  .regex(/^[A-Za-z0-9_]+$/);
+const phoneNumberSchema = z
+  .string()
+  .trim()
+  .regex(/^\+?[0-9]{10,15}$/);
+
+export const listAdminUsersSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+    search: z.string().trim().min(1).max(120).optional(),
+    status: profileStatusSchema.optional(),
+  }),
+});
+
+export const getAdminUserByIdSchema = z.object({
+  body: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  params: z.object({
+    userId: userIdSchema,
+  }),
+});
+
+export const createAdminUserSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    email: z.string().trim().email().max(254),
+    fullName: z.string().trim().min(2).max(120),
+    username: usernameSchema.optional(),
+    phoneNumber: phoneNumberSchema.optional(),
+    address: z.string().trim().min(3).max(240).optional(),
+    accountType: accountTypeSchema.optional().default("citizen"),
+    role: adminRoleSchema.optional(),
+    departmentId: z.string().trim().min(1).max(64).optional(),
+    departmentLabel: z.string().trim().min(1).max(160).optional(),
+    status: profileStatusSchema.optional().default("active"),
+  }),
+});
+
+export const updateAdminUserSchema = z.object({
+  query: z.object({}).optional().default({}),
+  params: z.object({
+    userId: userIdSchema,
+  }),
+  body: z
+    .object({
+      fullName: z.string().trim().min(2).max(120).optional(),
+      username: usernameSchema.optional(),
+      phoneNumber: phoneNumberSchema.optional(),
+      address: z.string().trim().min(3).max(240).optional(),
+      role: adminRoleSchema.optional(),
+      departmentId: z.string().trim().min(1).max(64).optional(),
+      departmentLabel: z.string().trim().min(1).max(160).optional(),
+      status: profileStatusSchema.optional(),
+    })
+    .superRefine((payload, ctx) => {
+      if (Object.keys(payload).length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["body"],
+          message: "At least one field is required to update a user.",
+        });
+      }
+    }),
+});
+
+export const banAdminUserSchema = z.object({
+  query: z.object({}).optional().default({}),
+  params: z.object({
+    userId: userIdSchema,
+  }),
+  body: z.object({
+    reason: z.string().trim().min(3).max(500).optional(),
+  }),
+});
+
+export const unbanAdminUserSchema = z.object({
+  query: z.object({}).optional().default({}),
+  params: z.object({
+    userId: userIdSchema,
+  }),
+  body: z.object({}).optional().default({}),
+});
 
 export const listAdminReportsSchema = z.object({
   body: z.object({}).optional().default({}),

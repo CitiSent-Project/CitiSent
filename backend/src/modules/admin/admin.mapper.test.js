@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   mapReportStatusInputToPersisted,
   toAdminReportResponse,
+  toAdminUserResponse,
   toTransferRequestResponse,
 } from "./admin.mapper.js";
 
@@ -64,4 +65,50 @@ test("toTransferRequestResponse matches frontend transfer request shape", () => 
   assert.equal(response.status, "approved");
   assert.equal(response.reviewerId, "super-1");
   assert.equal(response.reviewNotes, "Approved by superadmin");
+});
+
+test("toAdminUserResponse maps profile data for active users", () => {
+  const response = toAdminUserResponse({
+    profile: {
+      user_id: "user-1",
+      email: "user@example.com",
+      username: "user_one",
+      full_name: "User One",
+      phone_number: "639171234567",
+      account_type: "citizen",
+      role: null,
+      department_id: "bplo",
+      department_label: "Business Permits and Licensing Office (BPLO)",
+      created_at: "2026-03-01T00:00:00.000Z",
+      updated_at: "2026-03-02T00:00:00.000Z",
+    },
+    activeBan: null,
+  });
+
+  assert.equal(response.id, "user-1");
+  assert.equal(response.fullName, "User One");
+  assert.equal(response.status, "active");
+  assert.equal(response.ban, null);
+});
+
+test("toAdminUserResponse marks banned users with ban metadata", () => {
+  const response = toAdminUserResponse({
+    profile: {
+      user_id: "user-2",
+      email: "banned@example.com",
+      username: "banned_user",
+      full_name: "Banned User",
+      account_type: "citizen",
+      role: null,
+    },
+    activeBan: {
+      reason: "Terms violation",
+      banned_at: "2026-03-03T00:00:00.000Z",
+      banned_by_user_id: "admin-1",
+    },
+  });
+
+  assert.equal(response.status, "banned");
+  assert.equal(response.ban.reason, "Terms violation");
+  assert.equal(response.ban.bannedByUserId, "admin-1");
 });

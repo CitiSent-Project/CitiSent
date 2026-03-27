@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,12 +9,14 @@ import {
 } from "../../modules/profile";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
+import { getAuthPhoneNumber, getAuthUsername } from "../../services/authSession";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
-  const logoutTimerRef = useRef(null);
+  const displayUsername = getAuthUsername("");
+  const displayPhoneNumber = getAuthPhoneNumber("");
   const { refreshing, onRefresh } = usePullToRefresh(() => {
     setIsLogoutVisible(false);
   });
@@ -44,19 +46,8 @@ export default function Profile() {
     setIsLogoutVisible(false);
 
     authApi.logout();
-
-    logoutTimerRef.current = setTimeout(() => {
-      router.replace("/auth/Login");
-    }, 220);
+    router.replace("/auth/Login");
   };
-
-  useEffect(() => {
-    return () => {
-      if (logoutTimerRef.current) {
-        clearTimeout(logoutTimerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <View className="flex-1" style={{ backgroundColor: Colors.screen.profile }}>
@@ -70,8 +61,8 @@ export default function Profile() {
         onRefresh={onRefresh}
       >
         <ProfileHeader
-          name="Juan Dela Cruz"
-          phone="09123456789"
+          name={displayUsername}
+          phone={displayPhoneNumber}
           onEditProfile={() => router.push("/profile/edit")}
         />
 

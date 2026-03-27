@@ -44,7 +44,17 @@ async function request(endpoint, options = {}) {
       typeof parsedBody === "object" && parsedBody !== null
         ? parsedBody.message || parsedBody.error
         : undefined;
-    throw new Error(backendMessage || `Request failed (${response.status})`);
+    const error = new Error(
+      backendMessage || `Request failed (${response.status})`,
+    );
+
+    if (typeof parsedBody === "object" && parsedBody !== null) {
+      error.details = parsedBody.details;
+      error.status = response.status;
+      error.requestId = parsedBody.requestId;
+    }
+
+    throw error;
   }
 
   return parsedBody ?? null;

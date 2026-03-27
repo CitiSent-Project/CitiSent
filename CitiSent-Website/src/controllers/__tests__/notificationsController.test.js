@@ -45,6 +45,28 @@ describe('notificationsController', () => {
     })
   })
 
+  it('preserves secure metadata when building notifications', () => {
+    const notification = buildNotification({
+      title: 'Temporary password generated',
+      message: 'Authenticate to reveal the credential.',
+      meta: {
+        securePayload: {
+          kind: 'temporaryPassword',
+          forEmail: 'citizen@example.com',
+          secret: 'abc123',
+        },
+      },
+    })
+
+    expect(notification.meta).toEqual({
+      securePayload: {
+        kind: 'temporaryPassword',
+        forEmail: 'citizen@example.com',
+        secret: 'abc123',
+      },
+    })
+  })
+
   it('supports fan-out notification operations by admin id', () => {
     const initial = {
       'admin-1': [{ id: 'n1', read: false }],

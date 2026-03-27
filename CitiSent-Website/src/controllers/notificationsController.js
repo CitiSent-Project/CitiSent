@@ -10,7 +10,29 @@ export function getAdminNotifications({ notificationsByAdmin = {}, adminId }) {
   return notificationsByAdmin[adminId] || []
 }
 
-export function buildNotification({ title, message, type = 'Account' }) {
+function normalizeNotificationMeta(meta) {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+    return undefined
+  }
+
+  const normalized = {}
+
+  if (
+    meta.securePayload &&
+    typeof meta.securePayload === 'object' &&
+    !Array.isArray(meta.securePayload)
+  ) {
+    normalized.securePayload = {
+      ...meta.securePayload,
+    }
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined
+}
+
+export function buildNotification({ title, message, type = 'Account', meta }) {
+  const normalizedMeta = normalizeNotificationMeta(meta)
+
   return {
     id: `notif-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     title,
@@ -18,6 +40,7 @@ export function buildNotification({ title, message, type = 'Account' }) {
     type,
     createdAt: new Date().toISOString(),
     read: false,
+    ...(normalizedMeta ? { meta: normalizedMeta } : {}),
   }
 }
 

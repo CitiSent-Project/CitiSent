@@ -1,9 +1,9 @@
 Still Need To Complete Backend:
 
-    ☐ Build admin user-management APIs for the Users page
-        - Needed: list/search/filter users, get user details, 
+    ✔ Build admin user-management APIs for the Users page @done (3/28/2026, 2:36:39 AM)
+        ✔ - Needed: list/search/filter users, get user details, @done (3/28/2026, 2:37:24 AM)
             create user, update user, ban/unban user status.
-        - Reason: current users backend only supports /me, while 
+        ✔ - Reason: current users backend only supports /me, while @done (3/28/2026, 2:37:25 AM)
             admin Users UI needs multi-user management.
     
     ☐ Build dashboard aggregate endpoints.

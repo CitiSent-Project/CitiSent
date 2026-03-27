@@ -49,6 +49,8 @@ export function renderActivePage({
         onUpdateProfile,
         onToggleRead,
         onClearAll,
+        onTemporaryPasswordCreated,
+        onRevealTemporaryPassword,
         onUpdatePreferences,
         onRequestLogout,
         onConfirmLogout,
@@ -78,7 +80,13 @@ export function renderActivePage({
                 />
             )
         case APP_PAGES.USERS:
-            return <Users onViewUserProfile={onViewUserProfile} profile={profile} />
+            return (
+                <Users
+                    onViewUserProfile={onViewUserProfile}
+                    profile={profile}
+                    onTemporaryPasswordCreated={onTemporaryPasswordCreated}
+                />
+            )
         case APP_PAGES.REPORTS:
             return (
                 <Reports
@@ -122,6 +130,7 @@ export function renderActivePage({
                     notifications={notifications}
                     onToggleRead={onToggleRead}
                     onClearAll={onClearAll}
+                    onRevealTemporaryPassword={onRevealTemporaryPassword}
                 />
             )
         case APP_PAGES.SETTINGS:

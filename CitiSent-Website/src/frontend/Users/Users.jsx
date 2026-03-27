@@ -41,7 +41,7 @@ function mapFilterToBackendStatus(filterValue) {
   return undefined
 }
 
-export function Users({ onViewUserProfile, profile }) {
+export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }) {
   const pageSize = 8
   const [users, setUsers] = useState([])
   const [totalUsers, setTotalUsers] = useState(0)
@@ -233,12 +233,25 @@ export function Users({ onViewUserProfile, profile }) {
       })
 
       const temporaryPassword = response?.data?.temporaryPassword
+      let wasStoredInNotifications = false
+
+      if (temporaryPassword && onTemporaryPasswordCreated) {
+        const notificationResult = await onTemporaryPasswordCreated({
+          fullName: name,
+          email,
+          temporaryPassword,
+        })
+        wasStoredInNotifications = Boolean(notificationResult?.ok)
+      }
+
       setIsAddUserModalOpen(false)
       setCurrentPage(1)
       await Promise.all([fetchUsersPage(1), refreshUserStats()])
       notifySuccess(
         temporaryPassword
-          ? `User added successfully (${email}). Temporary password: ${temporaryPassword}`
+          ? wasStoredInNotifications
+            ? `User added successfully (${email}). Temporary password saved in Notifications.`
+            : `User added successfully (${email}). Temporary password: ${temporaryPassword}`
           : `User added successfully (${email}).`
       )
       return true

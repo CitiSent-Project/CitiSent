@@ -81,11 +81,20 @@ function normalizeUser(user, options = {}) {
 
   const username = resolveUsername(user, options.fallbackUsername);
   const phoneNumber = resolvePhoneNumber(user, options.fallbackPhoneNumber);
+  const gender =
+    user.gender || user.profile?.gender || user.user_metadata?.gender || "";
+  const profileImage =
+    user.profileImage ||
+    user.profile?.profileImage ||
+    user.user_metadata?.profileImage ||
+    null;
 
   return {
     ...user,
     username,
     phoneNumber,
+    gender,
+    profileImage,
   };
 }
 
@@ -103,6 +112,14 @@ export function setAuthUser(user, options = {}) {
 
 export function getAuthUser() {
   return sessionUser;
+}
+
+export function getAuthGender() {
+  return sessionUser?.gender || "";
+}
+
+export function getAuthProfileImage() {
+  return sessionUser?.profileImage || null;
 }
 
 export function getAuthUsername(fallbackValue = "") {

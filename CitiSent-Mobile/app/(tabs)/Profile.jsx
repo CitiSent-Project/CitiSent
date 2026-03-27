@@ -9,7 +9,7 @@ import {
 } from "../../modules/profile";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
-import { getAuthPhoneNumber, getAuthUsername } from "../../services/authSession";
+import { getAuthPhoneNumber, getAuthUsername, getAuthGender, getAuthProfileImage } from "../../services/authSession";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -17,6 +17,8 @@ export default function Profile() {
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
   const displayUsername = getAuthUsername("");
   const displayPhoneNumber = getAuthPhoneNumber("");
+  const displayGender = getAuthGender();
+  const displayProfileImage = getAuthProfileImage();
   const { refreshing, onRefresh } = usePullToRefresh(() => {
     setIsLogoutVisible(false);
   });
@@ -63,6 +65,8 @@ export default function Profile() {
         <ProfileHeader
           name={displayUsername}
           phone={displayPhoneNumber}
+          gender={displayGender}
+          profileImage={displayProfileImage}
           onEditProfile={() => router.push("/profile/edit")}
         />
 

@@ -5,7 +5,7 @@ const initialForm = {
   name: '',
   email: '',
   address: '',
-  status: 'Verified',
+  status: 'Active',
 }
 
 export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
@@ -26,10 +26,13 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
     setForm((previousForm) => ({ ...previousForm, [field]: value }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    onSubmit(form)
-    setForm(initialForm)
+    const submitted = await onSubmit(form)
+
+    if (submitted) {
+      setForm(initialForm)
+    }
   }
 
   function handleClose() {
@@ -103,8 +106,8 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
               onChange={(event) => updateField('status', event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
             >
-              <option value="Verified">Verified</option>
-              <option value="Unverified">Unverified</option>
+              <option value="Active">Active</option>
+              <option value="Banned">Banned</option>
             </select>
           </div>
 

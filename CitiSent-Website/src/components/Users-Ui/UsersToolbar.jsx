@@ -37,6 +37,7 @@ export function UsersToolbar({
   onSortChange,
   onFilterChange,
   onAddUserClick,
+  disableAddUser = false,
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3">
@@ -67,7 +68,9 @@ export function UsersToolbar({
       <button
         type="button"
         onClick={onAddUserClick}
-        className="ml-auto inline-flex items-center gap-2 rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
+        disabled={disableAddUser}
+        title={disableAddUser ? 'Only superadmins can add users.' : primaryAction}
+        className="ml-auto inline-flex items-center gap-2 rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-400 disabled:hover:bg-slate-400"
       >
         <FiPlus />
         {primaryAction}

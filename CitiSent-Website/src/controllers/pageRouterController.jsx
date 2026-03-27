@@ -78,7 +78,7 @@ export function renderActivePage({
                 />
             )
         case APP_PAGES.USERS:
-            return <Users onViewUserProfile={onViewUserProfile} />
+            return <Users onViewUserProfile={onViewUserProfile} profile={profile} />
         case APP_PAGES.REPORTS:
             return (
                 <Reports

@@ -8,6 +8,16 @@ const REPORT_STATUS_LABEL_MAP = {
   rejected: 'Unresolved',
 }
 
+const BACKEND_TO_UI_USER_STATUS = {
+  active: 'Active',
+  banned: 'Banned',
+}
+
+const UI_TO_BACKEND_USER_STATUS = {
+  Active: 'active',
+  Banned: 'banned',
+}
+
 function formatDate(value) {
   if (!value) {
     return 'Not available'
@@ -18,6 +28,11 @@ function formatDate(value) {
     day: '2-digit',
     year: 'numeric',
   })
+}
+
+function normalizeUserStatusLabel(status) {
+  const normalizedStatus = String(status || '').trim().toLowerCase()
+  return BACKEND_TO_UI_USER_STATUS[normalizedStatus] || 'Active'
 }
 
 function resolveDepartment(departmentId, departmentLabel, issueType) {
@@ -54,6 +69,33 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
     lastLoginAt: payload.lastLoginAt || '',
     accountType: payload.accountType || '',
   }
+}
+
+export function mapBackendUserToUiRow(payload = {}) {
+  const joinedAtValue = Date.parse(payload.joinedAt || payload.updatedAt || '')
+
+  return {
+    id: payload.id || '',
+    name: payload.fullName || payload.username || payload.email || 'Unknown User',
+    email: payload.email || 'Not available',
+    address: payload.address || 'Not available',
+    status: normalizeUserStatusLabel(payload.status),
+    registeredAt: formatDate(payload.joinedAt),
+    registeredAtValue: Number.isNaN(joinedAtValue) ? 0 : joinedAtValue,
+    username: payload.username || '',
+    role: payload.role || '',
+    accountType: payload.accountType || '',
+    phoneNumber: payload.phoneNumber || '',
+    departmentLabel: payload.departmentLabel || '',
+    departmentId: payload.departmentId || '',
+    ban: payload.ban || null,
+    joinedAt: payload.joinedAt || '',
+    updatedAt: payload.updatedAt || '',
+  }
+}
+
+export function mapUiStatusToBackendUserStatus(status) {
+  return UI_TO_BACKEND_USER_STATUS[String(status || '').trim()] || 'active'
 }
 
 export function mapBackendOfficeAdmin(payload = {}) {

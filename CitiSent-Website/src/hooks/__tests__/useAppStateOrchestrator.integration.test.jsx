@@ -369,13 +369,13 @@ describe('useAppStateOrchestrator access recovery integration', () => {
     vi.clearAllMocks()
   })
 
-  it('revalidates profile before denying navigation when access data changes server-side', async () => {
+  it('revalidates profile before denying navigation to restricted admin pages', async () => {
     await act(async () => {
-      await latestState.appActions.onNavigate(APP_PAGES.USERS)
+      await latestState.appActions.onNavigate(APP_PAGES.ADMIN_MANAGEMENT)
     })
 
     expect(authApiService.me).toHaveBeenCalledTimes(2)
     expect(latestState.appState.profile.role).toBe('Superadmin')
-    expect(latestState.appState.activePage).toBe(APP_PAGES.USERS)
+    expect(latestState.appState.activePage).toBe(APP_PAGES.ADMIN_MANAGEMENT)
   })
 })

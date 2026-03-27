@@ -1,6 +1,8 @@
 import { resolveApiBaseUrl } from './apiConfig'
 
 const BASE_URL = resolveApiBaseUrl()
+const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+const MAX_NETWORK_ATTEMPTS = 3
 
 function buildRequestUrl(endpoint) {
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
@@ -38,28 +40,48 @@ function buildValidationDetailsSummary(details) {
   return summary
 }
 
+function isNetworkError(error) {
+  return (
+    error instanceof TypeError ||
+    /Failed to fetch|ERR_CONNECTION_REFUSED|NetworkError|ECONNREFUSED/i.test(
+      String(error?.message || '')
+    )
+  )
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function request(endpoint, options = {}) {
   const { headers, token, ...requestOptions } = options
   const requestUrl = buildRequestUrl(endpoint)
+  const method = String(requestOptions.method || 'GET').toUpperCase()
+  const shouldRetryOnNetworkError = RETRYABLE_METHODS.has(method)
+  const maxAttempts = shouldRetryOnNetworkError ? MAX_NETWORK_ATTEMPTS : 1
   let response
 
-  try {
-    response = await fetch(requestUrl, {
-      headers: buildHeaders(token, headers),
-      ...requestOptions,
-    })
-  } catch (error) {
-    const networkError =
-      error instanceof TypeError ||
-      /Failed to fetch|ERR_CONNECTION_REFUSED|NetworkError/i.test(String(error?.message || ''))
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      response = await fetch(requestUrl, {
+        headers: buildHeaders(token, headers),
+        ...requestOptions,
+      })
+      break
+    } catch (error) {
+      if (isNetworkError(error) && attempt < maxAttempts) {
+        await wait(attempt * 250)
+        continue
+      }
 
-    if (networkError) {
-      throw new Error(
-        `Unable to reach the API server at ${BASE_URL}. Ensure the backend is running and reachable.`
-      )
+      if (isNetworkError(error)) {
+        throw new Error(
+          `Unable to reach the API server at ${BASE_URL}. Ensure the backend is running and reachable.`
+        )
+      }
+
+      throw error
     }
-
-    throw error
   }
 
   const rawBody = await response.text()

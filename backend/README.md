@@ -231,6 +231,30 @@ before update on public.profiles
 for each row execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
+-- Admin user-management: banned users state
+-- ---------------------------------------------------------------------------
+create table if not exists public.banned_users (
+  user_id             uuid primary key references auth.users(id) on delete cascade,
+  reason              text,
+  is_active           boolean not null default true,
+  banned_at           timestamptz not null default timezone('utc', now()),
+  banned_by_user_id   uuid references auth.users(id) on delete set null,
+  unbanned_at         timestamptz,
+  unbanned_by_user_id uuid references auth.users(id) on delete set null,
+  updated_at          timestamptz not null default timezone('utc', now()),
+  constraint chk_banned_users_lifecycle
+    check (
+      (is_active = true and unbanned_at is null and unbanned_by_user_id is null) or
+      (is_active = false and unbanned_at is not null)
+    )
+);
+
+drop trigger if exists trg_banned_users_updated_at on public.banned_users;
+create trigger trg_banned_users_updated_at
+before update on public.banned_users
+for each row execute function public.set_updated_at();
+
+-- ---------------------------------------------------------------------------
 -- Agencies and issue catalog (normalized lookup tables)
 -- ---------------------------------------------------------------------------
 create table if not exists public.agencies (
@@ -447,6 +471,7 @@ create table if not exists public.notifications (
 -- ---------------------------------------------------------------------------
 -- profiles
 create index if not exists idx_profiles_app_role on public.profiles(app_role);
+create index if not exists idx_banned_users_is_active on public.banned_users(is_active, banned_at desc);
 
 -- issue catalog
 create index if not exists idx_issue_types_agency_active on public.issue_types(agency_id, is_active);
@@ -489,6 +514,7 @@ create index if not exists idx_notifications_user_read_created
 -- Security: RLS
 -- ---------------------------------------------------------------------------
 alter table public.profiles enable row level security;
+alter table public.banned_users enable row level security;
 alter table public.reports enable row level security;
 alter table public.report_attachments enable row level security;
 alter table public.report_status_history enable row level security;
@@ -603,6 +629,14 @@ set search_path = public
 as $$
   select app_role from public.profiles where user_id = auth.uid();
 $$;
+
+-- Banned users: read/write only for admins.
+create policy banned_users_admin_read on public.banned_users
+  for select using (public.current_user_role() = 'admin');
+
+create policy banned_users_admin_write on public.banned_users
+  for all using (public.current_user_role() = 'admin')
+  with check (public.current_user_role() = 'admin');
 
 -- Agencies: admin can insert/update/delete.
 create policy agencies_admin_write on public.agencies

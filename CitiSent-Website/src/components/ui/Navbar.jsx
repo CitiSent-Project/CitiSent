@@ -24,7 +24,12 @@ const navItems = [
 		icon: FiUsers,
 		roles: [USER_ROLES.SUPERADMIN],
 	},
-	{ label: 'Users', pageKey: APP_PAGES.USERS, icon: FiUsers, roles: [USER_ROLES.SUPERADMIN] },
+	{
+		label: 'Users',
+		pageKey: APP_PAGES.USERS,
+		icon: FiUsers,
+		roles: [USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN],
+	},
 	{
 		label: 'Reports',
 		icon: FiFileText,

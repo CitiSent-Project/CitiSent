@@ -1,6 +1,14 @@
-import { useMemo, useState } from 'react'
-import { generateNextUserId, usersFilters, usersRows, usersStats } from '../../models/data'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ADMIN_STORAGE_KEYS, usersFilters, usersStats } from '../../models/data'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
+import { adminApiService } from '../../services/adminApiService'
+import {
+  mapBackendUserToUiRow,
+  mapUiStatusToBackendUserStatus,
+} from '../../services/adminApiMappers'
+import { loadFromStorageWithSchema } from '../../services/storageService'
+import { getStorageSchemaRule } from '../../models/storageSchemaModel'
+import { isSuperadmin, normalizeUserRole } from '../../models/roleAccessModel'
 import {
   AddUserFormModal,
   EditUserFormModal,
@@ -11,10 +19,36 @@ import {
   UsersToolbar,
 } from '../../components/Users-Ui'
 
-export function Users({ onViewUserProfile }) {
+function getStoredAccessToken() {
+  const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+
+  return loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', {
+    schemaVersion: schemaRule.schemaVersion,
+    migrate: schemaRule.migrate,
+    validate: schemaRule.validate,
+  })
+}
+
+function mapFilterToBackendStatus(filterValue) {
+  if (filterValue === 'Active') {
+    return 'active'
+  }
+
+  if (filterValue === 'Banned') {
+    return 'banned'
+  }
+
+  return undefined
+}
+
+export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }) {
   const pageSize = 8
-  const [users, setUsers] = useState(usersRows)
+  const [users, setUsers] = useState([])
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState({ active: 0, banned: 0 })
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState(usersFilters.sortOptions[0])
   const [filterBy, setFilterBy] = useState(usersFilters.filterOptions[0])
   const [currentPage, setCurrentPage] = useState(1)
@@ -23,23 +57,98 @@ export function Users({ onViewUserProfile }) {
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
   const [selectedUserIds, setSelectedUserIds] = useState([])
+  const resolvedRole = normalizeUserRole(profile?.role)
+  const canCreateUsers = isSuperadmin(resolvedRole)
+  const canToggleBan = isSuperadmin(resolvedRole)
 
-  const filteredAndSortedUsers = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase()
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 250)
 
-    const filteredUsers = users.filter((user) => {
-      const matchesFilter = filterBy === 'All' ? true : user.status === filterBy
-      const matchesSearch =
-        query.length === 0
-          ? true
-          : [user.name, user.email, user.address].some((field) =>
-              field.toLowerCase().includes(query)
-            )
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchTerm])
 
-      return matchesFilter && matchesSearch
-    })
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm, filterBy])
 
-    return [...filteredUsers].sort((a, b) => {
+  const fetchUsersPage = useCallback(
+    async (pageNumber) => {
+      const token = getStoredAccessToken()
+      if (!token) {
+        setUsers([])
+        setTotalUsers(0)
+        setIsLoading(false)
+        notifyError('Users unavailable.', 'Your session has expired. Please sign in again.')
+        return
+      }
+
+      setIsLoading(true)
+
+      try {
+        const response = await adminApiService.listUsers(token, {
+          limit: pageSize,
+          offset: (pageNumber - 1) * pageSize,
+          search: debouncedSearchTerm || undefined,
+          status: mapFilterToBackendStatus(filterBy),
+        })
+
+        const mappedUsers = (response?.data || []).map(mapBackendUserToUiRow)
+        const total = Number(response?.pagination?.total)
+
+        setUsers(mappedUsers)
+        setTotalUsers(Number.isFinite(total) ? total : mappedUsers.length)
+        setSelectedUserIds((previousIds) =>
+          previousIds.filter((id) => mappedUsers.some((user) => user.id === id))
+        )
+      } catch (error) {
+        setUsers([])
+        setTotalUsers(0)
+        notifyError('Unable to load users.', error.message)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [debouncedSearchTerm, filterBy]
+  )
+
+  const refreshUserStats = useCallback(async () => {
+    const token = getStoredAccessToken()
+    if (!token) {
+      return
+    }
+
+    try {
+      const [activeResponse, bannedResponse] = await Promise.all([
+        adminApiService.listUsers(token, { limit: 1, offset: 0, status: 'active' }),
+        adminApiService.listUsers(token, { limit: 1, offset: 0, status: 'banned' }),
+      ])
+
+      const activeTotal = Number(activeResponse?.pagination?.total)
+      const bannedTotal = Number(bannedResponse?.pagination?.total)
+
+      setStats({
+        active: Number.isFinite(activeTotal) ? activeTotal : 0,
+        banned: Number.isFinite(bannedTotal) ? bannedTotal : 0,
+      })
+    } catch {
+      setStats({ active: 0, banned: 0 })
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUsersPage(currentPage)
+  }, [currentPage, fetchUsersPage])
+
+  useEffect(() => {
+    refreshUserStats()
+  }, [refreshUserStats])
+
+  const visibleUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
       if (sortBy === 'Name') {
         return a.name.localeCompare(b.name)
       }
@@ -50,12 +159,16 @@ export function Users({ onViewUserProfile }) {
 
       return b.registeredAtValue - a.registeredAtValue
     })
-  }, [users, searchTerm, sortBy, filterBy])
+  }, [users, sortBy])
 
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedUsers.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize))
   const safeCurrentPage = Math.min(currentPage, totalPages)
-  const startIndex = (safeCurrentPage - 1) * pageSize
-  const visibleUsers = filteredAndSortedUsers.slice(startIndex, startIndex + pageSize)
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   const visiblePages = useMemo(() => {
     if (totalPages <= 3) {
@@ -80,15 +193,18 @@ export function Users({ onViewUserProfile }) {
 
   function handleFilterChange(value) {
     setFilterBy(value)
-    setCurrentPage(1)
   }
 
   function handleSearchChange(value) {
     setSearchTerm(value)
-    setCurrentPage(1)
   }
 
-  function handleAddUserSubmit(formData) {
+  async function handleAddUserSubmit(formData) {
+    if (!canCreateUsers) {
+      notifyError('Add user denied.', 'Only superadmins can create new users.')
+      return false
+    }
+
     const name = formData.name?.trim()
     const email = formData.email?.trim().toLowerCase()
     const address = formData.address?.trim()
@@ -98,38 +214,51 @@ export function Users({ onViewUserProfile }) {
         'Add user failed.',
         'Complete all required fields (name, email, address) before submitting.'
       )
-      return
+      return false
     }
 
-    const isDuplicateEmail = users.some((user) => user.email.toLowerCase() === email)
-    if (isDuplicateEmail) {
-      notifyError('Add user failed.', 'Use a different email. This email is already registered.')
-      return
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Add user failed.', 'Your session has expired. Please sign in again.')
+      return false
     }
 
-    const createdAt = Date.now()
-    const registeredAt = new Date(createdAt).toLocaleDateString('en-US', {
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
-    })
-
-    setUsers((previousUsers) => [
-      {
-        id: generateNextUserId(previousUsers),
-        name,
+    try {
+      const response = await adminApiService.createUser(token, {
+        fullName: name,
         email,
         address,
-        status: formData.status,
-        registeredAt,
-        registeredAtValue: createdAt,
-      },
-      ...previousUsers,
-    ])
+        accountType: 'citizen',
+        status: mapUiStatusToBackendUserStatus(formData.status),
+      })
 
-    setIsAddUserModalOpen(false)
-    setCurrentPage(1)
-    notifySuccess(`User added successfully (${email}).`)
+      const temporaryPassword = response?.data?.temporaryPassword
+      let wasStoredInNotifications = false
+
+      if (temporaryPassword && onTemporaryPasswordCreated) {
+        const notificationResult = await onTemporaryPasswordCreated({
+          fullName: name,
+          email,
+          temporaryPassword,
+        })
+        wasStoredInNotifications = Boolean(notificationResult?.ok)
+      }
+
+      setIsAddUserModalOpen(false)
+      setCurrentPage(1)
+      await Promise.all([fetchUsersPage(1), refreshUserStats()])
+      notifySuccess(
+        temporaryPassword
+          ? wasStoredInNotifications
+            ? `User added successfully (${email}). Temporary password saved in Notifications.`
+            : `User added successfully (${email}). Temporary password: ${temporaryPassword}`
+          : `User added successfully (${email}).`
+      )
+      return true
+    } catch (error) {
+      notifyError('Add user failed.', error.message)
+      return false
+    }
   }
 
   function handlePageChange(page) {
@@ -144,13 +273,27 @@ export function Users({ onViewUserProfile }) {
     setCurrentPage((previousPage) => Math.max(previousPage - 1, 1))
   }
 
-  function handleViewUser(user) {
-    setSelectedUser(user)
-    if (onViewUserProfile) {
-      onViewUserProfile(user)
+  async function handleViewUser(user) {
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('View profile failed.', 'Your session has expired. Please sign in again.')
       return
     }
-    setIsViewProfileOpen(true)
+
+    try {
+      const response = await adminApiService.getUserById(token, user.id)
+      const detailedUser = mapBackendUserToUiRow(response?.data || {})
+      setSelectedUser(detailedUser)
+
+      if (onViewUserProfile) {
+        onViewUserProfile(detailedUser)
+        return
+      }
+
+      setIsViewProfileOpen(true)
+    } catch (error) {
+      notifyError('View profile failed.', error.message)
+    }
   }
 
   function handleEditUser(user) {
@@ -158,77 +301,88 @@ export function Users({ onViewUserProfile }) {
     setIsEditUserOpen(true)
   }
 
-  function handleEditUserSubmit(formData) {
+  async function handleEditUserSubmit(formData) {
     if (!selectedUser) {
       notifyError('Edit user failed.', 'Select a user first, then try editing again.')
-      return
+      return false
     }
 
     const name = formData.name?.trim()
-    const email = formData.email?.trim().toLowerCase()
     const address = formData.address?.trim()
 
-    if (!name || !email || !address) {
+    if (!name || !address) {
       notifyError(
         'Edit user failed.',
-        'Complete all required fields (name, email, address) before saving.'
+        'Complete all required fields (name and address) before saving.'
       )
-      return
+      return false
     }
 
-    const isDuplicateEmail = users.some(
-      (user) => user.id !== selectedUser.id && user.email.toLowerCase() === email
-    )
-    if (isDuplicateEmail) {
-      notifyError(
-        'Edit user failed.',
-        'Use a different email. Another user is already using this email.'
-      )
-      return
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Edit user failed.', 'Your session has expired. Please sign in again.')
+      return false
     }
 
-    setUsers((previousUsers) =>
-      previousUsers.map((user) =>
-        user.id === selectedUser.id
-          ? {
-              ...user,
-              name,
-              email,
-              address,
-              status: formData.status,
-            }
-          : user
-      )
-    )
+    try {
+      const response = await adminApiService.updateUser(token, selectedUser.id, {
+        fullName: name,
+        address,
+      })
 
-    setIsEditUserOpen(false)
-    setSelectedUser(null)
-    notifySuccess('User details updated successfully.')
+      const updatedUser = mapBackendUserToUiRow(response?.data || {})
+      setUsers((previousUsers) =>
+        previousUsers.map((user) => (user.id === selectedUser.id ? updatedUser : user))
+      )
+      setSelectedUser(updatedUser)
+      setIsEditUserOpen(false)
+      notifySuccess('User details updated successfully.')
+      return true
+    } catch (error) {
+      notifyError('Edit user failed.', error.message)
+      return false
+    }
   }
 
-  function handleBanUser(targetUser) {
+  async function handleToggleBanUser(targetUser) {
+    if (!canToggleBan) {
+      notifyError('Action denied.', 'Only superadmins can ban or unban users.')
+      return
+    }
+
     if (!targetUser) {
-      notifyError('Ban user failed.', 'Select a valid user and try again.')
+      notifyError('User update failed.', 'Select a valid user and try again.')
       return
     }
 
-    if (targetUser.status === 'Banned') {
-      notifyError('Ban user failed.', 'This user is already banned. No further action is needed.')
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('User update failed.', 'Your session has expired. Please sign in again.')
       return
     }
 
-    setUsers((previousUsers) =>
-      previousUsers.map((user) =>
-        user.id === targetUser.id
-          ? {
-              ...user,
-              status: 'Banned',
-            }
-          : user
+    try {
+      const response =
+        targetUser.status === 'Banned'
+          ? await adminApiService.unbanUser(token, targetUser.id)
+          : await adminApiService.banUser(token, targetUser.id, {
+              reason: 'Banned by administrator from Users page',
+            })
+
+      const updatedUser = mapBackendUserToUiRow(response?.data || {})
+      setUsers((previousUsers) =>
+        previousUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
       )
-    )
 
-    notifySuccess(`${targetUser.name} was banned successfully.`)
+      await refreshUserStats()
+      notifySuccess(
+        updatedUser.status === 'Banned'
+          ? `${updatedUser.name} was banned successfully.`
+          : `${updatedUser.name} was unbanned successfully.`
+      )
+    } catch (error) {
+      notifyError('User update failed.', error.message)
+    }
   }
 
   function handleToggleSelectUser(userId) {
@@ -252,36 +406,84 @@ export function Users({ onViewUserProfile }) {
     })
   }
 
-  function handleBulkStatusUpdate(status) {
-    if (!selectedUserIds.length) {
-      notifyError('Bulk update failed.', 'Select one or more users first.')
+  async function handleBulkBanUsers() {
+    if (!canToggleBan) {
+      notifyError('Bulk action denied.', 'Only superadmins can ban users.')
       return
     }
 
-    setUsers((previousUsers) =>
-      previousUsers.map((user) =>
-        selectedUserIds.includes(user.id) ? { ...user, status } : user
-      )
-    )
-
-    notifySuccess(`Updated status to ${status} for ${selectedUserIds.length} user(s).`)
-    setSelectedUserIds([])
-  }
-
-  function handleBulkBanUsers() {
     if (!selectedUserIds.length) {
       notifyError('Bulk ban failed.', 'Select one or more users first.')
       return
     }
 
-    setUsers((previousUsers) =>
-      previousUsers.map((user) =>
-        selectedUserIds.includes(user.id) ? { ...user, status: 'Banned' } : user
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Bulk ban failed.', 'Your session has expired. Please sign in again.')
+      return
+    }
+
+    const operations = await Promise.allSettled(
+      selectedUserIds.map((userId) =>
+        adminApiService.banUser(token, userId, {
+          reason: 'Bulk ban from Users page',
+        })
       )
     )
 
-    notifySuccess(`Banned ${selectedUserIds.length} user(s) successfully.`)
+    const successfulCount = operations.filter((result) => result.status === 'fulfilled').length
+    const failedCount = operations.length - successfulCount
+
     setSelectedUserIds([])
+    await Promise.all([fetchUsersPage(safeCurrentPage), refreshUserStats()])
+
+    if (failedCount > 0) {
+      notifyError(
+        'Bulk ban partially failed.',
+        `${successfulCount} user(s) banned, ${failedCount} user(s) failed.`
+      )
+      return
+    }
+
+    notifySuccess(`Banned ${successfulCount} user(s) successfully.`)
+  }
+
+  async function handleBulkUnbanUsers() {
+    if (!canToggleBan) {
+      notifyError('Bulk action denied.', 'Only superadmins can unban users.')
+      return
+    }
+
+    if (!selectedUserIds.length) {
+      notifyError('Bulk unban failed.', 'Select one or more users first.')
+      return
+    }
+
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Bulk unban failed.', 'Your session has expired. Please sign in again.')
+      return
+    }
+
+    const operations = await Promise.allSettled(
+      selectedUserIds.map((userId) => adminApiService.unbanUser(token, userId))
+    )
+
+    const successfulCount = operations.filter((result) => result.status === 'fulfilled').length
+    const failedCount = operations.length - successfulCount
+
+    setSelectedUserIds([])
+    await Promise.all([fetchUsersPage(safeCurrentPage), refreshUserStats()])
+
+    if (failedCount > 0) {
+      notifyError(
+        'Bulk unban partially failed.',
+        `${successfulCount} user(s) unbanned, ${failedCount} user(s) failed.`
+      )
+      return
+    }
+
+    notifySuccess(`Unbanned ${successfulCount} user(s) successfully.`)
   }
 
   return (
@@ -295,9 +497,10 @@ export function Users({ onViewUserProfile }) {
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {usersStats.map((stat) => (
-            <UserStatCard key={stat.id} {...stat} />
-          ))}
+          {usersStats.map((stat) => {
+            const value = stat.id === 'active-users' ? String(stats.active) : String(stats.banned)
+            return <UserStatCard key={stat.id} {...stat} value={value} />
+          })}
         </div>
 
         <section className="rounded-2xl bg-white shadow-sm border border-slate-200">
@@ -313,25 +516,22 @@ export function Users({ onViewUserProfile }) {
             onSortChange={handleSortChange}
             onFilterChange={handleFilterChange}
             onAddUserClick={() => setIsAddUserModalOpen(true)}
+            disableAddUser={!canCreateUsers}
           />
-          {selectedUserIds.length > 0 && (
+          {isLoading ? (
+            <div className="px-4 pt-3 text-sm text-slate-500">Loading users...</div>
+          ) : null}
+          {selectedUserIds.length > 0 && canToggleBan && (
             <div className="flex flex-wrap items-center gap-2 px-4 mt-3 pb-3">
               <span className="text-sm text-slate-600">
                 {selectedUserIds.length} selected
               </span>
               <button
                 type="button"
-                onClick={() => handleBulkStatusUpdate('Verified')}
+                onClick={handleBulkUnbanUsers}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
-                Set Verified
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBulkStatusUpdate('Unverified')}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Set Unverified
+                Activate Selected
               </button>
               <button
                 type="button"
@@ -349,7 +549,8 @@ export function Users({ onViewUserProfile }) {
             onToggleSelectAllUsers={handleToggleSelectAllVisibleUsers}
             onViewUser={handleViewUser}
             onEditUser={handleEditUser}
-            onBanUser={handleBanUser}
+            onToggleBanUser={handleToggleBanUser}
+            canToggleBan={canToggleBan}
           />
           <UsersPagination
             currentPage={safeCurrentPage}

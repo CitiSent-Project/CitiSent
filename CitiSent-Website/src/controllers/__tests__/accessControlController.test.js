@@ -13,14 +13,13 @@ describe('accessControlController', () => {
     expect(decision).toEqual({ allowed: true })
   })
 
-  it('denies office admin access to users page', () => {
+  it('allows office admins to access users page', () => {
     const decision = buildPageAccessDecision({
       role: USER_ROLES.OFFICE_ADMIN,
       requestedPage: APP_PAGES.USERS,
     })
 
-    expect(decision.allowed).toBe(false)
-    expect(decision.activity.action).toBe('Access denied')
+    expect(decision).toEqual({ allowed: true })
   })
 
   it('maps legacy Administrator role to superadmin access', () => {

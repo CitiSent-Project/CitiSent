@@ -9,6 +9,7 @@ import { USER_ROLES, isSuperadmin } from "../../shared/auth/roleAccess.js";
 import { buildDepartmentCandidates } from "../../shared/data/departments.js";
 
 const PROFILES_TABLE = "profiles";
+const BANNED_USERS_TABLE = "banned_users";
 const REPORTS_TABLE = "reports";
 const TRANSFER_REQUESTS_TABLE = "transfer_requests";
 
@@ -18,6 +19,80 @@ function getDb(accessToken) {
 
 function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
+}
+
+function toErrorText(error) {
+  const parts = [
+    error?.message,
+    error?.code,
+    error?.name,
+    error?.details,
+    error?.hint,
+    error?.cause?.message,
+    error?.cause?.details,
+    error?.error_description,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  try {
+    parts.push(JSON.stringify(error));
+  } catch {}
+
+  return parts.join(" ").toLowerCase();
+}
+
+function isDuplicateAuthError(error) {
+  const message = toErrorText(error);
+  const code = String(error?.code || "").toUpperCase();
+
+  return (
+    code === "USER_ALREADY_EXISTS" ||
+    code === "23505" ||
+    message.includes("already registered") ||
+    message.includes("already exists") ||
+    message.includes("duplicate key") ||
+    message.includes("unique constraint")
+  );
+}
+
+function getAdminDb() {
+  const adminDb = createAdminSupabaseClient();
+
+  if (!adminDb) {
+    throw new AppError(
+      "Admin user management requires SUPABASE_SERVICE_ROLE_KEY",
+      StatusCodes.SERVICE_UNAVAILABLE,
+    );
+  }
+
+  return adminDb;
+}
+
+async function getActiveBansByUserIds({ db, userIds = [] }) {
+  if (!userIds.length) {
+    return {};
+  }
+
+  const { data, error } = await db
+    .from(BANNED_USERS_TABLE)
+    .select("user_id, reason, banned_at, banned_by_user_id")
+    .in("user_id", userIds)
+    .eq("is_active", true);
+
+  if (error) {
+    throw toGatewayError("Failed to fetch banned users", error);
+  }
+
+  return (data || []).reduce((accumulator, banEntry) => {
+    accumulator[banEntry.user_id] = banEntry;
+    return accumulator;
+  }, {});
+}
+
+async function getActiveBanByUserId({ db, userId }) {
+  const activeBansByUserId = await getActiveBansByUserIds({ db, userIds: [userId] });
+  return activeBansByUserId[userId] || null;
 }
 
 async function loadReporterProfiles(db, rows = []) {
@@ -62,6 +137,194 @@ function applyDepartmentScope(query, actor) {
 }
 
 export const adminRepository = {
+  async listUsers({ accessToken, limit, offset, search, status }) {
+    const db = getDb(accessToken);
+    const normalizedLimit = Number.isFinite(Number(limit)) ? Number(limit) : 50;
+    const normalizedOffset = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+    const normalizedSearch = String(search || "").trim();
+
+    let query = db
+      .from(PROFILES_TABLE)
+      .select("*")
+      .eq("account_type", "citizen")
+      .order("created_at", { ascending: false });
+
+    if (normalizedSearch) {
+      query = query.or(
+        `email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,full_name.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
+      );
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw toGatewayError("Failed to fetch users", error);
+    }
+
+    const allRows = data || [];
+    const activeBansByUserId = await getActiveBansByUserIds({
+      db,
+      userIds: allRows.map((row) => row.user_id).filter(Boolean),
+    });
+
+    const filteredRows = allRows.filter((row) => {
+      if (!status) {
+        return true;
+      }
+
+      const isBanned = Boolean(activeBansByUserId[row.user_id]);
+      return status === "banned" ? isBanned : !isBanned;
+    });
+
+    const paginatedRows = filteredRows.slice(
+      normalizedOffset,
+      normalizedOffset + normalizedLimit,
+    );
+
+    const paginatedBansByUserId = paginatedRows.reduce((accumulator, row) => {
+      if (activeBansByUserId[row.user_id]) {
+        accumulator[row.user_id] = activeBansByUserId[row.user_id];
+      }
+      return accumulator;
+    }, {});
+
+    return {
+      rows: paginatedRows,
+      count: filteredRows.length,
+      activeBansByUserId: paginatedBansByUserId,
+    };
+  },
+
+  async getUserById({ accessToken, userId }) {
+    const db = getDb(accessToken);
+
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to fetch user", error);
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    const activeBan = await getActiveBanByUserId({ db, userId });
+
+    return {
+      profile: data,
+      activeBan,
+    };
+  },
+
+  async createAuthUser({ email, password, userMetadata }) {
+    const adminDb = getAdminDb();
+    const { data, error } = await adminDb.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: userMetadata,
+    });
+
+    if (error) {
+      if (isDuplicateAuthError(error)) {
+        throw new AppError("Email is already registered", StatusCodes.CONFLICT, error);
+      }
+
+      throw toGatewayError("Failed to create authentication account", error);
+    }
+
+    return data?.user || null;
+  },
+
+  async deleteAuthUserById({ userId }) {
+    const adminDb = getAdminDb();
+    const { error } = await adminDb.auth.admin.deleteUser(userId, false);
+
+    if (error) {
+      throw toGatewayError("Failed to rollback authentication account", error);
+    }
+  },
+
+  async createUserProfile({ accessToken, userId, payload }) {
+    const db = getDb(accessToken);
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .upsert(
+        {
+          user_id: userId,
+          ...payload,
+        },
+        { onConflict: "user_id" },
+      )
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to create user profile", error);
+    }
+
+    return data;
+  },
+
+  async updateUserProfile({ accessToken, userId, payload }) {
+    const db = getDb(accessToken);
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .update(payload)
+      .eq("user_id", userId)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to update user profile", error);
+    }
+
+    return data;
+  },
+
+  async banUser({ accessToken, actorId, userId, reason }) {
+    const db = getDb(accessToken);
+    const { error } = await db
+      .from(BANNED_USERS_TABLE)
+      .upsert(
+        {
+          user_id: userId,
+          reason: reason || null,
+          is_active: true,
+          banned_at: new Date().toISOString(),
+          banned_by_user_id: actorId,
+          unbanned_at: null,
+          unbanned_by_user_id: null,
+        },
+        { onConflict: "user_id" },
+      );
+
+    if (error) {
+      throw toGatewayError("Failed to ban user", error);
+    }
+  },
+
+  async unbanUser({ accessToken, actorId, userId }) {
+    const db = getDb(accessToken);
+    const { error } = await db
+      .from(BANNED_USERS_TABLE)
+      .update({
+        is_active: false,
+        unbanned_at: new Date().toISOString(),
+        unbanned_by_user_id: actorId,
+      })
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    if (error) {
+      throw toGatewayError("Failed to unban user", error);
+    }
+  },
+
   async listReports({ actor, accessToken, limit, offset, status }) {
     const db = getDb(accessToken);
 

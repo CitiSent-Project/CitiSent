@@ -5,21 +5,69 @@ import { loadActorProfile, requireRole } from "../../middlewares/actor.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { adminController } from "./admin.controller.js";
 import {
+  banAdminUserSchema,
   assignOfficeDepartmentSchema,
+  createAdminUserSchema,
   createTransferRequestSchema,
   getAdminReportByIdSchema,
+  getAdminUserByIdSchema,
   listAdminReportsSchema,
+  listAdminUsersSchema,
   listOfficeAdminsSchema,
   listTransferRequestsSchema,
   rejectTransferRequestSchema,
   reviewTransferRequestSchema,
+  unbanAdminUserSchema,
   updateAdminReportSchema,
+  updateAdminUserSchema,
 } from "./admin.schema.js";
 import { USER_ROLES } from "../../shared/auth/roleAccess.js";
 
 const adminRouter = Router();
 
 adminRouter.use(requireAuth, loadActorProfile);
+
+adminRouter.get(
+  "/users",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(listAdminUsersSchema),
+  asyncHandler(adminController.listUsers),
+);
+
+adminRouter.get(
+  "/users/:userId",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getAdminUserByIdSchema),
+  asyncHandler(adminController.getUserById),
+);
+
+adminRouter.post(
+  "/users",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(createAdminUserSchema),
+  asyncHandler(adminController.createUser),
+);
+
+adminRouter.patch(
+  "/users/:userId",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(updateAdminUserSchema),
+  asyncHandler(adminController.updateUser),
+);
+
+adminRouter.patch(
+  "/users/:userId/ban",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(banAdminUserSchema),
+  asyncHandler(adminController.banUser),
+);
+
+adminRouter.patch(
+  "/users/:userId/unban",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(unbanAdminUserSchema),
+  asyncHandler(adminController.unbanUser),
+);
 
 adminRouter.get(
   "/reports",

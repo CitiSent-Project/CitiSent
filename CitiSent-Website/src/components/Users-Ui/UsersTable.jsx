@@ -38,14 +38,15 @@ function UsersTableRow({
   onToggleSelected,
   onViewUser,
   onEditUser,
-  onBanUser,
+  onToggleBanUser,
+  canToggleBan,
 }) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
 
   function handleAction(action) {
     if (action === 'view') onViewUser(user)
     if (action === 'edit') onEditUser(user)
-    if (action === 'ban') onBanUser(user)
+    if (action === 'ban-toggle') onToggleBanUser(user)
     setIsActionMenuOpen(false)
   }
 
@@ -56,7 +57,7 @@ function UsersTableRow({
         className="h-4 w-4 rounded border-slate-300"
         checked={isSelected}
         onChange={() => onToggleSelected(user.id)}
-        aria-label={`Select ${user.name}`}
+        aria-label={`Select ${user.name || 'user'}`}
       />
       <div className="flex items-center gap-3">
         <UserInitialsAvatar name={user.name} />
@@ -93,13 +94,17 @@ function UsersTableRow({
             >
               Edit User
             </button>
-            <button
-              type="button"
-              onClick={() => handleAction('ban')}
-              className="block w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-slate-100"
-            >
-              Ban User
-            </button>
+            {canToggleBan ? (
+              <button
+                type="button"
+                onClick={() => handleAction('ban-toggle')}
+                className={`block w-full px-3 py-2 text-left text-sm hover:bg-slate-100 ${
+                  user.status === 'Banned' ? 'text-emerald-700' : 'text-rose-600'
+                }`}
+              >
+                {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -114,7 +119,8 @@ export function UsersTable({
   onToggleSelectAllUsers,
   onViewUser,
   onEditUser,
-  onBanUser,
+  onToggleBanUser,
+  canToggleBan = false,
 }) {
   const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
   const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
@@ -134,7 +140,8 @@ export function UsersTable({
                 onToggleSelected={onToggleSelectUser}
                 onViewUser={onViewUser}
                 onEditUser={onEditUser}
-                onBanUser={onBanUser}
+                onToggleBanUser={onToggleBanUser}
+                canToggleBan={canToggleBan}
               />
             ))
           ) : (

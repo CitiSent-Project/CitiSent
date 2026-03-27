@@ -18,8 +18,8 @@ export const usersStats = [
 export const usersFilters = {
   searchPlaceholder: 'Search',
   sortOptions: ['Newest', 'Oldest', 'Name'],
-  filterOptions: ['All', 'Verified', 'Unverified', 'Banned'],
-  primaryAction: 'Add Users',
+  filterOptions: ['All', 'Active', 'Banned'],
+  primaryAction: 'Add User',
 }
 
 export const Users = [

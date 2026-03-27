@@ -21,7 +21,6 @@ function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
-<<<<<<< HEAD
 function normalizeOptionalString(value) {
   const normalizedValue = String(value || "").trim();
   return normalizedValue || null;
@@ -40,7 +39,8 @@ async function resolveProfileEmailFromCandidates(candidates) {
   }
 
   return "";
-=======
+}
+
 function normalizeUsername(value) {
   return String(value || "")
     .trim()
@@ -77,7 +77,6 @@ async function assertRegistrationIdentifiersAreUnique({
       );
     }
   }
->>>>>>> 8f6f1ad846303650715f4f153f7bf64d14c84604
 }
 
 function toUserResponse({ user, session, profile }) {
@@ -135,18 +134,14 @@ export const authService = {
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
       : null;
-<<<<<<< HEAD
     const normalizedRole = normalizeUserRole(payload.role);
     const accountType = normalizeAccountType(payload.accountType, normalizedRole);
     const rawDepartmentValue = payload.departmentLabel || payload.departmentId;
-=======
 
     await assertRegistrationIdentifiersAreUnique({
       username: payload.username,
       phoneNumber: normalizedPhoneNumber,
     });
-
->>>>>>> 8f6f1ad846303650715f4f153f7bf64d14c84604
     const profilePayload = {
       email: normalizedEmail,
       username: payload.username,

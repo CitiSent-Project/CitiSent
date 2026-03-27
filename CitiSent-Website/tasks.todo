@@ -1,0 +1,24 @@
+Still Need To Complete Backend:
+
+    ✔ Build admin user-management APIs for the Users page @done (3/28/2026, 2:36:39 AM)
+        ✔ - Needed: list/search/filter users, get user details, @done (3/28/2026, 2:37:24 AM)
+            create user, update user, ban/unban user status.
+        ✔ - Reason: current users backend only supports /me, while @done (3/28/2026, 2:37:25 AM)
+            admin Users UI needs multi-user management.
+    
+    ☐ Build dashboard aggregate endpoints.
+        - Needed: total users, reports by status, reports by category, weekly trend, recent admins, recent registered users.
+        - Reason: dashboard currently renders static card/chart/table data.
+    
+    ☐ Add notifications persistence and APIs.
+        - Needed: list notifications per admin, mark read/unread, clear/bulk actions.
+        - Reason: notifications are currently seeded and stored locally.
+    
+    ☐ Add activity/audit log storage.
+        - Needed: backend audit trail endpoint and DB table so activity survives device/browser reset.
+        - Reason: activity log is currently local state history.
+    
+    ☐ Decide department source of truth.
+        - Needed: Option A: keep as backend constant and expose one endpoint for frontend consumption.
+                  Option B: move to departments table in DB for full admin configurability.
+        - Reason: avoid duplicated static department lists across layers.

@@ -1,16 +1,78 @@
-# React + Vite
+# CitiSent Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Admin website for CitiSent, built with React + Vite.
 
-Currently, two official plugins are available:
+## Documentation Hub
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Comprehensive file/function documentation is available in:
 
-## React Compiler
+- [docs/reference/index.md](docs/reference/index.md)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The reference set documents:
 
-## Expanding the ESLint configuration
+- Every in-scope file in CitiSent-Website
+- Each declared function/method in JS/JSX modules
+- Purpose, inputs, outputs, side effects, dependencies, and usage scope per function
+- DB wiring fast paths (API client, auth flow, reports flow, access control, persistence)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Per-Folder Reference Files
+
+- [docs/reference/root-and-public.md](docs/reference/root-and-public.md)
+- [docs/reference/src-core.md](docs/reference/src-core.md)
+- [docs/reference/src-components.md](docs/reference/src-components.md)
+- [docs/reference/src-controllers.md](docs/reference/src-controllers.md)
+- [docs/reference/src-frontend.md](docs/reference/src-frontend.md)
+- [docs/reference/src-hooks.md](docs/reference/src-hooks.md)
+- [docs/reference/src-models.md](docs/reference/src-models.md)
+- [docs/reference/src-services.md](docs/reference/src-services.md)
+- [docs/reference/project-tooling.md](docs/reference/project-tooling.md)
+
+Coverage manifest:
+
+- [docs/reference/_coverage-manifest.json](docs/reference/_coverage-manifest.json)
+
+## Regenerate Documentation
+
+When files/functions are added or refactored, regenerate docs with:
+
+```powershell
+./scripts/generate-documentation.ps1
+```
+
+## Development Commands
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Run web + backend together (recommended for local development):
+
+```powershell
+npm run dev
+```
+
+Run only the website:
+
+```powershell
+npm run dev:web
+```
+
+Run only the backend from this folder:
+
+```powershell
+npm run dev:backend
+```
+
+Build for production:
+
+```powershell
+npm run build
+```
+
+Run lint:
+
+```powershell
+npm run lint
+```

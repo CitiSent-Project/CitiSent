@@ -28,6 +28,7 @@ vi.mock('../useAuthSession', () => ({
 vi.mock('../../services/authApiService', () => ({
   authApiService: {
     me: vi.fn(),
+    login: vi.fn(),
     updateCurrentUser: vi.fn(),
   },
 }))
@@ -143,6 +144,20 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         accountType: 'admin',
         departmentId: profile.departmentId,
         departmentLabel: profile.department,
+      },
+    })
+    authApiService.login.mockResolvedValue({
+      data: {
+        token: 'token-reauth',
+        user: {
+          id: profile.id,
+          fullName: profile.fullName,
+          email: profile.email,
+          role: 'Superadmin',
+          accountType: 'admin',
+          departmentId: profile.departmentId,
+          departmentLabel: profile.department,
+        },
       },
     })
     adminApiService.listOfficeAdmins.mockResolvedValue({
@@ -284,6 +299,41 @@ describe('useAppStateOrchestrator transfer review integration', () => {
 
     expect(latestState.appState.activityLog[0].action).toBe('Department transfer rejected')
   })
+
+  it('stores generated temporary passwords in notifications and reveals them only after re-authentication', async () => {
+    await act(async () => {
+      await latestState.appActions.onTemporaryPasswordCreated({
+        fullName: 'New Citizen',
+        email: 'new.citizen@citisent.gov',
+        temporaryPassword: 'x9k3zv21',
+      })
+    })
+
+    const notification = latestState.appState.notificationsByAdmin['admin-super-001'][0]
+
+    expect(notification.title).toBe('Temporary password generated')
+    expect(notification.meta.securePayload.kind).toBe('temporaryPassword')
+    expect(notification.meta.securePayload.secret).toBe('x9k3zv21')
+    expect(notification.read).toBe(false)
+
+    let revealResult
+    await act(async () => {
+      revealResult = await latestState.appActions.onRevealTemporaryPassword({
+        notificationId: notification.id,
+        password: 'superadmin123',
+      })
+    })
+
+    expect(authApiService.login).toHaveBeenCalledWith({
+      email: 'superadmin@citisent.gov',
+      identifier: 'superadmin@citisent.gov',
+      password: 'superadmin123',
+    })
+    expect(revealResult.ok).toBe(true)
+    expect(revealResult.temporaryPassword).toBe('x9k3zv21')
+    expect(latestState.appState.notificationsByAdmin['admin-super-001'][0].read).toBe(true)
+    expect(latestState.appState.activityLog[0].action).toBe('Temporary password revealed')
+  })
 })
 
 describe('useAppStateOrchestrator access recovery integration', () => {
@@ -369,13 +419,13 @@ describe('useAppStateOrchestrator access recovery integration', () => {
     vi.clearAllMocks()
   })
 
-  it('revalidates profile before denying navigation when access data changes server-side', async () => {
+  it('revalidates profile before denying navigation to restricted admin pages', async () => {
     await act(async () => {
-      await latestState.appActions.onNavigate(APP_PAGES.USERS)
+      await latestState.appActions.onNavigate(APP_PAGES.ADMIN_MANAGEMENT)
     })
 
     expect(authApiService.me).toHaveBeenCalledTimes(2)
     expect(latestState.appState.profile.role).toBe('Superadmin')
-    expect(latestState.appState.activePage).toBe(APP_PAGES.USERS)
+    expect(latestState.appState.activePage).toBe(APP_PAGES.ADMIN_MANAGEMENT)
   })
 })

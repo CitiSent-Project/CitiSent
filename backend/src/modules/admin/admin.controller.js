@@ -2,6 +2,89 @@ import { StatusCodes } from "http-status-codes";
 import { adminService } from "./admin.service.js";
 
 export const adminController = {
+  async listUsers(req, res) {
+    const result = await adminService.listUsers({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      limit: req.query.limit,
+      offset: req.query.offset,
+      search: req.query.search,
+      status: req.query.status,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      ...result,
+    });
+  },
+
+  async getUserById(req, res) {
+    const result = await adminService.getUserById({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userId: req.params.userId,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async createUser(req, res) {
+    const result = await adminService.createUser({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      payload: req.body,
+    });
+
+    return res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async updateUser(req, res) {
+    const result = await adminService.updateUser({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userId: req.params.userId,
+      payload: req.body,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async banUser(req, res) {
+    const result = await adminService.banUser({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userId: req.params.userId,
+      reason: req.body.reason,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async unbanUser(req, res) {
+    const result = await adminService.unbanUser({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userId: req.params.userId,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async listReports(req, res) {
     const result = await adminService.listReports({
       actor: req.actor,

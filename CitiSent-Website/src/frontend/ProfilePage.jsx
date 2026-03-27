@@ -219,6 +219,25 @@ export function ProfileInformation({
                 </div>
               ) : null}
             </div>
+            <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(false)
+                  setSubmissionFeedback(null)
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveProfile}
+                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              >
+                Save
+              </button>
+            </div>
           </section>
         ) : null}
 

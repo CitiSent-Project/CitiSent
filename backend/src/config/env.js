@@ -3,6 +3,80 @@ import { z } from "zod";
 
 dotenv.config();
 
+function isJwtLike(value) {
+  const parts = String(value || "").split(".");
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+}
+
+function decodeJwtPayload(token) {
+  try {
+    const payload = String(token || "").split(".")[1];
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padLength = (4 - (normalized.length % 4)) % 4;
+    const padded = `${normalized}${"=".repeat(padLength)}`;
+    const json = Buffer.from(padded, "base64").toString("utf8");
+
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function isValidSupabasePublicKey(value) {
+  const key = String(value || "").trim();
+
+  if (!key || key.startsWith("sb_secret_")) {
+    return false;
+  }
+
+  if (key.startsWith("sb_publishable_")) {
+    return true;
+  }
+
+  if (!isJwtLike(key)) {
+    return false;
+  }
+
+  const payload = decodeJwtPayload(key);
+  if (!payload || !payload.role) {
+    return true;
+  }
+
+  return payload.role === "anon";
+}
+
+function isValidSupabaseAdminKey(value) {
+  const key = String(value || "").trim();
+
+  if (!key) {
+    return false;
+  }
+
+  if (key.startsWith("sb_secret_")) {
+    return true;
+  }
+
+  if (!isJwtLike(key)) {
+    return false;
+  }
+
+  const payload = decodeJwtPayload(key);
+  if (!payload || !payload.role) {
+    return true;
+  }
+
+  return payload.role === "service_role";
+}
+
+const optionalString = (schema) =>
+  z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const normalized = value.trim();
+    return normalized === "" ? undefined : normalized;
+  }, schema.optional());
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -13,12 +87,23 @@ const envSchema = z.object({
     .string()
     .default("http://localhost:5173,http://localhost:8081"),
   SUPABASE_URL: z.string().url(),
-  SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_ANON_KEY: z
+    .string()
+    .min(1)
+    .refine(isValidSupabasePublicKey, {
+      message:
+        "SUPABASE_ANON_KEY must be a valid Supabase anon/public key (JWT anon key or sb_publishable_ key). Do not use sb_secret_ here.",
+    }),
+  SUPABASE_SERVICE_ROLE_KEY: optionalString(
+    z.string().min(1).refine(isValidSupabaseAdminKey, {
+      message:
+        "SUPABASE_SERVICE_ROLE_KEY must be a valid service/admin key (service_role JWT or sb_secret_ key).",
+    }),
+  ),
   CACHE_DRIVER: z.enum(["auto", "memory", "redis"]).default("auto"),
   CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   CACHE_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
-  REDIS_URL: z.string().url().optional(),
+  REDIS_URL: optionalString(z.string().url()),
   RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()

@@ -256,6 +256,32 @@ export function useAppStateOrchestrator() {
     )
   }
 
+  async function refreshProfileForAccessCheck() {
+    if (!accessToken) {
+      return null
+    }
+
+    try {
+      const meResponse = await authApiService.me(accessToken)
+      const nextProfile = mapBackendProfileToAdminProfile(meResponse?.data)
+
+      if (nextProfile.accountType !== 'admin' || !nextProfile.role) {
+        return null
+      }
+
+      setProfile(nextProfile)
+      setPreferences((previous) => ({
+        ...previous,
+        displayName: nextProfile.fullName || previous.displayName,
+        department: nextProfile.department || previous.department,
+      }))
+
+      return nextProfile
+    } catch {
+      return null
+    }
+  }
+
   const { handleRegister, handleLogin, handleLogout } = useAuthSession({
     setAccessToken,
     setProfile,
@@ -444,11 +470,23 @@ export function useAppStateOrchestrator() {
     [adminAccounts, profile.id]
   )
 
-  function handleNavigate(nextPage) {
-    const accessDecision = buildPageAccessDecision({
+  async function handleNavigate(nextPage) {
+    let accessDecision = buildPageAccessDecision({
       role: profile.role,
       requestedPage: nextPage,
     })
+
+    if (!accessDecision.allowed) {
+      const refreshedProfile = await refreshProfileForAccessCheck()
+
+      if (refreshedProfile) {
+        accessDecision = buildPageAccessDecision({
+          role: refreshedProfile.role,
+          requestedPage: nextPage,
+        })
+      }
+    }
+
     if (!accessDecision.allowed) {
       addActivity(accessDecision.activity.action, accessDecision.activity.detail)
       notifyError('Access denied.', accessDecision.message)

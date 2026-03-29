@@ -558,4 +558,83 @@ export const adminRepository = {
 
     return data;
   },
+
+  async listDashboardReports({ actor, accessToken, startAt, endAt }) {
+    const db = getDb(accessToken);
+
+    let query = db
+      .from(REPORTS_TABLE)
+      .select("id, issue_type, status, created_at")
+      .order("created_at", { ascending: false });
+
+    query = applyDepartmentScope(query, actor);
+
+    if (startAt) {
+      query = query.gte("created_at", startAt);
+    }
+
+    if (endAt) {
+      query = query.lt("created_at", endAt);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw toGatewayError("Failed to fetch dashboard report metrics", error);
+    }
+
+    return data || [];
+  },
+
+  async countTotalCitizens({ accessToken }) {
+    const db = getDb(accessToken);
+
+    const { count, error } = await db
+      .from(PROFILES_TABLE)
+      .select("user_id", { count: "exact", head: true })
+      .eq("account_type", "citizen");
+
+    if (error) {
+      throw toGatewayError("Failed to count users", error);
+    }
+
+    return count || 0;
+  },
+
+  async listRecentCitizens({ accessToken, limit = 5 }) {
+    const db = getDb(accessToken);
+    const normalizedLimit = Number.isFinite(Number(limit)) ? Number(limit) : 5;
+
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .select("user_id, username, full_name, email, created_at")
+      .eq("account_type", "citizen")
+      .order("created_at", { ascending: false })
+      .range(0, Math.max(0, normalizedLimit - 1));
+
+    if (error) {
+      throw toGatewayError("Failed to fetch recent users", error);
+    }
+
+    return data || [];
+  },
+
+  async listRecentOfficeAdmins({ accessToken, limit = 20 }) {
+    const db = getDb(accessToken);
+    const normalizedLimit = Number.isFinite(Number(limit)) ? Number(limit) : 20;
+
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .select("*")
+      .eq("account_type", "admin")
+      .eq("role", USER_ROLES.OFFICE_ADMIN)
+      .order("created_at", { ascending: false })
+      .range(0, Math.max(0, normalizedLimit - 1));
+
+    if (error) {
+      throw toGatewayError("Failed to fetch recent admins", error);
+    }
+
+    return data || [];
+  },
 };

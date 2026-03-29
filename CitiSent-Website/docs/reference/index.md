@@ -36,3 +36,11 @@ Total Declared Functions Captured: 315
 1. Re-run scripts/generate-documentation.ps1 after adding, deleting, or refactoring files/functions.
 2. Commit docs updates together with code changes to keep navigation and behavior docs synchronized.
 3. Use _coverage-manifest.json as the baseline when auditing documentation completeness.
+
+## Manual Sync Notes (2026-03-29)
+
+- Dashboard page now hydrates from backend aggregate APIs instead of static card/chart/table data.
+- Admin API service now includes dashboard aggregate endpoints under /admin/dashboard/*.
+- Admin API mappers now include dashboard-specific payload mapping helpers for stat cards, category chart, weekly trend, and recent tables.
+- Login page identifier copy now explicitly supports username-or-email input.
+- useAppStateOrchestrator integration tests were stabilized to reduce React act warning noise during async hydration.

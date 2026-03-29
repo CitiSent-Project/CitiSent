@@ -9,6 +9,8 @@ import {
 } from "../../shared/auth/roleAccess.js";
 import { AppError } from "../../shared/errors/appError.js";
 import {
+  buildDepartmentCandidates,
+  DEPARTMENTS,
   resolveDepartmentId,
   resolveDepartmentLabel,
 } from "../../shared/data/departments.js";
@@ -19,6 +21,101 @@ import {
   toAdminUserResponse,
   toTransferRequestResponse,
 } from "./admin.mapper.js";
+
+const MANILA_TIME_ZONE = "Asia/Manila";
+const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
+const REPORT_STATUS_LABELS = Object.freeze({
+  pending: "Pending",
+  in_review: "In Progress",
+  resolved: "Resolved",
+  rejected: "Unresolved",
+});
+
+function normalizeDashboardLimit(limit) {
+  const normalizedLimit = Number(limit);
+  if (!Number.isFinite(normalizedLimit)) {
+    return 5;
+  }
+
+  return Math.max(1, Math.min(20, Math.trunc(normalizedLimit)));
+}
+
+function buildDateParts(value, timeZone = MANILA_TIME_ZONE) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(new Date(value));
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return {
+    year,
+    month,
+    day,
+    key: `${year}-${month}-${day}`,
+  };
+}
+
+function buildWeekdayLabel(value, timeZone = MANILA_TIME_ZONE) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "long",
+  }).format(new Date(value));
+}
+
+function normalizeReportStatus(status) {
+  const normalizedStatus = String(status || "")
+    .trim()
+    .toLowerCase();
+
+  return REPORT_STATUS_KEYS.includes(normalizedStatus)
+    ? normalizedStatus
+    : "pending";
+}
+
+function filterOfficeAdminsByScope(rows = [], actor) {
+  if (isSuperadmin(actor?.role)) {
+    return rows;
+  }
+
+  const actorCandidates = buildDepartmentCandidates({
+    departmentId: actor?.departmentId,
+    departmentLabel: actor?.departmentLabel,
+  });
+
+  if (actorCandidates.length === 0) {
+    return [];
+  }
+
+  const normalizedActorCandidates = new Set(
+    actorCandidates.map((value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase(),
+    ),
+  );
+
+  return rows.filter((row) => {
+    const rowCandidates = buildDepartmentCandidates({
+      departmentId: row?.department_id,
+      departmentLabel: row?.department_label,
+    }).map((value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase(),
+    );
+
+    return rowCandidates.some((candidate) =>
+      normalizedActorCandidates.has(candidate),
+    );
+  });
+}
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -588,5 +685,210 @@ export const adminService = {
     });
 
     return toTransferRequestResponse(reviewedRequest);
+  },
+
+  async getDashboardSummary({ actor, accessToken }) {
+    const [totalUsers, reportRows] = await Promise.all([
+      adminRepository.countTotalCitizens({
+        accessToken,
+      }),
+      adminRepository.listDashboardReports({
+        actor,
+        accessToken,
+      }),
+    ]);
+
+    const reportTotals = reportRows.reduce(
+      (accumulator, row) => {
+        const status = normalizeReportStatus(row?.status);
+        accumulator.totalReports += 1;
+        accumulator.statusBreakdown[status] += 1;
+        return accumulator;
+      },
+      {
+        totalReports: 0,
+        statusBreakdown: {
+          pending: 0,
+          in_review: 0,
+          resolved: 0,
+          rejected: 0,
+        },
+      },
+    );
+
+    return {
+      totals: {
+        totalUsers,
+        ongoingReports:
+          reportTotals.statusBreakdown.pending +
+          reportTotals.statusBreakdown.in_review,
+        reportsResolved: reportTotals.statusBreakdown.resolved,
+        totalReports: reportTotals.totalReports,
+      },
+      scope: {
+        reportMetrics: isSuperadmin(actor?.role) ? "global" : "department",
+        userMetrics: "global",
+      },
+    };
+  },
+
+  async getDashboardReportsByStatus({ actor, accessToken }) {
+    const reportRows = await adminRepository.listDashboardReports({
+      actor,
+      accessToken,
+    });
+
+    const statusCounts = {
+      pending: 0,
+      in_review: 0,
+      resolved: 0,
+      rejected: 0,
+    };
+
+    reportRows.forEach((row) => {
+      const status = normalizeReportStatus(row?.status);
+      statusCounts[status] += 1;
+    });
+
+    const breakdown = REPORT_STATUS_KEYS.map((status) => ({
+      status,
+      label: REPORT_STATUS_LABELS[status],
+      count: statusCounts[status],
+    }));
+
+    return {
+      totalReports: reportRows.length,
+      breakdown,
+    };
+  },
+
+  async getDashboardReportsByCategory({ actor, accessToken }) {
+    const reportRows = await adminRepository.listDashboardReports({
+      actor,
+      accessToken,
+    });
+
+    const categories = DEPARTMENTS.map((department) => ({
+      id: department.id,
+      label: department.label,
+      count: 0,
+    }));
+
+    const categoryIndex = categories.reduce((accumulator, category, index) => {
+      accumulator[category.id] = index;
+      return accumulator;
+    }, {});
+
+    let unknownCount = 0;
+
+    reportRows.forEach((row) => {
+      const categoryId = resolveDepartmentId(row?.issue_type);
+      if (!categoryId || categoryIndex[categoryId] === undefined) {
+        unknownCount += 1;
+        return;
+      }
+
+      categories[categoryIndex[categoryId]].count += 1;
+    });
+
+    if (unknownCount > 0) {
+      categories.push({
+        id: "unknown",
+        label: "Unknown",
+        count: unknownCount,
+      });
+    }
+
+    return {
+      totalReports: reportRows.length,
+      breakdown: categories,
+    };
+  },
+
+  async getDashboardWeeklyTrend({ actor, accessToken }) {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const startAt = new Date(now - 7 * dayMs).toISOString();
+    const endAt = new Date(now + dayMs).toISOString();
+
+    const reportRows = await adminRepository.listDashboardReports({
+      actor,
+      accessToken,
+      startAt,
+      endAt,
+    });
+
+    const points = [];
+    const countsByDateKey = {};
+
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const pointTime = now - offset * dayMs;
+      const dateParts = buildDateParts(pointTime);
+      const dateKey = dateParts.key;
+
+      countsByDateKey[dateKey] = 0;
+      points.push({
+        dateKey,
+        label: buildWeekdayLabel(pointTime),
+        value: 0,
+      });
+    }
+
+    reportRows.forEach((row) => {
+      const createdAt = row?.created_at;
+      if (!createdAt) {
+        return;
+      }
+
+      const dateKey = buildDateParts(createdAt).key;
+      if (countsByDateKey[dateKey] === undefined) {
+        return;
+      }
+
+      countsByDateKey[dateKey] += 1;
+    });
+
+    const completedPoints = points.map((point) => ({
+      ...point,
+      value: countsByDateKey[point.dateKey] || 0,
+    }));
+
+    return {
+      timeZone: MANILA_TIME_ZONE,
+      labels: completedPoints.map((point) => point.label),
+      values: completedPoints.map((point) => point.value),
+      points: completedPoints,
+    };
+  },
+
+  async getDashboardRecentAdmins({ actor, accessToken, limit }) {
+    const normalizedLimit = normalizeDashboardLimit(limit);
+    const rawRows = await adminRepository.listRecentOfficeAdmins({
+      accessToken,
+      limit: Math.max(20, normalizedLimit * 4),
+    });
+
+    const scopedRows = filterOfficeAdminsByScope(rawRows, actor).slice(
+      0,
+      normalizedLimit,
+    );
+
+    return scopedRows.map(toOfficeAdminResponse);
+  },
+
+  async getDashboardRecentUsers({ accessToken, limit }) {
+    const normalizedLimit = normalizeDashboardLimit(limit);
+    const rows = await adminRepository.listRecentCitizens({
+      accessToken,
+      limit: normalizedLimit,
+    });
+
+    return rows.map((profile) => ({
+      id: profile?.user_id || "",
+      username: profile?.username || "",
+      fullName: profile?.full_name || profile?.username || profile?.email || "",
+      email: profile?.email || null,
+      joinedAt: profile?.created_at || null,
+    }));
   },
 };

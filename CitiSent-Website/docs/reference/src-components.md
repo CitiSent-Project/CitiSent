@@ -75,6 +75,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: OfficeAdminAssignmentsSection({
+
   totalOfficeUnread,
   searchTerm,
   onSearchTermChange,
@@ -105,6 +106,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: TransferRequestQueueSection({
+
   filteredPendingRequests,
   unreadByAdminId,
   onOpenApprovalModal,
@@ -128,6 +130,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: TransferReviewModal({
+
   reviewModal,
   reviewModalRef,
   reviewNotes,
@@ -154,6 +157,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: AuthInputField({
+
   id,
   label,
   type = "text",
@@ -182,6 +186,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: AuthPageShell({
+
   title,
   subtitle,
   children,
@@ -206,6 +211,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: AuthPasswordField({
+
   id,
   label,
   value,
@@ -239,6 +245,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: DashboardStatCard({
+
   icon: Icon,
   label,
   value,
@@ -528,9 +535,10 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Imports: react-icons/fi
 - Functions Declared: 1
 
-### Function: UrgencyFilterChips({ 
-  chips, 
-  selectedChip, 
+### Function: UrgencyFilterChips({
+
+  chips,
+  selectedChip,
   onSelectChip,
   searchTerm,
   onSearchChange,
@@ -541,7 +549,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 
 - Defined At: line 2
 - Specific Purpose: Renders a UI section/component and wires props, event handlers, and visual state for the current view context.
-- Inputs: Accepts: { 
+- Inputs: Accepts: {
   chips, selectedChip, onSelectChip, searchTerm, onSearchChange, statusFilter, statusOptions = ['All Status', 'Pending', 'In Progress', 'Resolved', 'Unresolved'], onStatusChange
 }
 - Output: Returns JSX elements (React render output) for the component subtree.
@@ -557,6 +565,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 3
 
 ### Function: AccountSettingsTab({
+
   profile,
   preferences,
   onUpdatePreference,
@@ -646,6 +655,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 2
 
 ### Function: DepartmentTransferTab({
+
   profile,
   transferRequests,
   departmentOptions,
@@ -679,6 +689,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: FormInputField({
+
   label,
   value,
   onChange,
@@ -767,6 +778,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 3
 
 ### Function: SecuritySettingsTab({
+
   preferences,
   onUpdatePreference,
   onRequestLogout,
@@ -937,6 +949,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: Pagination({
+
   currentPage,
   totalPages,
   visiblePages,
@@ -989,7 +1002,8 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Key Dependencies: react-hot-toast
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
-### Function: notifyError(message = 'Action failed.',
+### Function: notifyError(message = 'Action failed.'
+
   guideline = 'Please verify your input, check your connection, and try again.')
 
 - Defined At: line 15
@@ -1133,6 +1147,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: UsersPagination({
+
   currentPage,
   totalPages,
   visiblePages,
@@ -1178,6 +1193,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: UsersTableRow({
+
   user,
   isSelected,
   onToggleSelected,
@@ -1206,6 +1222,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: UsersTable({
+
   users,
   selectedUserIds = [],
   onToggleSelectUser,
@@ -1276,6 +1293,7 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: UsersToolbar({
+
   searchPlaceholder,
   primaryAction,
   searchTerm,
@@ -1297,4 +1315,3 @@ Scope: files grouped under src-components for CitiSent-Website.
 - Side Effects: No direct external side effects detected; behavior appears computation/render focused.
 - Key Dependencies: react-icons/fi
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
-

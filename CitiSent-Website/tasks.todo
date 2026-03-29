@@ -6,9 +6,9 @@ Still Need To Complete Backend:
         ✔ - Reason: current users backend only supports /me, while @done (3/28/2026, 2:37:25 AM)
             admin Users UI needs multi-user management.
     
-    ☐ Build dashboard aggregate endpoints.
-        - Needed: total users, reports by status, reports by category, weekly trend, recent admins, recent registered users.
-        - Reason: dashboard currently renders static card/chart/table data.
+    ✔ Build dashboard aggregate endpoints. @done (3/29/2026, 11:05:42 PM)
+         ✔ Needed: total users, reports by status, reports by category, weekly trend, recent admins, recent registered users. @done (3/29/2026, 11:06:04 PM)
+         ✔ Reason: dashboard currently renders static card/chart/table data. @done (3/29/2026, 11:06:05 PM)
     
     ☐ Add notifications persistence and APIs.
         - Needed: list notifications per admin, mark read/unread, clear/bulk actions.

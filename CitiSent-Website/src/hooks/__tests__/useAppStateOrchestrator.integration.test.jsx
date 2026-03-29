@@ -51,6 +51,12 @@ function schemaValue(payload, schemaVersion = 1) {
 
 let latestState
 
+async function flushMicrotasks(iterations = 5) {
+  for (let index = 0; index < iterations; index += 1) {
+    await Promise.resolve()
+  }
+}
+
 function HookHarness() {
   const orchestrator = useAppStateOrchestrator()
 
@@ -65,7 +71,7 @@ describe('useAppStateOrchestrator transfer review integration', () => {
   let container
   let root
 
-  beforeEach(() => {
+  beforeEach(async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     window.localStorage.clear()
     window.matchMedia = vi.fn().mockReturnValue({
@@ -233,8 +239,9 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     document.body.appendChild(container)
     root = createRoot(container)
 
-    act(() => {
+    await act(async () => {
       root.render(<HookHarness />)
+      await flushMicrotasks()
     })
   })
 
@@ -340,7 +347,7 @@ describe('useAppStateOrchestrator access recovery integration', () => {
   let container
   let root
 
-  beforeEach(() => {
+  beforeEach(async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     window.localStorage.clear()
     window.matchMedia = vi.fn().mockReturnValue({
@@ -404,8 +411,9 @@ describe('useAppStateOrchestrator access recovery integration', () => {
     document.body.appendChild(container)
     root = createRoot(container)
 
-    act(() => {
+    await act(async () => {
       root.render(<HookHarness />)
+      await flushMicrotasks()
     })
   })
 

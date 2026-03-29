@@ -23,6 +23,7 @@ const phoneNumberSchema = z
   .string()
   .trim()
   .regex(/^\+?[0-9]{10,15}$/);
+const dashboardLimitSchema = z.coerce.number().int().min(1).max(20).default(5);
 
 export const listAdminUsersSchema = z.object({
   body: z.object({}).optional().default({}),
@@ -183,5 +184,45 @@ export const assignOfficeDepartmentSchema = z.object({
   body: z.object({
     departmentId: z.string().trim().min(1).max(64),
     departmentLabel: z.string().trim().min(1).max(160).optional(),
+  }),
+});
+
+export const getDashboardSummarySchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+});
+
+export const getDashboardReportsByStatusSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+});
+
+export const getDashboardReportsByCategorySchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+});
+
+export const getDashboardWeeklyTrendSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+});
+
+export const getDashboardRecentAdminsSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({
+    limit: dashboardLimitSchema,
+  }),
+});
+
+export const getDashboardRecentUsersSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  query: z.object({
+    limit: dashboardLimitSchema,
   }),
 });

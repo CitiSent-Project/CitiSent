@@ -206,4 +206,78 @@ export const adminController = {
       data: result,
     });
   },
+
+  async getDashboardSummary(req, res) {
+    const result = await adminService.getDashboardSummary({
+      actor: req.actor,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async getDashboardReportsByStatus(req, res) {
+    const result = await adminService.getDashboardReportsByStatus({
+      actor: req.actor,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async getDashboardReportsByCategory(req, res) {
+    const result = await adminService.getDashboardReportsByCategory({
+      actor: req.actor,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async getDashboardWeeklyTrend(req, res) {
+    const result = await adminService.getDashboardWeeklyTrend({
+      actor: req.actor,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async getDashboardRecentAdmins(req, res) {
+    const result = await adminService.getDashboardRecentAdmins({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      limit: req.query.limit,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async getDashboardRecentUsers(req, res) {
+    const result = await adminService.getDashboardRecentUsers({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      limit: req.query.limit,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
 };

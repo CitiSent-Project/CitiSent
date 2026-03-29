@@ -15,6 +15,7 @@
         "SUPABASE",
         "Superadmin",
         "superadmins",
+        "timestamptz",
         "unban",
         "Villanueva"
     ]

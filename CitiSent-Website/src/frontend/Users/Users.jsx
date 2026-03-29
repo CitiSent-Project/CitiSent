@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ADMIN_STORAGE_KEYS, usersFilters, usersStats } from '../../models/data'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
 import { adminApiService } from '../../services/adminApiService'
 import {
@@ -18,6 +18,28 @@ import {
   UsersTable,
   UsersToolbar,
 } from '../../components/Users-Ui'
+
+const USERS_STATS = [
+  {
+    id: 'active-users',
+    label: 'Active Users',
+    icon: 'user',
+    accent: 'indigo',
+  },
+  {
+    id: 'banned-users',
+    label: 'Banned Users',
+    icon: 'user-x',
+    accent: 'orange',
+  },
+]
+
+const USERS_FILTERS = {
+  searchPlaceholder: 'Search',
+  sortOptions: ['Newest', 'Oldest', 'Name'],
+  filterOptions: ['All', 'Active', 'Banned'],
+  primaryAction: 'Add User',
+}
 
 function getStoredAccessToken() {
   const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
@@ -49,8 +71,8 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
   const [stats, setStats] = useState({ active: 0, banned: 0 })
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState(usersFilters.sortOptions[0])
-  const [filterBy, setFilterBy] = useState(usersFilters.filterOptions[0])
+  const [sortBy, setSortBy] = useState(USERS_FILTERS.sortOptions[0])
+  const [filterBy, setFilterBy] = useState(USERS_FILTERS.filterOptions[0])
   const [currentPage, setCurrentPage] = useState(1)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -497,7 +519,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {usersStats.map((stat) => {
+          {USERS_STATS.map((stat) => {
             const value = stat.id === 'active-users' ? String(stats.active) : String(stats.banned)
             return <UserStatCard key={stat.id} {...stat} value={value} />
           })}
@@ -505,13 +527,13 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
         <section className="rounded-2xl bg-white shadow-sm border border-slate-200">
           <UsersToolbar
-            searchPlaceholder={usersFilters.searchPlaceholder}
-            primaryAction={usersFilters.primaryAction}
+            searchPlaceholder={USERS_FILTERS.searchPlaceholder}
+            primaryAction={USERS_FILTERS.primaryAction}
             searchTerm={searchTerm}
             sortBy={sortBy}
             filterBy={filterBy}
-            sortOptions={usersFilters.sortOptions}
-            filterOptions={usersFilters.filterOptions}
+            sortOptions={USERS_FILTERS.sortOptions}
+            filterOptions={USERS_FILTERS.filterOptions}
             onSearchChange={handleSearchChange}
             onSortChange={handleSortChange}
             onFilterChange={handleFilterChange}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ProfileSummaryCard } from '../components/Account-Ui'
-import { formatDateTime, categoryAgencyCards } from '../models/data'
+import { DEPARTMENT_OPTIONS, formatDateTime } from '../models/data'
 import { buildProfileSubmissionState } from '../controllers/profileController'
 import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
 import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
@@ -12,7 +12,7 @@ export function ProfileInformation({
   onUpdateProfile,
   onSubmitTransferRequest,
 }) {
-  const departmentCatalog = categoryAgencyCards.map((agency) => ({
+  const departmentCatalog = DEPARTMENT_OPTIONS.map((agency) => ({
     id: agency.id,
     label: agency.label,
   }))

@@ -2,10 +2,7 @@ import { useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips } from '../../components/Reports-Ui'
-import {
-  allCategoryFilterId,
-  categoryAgencyCards,
-} from '../../models/data'
+import { DEPARTMENT_OPTIONS } from '../../models/data'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
 import { filterUserReportsByCategory } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
@@ -13,18 +10,20 @@ import { isSuperadmin } from '../../models/roleAccessModel'
 
 const CATEGORY_COLORS = ['#1650e8', '#65c98d', '#8d66d6', '#ff9082', '#39bee0', '#ffb44d', '#2f89e5', '#7a6ce5', '#4f46e5']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const ALL_CATEGORY_FILTER_ID = 'all-categories'
+const CATEGORY_AGENCY_CARDS = DEPARTMENT_OPTIONS
 
 export function ByCategory({ rows, profile, onViewReport, onUpdateStatus, isLoading = false }) {
-  const [selectedAgencyId, setSelectedAgencyId] = useState(allCategoryFilterId)
+  const [selectedAgencyId, setSelectedAgencyId] = useState(ALL_CATEGORY_FILTER_ID)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('All Urgency')
   const hasAllAccess = isSuperadmin(profile?.role)
 
   const cardsWithAllFilter = useMemo(() => {
-    const scopedAgencies = getScopedAgencyFilters({ agencies: categoryAgencyCards, profile })
+    const scopedAgencies = getScopedAgencyFilters({ agencies: CATEGORY_AGENCY_CARDS, profile })
     if (hasAllAccess) {
-      return [{ id: allCategoryFilterId, label: 'All Agencies', tone: 'bg-slate-100' }, ...scopedAgencies]
+      return [{ id: ALL_CATEGORY_FILTER_ID, label: 'All Agencies', tone: 'bg-slate-100' }, ...scopedAgencies]
     }
 
     return scopedAgencies
@@ -32,14 +31,14 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus, isLoad
 
   const effectiveSelectedAgencyId = cardsWithAllFilter.some((agency) => agency.id === selectedAgencyId)
     ? selectedAgencyId
-    : cardsWithAllFilter[0]?.id || allCategoryFilterId
+    : cardsWithAllFilter[0]?.id || ALL_CATEGORY_FILTER_ID
 
   const filteredRows = useMemo(() => {
     let result = filterUserReportsByCategory({
       reports: rows,
       selectedCategoryId: effectiveSelectedAgencyId,
       hasAllAccess,
-      allCategoryFilterId,
+      allCategoryFilterId: ALL_CATEGORY_FILTER_ID,
     })
 
     // Apply Search Filter
@@ -99,17 +98,17 @@ export function ByCategory({ rows, profile, onViewReport, onUpdateStatus, isLoad
     ]
   }, [rows])
   const reportsByCategoryData = useMemo(() => {
-    const values = categoryAgencyCards.map(
+    const values = CATEGORY_AGENCY_CARDS.map(
       (agency) => rows.filter((row) => row.categoryId === agency.id).length
     )
 
     return {
       title: 'Total Reports Per Category',
       total: String(rows.length),
-      labels: categoryAgencyCards.map((agency) => agency.label),
+      labels: CATEGORY_AGENCY_CARDS.map((agency) => agency.label),
       values,
-      colors: categoryAgencyCards.map((_, index) => CATEGORY_COLORS[index % CATEGORY_COLORS.length]),
-      legend: categoryAgencyCards.map((agency, index) => ({
+      colors: CATEGORY_AGENCY_CARDS.map((_, index) => CATEGORY_COLORS[index % CATEGORY_COLORS.length]),
+      legend: CATEGORY_AGENCY_CARDS.map((agency, index) => ({
         label: agency.label,
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       })),

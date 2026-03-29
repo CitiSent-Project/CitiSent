@@ -2,6 +2,23 @@
 
 Scope: files grouped under src-services for CitiSent-Website.
 
+## Manual Sync Notes (2026-03-29)
+
+- src/services/adminApiService.js now includes dashboard aggregate methods:
+  - getDashboardSummary
+  - getDashboardReportsByStatus
+  - getDashboardReportsByCategory
+  - getDashboardWeeklyTrend
+  - getDashboardRecentAdmins
+  - getDashboardRecentUsers
+- src/services/adminApiMappers.js now includes dashboard mapping helpers:
+  - mapDashboardSummaryToStatCards
+  - mapDashboardCategoryBreakdown
+  - mapDashboardWeeklyTrend
+  - mapDashboardRecentAdmins
+  - mapDashboardRecentUsers
+- Existing generated function counts below may lag until the next full docs generation run.
+
 ## File: src/services/__tests__/storageService.test.js
 
 - Purpose: Automated test module that validates feature behavior and prevents regressions.

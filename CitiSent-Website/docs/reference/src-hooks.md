@@ -2,6 +2,14 @@
 
 Scope: files grouped under src-hooks for CitiSent-Website.
 
+## Manual Sync Notes (2026-03-29)
+
+- src/hooks/__tests__/useAppStateOrchestrator.integration.test.jsx now includes async test hydration stabilization:
+  - flushMicrotasks helper
+  - async beforeEach setup wrapped in act
+- This reduces React act warning noise while preserving integration coverage behavior.
+- Existing generated function counts below may lag until the next full docs generation run.
+
 ## File: src/hooks/__tests__/useAppStateOrchestrator.integration.test.jsx
 
 - Purpose: Automated test module that validates feature behavior and prevents regressions.
@@ -75,6 +83,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Functions Declared: 9
 
 ### Function: useAdminManagementState({
+
   officeAdmins,
   pendingRequests,
   notificationsByAdmin,
@@ -322,6 +331,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: handleSubmitTransferRequest({
+
     requestedDepartmentId,
     requestedDepartmentLabel,
     reason,
@@ -444,6 +454,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: useAuthSession({
+
   setAccessToken,
   setProfile,
   setAdminAccounts,
@@ -534,6 +545,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Functions Declared: 3
 
 ### Function: useNotificationsState({
+
   notificationsByAdmin,
   activeAdminId,
   setNotificationsByAdmin,
@@ -578,6 +590,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: usePageLoadingState({
+
   activePage,
   isAuthenticated,
   isPageLoading,
@@ -667,4 +680,3 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Side Effects: Updates React/application state via setter calls.
 - Key Dependencies: react, ../controllers/userReportsController
 - Usage Scope: Internal helper; intended to be used only within this module.
-

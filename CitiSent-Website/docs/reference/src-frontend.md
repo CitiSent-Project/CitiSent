@@ -1,6 +1,17 @@
-﻿# Src Frontend Pages Reference
+﻿<!-- markdownlint-disable MD024 -->
+
+# Src Frontend Pages Reference
 
 Scope: files grouped under src-frontend for CitiSent-Website.
+
+## Manual Sync Notes (2026-03-29)
+
+- src/frontend/Dashboard.jsx now loads live data via adminApiService dashboard endpoints and maps payloads through adminApiMappers.
+- Static dashboard cards/charts/tables remain as fallback data if API loading fails.
+- src/frontend/Login-Page.jsx identifier field now presents username-or-email UX copy:
+  - Label: Username or Email
+  - Placeholder: Enter your username or email
+- Existing generated import/function metadata below may lag until the next full docs generation run.
 
 ## File: src/frontend/__tests__/Login-Page.test.jsx
 
@@ -17,6 +28,7 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 - Functions Declared: 1
 
 ### Function: AdminManagement({
+
   profile,
   adminAccounts,
   notificationsByAdmin,
@@ -141,6 +153,7 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 - Functions Declared: 4
 
 ### Function: ProfileInformation({
+
   profile,
   activityLog,
   transferRequests,
@@ -299,6 +312,7 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 - Functions Declared: 2
 
 ### Function: ByUrgencyLevels({
+
   rows,
   profile,
   onViewReport,
@@ -370,6 +384,7 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 - Functions Declared: 2
 
 ### Function: Settings({
+
   profile,
   preferences,
   transferRequests,
@@ -588,4 +603,3 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 - Side Effects: Updates React/application state via setter calls. Publishes user-facing toast/notification feedback.
 - Key Dependencies: react, ../../models/data, ../../components/ui/toastHelpers
 - Usage Scope: Internal helper; intended to be used only within this module.
-

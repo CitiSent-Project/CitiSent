@@ -168,6 +168,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: filterOfficeAdmins({
+
   officeAdmins = [],
   searchTerm = '',
   departmentFilter = 'all',
@@ -185,6 +186,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: filterPendingTransferRequests({
+
   pendingRequests = [],
   searchTerm = '',
   departmentFilter = 'all',
@@ -200,6 +202,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: buildOfficeAdminDepartmentAssignment({
+
   adminAccounts,
   adminId,
   nextDepartmentId,
@@ -233,6 +236,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: buildAppearanceState({
+
   themePreference,
   fontSizePreference,
   animationsEnabled,
@@ -330,6 +334,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Functions Declared: 4
 
 ### Function: buildTransferRequestCreation({
+
   profile,
   requestedDepartmentId,
   requestedDepartmentLabel,
@@ -617,6 +622,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: renderActivePage({
+
     appState,
     appActions,
 })
@@ -658,6 +664,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: buildProfileSubmissionState({
+
   profile,
   draft,
   transferReason,
@@ -833,6 +840,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: filterUserReportsByCategory({
+
   reports = [],
   selectedCategoryId,
   hasAllAccess = false,
@@ -849,6 +857,7 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: filterUserReportsByUrgency({
+
   reports = [],
   selectedUrgency = ALL_URGENCY_FILTER,
   allUrgencyFilter = ALL_URGENCY_FILTER,
@@ -882,4 +891,3 @@ Scope: files grouped under src-controllers for CitiSent-Website.
 - Side Effects: No direct external side effects detected; behavior appears computation/render focused.
 - Key Dependencies: This function primarily relies on in-file logic and standard language/runtime features.
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
-

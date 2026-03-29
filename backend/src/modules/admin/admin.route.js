@@ -9,6 +9,12 @@ import {
   assignOfficeDepartmentSchema,
   createAdminUserSchema,
   createTransferRequestSchema,
+  getDashboardRecentAdminsSchema,
+  getDashboardRecentUsersSchema,
+  getDashboardReportsByCategorySchema,
+  getDashboardReportsByStatusSchema,
+  getDashboardSummarySchema,
+  getDashboardWeeklyTrendSchema,
   getAdminReportByIdSchema,
   getAdminUserByIdSchema,
   listAdminReportsSchema,
@@ -130,6 +136,48 @@ adminRouter.patch(
   requireRole([USER_ROLES.SUPERADMIN]),
   validateRequest(assignOfficeDepartmentSchema),
   asyncHandler(adminController.assignOfficeDepartment),
+);
+
+adminRouter.get(
+  "/dashboard/summary",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardSummarySchema),
+  asyncHandler(adminController.getDashboardSummary),
+);
+
+adminRouter.get(
+  "/dashboard/reports/status",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardReportsByStatusSchema),
+  asyncHandler(adminController.getDashboardReportsByStatus),
+);
+
+adminRouter.get(
+  "/dashboard/reports/category",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardReportsByCategorySchema),
+  asyncHandler(adminController.getDashboardReportsByCategory),
+);
+
+adminRouter.get(
+  "/dashboard/reports/weekly-trend",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardWeeklyTrendSchema),
+  asyncHandler(adminController.getDashboardWeeklyTrend),
+);
+
+adminRouter.get(
+  "/dashboard/admins/recent",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardRecentAdminsSchema),
+  asyncHandler(adminController.getDashboardRecentAdmins),
+);
+
+adminRouter.get(
+  "/dashboard/users/recent",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getDashboardRecentUsersSchema),
+  asyncHandler(adminController.getDashboardRecentUsers),
 );
 
 export { adminRouter };

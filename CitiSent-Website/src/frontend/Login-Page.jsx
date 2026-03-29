@@ -62,11 +62,11 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 			<form className="space-y-5" onSubmit={handleSubmit}>
 				<AuthInputField
 					id="login-identifier"
-					label="Email"
+					label="Username or Email"
 					type="text"
 					value={form.identifier}
 					onChange={(value) => updateField('identifier', value)}
-					placeholder="example@citisent.gov"
+					placeholder="Enter your username or email"
 					variant="figma-login"
 				/>
 

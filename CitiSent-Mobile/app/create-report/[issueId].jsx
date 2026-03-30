@@ -9,7 +9,8 @@ import {
   SubmitReportButton,
   getCreateReportIssueById,
 } from "../../modules/createReport";
-import { PageTopBar, RefreshableScrollView, Colors, usePullToRefresh } from "../../modules/shared";
+import { PageTopBar, RefreshableScrollView, Colors, usePullToRefresh, api } from "../../modules/shared";
+import { reportsApi } from "../../services/reports";
 
 export default function CreateReportIssueDetailScreen() {
   const { issueId } = useLocalSearchParams();
@@ -27,7 +28,8 @@ export default function CreateReportIssueDetailScreen() {
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
   const reportContentHeightRef = useRef(0);
 
-  const canSubmit = issueLocation.trim().length > 0 && report.trim().length > 0;
+  // Enforce backend validation: location min 1, description min 10, issueType min 1
+  const canSubmit = issueLocation.trim().length > 0 && report.trim().length >= 10;
 
   function handleInputLayout(field, y) {
     inputPositionsRef.current[field] = y;
@@ -56,15 +58,28 @@ export default function CreateReportIssueDetailScreen() {
     }, 50);
   }
 
-  function handleSubmitReport() {
-    if (!canSubmit) {
-      Alert.alert("Missing details", "Please provide the issue location and report before submitting.");
+  async function handleSubmitReport() {
+    if (issueLocation.trim().length === 0) {
+      Alert.alert("Missing details", "Please provide the issue location.");
+      return;
+    }
+    if (report.trim().length < 10) {
+      Alert.alert("Description too short", "Please provide a more detailed report (at least 10 characters).");
       return;
     }
 
     setIsSubmitting(true);
+    try {
+      // Only send attachmentUrl if valid (not used in current UI, but placeholder for future)
+      let attachmentUrl;
+      // If you add attachment support, validate URL here
 
-    setTimeout(() => {
+      await reportsApi.createReport({
+        issueType: issue.label,
+        location: issueLocation,
+        description: report,
+        ...(attachmentUrl ? { attachmentUrl } : {}),
+      });
       setIsSubmitting(false);
       Alert.alert("Report submitted", "Your report has been submitted successfully.", [
         {
@@ -76,7 +91,10 @@ export default function CreateReportIssueDetailScreen() {
           },
         },
       ]);
-    }, 450);
+    } catch (error) {
+      setIsSubmitting(false);
+      Alert.alert("Submission failed", error?.message || "Unable to submit report. Please try again.");
+    }
   }
 
   if (!issue) {

@@ -156,6 +156,27 @@ function shouldUseLocalReportsData() {
 }
 
 export const reportsApi = {
+  createReport: async ({
+    issueType,
+    location,
+    description,
+    attachmentUrl,
+    sentimentLabel,
+  }) => {
+    // Only include attachmentUrl if it's a valid, non-empty URL
+    const payload = {
+      issueType,
+      location,
+      description,
+      ...(attachmentUrl &&
+      typeof attachmentUrl === "string" &&
+      attachmentUrl.startsWith("http")
+        ? { attachmentUrl }
+        : {}),
+      ...(sentimentLabel ? { sentimentLabel } : {}),
+    };
+    return api.post("/reports", payload);
+  },
   getMyReports: async () => {
     if (shouldUseLocalReportsData()) {
       return MY_REPORTS;

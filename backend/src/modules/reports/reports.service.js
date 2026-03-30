@@ -51,14 +51,16 @@ export const reportsService = {
     sentimentLabel,
     accessToken,
   }) {
+    // Use correct snake_case keys for DB insert
     const created = await reportsRepository.create(
       {
         user_id: userId,
         issue_type: issueType,
         description,
         location,
-        attachment_url: attachmentUrl ?? null,
-        sentiment_label: sentimentLabel ?? null,
+        // Only include attachment_url if present
+        ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
+        ...(sentimentLabel ? { sentiment_label: sentimentLabel } : {}),
         status: "pending",
       },
       accessToken,

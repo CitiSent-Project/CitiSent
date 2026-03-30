@@ -107,7 +107,7 @@ export default function LoginFormScreen() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
         keyboardVerticalOffset={24}
       >
         <View className="flex-1 px-8 pt-16">

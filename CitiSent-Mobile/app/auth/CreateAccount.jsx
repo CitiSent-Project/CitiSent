@@ -249,9 +249,9 @@ export default function CreateAccountScreen() {
         profileImage,
       });
 
-      setSuccessMessage("Account created successfully! Redirecting...");
+      setSuccessMessage("Account created successfully! Please login to continue.");
       await new Promise((resolve) => setTimeout(resolve, 850));
-      router.replace("/(tabs)");
+      router.replace("/auth/LoginForm");
     } catch (error) {
       setSuccessMessage("");
       setFieldErrors(

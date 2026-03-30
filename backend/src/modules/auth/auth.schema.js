@@ -39,6 +39,7 @@ export const registerSchema = z.object({
     age: z.coerce.number().int().min(1).max(120).optional(),
     gender: z.string().trim().min(1).max(24).optional(),
     clientType: z.string().trim().min(1).max(32).optional(),
+    address: z.string().trim().min(5).max(255),
   }),
 });
 

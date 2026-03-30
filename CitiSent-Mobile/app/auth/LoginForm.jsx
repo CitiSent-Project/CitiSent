@@ -147,18 +147,21 @@ export default function LoginFormScreen() {
               error={fieldErrors.password}
             />
 
-            <View className="mb-6 flex-row items-center justify-between">
-              <RememberMeToggle checked={rememberMe} onToggle={() => setRememberMe((prev) => !prev)} />
+<View className="mb-6 flex-row items-center justify-end">
+  
+  {/* <RememberMeToggle checked={rememberMe} onToggle={() => setRememberMe((prev) => !prev)} /> */}
 
-              <Pressable
-                className="items-end"
-                accessibilityRole="button"
-                accessibilityLabel="Forgot password"
-                onPress={() => router.push("/auth/ForgotPassword")}
-              >
-                <Text className="text-[14px] text-[#8CA8C9]">Forgot your Password?</Text>
-              </Pressable>
-            </View>
+
+  <Pressable
+    accessibilityRole="button"
+    accessibilityLabel="Forgot password"
+    onPress={() => router.push("/auth/ForgotPassword")}
+  >
+    <Text className="text-[14px] text-[#8CA8C9]">
+      Forgot your Password?
+    </Text>
+  </Pressable>
+</View>
 
             <View>
               <AuthActionButton

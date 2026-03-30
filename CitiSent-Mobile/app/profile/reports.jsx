@@ -1,6 +1,7 @@
+
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { MyReportCard, MY_REPORTS } from "../../modules/myReports";
+import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
 
@@ -16,20 +17,29 @@ function normalizeStatus(value) {
 }
 
 export default function ReportsMadePage() {
+
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [reports, setReports] = useState(MY_REPORTS);
   const [editingReportId, setEditingReportId] = useState(null);
 
+  // Use the custom hook to fetch user's reports
+  const { reports, reloadMyReports, isInitialLoading } = useMyReports();
+
+  // Pull to refresh uses the reload function from the hook
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setSelectedStatus("all");
-    setReports(MY_REPORTS);
+    await reloadMyReports();
   });
+
+
+  // Normalize status for filtering and counts
+  function normalizeStatus(value) {
+    return String(value || "").trim().toLowerCase();
+  }
 
   const filteredReports = useMemo(() => {
     if (selectedStatus === "all") {
       return reports;
     }
-
     return reports.filter((report) => normalizeStatus(report.status) === selectedStatus);
   }, [reports, selectedStatus]);
 
@@ -39,9 +49,10 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  const handleSaveReport = (updates) => {
-    setReports((prev) => prev.map((item) => (item.id === editingReportId ? { ...item, ...updates } : item)));
+  // When saving, just close the edit modal (data will be refreshed on next reload)
+  const handleSaveReport = () => {
     setEditingReportId(null);
+    reloadMyReports();
   };
 
   return (

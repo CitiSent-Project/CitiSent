@@ -72,7 +72,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 
 	return (
 		<AuthPageShell
-			variant="figma-login"
+			variant="admin-login"
 			title="Create Admin Account"
 			subtitle="Set up your account to access the CitiSent admin workspace."
 			footer={
@@ -96,7 +96,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.fullName}
 					onChange={(value) => updateField('fullName', value)}
 					placeholder="Juan Dela Cruz"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthInputField
@@ -106,7 +106,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.email}
 					onChange={(value) => updateField('email', value)}
 					placeholder="admin@citisent.gov"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthInputField
@@ -115,7 +115,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={DEPARTMENT_OPTIONS.find((department) => department.id === form.departmentId)?.label || ''}
 					onChange={() => {}}
 					placeholder=""
-					variant="figma-login"
+					variant="admin-login"
 					disabled
 				/>
 
@@ -158,7 +158,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.phone}
 					onChange={(value) => updateField('phone', value)}
 					placeholder="+63 900 000 0000"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthInputField
@@ -167,7 +167,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.address}
 					onChange={(value) => updateField('address', value)}
 					placeholder="City Hall, Main District"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthPasswordField
@@ -176,7 +176,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.password}
 					onChange={(value) => updateField('password', value)}
 					placeholder="Create password"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthPasswordField
@@ -185,7 +185,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin }) {
 					value={form.confirmPassword}
 					onChange={(value) => updateField('confirmPassword', value)}
 					placeholder="Confirm password"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<div className="md:col-span-2">

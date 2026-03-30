@@ -7,17 +7,8 @@ import {
     PieChart,
     VerticalChart,
 } from '../components/Dashboard-Ui'
-import {
-    ADMIN_STORAGE_KEYS,
-    dashboardAdminRows,
-    dashboardAdminTableColumns,
-    dashboardNewUsersTableColumns,
-    dashboardStatCards,
-    getLatestJoinedUsersRows,
-    reportsByCategory,
-    reportsThisWeek,
-} from '../models/data'
-import { buildDashboardNewUserRows, buildDashboardStatCards } from '../controllers/dashboardController'
+import { ADMIN_STORAGE_KEYS } from '../models/data'
+import { buildDashboardStatCards } from '../controllers/dashboardController'
 import {
     mapDashboardCategoryBreakdown,
     mapDashboardRecentAdmins,
@@ -31,6 +22,74 @@ import { loadFromStorageWithSchema } from '../services/storageService'
 import { getStorageSchemaRule } from '../models/storageSchemaModel'
 
 const MotionDiv = motion.div
+
+const DASHBOARD_STAT_CARDS_TEMPLATE = [
+    {
+        id: 'total-users',
+        iconKey: 'users',
+        label: 'Total Users',
+        value: '0',
+        trendValue: '--',
+        trendDirection: 'up',
+        color: 'blue',
+    },
+    {
+        id: 'ongoing-reports',
+        iconKey: 'target',
+        label: 'On going reports',
+        value: '0',
+        trendValue: '--',
+        trendDirection: 'up',
+        color: 'purple',
+    },
+    {
+        id: 'reports-resolved',
+        iconKey: 'check-circle',
+        label: 'Reports resolved',
+        value: '0',
+        trendValue: '--',
+        trendDirection: 'up',
+        color: 'green',
+    },
+    {
+        id: 'total-reports',
+        iconKey: 'file-text',
+        label: 'Total Reports',
+        value: '0',
+        trendValue: '--',
+        trendDirection: 'up',
+        color: 'amber',
+    },
+]
+
+const DASHBOARD_CATEGORY_COLORS = [
+    '#1650e8',
+    '#65c98d',
+    '#8d66d6',
+    '#ff9082',
+    '#39bee0',
+    '#ffb44d',
+    '#2f89e5',
+    '#7a6ce5',
+]
+
+const DASHBOARD_ADMIN_TABLE_COLUMNS = ['Name', 'Email', 'Department Assigned', 'Last Activity']
+const DASHBOARD_NEW_USERS_TABLE_COLUMNS = ['Username', 'Date Joined']
+
+const EMPTY_CATEGORY_DATA = {
+    title: 'Reports by Category',
+    total: '0',
+    labels: [],
+    values: [],
+    colors: [],
+    legend: [],
+}
+
+const EMPTY_WEEKLY_DATA = {
+    title: 'Total Reports This Week',
+    labels: [],
+    values: [],
+}
 
 function getStoredAccessToken() {
     const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
@@ -54,19 +113,15 @@ export function Dashboard() {
     )
 
     const fallbackStatCards = useMemo(
-        () => buildDashboardStatCards({ statCards: dashboardStatCards, iconMap }),
+        () => buildDashboardStatCards({ statCards: DASHBOARD_STAT_CARDS_TEMPLATE, iconMap }),
         [iconMap]
-    )
-    const fallbackNewUsersRows = useMemo(
-        () => buildDashboardNewUserRows(getLatestJoinedUsersRows()),
-        []
     )
 
     const [statCards, setStatCards] = useState(fallbackStatCards)
-    const [categoryData, setCategoryData] = useState(reportsByCategory)
-    const [weeklyData, setWeeklyData] = useState(reportsThisWeek)
-    const [adminsTableRows, setAdminsTableRows] = useState(dashboardAdminRows)
-    const [newUsersTableRows, setNewUsersTableRows] = useState(fallbackNewUsersRows)
+    const [categoryData, setCategoryData] = useState(EMPTY_CATEGORY_DATA)
+    const [weeklyData, setWeeklyData] = useState(EMPTY_WEEKLY_DATA)
+    const [adminsTableRows, setAdminsTableRows] = useState([])
+    const [newUsersTableRows, setNewUsersTableRows] = useState([])
     const [isLoadingDashboard, setIsLoadingDashboard] = useState(true)
 
     useEffect(() => {
@@ -97,12 +152,12 @@ export function Dashboard() {
 
                 const summaryCards = mapDashboardSummaryToStatCards(
                     summaryResponse?.data,
-                    dashboardStatCards
+                    DASHBOARD_STAT_CARDS_TEMPLATE
                 )
 
                 setStatCards(buildDashboardStatCards({ statCards: summaryCards, iconMap }))
                 setCategoryData(
-                    mapDashboardCategoryBreakdown(categoryResponse?.data, reportsByCategory.colors)
+                    mapDashboardCategoryBreakdown(categoryResponse?.data, DASHBOARD_CATEGORY_COLORS)
                 )
                 setWeeklyData(mapDashboardWeeklyTrend(weeklyResponse?.data))
                 setAdminsTableRows(mapDashboardRecentAdmins(adminsResponse?.data))
@@ -173,12 +228,12 @@ export function Dashboard() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <DashboardTableCard
                     title="Admins"
-                    columns={dashboardAdminTableColumns}
+                    columns={DASHBOARD_ADMIN_TABLE_COLUMNS}
                     rows={adminsTableRows}
                 />
                 <DashboardTableCard
                     title="Newly Joined Users"
-                    columns={dashboardNewUsersTableColumns}
+                    columns={DASHBOARD_NEW_USERS_TABLE_COLUMNS}
                     rows={newUsersTableRows}
                 />
             </div>

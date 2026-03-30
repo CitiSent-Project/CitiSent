@@ -7,9 +7,6 @@ import {
   UrgencyFeedTable,
   UrgencyFilterChips,
 } from '../../components/Reports-Ui'
-import {
-  urgencyFilterChips,
-} from '../../models/data'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import {
   ALL_URGENCY_FILTER,
@@ -19,6 +16,7 @@ import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
 const URGENCY_COLORS = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#93c5fd']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const URGENCY_FILTER_CHIPS = ['All Reports', 'Emergency', 'Urgent', 'Moderate', 'Calm']
 
 export function ByUrgencyLevels({
   rows,
@@ -27,7 +25,7 @@ export function ByUrgencyLevels({
   onUpdateStatus,
   isLoading = false,
 }) {
-  const [selectedUrgency, setSelectedUrgency] = useState(urgencyFilterChips[0])
+  const [selectedUrgency, setSelectedUrgency] = useState(URGENCY_FILTER_CHIPS[0])
 
   const filteredRows = useMemo(() => {
     return filterUserReportsByUrgency({
@@ -150,7 +148,7 @@ export function ByUrgencyLevels({
         </section>
 
         <UrgencyFilterChips
-          chips={urgencyFilterChips}
+          chips={URGENCY_FILTER_CHIPS}
           selectedChip={selectedUrgency}
           onSelectChip={handleSelectUrgency}
         />

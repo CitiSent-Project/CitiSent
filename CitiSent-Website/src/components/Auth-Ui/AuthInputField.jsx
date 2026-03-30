@@ -9,13 +9,13 @@ export function AuthInputField({
   disabled = false,
   variant = "default",
 }) {
-  const isFigmaLogin = variant === "figma-login";
+  const isAdminLogin = variant === "admin-login";
 
   return (
     <div>
       <label
         htmlFor={id}
-        className={`mb-1 block text-sm font-medium ${isFigmaLogin ? "text-white/95" : "text-slate-700"}`}
+        className={`mb-1 block text-sm font-medium ${isAdminLogin ? "text-white/95" : "text-slate-700"}`}
       >
         {label}
       </label>
@@ -27,7 +27,7 @@ export function AuthInputField({
         placeholder={placeholder}
         disabled={disabled}
         className={`w-full rounded-xl border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-          isFigmaLogin
+          isAdminLogin
             ? "border-white/50 bg-white text-slate-700 placeholder:text-slate-400 focus:border-white focus:ring-cyan-200/70"
             : "bg-white text-slate-700 focus:ring-cyan-200"
         } ${

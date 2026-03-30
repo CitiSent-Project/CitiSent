@@ -42,7 +42,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 
 	return (
 		<AuthPageShell
-			variant="figma-login"
+			variant="admin-login"
 			title="Login"
 			subtitle="Sign in to access the CitiSent admin workspace."
 			footer={
@@ -67,7 +67,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 					value={form.identifier}
 					onChange={(value) => updateField('identifier', value)}
 					placeholder="Enter your username or email"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<AuthPasswordField
@@ -76,7 +76,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 					value={form.password}
 					onChange={(value) => updateField('password', value)}
 					placeholder="Password"
-					variant="figma-login"
+					variant="admin-login"
 				/>
 
 				<label className="flex items-center gap-2 text-sm text-white/95">

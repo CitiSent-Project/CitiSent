@@ -30,6 +30,7 @@ const INITIAL_FIELD_ERRORS = {
   age: "",
   gender: "",
   clientType: "",
+  address: "",
   password: "",
   confirmPassword: "",
 };
@@ -56,6 +57,11 @@ function mapRegisterErrorToFieldErrors(errorMessage) {
 
   if (message.includes("email")) {
     nextErrors.email = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("address")) {
+    nextErrors.address = rawMessage;
     return nextErrors;
   }
 
@@ -91,8 +97,9 @@ export default function CreateAccountScreen() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [clientType, setClientType] = useState("");
+  const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,6 +114,7 @@ export default function CreateAccountScreen() {
     age: setAge,
     gender: setGender,
     clientType: setClientType,
+    address: setAddress,
     password: setPassword,
     confirmPassword: setConfirmPassword,
   };
@@ -115,6 +123,7 @@ export default function CreateAccountScreen() {
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
+    const trimmedAddress = address.trim();
     const parsedAge = Number.parseInt(age.trim(), 10);
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
@@ -152,6 +161,12 @@ export default function CreateAccountScreen() {
       nextErrors.clientType = "Client type is required.";
     }
 
+    if (!trimmedAddress) {
+      nextErrors.address = "Address is required.";
+    } else if (trimmedAddress.length < 5) {
+      nextErrors.address = "Please enter a valid address.";
+    }
+
     if (!password) {
       nextErrors.password = "Password is required.";
     } else if (password.length < 8) {
@@ -176,11 +191,13 @@ export default function CreateAccountScreen() {
         !nextErrors.age &&
         !nextErrors.gender &&
         !nextErrors.clientType &&
+        !nextErrors.address &&
         !nextErrors.password &&
         !nextErrors.confirmPassword,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
+      trimmedAddress,
       parsedAge,
     };
   };
@@ -195,6 +212,7 @@ export default function CreateAccountScreen() {
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
+      trimmedAddress,
       parsedAge,
     } = validateFields();
 
@@ -226,6 +244,7 @@ export default function CreateAccountScreen() {
         age: parsedAge,
         gender,
         clientType,
+        address: trimmedAddress,
         password,
         profileImage,
       });
@@ -330,6 +349,17 @@ export default function CreateAccountScreen() {
               keyboardType="number-pad"
               returnKeyType="next"
               error={fieldErrors.age}
+            />
+
+            <AuthInputField
+              value={address}
+              onChangeText={handleFieldChange("address")}
+              placeholder="Address"
+              icon="location-outline"
+              autoComplete="street-address"
+              textContentType="fullStreetAddress"
+              returnKeyType="next"
+              error={fieldErrors.address}
             />
 
             <AuthChoiceField

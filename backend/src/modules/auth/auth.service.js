@@ -122,6 +122,7 @@ export const authService = {
       age: payload.age ?? null,
       gender: payload.gender ?? null,
       client_type: payload.clientType ?? null,
+      address: payload.address ?? null,
     };
 
     const signUpData = await authRepository.registerWithEmailPassword({

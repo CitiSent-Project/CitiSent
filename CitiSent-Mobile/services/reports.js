@@ -156,6 +156,10 @@ function shouldUseLocalReportsData() {
 }
 
 export const reportsApi = {
+  deleteReport: async (reportId) => {
+    if (!reportId) throw new Error("Missing report ID");
+    return api.delete(`/reports/${reportId}`);
+  },
   createReport: async ({
     issueType,
     location,

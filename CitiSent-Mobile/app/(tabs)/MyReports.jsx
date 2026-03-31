@@ -1,3 +1,4 @@
+import React from "react";
 import { Text, View } from "react-native";
 import {
   MyReportsList,
@@ -11,8 +12,20 @@ import { AuthCityFooter } from "../../modules/auth";
 
 export default function MyReportsScreen() {
   const { reports, reloadMyReports, isInitialLoading } = useMyReports();
-
+  const [deletingId, setDeletingId] = React.useState(null);
   const { refreshing, onRefresh } = usePullToRefresh(reloadMyReports);
+
+  const handleDelete = async (reportId) => {
+    setDeletingId(reportId);
+    try {
+      await require("../../services/reports").reportsApi.deleteReport(reportId);
+      await reloadMyReports();
+    } catch (err) {
+      alert(err?.message || "Failed to delete report.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
@@ -36,7 +49,7 @@ export default function MyReportsScreen() {
               Track the status and details of every concern you have submitted.
             </Text>
 
-            <MyReportsList reports={reports} />
+            <MyReportsList reports={reports} onDelete={handleDelete} deletingId={deletingId} />
           </>
         )}
       </RefreshableScrollView>

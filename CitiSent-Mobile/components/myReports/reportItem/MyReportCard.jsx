@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, View } from "react-native";
+import { Text, View, Pressable, Alert } from "react-native";
 import { formatDateTime } from "../../../modules/shared";
 import ReportAttachmentPreview from "./ReportAttachmentPreview";
 import ReportStatusBadge from "./ReportStatusBadge";
@@ -9,7 +9,22 @@ function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>{text}</Text>;
 }
 
-export default function MyReportCard({ report, containerClassName = "mb-4" }) {
+export default function MyReportCard({ report, containerClassName = "mb-4", onDelete }) {
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Report",
+      "Are you sure you want to delete this report? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => onDelete?.(report.id),
+        },
+      ]
+    );
+  };
+
   return (
     <View className={`${containerClassName} rounded-2xl border px-4 py-4 shadow-sm`} style={{ borderColor: Colors.border, backgroundColor: Colors.background }}>
       <View className="mb-3 flex-row items-start justify-between gap-3">
@@ -32,9 +47,25 @@ export default function MyReportCard({ report, containerClassName = "mb-4" }) {
 
       <ReportAttachmentPreview attachment={report.attachment} />
 
-      <View className="mt-3 flex-row items-center justify-end gap-1.5">
-        <Ionicons name="time-outline" size={13} color={Colors.text.secondary} />
-        <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>{formatDateTime(report.createdAt)}</Text>
+      <View className="mt-3 flex-row items-center justify-between gap-1.5">
+        <View className="flex-row items-center gap-1.5">
+          <Ionicons name="time-outline" size={13} color={Colors.text.secondary} />
+          <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>{formatDateTime(report.createdAt)}</Text>
+        </View>
+        {onDelete && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Delete report"
+            onPress={handleDelete}
+            className="ml-2 flex-row items-center rounded px-2 py-1"
+            style={{ backgroundColor: Colors.ui.errorSurface }}
+          >
+            <Ionicons name="trash-outline" size={16} color={Colors.error} />
+            <Text className="ml-1 text-xs font-semibold" style={{ color: Colors.error }}>
+              Delete
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

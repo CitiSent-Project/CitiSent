@@ -1,5 +1,4 @@
 import { normalizeReportStatus } from '../models/reportStatusModel'
-import { DEPARTMENT_OPTIONS } from '../models/data'
 
 const REPORT_STATUS_LABEL_MAP = {
   pending: 'Pending',
@@ -36,22 +35,12 @@ function normalizeUserStatusLabel(status) {
 }
 
 function resolveDepartment(departmentId, departmentLabel, issueType) {
-  const byId = DEPARTMENT_OPTIONS.find((department) => department.id === departmentId)
-  if (byId) {
-    return byId
-  }
-
-  const byLabel = DEPARTMENT_OPTIONS.find(
-    (department) => department.label === departmentLabel || department.label === issueType
-  )
-
-  if (byLabel) {
-    return byLabel
-  }
+  const normalizedDepartmentId = String(departmentId || '').trim()
+  const normalizedDepartmentLabel = String(departmentLabel || issueType || '').trim()
 
   return {
-    id: departmentId || issueType || 'unassigned',
-    label: departmentLabel || issueType || 'Unassigned',
+    id: normalizedDepartmentId || 'unassigned',
+    label: normalizedDepartmentLabel || 'Unassigned',
   }
 }
 
@@ -135,6 +124,28 @@ export function mapBackendTransferRequest(payload = {}) {
     reviewedById: payload.reviewerId || '',
     reviewedByName: payload.reviewerName || '',
     reviewNotes: payload.reviewNotes || '',
+  }
+}
+
+export function mapBackendNotification(payload = {}) {
+  return {
+    id: payload.id || '',
+    title: payload.title || '',
+    message: payload.message || '',
+    type: payload.type || 'System',
+    read: Boolean(payload.read),
+    createdAt: payload.createdAt || '',
+    reportId: payload.reportId || null,
+    readAt: payload.readAt || null,
+  }
+}
+
+export function mapBackendActivityLogEntry(payload = {}) {
+  return {
+    id: payload.id || '',
+    action: payload.action || 'Activity',
+    detail: payload.detail || '',
+    createdAt: payload.createdAt || new Date().toISOString(),
   }
 }
 

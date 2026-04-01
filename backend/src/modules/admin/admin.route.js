@@ -4,6 +4,8 @@ import { requireAuth } from "../../middlewares/auth.js";
 import { loadActorProfile, requireRole } from "../../middlewares/actor.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { adminController } from "./admin.controller.js";
+import { adminActivityRouter } from "./activity/activity.route.js";
+import { adminNotificationsRouter } from "./notifications/notifications.route.js";
 import {
   banAdminUserSchema,
   assignOfficeDepartmentSchema,
@@ -32,6 +34,8 @@ import { USER_ROLES } from "../../shared/auth/roleAccess.js";
 const adminRouter = Router();
 
 adminRouter.use(requireAuth, loadActorProfile);
+adminRouter.use(adminActivityRouter);
+adminRouter.use(adminNotificationsRouter);
 
 adminRouter.get(
   "/users",

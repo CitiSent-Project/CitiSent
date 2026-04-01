@@ -12,33 +12,13 @@ Scope: files grouped under src-models for CitiSent-Website.
 ## File: src/models/data/admin/adminPortalData.js
 
 - Purpose: Model/domain module containing data contracts, constants, or normalization rules.
-- Export Surface: Exports: ADMIN_STORAGE_KEYS, buildDefaultNotificationsByAdmin, createActivityEntry, DEFAULT_ADMIN_ACCOUNTS, DEFAULT_ADMIN_PROFILE, DEFAULT_NOTIFICATIONS, DEFAULT_PREFERENCES, DEFAULT_TRANSFER_REQUESTS, DEPARTMENT_OPTIONS, formatDateTime, getDepartmentLabelById
+- Export Surface: Exports: ADMIN_STORAGE_KEYS, createActivityEntry, DEFAULT_ADMIN_ACCOUNTS, DEFAULT_ADMIN_PROFILE, DEFAULT_PREFERENCES, DEFAULT_TRANSFER_REQUESTS, formatDateTime
 - Imports: No explicit imports detected.
-- Functions Declared: 4
-
-### Function: getDepartmentLabelById(departmentId)
-
-- Defined At: line 27
-- Specific Purpose: Resolves domain constants or computed model values required by controllers and services.
-- Inputs: Accepts: departmentId
-- Output: Returns retrieved or derived data (object, array, or primitive) consumed by callers.
-- Side Effects: No direct external side effects detected; behavior appears computation/render focused.
-- Key Dependencies: This function primarily relies on in-file logic and standard language/runtime features.
-- Usage Scope: Exported symbol; intended for use by other modules importing this file.
-
-### Function: buildDefaultNotificationsByAdmin(adminAccounts = DEFAULT_ADMIN_ACCOUNTS)
-
-- Defined At: line 89
-- Specific Purpose: Constructs a new structured value/object used by downstream state, rendering, or persistence logic.
-- Inputs: Accepts: adminAccounts = DEFAULT_ADMIN_ACCOUNTS
-- Output: Returns a newly constructed/normalized data structure for downstream use.
-- Side Effects: Creates timestamped metadata for logs/events.
-- Key Dependencies: This function primarily relies on in-file logic and standard language/runtime features.
-- Usage Scope: Exported symbol; intended for use by other modules importing this file.
+- Functions Declared: 2
 
 ### Function: formatDateTime(value)
 
-- Defined At: line 99
+- Defined At: line 47
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
 - Inputs: Accepts: value
 - Output: Returns a newly constructed/normalized data structure for downstream use.
@@ -48,7 +28,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 
 ### Function: createActivityEntry(action, detail)
 
-- Defined At: line 113
+- Defined At: line 61
 - Specific Purpose: Constructs a new structured value/object used by downstream state, rendering, or persistence logic.
 - Inputs: Accepts: action, detail
 - Output: Returns a newly constructed/normalized data structure for downstream use.
@@ -352,7 +332,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 170]
 
 - Defined At: line 170
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -362,7 +342,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 176]
 
 - Defined At: line 176
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -372,7 +352,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 181]
 
 - Defined At: line 181
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -382,7 +362,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 189]
 
 - Defined At: line 189
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -392,7 +372,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 194]
 
 - Defined At: line 194
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -402,7 +382,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 199]
 
 - Defined At: line 199
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.
@@ -412,7 +392,7 @@ Scope: files grouped under src-models for CitiSent-Website.
 - Key Dependencies: ./pageModel
 - Usage Scope: Exposed through an exported object API; callable by modules importing this service/controller object.
 
-### Function: STORAGE_SCHEMA_RULES.validate(value)
+### Function: STORAGE_SCHEMA_RULES.validate(value) [line 204]
 
 - Defined At: line 204
 - Specific Purpose: Implements file-specific feature logic that supports this module's behavior and data flow.

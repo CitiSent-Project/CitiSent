@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_PREFERENCES,
-  DEPARTMENT_OPTIONS,
 } from '../models/data'
 import { usePersistToStorage } from '../hooks/usePersistToStorage'
 import { loadFromStorage } from '../services/storageService'
@@ -21,11 +20,14 @@ export function Settings({
   profile,
   preferences,
   transferRequests,
+  departmentOptions = [],
   onUpdateProfile,
   onUpdatePreferences,
   onRequestLogout,
   onSubmitTransferRequest,
 }) {
+  const availableDepartments = Array.isArray(departmentOptions) ? departmentOptions : []
+
   const [activeTab, setActiveTab] = useState(() => {
     const storedTab = loadFromStorage(ADMIN_STORAGE_KEYS.settingsActiveTab, tabs[0])
     return tabs.includes(storedTab) ? storedTab : tabs[0]
@@ -65,7 +67,7 @@ export function Settings({
       <DepartmentTransferTab
         profile={profile}
         transferRequests={transferRequests}
-        departmentOptions={DEPARTMENT_OPTIONS}
+        departmentOptions={availableDepartments}
         onSubmitTransferRequest={onSubmitTransferRequest}
       />
     ),

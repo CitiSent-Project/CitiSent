@@ -10,15 +10,15 @@ Still Need To Complete Backend:
          ✔ Needed: total users, reports by status, reports by category, weekly trend, recent admins, recent registered users. @done (3/29/2026, 11:06:04 PM)
          ✔ Reason: dashboard currently renders static card/chart/table data. @done (3/29/2026, 11:06:05 PM)
     
-    ☐ Add notifications persistence and APIs.
-        - Needed: list notifications per admin, mark read/unread, clear/bulk actions.
-        - Reason: notifications are currently seeded and stored locally.
+    ✔ Add notifications persistence and APIs. @done (4/1/2026, 3:45:58 PM)
+        ✔ Needed: list notifications per admin, mark read/unread, clear/bulk actions. @done (4/1/2026, 3:46:11 PM)
+        ✔ Reason: notifications are currently seeded and stored locally. @done (4/1/2026, 3:46:12 PM)
     
-    ☐ Add activity/audit log storage.
-        - Needed: backend audit trail endpoint and DB table so activity survives device/browser reset.
-        - Reason: activity log is currently local state history.
+    ✔ Add activity/audit log storage. @done (4/1/2026, 3:56:20 PM)
+        ✔ - Needed: backend audit trail endpoint and DB table so activity survives device/browser reset. @done (4/1/2026, 3:56:20 PM)
+        ✔ - Reason: activity log is currently local state history. @done (4/1/2026, 3:56:20 PM)
     
-    ☐ Decide department source of truth.
-        - Needed: Option A: keep as backend constant and expose one endpoint for frontend consumption.
+    ✔ Decide department source of truth. @done (4/1/2026, 3:56:20 PM)
+        ✔ - Needed: Option A: keep as backend constant and expose one endpoint for frontend consumption. @done (4/1/2026, 3:56:20 PM)
                   Option B: move to departments table in DB for full admin configurability.
-        - Reason: avoid duplicated static department lists across layers.
+        ✔ - Reason: avoid duplicated static department lists across layers. @done (4/1/2026, 3:56:20 PM)

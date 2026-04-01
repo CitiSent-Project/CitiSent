@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ProfileSummaryCard } from '../components/Account-Ui'
-import { DEPARTMENT_OPTIONS, formatDateTime } from '../models/data'
+import { formatDateTime } from '../models/data'
 import { buildProfileSubmissionState } from '../controllers/profileController'
 import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
 import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
@@ -11,12 +11,13 @@ export function ProfileInformation({
   transferRequests,
   onUpdateProfile,
   onSubmitTransferRequest,
+  departmentOptions,
 }) {
-  const departmentCatalog = DEPARTMENT_OPTIONS.map((agency) => ({
+  const departmentCatalog = departmentOptions.map((agency) => ({
     id: agency.id,
     label: agency.label,
   }))
-  const departmentOptions = departmentCatalog.map((agency) => agency.label)
+  const departmentLabels = departmentCatalog.map((agency) => agency.label)
   const isOfficeAdmin = normalizeUserRole(profile.role) === USER_ROLES.OFFICE_ADMIN
   const hasPendingTransferRequest = transferRequests.some(
     (request) =>
@@ -168,10 +169,10 @@ export function ProfileInformation({
                   disabled={isOfficeAdmin && hasPendingTransferRequest}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 >
-                  {!departmentOptions.includes(draft.department) ? (
+                  {!departmentLabels.includes(draft.department) ? (
                     <option value={draft.department}>{draft.department}</option>
                   ) : null}
-                  {departmentOptions.map((department) => (
+                  {departmentLabels.map((department) => (
                     <option key={department} value={department}>
                       {department}
                     </option>

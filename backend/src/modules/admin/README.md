@@ -5,6 +5,8 @@ This module owns backend authorization-aware admin workflows:
 - scoped report review
 - office-admin department assignment
 - department transfer request submission and review
+- persistent notifications state and actions
+- persistent activity/audit log events
 - dashboard aggregate metrics for admin dashboard cards, charts, and tables
 
 Route-level role checks happen in middleware. Resource-level scope checks stay in the service/repository layers.
@@ -32,6 +34,23 @@ All routes below live under /api/v1/admin and require authenticated admin role.
   - Returns recently registered office admins.
 - GET /dashboard/users/recent
   - Returns recently registered citizens.
+
+## Persistence Endpoints
+
+All routes below live under /api/v1/admin and require authenticated admin role.
+
+- GET /notifications
+  - Returns persistent notification entries for the current admin (or scoped target for superadmin).
+- PATCH /notifications/:notificationId/read
+  - Updates a single notification read/unread state.
+- PATCH /notifications/read-state
+  - Bulk updates notification read/unread state.
+- POST /notifications/clear
+  - Clears selected or all notifications.
+- GET /activity-log
+  - Returns persistent activity/audit entries for the current admin (or scoped target for superadmin).
+- POST /activity-log
+  - Persists a new admin activity entry.
 
 ## Scope Rules
 

@@ -2,11 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { notifyError, notifySuccess } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
-  DEPARTMENT_OPTIONS,
-  buildDefaultNotificationsByAdmin,
   DEFAULT_ADMIN_ACCOUNTS,
   DEFAULT_ADMIN_PROFILE,
-  DEFAULT_NOTIFICATIONS,
   DEFAULT_PREFERENCES,
   DEFAULT_TRANSFER_REQUESTS,
 } from '../models/data'
@@ -47,7 +44,9 @@ import { getStorageSchemaRule } from '../models/storageSchemaModel'
 import { authApiService } from '../services/authApiService'
 import { adminApiService } from '../services/adminApiService'
 import {
+  mapBackendActivityLogEntry,
   mapBackendOfficeAdmin,
+  mapBackendNotification,
   mapBackendProfileToAdminProfile,
   mapBackendReportToUiRow,
   mapBackendTransferRequest,
@@ -71,15 +70,17 @@ function getSchemaPersistenceOptions(storageKey) {
   }
 }
 
-function findDepartmentOption(value) {
+function findDepartmentOption(value, departmentOptions) {
   return (
-    DEPARTMENT_OPTIONS.find(
+    departmentOptions.find(
       (department) => department.id === value || department.label === value
     ) || null
   )
 }
 
 export function useAppStateOrchestrator() {
+  // Department options state (dynamic from backend)
+  const [departmentOptions, setDepartmentOptions] = useState([])
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
   const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
 
@@ -105,6 +106,26 @@ export function useAppStateOrchestrator() {
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
   )
   const [profile, setProfile] = useState(() => storedProfile)
+  // Fetch departments from backend on session boot.
+  useEffect(() => {
+    let isMounted = true
+
+    async function fetchDepartments() {
+      try {
+        const response = await adminApiService.getDepartments()
+        if (response && Array.isArray(response.departments) && isMounted) {
+          setDepartmentOptions(response.departments)
+        }
+      } catch {
+        // Keep empty list until API is reachable.
+      }
+    }
+
+    fetchDepartments()
+    return () => {
+      isMounted = false
+    }
+  }, [])
   const [adminAccounts, setAdminAccounts] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.adminAccounts, DEFAULT_ADMIN_ACCOUNTS)
   )
@@ -133,18 +154,7 @@ export function useAppStateOrchestrator() {
       return storedNotificationsByAdmin
     }
 
-    const legacyNotifications = loadSchemaBackedValue(
-      ADMIN_STORAGE_KEYS.notifications,
-      DEFAULT_NOTIFICATIONS
-    )
-    const seededNotifications = buildDefaultNotificationsByAdmin(adminAccounts)
-
-    return storedProfile.id
-      ? {
-          ...seededNotifications,
-          [storedProfile.id]: legacyNotifications,
-        }
-      : seededNotifications
+    return {}
   })
   const [activityLog, setActivityLog] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activity, [])
@@ -254,6 +264,17 @@ export function useAppStateOrchestrator() {
     setActivityLog((previous) =>
       buildNextActivityLog({ previousActivityLog: previous, action, detail })
     )
+
+    if (!accessToken || !profile.id) {
+      return
+    }
+
+    adminApiService
+      .createActivityLogEntry(accessToken, {
+        action,
+        detail,
+      })
+      .catch(() => {})
   }
 
   async function refreshProfileForAccessCheck() {
@@ -325,6 +346,49 @@ export function useAppStateOrchestrator() {
             : Promise.resolve({ data: [] }),
         ])
 
+        let hydratedActivityLog = null
+        try {
+          const activityResponse = await adminApiService.getActivityLog(accessToken, {
+            limit: 200,
+            offset: 0,
+          })
+          hydratedActivityLog = (activityResponse?.data || []).map(mapBackendActivityLogEntry)
+        } catch {
+          hydratedActivityLog = null
+        }
+
+        const mappedOfficeAdmins = (officeAdminsResponse?.data || []).map(mapBackendOfficeAdmin)
+        const notificationAdminIds = Array.from(
+          new Set(
+            [
+              nextProfile.id,
+              ...(normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
+                ? mappedOfficeAdmins.map((admin) => admin.id)
+                : []),
+            ].filter(Boolean)
+          )
+        )
+
+        const notificationResponses = await Promise.allSettled(
+          notificationAdminIds.map((adminId) =>
+            adminApiService.listNotifications(
+              accessToken,
+              normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
+                ? { adminId, limit: 200, offset: 0 }
+                : { limit: 200, offset: 0 }
+            )
+          )
+        )
+
+        const hydratedNotificationsByAdmin = notificationAdminIds.reduce((accumulator, adminId, index) => {
+          const response = notificationResponses[index]
+          accumulator[adminId] =
+            response?.status === 'fulfilled'
+              ? (response.value?.data || []).map(mapBackendNotification)
+              : []
+          return accumulator
+        }, {})
+
         if (isCancelled) {
           return
         }
@@ -337,7 +401,11 @@ export function useAppStateOrchestrator() {
           department: nextProfile.department || previous.department,
         }))
         setTransferRequests((transferResponse?.data || []).map(mapBackendTransferRequest))
-        setAdminAccounts((officeAdminsResponse?.data || []).map(mapBackendOfficeAdmin))
+        setAdminAccounts(mappedOfficeAdmins)
+        setNotificationsByAdmin(hydratedNotificationsByAdmin)
+        if (hydratedActivityLog) {
+          setActivityLog(hydratedActivityLog)
+        }
       } catch (error) {
         if (isCancelled) {
           return
@@ -377,13 +445,17 @@ export function useAppStateOrchestrator() {
       : adminAccounts
 
     setNotificationsByAdmin((previous) => {
-      const seeded = buildDefaultNotificationsByAdmin(relatedAdmins)
       let didChange = false
       const next = { ...previous }
 
-      Object.entries(seeded).forEach(([adminId, notifications]) => {
+      relatedAdmins.forEach((admin) => {
+        const adminId = admin?.id
+        if (!adminId) {
+          return
+        }
+
         if (!Array.isArray(next[adminId])) {
-          next[adminId] = notifications
+          next[adminId] = []
           didChange = true
         }
       })
@@ -403,7 +475,10 @@ export function useAppStateOrchestrator() {
       currentPreferences: preferences,
       updates,
     })
-    const selectedDepartment = findDepartmentOption(updates.department || updates.departmentId)
+    const selectedDepartment = findDepartmentOption(
+      updates.department || updates.departmentId,
+      departmentOptions
+    )
 
     try {
       const response = await authApiService.updateCurrentUser(accessToken, {
@@ -459,6 +534,39 @@ export function useAppStateOrchestrator() {
     setNotificationsByAdmin,
     addActivity,
     notifySuccess,
+    notifyError,
+    persistToggleRead: async ({ notificationId, isRead }) => {
+      if (!accessToken) {
+        throw new Error('Your session has expired. Please sign in again.')
+      }
+
+      const response = await adminApiService.updateNotificationReadState(
+        accessToken,
+        notificationId,
+        {
+          isRead,
+          ...(normalizeUserRole(profile.role) === USER_ROLES.SUPERADMIN
+            ? { adminId: profile.id }
+            : {}),
+        }
+      )
+
+      return {
+        notification: mapBackendNotification(response?.data),
+      }
+    },
+    persistClearAll: async () => {
+      if (!accessToken) {
+        throw new Error('Your session has expired. Please sign in again.')
+      }
+
+      await adminApiService.clearNotifications(accessToken, {
+        clearAll: true,
+        ...(normalizeUserRole(profile.role) === USER_ROLES.SUPERADMIN
+          ? { adminId: profile.id }
+          : {}),
+      })
+    },
   })
 
   const superadminRecipientIds = useMemo(
@@ -988,6 +1096,7 @@ export function useAppStateOrchestrator() {
     unreadNotifications,
     preferences,
     transferRequests,
+    departmentOptions,
     rememberedEmail,
     selectedUserProfile,
     selectedReport,
@@ -1059,5 +1168,6 @@ export function useAppStateOrchestrator() {
     handleTemporaryPasswordCreated,
     handleRevealTemporaryPassword,
     setAuthPage,
+    departmentOptions,
   }
 }

@@ -1,6 +1,59 @@
+
+
 import { apiClient } from './apiClient'
 
 export const adminApiService = {
+  // Fetch departments from backend
+  getDepartments: (token) =>
+    apiClient.get('/departments', { token }),
+  getActivityLog: (token, { adminId, limit = 200, offset = 0 } = {}) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    })
+
+    if (adminId) {
+      params.set('adminId', adminId)
+    }
+
+    return apiClient.get(`/admin/activity-log?${params.toString()}`, {
+      token,
+    })
+  },
+  createActivityLogEntry: (token, payload) =>
+    apiClient.post('/admin/activity-log', payload, {
+      token,
+    }),
+  listNotifications: (token, { adminId, limit = 200, offset = 0, read } = {}) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    })
+
+    if (adminId) {
+      params.set('adminId', adminId)
+    }
+
+    if (read) {
+      params.set('read', read)
+    }
+
+    return apiClient.get(`/admin/notifications?${params.toString()}`, {
+      token,
+    })
+  },
+  updateNotificationReadState: (token, notificationId, payload) =>
+    apiClient.patch(`/admin/notifications/${notificationId}/read`, payload, {
+      token,
+    }),
+  bulkUpdateNotificationReadState: (token, payload) =>
+    apiClient.patch('/admin/notifications/read-state', payload, {
+      token,
+    }),
+  clearNotifications: (token, payload) =>
+    apiClient.post('/admin/notifications/clear', payload, {
+      token,
+    }),
   listUsers: (token, { limit = 50, offset = 0, search, status } = {}) => {
     const params = new URLSearchParams({
       limit: String(limit),

@@ -31,6 +31,7 @@ function App() {
           onLogin: appActions.onLogin,
           onSwitchToRegister: () => appActions.setAuthPage(getRegisterAuthPage()),
           rememberedEmail: appState.rememberedEmail,
+          departmentOptions: appState.departmentOptions,
         })}
       </>
     )

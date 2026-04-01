@@ -9,7 +9,13 @@ import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
-export function Reports({ section = 'category', profile, onViewReport, onUpdateStatus }) {
+export function Reports({
+  section = 'category',
+  profile,
+  departmentOptions = [],
+  onViewReport,
+  onUpdateStatus,
+}) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -93,6 +99,7 @@ export function Reports({ section = 'category', profile, onViewReport, onUpdateS
     <ByCategory
       rows={scopedRows}
       profile={profile}
+      departmentOptions={departmentOptions}
       onViewReport={onViewReport}
       onUpdateStatus={handleUpdateStatus}
       isLoading={loading}

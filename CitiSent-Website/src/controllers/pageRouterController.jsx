@@ -12,9 +12,23 @@ import { ReportDetailPage } from '../components/Reports-Ui/ReportDetailPage'
 import { AdminManagement } from '../frontend/AdminManagement'
 import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 
-export function renderAuthPage({ authPage, onRegister, onSwitchToLogin, onLogin, onSwitchToRegister, rememberedEmail }) {
+export function renderAuthPage({
+    authPage,
+    onRegister,
+    onSwitchToLogin,
+    onLogin,
+    onSwitchToRegister,
+    rememberedEmail,
+    departmentOptions,
+}) {
     if (authPage === AUTH_PAGES.REGISTER) {
-        return <RegisterPage onRegister={onRegister} onSwitchToLogin={onSwitchToLogin} />
+        return (
+            <RegisterPage
+                onRegister={onRegister}
+                onSwitchToLogin={onSwitchToLogin}
+                departmentOptions={departmentOptions}
+            />
+        )
     }
 
     return (
@@ -41,6 +55,7 @@ export function renderActivePage({
         selectedUserProfile,
         selectedReport,
         transferRequests,
+        departmentOptions,
     } = appState
 
     const {
@@ -77,6 +92,7 @@ export function renderActivePage({
                     onAssignOfficeDepartment={onAssignOfficeDepartment}
                     onApproveTransfer={onApproveTransfer}
                     onRejectTransfer={onRejectTransfer}
+                    departmentOptions={departmentOptions}
                 />
             )
         case APP_PAGES.USERS:
@@ -92,6 +108,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.CATEGORY}
                     profile={profile}
+                    departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
                 />
@@ -101,6 +118,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.CATEGORY}
                     profile={profile}
+                    departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
                 />
@@ -110,6 +128,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.URGENCY}
                     profile={profile}
+                    departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
                 />
@@ -122,6 +141,7 @@ export function renderActivePage({
                     transferRequests={transferRequests}
                     onUpdateProfile={onUpdateProfile}
                     onSubmitTransferRequest={onSubmitTransferRequest}
+                    departmentOptions={departmentOptions}
                 />
             )
         case APP_PAGES.NOTIFICATIONS:
@@ -139,6 +159,7 @@ export function renderActivePage({
                     profile={profile}
                     preferences={preferences}
                     transferRequests={transferRequests}
+                    departmentOptions={departmentOptions}
                     onUpdateProfile={onUpdateProfile}
                     onUpdatePreferences={onUpdatePreferences}
                     onRequestLogout={onRequestLogout}

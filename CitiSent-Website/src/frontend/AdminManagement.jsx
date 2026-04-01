@@ -1,5 +1,4 @@
 import { useMemo, useRef } from 'react'
-import { DEPARTMENT_OPTIONS } from '../models/data'
 import { getPendingTransferRequests } from '../controllers/departmentTransferController'
 import { getOfficeAdmins } from '../controllers/adminManagementController'
 import { USER_ROLES } from '../models/roleAccessModel'
@@ -20,6 +19,7 @@ export function AdminManagement({
   onAssignOfficeDepartment,
   onApproveTransfer,
   onRejectTransfer,
+  departmentOptions,
 }) {
   const officeAdmins = useMemo(() => getOfficeAdmins(adminAccounts), [adminAccounts])
   const pendingRequests = useMemo(
@@ -53,7 +53,7 @@ export function AdminManagement({
     officeAdmins,
     pendingRequests,
     notificationsByAdmin,
-    departmentOptions: DEPARTMENT_OPTIONS,
+    departmentOptions,
     onAssignOfficeDepartment,
     onApproveTransfer,
     onRejectTransfer,
@@ -99,7 +99,7 @@ export function AdminManagement({
           onDepartmentFilterChange={setDepartmentFilter}
           unreadFilter={unreadFilter}
           onUnreadFilterChange={setUnreadFilter}
-          departmentOptions={DEPARTMENT_OPTIONS}
+          departmentOptions={departmentOptions}
           filteredOfficeAdmins={filteredOfficeAdmins}
           unreadByAdminId={unreadByAdminId}
           getSelectedDepartmentId={getSelectedDepartmentId}

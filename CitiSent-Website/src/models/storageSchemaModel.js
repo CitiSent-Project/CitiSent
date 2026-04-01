@@ -2,10 +2,8 @@ import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_ADMIN_ACCOUNTS,
   DEFAULT_ADMIN_PROFILE,
-  DEFAULT_NOTIFICATIONS,
   DEFAULT_PREFERENCES,
   DEFAULT_TRANSFER_REQUESTS,
-  buildDefaultNotificationsByAdmin,
 } from './data'
 import { APP_PAGES } from './pageModel'
 
@@ -134,14 +132,12 @@ function normalizeNotificationSecurePayload(payload) {
 }
 
 function normalizeNotificationsArray(notifications) {
-  const normalized = asArray(notifications, []).map((entry) => normalizeNotification(entry))
-  return normalized.length > 0 ? normalized : DEFAULT_NOTIFICATIONS
+  return asArray(notifications, []).map((entry) => normalizeNotification(entry))
 }
 
-function normalizeNotificationsByAdmin(notificationsByAdmin, adminAccounts) {
-  const seeded = buildDefaultNotificationsByAdmin(adminAccounts)
+function normalizeNotificationsByAdmin(notificationsByAdmin) {
   const source = asObject(notificationsByAdmin, {})
-  const adminIds = Array.from(new Set([...Object.keys(seeded), ...Object.keys(source)]))
+  const adminIds = Array.from(new Set(Object.keys(source)))
 
   return adminIds.reduce((accumulator, adminId) => {
     accumulator[adminId] = normalizeNotificationsArray(source[adminId]).map((notification) => ({
@@ -212,7 +208,7 @@ export const STORAGE_SCHEMA_RULES = {
     schemaVersion: STORAGE_SCHEMA_VERSION,
     migrate: migratePassThrough,
     validate: (value) =>
-      normalizeNotificationsByAdmin(value, normalizeAdminAccounts(DEFAULT_ADMIN_ACCOUNTS)),
+      normalizeNotificationsByAdmin(value),
   },
   [ADMIN_STORAGE_KEYS.activity]: {
     schemaVersion: STORAGE_SCHEMA_VERSION,

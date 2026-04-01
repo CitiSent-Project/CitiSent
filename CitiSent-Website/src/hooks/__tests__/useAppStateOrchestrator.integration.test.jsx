@@ -35,6 +35,12 @@ vi.mock('../../services/authApiService', () => ({
 
 vi.mock('../../services/adminApiService', () => ({
   adminApiService: {
+    getActivityLog: vi.fn(),
+    createActivityLogEntry: vi.fn(),
+    getDepartments: vi.fn(),
+    listNotifications: vi.fn(),
+    updateNotificationReadState: vi.fn(),
+    clearNotifications: vi.fn(),
     listTransferRequests: vi.fn(),
     listOfficeAdmins: vi.fn(),
     approveTransferRequest: vi.fn(),
@@ -177,6 +183,38 @@ describe('useAppStateOrchestrator transfer review integration', () => {
           role: 'Office Admin',
         },
       ],
+    })
+    adminApiService.getDepartments.mockResolvedValue({
+      departments: [],
+    })
+    adminApiService.getActivityLog.mockResolvedValue({
+      data: [],
+    })
+    adminApiService.createActivityLogEntry.mockResolvedValue({
+      data: {
+        id: 'activity-1',
+        action: 'Sample action',
+        detail: 'Sample detail',
+        createdAt: '2026-03-10T08:30:00.000Z',
+      },
+    })
+    adminApiService.listNotifications.mockResolvedValue({
+      data: [],
+    })
+    adminApiService.updateNotificationReadState.mockResolvedValue({
+      data: {
+        id: 'notif-1',
+        title: 'Sample notification',
+        message: 'Sample message',
+        type: 'Account',
+        read: true,
+        createdAt: '2026-03-10T08:30:00.000Z',
+      },
+    })
+    adminApiService.clearNotifications.mockResolvedValue({
+      data: {
+        clearedCount: 0,
+      },
     })
     adminApiService.listTransferRequests.mockResolvedValue({
       data: [
@@ -406,6 +444,12 @@ describe('useAppStateOrchestrator access recovery integration', () => {
       })
 
     adminApiService.listTransferRequests.mockResolvedValue({ data: [] })
+    adminApiService.getActivityLog.mockResolvedValue({ data: [] })
+    adminApiService.createActivityLogEntry.mockResolvedValue({ data: null })
+  adminApiService.getDepartments.mockResolvedValue({ departments: [] })
+  adminApiService.listNotifications.mockResolvedValue({ data: [] })
+  adminApiService.updateNotificationReadState.mockResolvedValue({ data: null })
+  adminApiService.clearNotifications.mockResolvedValue({ data: { clearedCount: 0 } })
 
     container = document.createElement('div')
     document.body.appendChild(container)

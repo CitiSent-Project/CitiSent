@@ -3,19 +3,22 @@ import { Pressable, Text, View } from "react-native";
 import {
   NotificationItemCard,
   ProfileSubpageLayout,
-  PROFILE_NOTIFICATIONS,
 } from "../../modules/profile";
-import { usePullToRefresh, Colors } from "../../modules/shared";
+import { usePullToRefresh, useNotifications, Colors } from "../../modules/shared";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(PROFILE_NOTIFICATIONS);
   const [filterMode, setFilterMode] = useState("all");
-
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  const {
+    notifications,
+    unreadCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    resetNotifications,
+  } = useNotifications();
 
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setFilterMode("all");
-    setNotifications(PROFILE_NOTIFICATIONS);
+    resetNotifications();
   });
 
   const visibleNotifications = useMemo(() => {
@@ -27,7 +30,11 @@ export default function NotificationsPage() {
   }, [filterMode, notifications]);
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+    markAllNotificationsAsRead();
+  };
+
+  const handleMarkSingleAsRead = (notificationId) => {
+    markNotificationAsRead(notificationId);
   };
 
   return (
@@ -70,7 +77,13 @@ export default function NotificationsPage() {
       </View>
 
       {visibleNotifications.length > 0 ? (
-        visibleNotifications.map((item) => <NotificationItemCard key={item.id} item={item} />)
+        visibleNotifications.map((item) => (
+          <NotificationItemCard
+            key={item.id}
+            item={item}
+            onPress={() => handleMarkSingleAsRead(item.id)}
+          />
+        ))
       ) : (
         <View className="rounded-2xl border px-4 py-8" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
           <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No notifications to show.</Text>

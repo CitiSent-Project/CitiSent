@@ -3,20 +3,16 @@ import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Text, View, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";
 import { getAuthUsername, getAuthGender, getAuthProfileImage } from "../../services/authSession";
 import NotificationBellButton from "./NotificationBellButton";
-import { Colors } from "../../modules/shared";
+import { useNotifications, Colors } from "../../modules/shared";
 import { DEFAULT_PROFILE_IMAGES } from "../../constants/profileImages";
 
 export default function HomeHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { unreadCount: unreadNotificationCount } = useNotifications();
 
-  const unreadNotificationCount = useMemo(
-    () => PROFILE_NOTIFICATIONS.filter((item) => !item.read).length,
-    [],
-  );
   const username = useMemo(() => getAuthUsername(""), []);
   const gender = useMemo(() => getAuthGender(), []);
   const profileImage = useMemo(() => getAuthProfileImage(), []);

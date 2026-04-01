@@ -11,6 +11,7 @@ export { default as SkeletonBlock } from "../../components/ui/SkeletonBlock";
 
 export { useFetch } from "../../hooks/useFetch";
 export { default as usePullToRefresh } from "../../hooks/usePullToRefresh";
+export { default as useNotifications } from "../../hooks/useNotifications";
 
 export { Colors } from "../../constants/colors";
 export { Config } from "../../constants/config";

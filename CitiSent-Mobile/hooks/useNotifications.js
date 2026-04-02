@@ -1,29 +1,33 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
-  getNotifications,
+  ensureNotificationsLoaded,
+  getNotificationsSnapshot,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  refreshNotifications,
   resetNotifications,
   subscribeToNotifications,
 } from "../services/notificationState";
 
 export default function useNotifications() {
-  const notifications = useSyncExternalStore(
+  const snapshot = useSyncExternalStore(
     subscribeToNotifications,
-    getNotifications,
-    getNotifications,
+    getNotificationsSnapshot,
+    getNotificationsSnapshot,
   );
 
-  const unreadCount = useMemo(
-    () => notifications.filter((item) => !item.read).length,
-    [notifications],
-  );
+  useEffect(() => {
+    void ensureNotificationsLoaded();
+  }, []);
 
   return {
-    notifications,
-    unreadCount,
+    notifications: snapshot.notifications,
+    unreadCount: snapshot.unreadCount,
+    isLoading: snapshot.isLoading,
+    error: snapshot.error,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     resetNotifications,
+    refreshNotifications,
   };
 }

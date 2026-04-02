@@ -5,6 +5,7 @@ import { authRouter } from "../modules/auth/auth.route.js";
 import { usersRouter } from "../modules/users/users.route.js";
 import { adminRouter } from "../modules/admin/admin.route.js";
 import { departmentsRouter } from "../modules/departments/departments.route.js";
+import { notificationsRouter } from "../modules/notifications/notifications.route.js";
 
 const apiRouter = Router();
 
@@ -14,5 +15,6 @@ apiRouter.use("/users", usersRouter);
 apiRouter.use("/reports", reportsRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/departments", departmentsRouter);
+apiRouter.use("/notifications", notificationsRouter);
 
 export { apiRouter };

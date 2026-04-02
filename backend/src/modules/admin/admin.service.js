@@ -21,6 +21,9 @@ import {
   toAdminUserResponse,
   toTransferRequestResponse,
 } from "./admin.mapper.js";
+import { notificationsRepository } from "./notifications/notifications.repository.js";
+import { logger } from "../../config/logger.js";
+import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
 
 const MANILA_TIME_ZONE = "Asia/Manila";
 const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
@@ -164,6 +167,35 @@ function assertSuperadmin(actor) {
   if (!isSuperadmin(actor?.role)) {
     throw new AppError("Forbidden", StatusCodes.FORBIDDEN);
   }
+}
+
+async function createCitizenStatusNotification({
+  accessToken,
+  reportRow,
+  nextStatus,
+}) {
+  const notificationContent = getStatusNotificationContent(nextStatus);
+
+  if (!notificationContent || !reportRow?.user_id) {
+    return;
+  }
+
+  await notificationsRepository.createNotification({
+    accessToken,
+    userId: reportRow.user_id,
+    type: "status",
+    title: notificationContent.title,
+    message: notificationContent.message,
+    reportId: reportRow.id,
+  });
+
+  // Push integration will use this deterministic event marker.
+  logger.info("Citizen report-status notification created", {
+    reportId: reportRow.id,
+    userId: reportRow.user_id,
+    status: notificationContent.statusCode,
+    eventType: notificationContent.eventType,
+  });
 }
 
 export const adminService = {
@@ -495,17 +527,51 @@ export const adminService = {
   },
 
   async updateReportStatus({ actor, accessToken, reportId, status }) {
+    const nextStatus = mapReportStatusInputToPersisted(status);
+    const existingReport = await adminRepository.getReportById({
+      actor,
+      accessToken,
+      reportId,
+    });
+
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    const previousStatus = normalizeReportStatus(existingReport.row?.status);
+
+    if (previousStatus === nextStatus) {
+      return toAdminReportResponse({
+        reportRow: existingReport.row,
+        reporterProfile: existingReport.reporterProfile,
+      });
+    }
+
     const result = await adminRepository.updateReportById({
       actor,
       accessToken,
       reportId,
       payload: {
-        status: mapReportStatusInputToPersisted(status),
+        status: nextStatus,
       },
     });
 
     if (!result) {
       throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    try {
+      await createCitizenStatusNotification({
+        accessToken,
+        reportRow: result.row,
+        nextStatus,
+      });
+    } catch (error) {
+      logger.warn("Failed to create citizen report-status notification", {
+        reportId,
+        nextStatus,
+        error: error?.message || String(error),
+      });
     }
 
     return toAdminReportResponse({

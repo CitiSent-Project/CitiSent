@@ -25,4 +25,8 @@ export const runtimeFlags = Object.freeze({
     process.env.EXPO_PUBLIC_ALLOW_LOCAL_REPORTS_FALLBACK,
     true,
   ),
+  allowLocalNotificationsFallback: parseBooleanEnv(
+    process.env.EXPO_PUBLIC_ALLOW_LOCAL_NOTIFICATIONS_FALLBACK,
+    true,
+  ),
 });

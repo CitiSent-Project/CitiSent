@@ -15,8 +15,8 @@ import {
     mapDashboardRecentUsers,
     mapDashboardSummaryToStatCards,
     mapDashboardWeeklyTrend,
-} from '../services/adminApiMappers'
-import { adminApiService } from '../services/adminApiService'
+} from '../services/api/admin/dashboardApiMappers'
+import { dashboardApiService } from '../services/api/admin/dashboardApiService'
 import { notifyError } from '../components/ui/toastHelpers'
 import { loadFromStorageWithSchema } from '../services/storageService'
 import { getStorageSchemaRule } from '../models/storageSchemaModel'
@@ -139,11 +139,11 @@ export function Dashboard() {
 
                 const [summaryResponse, categoryResponse, weeklyResponse, adminsResponse, usersResponse] =
                     await Promise.all([
-                        adminApiService.getDashboardSummary(token),
-                        adminApiService.getDashboardReportsByCategory(token),
-                        adminApiService.getDashboardWeeklyTrend(token),
-                        adminApiService.getDashboardRecentAdmins(token, { limit: 5 }),
-                        adminApiService.getDashboardRecentUsers(token, { limit: 5 }),
+                        dashboardApiService.getDashboardSummary(token),
+                        dashboardApiService.getDashboardReportsByCategory(token),
+                        dashboardApiService.getDashboardWeeklyTrend(token),
+                        dashboardApiService.getDashboardRecentAdmins(token, { limit: 5 }),
+                        dashboardApiService.getDashboardRecentUsers(token, { limit: 5 }),
                     ])
 
                 if (isCancelled) {

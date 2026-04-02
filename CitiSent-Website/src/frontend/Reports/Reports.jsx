@@ -3,8 +3,8 @@ import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
 import { canAdminUpdateReport, filterReportsForAdmin } from '../../controllers/reportAccessController'
 import { notifyError } from '../../components/ui/toastHelpers'
-import { adminApiService } from '../../services/adminApiService'
-import { mapBackendReportToUiRow } from '../../services/adminApiMappers'
+import { reportsApiService } from '../../services/api/admin/reportsApiService'
+import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
@@ -36,7 +36,7 @@ export function Reports({
             validate: schemaRule.validate,
           }
         )
-        const response = await adminApiService.listReports(parsedToken, { limit: 100, offset: 0 })
+        const response = await reportsApiService.listReports(parsedToken, { limit: 100, offset: 0 })
 
         if (isCancelled) {
           return

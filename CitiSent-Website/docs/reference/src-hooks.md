@@ -14,7 +14,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 
 - Purpose: Automated test module that validates feature behavior and prevents regressions.
 - Export Surface: No explicit exports (or export detection not applicable).
-- Imports: react, react-dom/client, vitest, ../useAppStateOrchestrator, ../../models/data, ../../models/pageModel, ../../services/authApiService, ../../services/adminApiService
+- Imports: react, react-dom/client, vitest, ../useAppStateOrchestrator, ../../models/data, ../../models/pageModel, ../../services/api/auth/authApiService, ../../services/api/admin/activityLogApiService, ../../services/api/admin/departmentsApiService, ../../services/api/admin/notificationsApiService, ../../services/api/admin/officeAdminsApiService, ../../services/api/admin/transferRequestsApiService
 - Functions Declared: 2
 
 ### Function: schemaValue(payload, schemaVersion = 1)
@@ -41,7 +41,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 
 - Purpose: Automated test module that validates feature behavior and prevents regressions.
 - Export Surface: No explicit exports (or export detection not applicable).
-- Imports: vitest, ../useAuthSession, ../../services/authApiService
+- Imports: vitest, ../useAuthSession, ../../services/api/auth/authApiService
 - Functions Declared: 1
 
 ### Function: buildDependencies()
@@ -51,7 +51,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: No explicit parameters; relies on closure/module context and imported dependencies.
 - Output: Returns a newly constructed/normalized data structure for downstream use.
 - Side Effects: Publishes user-facing toast/notification feedback. Drives navigation or view transition state.
-- Key Dependencies: vitest, ../useAuthSession, ../../services/authApiService
+- Key Dependencies: vitest, ../useAuthSession, ../../services/api/auth/authApiService
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ## File: src/hooks/__tests__/useNotificationsState.test.js
@@ -430,7 +430,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 
 - Purpose: Custom React hook module that encapsulates reusable state and side-effect behavior.
 - Export Surface: Exports: useAuthSession
-- Imports: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Imports: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Functions Declared: 6
 
 ### Function: normalizeLoginIdentifier(payload = {})
@@ -440,7 +440,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: Accepts: payload = {}
 - Output: Returns a newly constructed/normalized data structure for downstream use.
 - Side Effects: Drives navigation or view transition state.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: buildRegistrationUsername(payload = {})
@@ -450,7 +450,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: Accepts: payload = {}
 - Output: Returns a newly constructed/normalized data structure for downstream use.
 - Side Effects: No direct external side effects detected; behavior appears computation/render focused.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: useAuthSession({
@@ -477,7 +477,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
   setAccessToken, setProfile, setAdminAccounts, setTransferRequests, setSelectedReport, setSelectedUserProfile, setPreferences, setActivePage, setIsAuthenticated, setAuthPage, setRememberedEmail, addActivity, notifySuccess, notifyError, }
 - Output: Returns a hook API object/tuple containing current state and callable handlers.
 - Side Effects: Triggers network/API I/O. Publishes user-facing toast/notification feedback. Drives navigation or view transition state.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Exported symbol; intended for use by other modules importing this file.
 
 ### Function: handleRegister(payload)
@@ -487,7 +487,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: Accepts: payload
 - Output: Primarily performs side-effect-driven logic; return value is not a primary integration contract.
 - Side Effects: Triggers network/API I/O. Updates React/application state via setter calls. Publishes user-facing toast/notification feedback.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: handleLogin(payload)
@@ -497,7 +497,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: Accepts: payload
 - Output: Primarily performs side-effect-driven logic; return value is not a primary integration contract.
 - Side Effects: Triggers network/API I/O.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ### Function: handleLogout()
@@ -507,7 +507,7 @@ Scope: files grouped under src-hooks for CitiSent-Website.
 - Inputs: No explicit parameters; relies on closure/module context and imported dependencies.
 - Output: Returns a module-specific value based on current parameters and internal logic.
 - Side Effects: Updates React/application state via setter calls. Publishes user-facing toast/notification feedback. Drives navigation or view transition state.
-- Key Dependencies: ../services/authApiService, ../services/adminApiMappers, ../models/data, ../models/pageModel
+- Key Dependencies: ../services/api/auth/authApiService, ../services/api/admin/accountsApiMappers, ../models/data, ../models/pageModel
 - Usage Scope: Internal helper; intended to be used only within this module.
 
 ## File: src/hooks/useModalAccessibility.js

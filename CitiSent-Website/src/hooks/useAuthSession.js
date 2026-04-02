@@ -1,5 +1,5 @@
-import { authApiService } from '../services/authApiService'
-import { mapBackendProfileToAdminProfile } from '../services/adminApiMappers'
+import { authApiService } from '../services/api/auth/authApiService'
+import { mapBackendProfileToAdminProfile } from '../services/api/admin/accountsApiMappers'
 import {
   buildPostLoginTransition,
   buildPostLogoutTransition,

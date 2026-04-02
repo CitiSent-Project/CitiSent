@@ -906,34 +906,106 @@
         "FunctionCount":  1
     },
     {
-        "File":  "src/services/adminApiMappers.js",
+        "File":  "src/services/api/admin/accountsApiMappers.js",
         "Group":  "src-services",
         "IsCode":  true,
-        "FunctionCount":  7
+        "FunctionCount":  6
     },
     {
-        "File":  "src/services/adminApiService.js",
+        "File":  "src/services/api/admin/activityLogApiMappers.js",
         "Group":  "src-services",
         "IsCode":  true,
-        "FunctionCount":  9
+        "FunctionCount":  1
     },
     {
-        "File":  "src/services/apiClient.js",
-        "Group":  "src-services",
-        "IsCode":  true,
-        "FunctionCount":  8
-    },
-    {
-        "File":  "src/services/apiConfig.js",
+        "File":  "src/services/api/admin/activityLogApiService.js",
         "Group":  "src-services",
         "IsCode":  true,
         "FunctionCount":  2
     },
     {
-        "File":  "src/services/authApiService.js",
+        "File":  "src/services/api/admin/dashboardApiMappers.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  6
+    },
+    {
+        "File":  "src/services/api/admin/dashboardApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  6
+    },
+    {
+        "File":  "src/services/api/admin/departmentsApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  1
+    },
+    {
+        "File":  "src/services/api/admin/notificationsApiMappers.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  1
+    },
+    {
+        "File":  "src/services/api/admin/notificationsApiService.js",
         "Group":  "src-services",
         "IsCode":  true,
         "FunctionCount":  4
+    },
+    {
+        "File":  "src/services/api/admin/officeAdminsApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  2
+    },
+    {
+        "File":  "src/services/api/admin/reportsApiMappers.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  4
+    },
+    {
+        "File":  "src/services/api/admin/reportsApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  3
+    },
+    {
+        "File":  "src/services/api/admin/transferRequestsApiMappers.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  1
+    },
+    {
+        "File":  "src/services/api/admin/transferRequestsApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  4
+    },
+    {
+        "File":  "src/services/api/admin/usersApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  6
+    },
+    {
+        "File":  "src/services/api/auth/authApiService.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  4
+    },
+    {
+        "File":  "src/services/api/core/apiClient.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  8
+    },
+    {
+        "File":  "src/services/api/core/apiConfig.js",
+        "Group":  "src-services",
+        "IsCode":  true,
+        "FunctionCount":  2
     },
     {
         "File":  "src/services/storageService.js",

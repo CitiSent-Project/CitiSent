@@ -1,5 +1,5 @@
 function normalizeUrl(url) {
-  return String(url || "").trim().replace(/\/+$/, '')
+  return String(url || '').trim().replace(/\/+$/, '')
 }
 
 export function resolveApiBaseUrl() {

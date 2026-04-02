@@ -5,8 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStateOrchestrator } from '../useAppStateOrchestrator'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { APP_PAGES } from '../../models/pageModel'
-import { authApiService } from '../../services/authApiService'
-import { adminApiService } from '../../services/adminApiService'
+import { authApiService } from '../../services/api/auth/authApiService'
+import { activityLogApiService } from '../../services/api/admin/activityLogApiService'
+import { departmentsApiService } from '../../services/api/admin/departmentsApiService'
+import { notificationsApiService } from '../../services/api/admin/notificationsApiService'
+import { officeAdminsApiService } from '../../services/api/admin/officeAdminsApiService'
+import { transferRequestsApiService } from '../../services/api/admin/transferRequestsApiService'
 
 vi.mock('../../components/ui/toastHelpers', () => ({
   notifySuccess: vi.fn(),
@@ -25,7 +29,7 @@ vi.mock('../useAuthSession', () => ({
   })),
 }))
 
-vi.mock('../../services/authApiService', () => ({
+vi.mock('../../services/api/auth/authApiService', () => ({
   authApiService: {
     me: vi.fn(),
     login: vi.fn(),
@@ -33,20 +37,45 @@ vi.mock('../../services/authApiService', () => ({
   },
 }))
 
-vi.mock('../../services/adminApiService', () => ({
-  adminApiService: {
+vi.mock('../../services/api/admin/activityLogApiService', () => ({
+  activityLogApiService: {
     getActivityLog: vi.fn(),
     createActivityLogEntry: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/api/admin/departmentsApiService', () => ({
+  departmentsApiService: {
     getDepartments: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/api/admin/notificationsApiService', () => ({
+  notificationsApiService: {
     listNotifications: vi.fn(),
     updateNotificationReadState: vi.fn(),
     clearNotifications: vi.fn(),
-    listTransferRequests: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/api/admin/officeAdminsApiService', () => ({
+  officeAdminsApiService: {
     listOfficeAdmins: vi.fn(),
+    assignOfficeDepartment: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/api/admin/reportsApiService', () => ({
+  reportsApiService: {
+    updateReport: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/api/admin/transferRequestsApiService', () => ({
+  transferRequestsApiService: {
+    listTransferRequests: vi.fn(),
     approveTransferRequest: vi.fn(),
     rejectTransferRequest: vi.fn(),
-    assignOfficeDepartment: vi.fn(),
-    updateReport: vi.fn(),
     createTransferRequest: vi.fn(),
   },
 }))
@@ -172,7 +201,7 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         },
       },
     })
-    adminApiService.listOfficeAdmins.mockResolvedValue({
+    officeAdminsApiService.listOfficeAdmins.mockResolvedValue({
       data: [
         {
           id: 'admin-office-001',
@@ -184,13 +213,13 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         },
       ],
     })
-    adminApiService.getDepartments.mockResolvedValue({
+    departmentsApiService.getDepartments.mockResolvedValue({
       departments: [],
     })
-    adminApiService.getActivityLog.mockResolvedValue({
+    activityLogApiService.getActivityLog.mockResolvedValue({
       data: [],
     })
-    adminApiService.createActivityLogEntry.mockResolvedValue({
+    activityLogApiService.createActivityLogEntry.mockResolvedValue({
       data: {
         id: 'activity-1',
         action: 'Sample action',
@@ -198,10 +227,10 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         createdAt: '2026-03-10T08:30:00.000Z',
       },
     })
-    adminApiService.listNotifications.mockResolvedValue({
+    notificationsApiService.listNotifications.mockResolvedValue({
       data: [],
     })
-    adminApiService.updateNotificationReadState.mockResolvedValue({
+    notificationsApiService.updateNotificationReadState.mockResolvedValue({
       data: {
         id: 'notif-1',
         title: 'Sample notification',
@@ -211,12 +240,12 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         createdAt: '2026-03-10T08:30:00.000Z',
       },
     })
-    adminApiService.clearNotifications.mockResolvedValue({
+    notificationsApiService.clearNotifications.mockResolvedValue({
       data: {
         clearedCount: 0,
       },
     })
-    adminApiService.listTransferRequests.mockResolvedValue({
+    transferRequestsApiService.listTransferRequests.mockResolvedValue({
       data: [
         {
           id: 'transfer-req-001',
@@ -236,7 +265,7 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         },
       ],
     })
-    adminApiService.approveTransferRequest.mockResolvedValue({
+    transferRequestsApiService.approveTransferRequest.mockResolvedValue({
       data: {
         id: 'transfer-req-001',
         adminId: 'admin-office-001',
@@ -254,7 +283,7 @@ describe('useAppStateOrchestrator transfer review integration', () => {
         reviewNotes: 'Approved by superadmin',
       },
     })
-    adminApiService.rejectTransferRequest.mockResolvedValue({
+    transferRequestsApiService.rejectTransferRequest.mockResolvedValue({
       data: {
         id: 'transfer-req-001',
         adminId: 'admin-office-001',
@@ -443,13 +472,13 @@ describe('useAppStateOrchestrator access recovery integration', () => {
         },
       })
 
-    adminApiService.listTransferRequests.mockResolvedValue({ data: [] })
-    adminApiService.getActivityLog.mockResolvedValue({ data: [] })
-    adminApiService.createActivityLogEntry.mockResolvedValue({ data: null })
-  adminApiService.getDepartments.mockResolvedValue({ departments: [] })
-  adminApiService.listNotifications.mockResolvedValue({ data: [] })
-  adminApiService.updateNotificationReadState.mockResolvedValue({ data: null })
-  adminApiService.clearNotifications.mockResolvedValue({ data: { clearedCount: 0 } })
+    transferRequestsApiService.listTransferRequests.mockResolvedValue({ data: [] })
+    activityLogApiService.getActivityLog.mockResolvedValue({ data: [] })
+    activityLogApiService.createActivityLogEntry.mockResolvedValue({ data: null })
+    departmentsApiService.getDepartments.mockResolvedValue({ departments: [] })
+    notificationsApiService.listNotifications.mockResolvedValue({ data: [] })
+    notificationsApiService.updateNotificationReadState.mockResolvedValue({ data: null })
+    notificationsApiService.clearNotifications.mockResolvedValue({ data: { clearedCount: 0 } })
 
     container = document.createElement('div')
     document.body.appendChild(container)

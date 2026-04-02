@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient'
+import { apiClient } from '../core/apiClient'
 
 export const authApiService = {
   register: (payload) => apiClient.post('/auth/register', payload),

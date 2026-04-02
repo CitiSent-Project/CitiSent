@@ -53,11 +53,6 @@ function normalizeSchemaValue({
   }
 }
 
-/**
- * Reads persisted data from a single key that stores an envelope:
- * { schemaVersion: number, payload: any }.
- * Supports legacy unversioned payloads via migration from version 0.
- */
 export function loadFromStorageWithSchema(
   key,
   fallbackValue,

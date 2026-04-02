@@ -1,24 +1,4 @@
-Still Need To Complete Backend:
-
-    ✔ Build admin user-management APIs for the Users page @done (3/28/2026, 2:36:39 AM)
-        ✔ - Needed: list/search/filter users, get user details, @done (3/28/2026, 2:37:24 AM)
-            create user, update user, ban/unban user status.
-        ✔ - Reason: current users backend only supports /me, while @done (3/28/2026, 2:37:25 AM)
-            admin Users UI needs multi-user management.
-    
-    ✔ Build dashboard aggregate endpoints. @done (3/29/2026, 11:05:42 PM)
-         ✔ Needed: total users, reports by status, reports by category, weekly trend, recent admins, recent registered users. @done (3/29/2026, 11:06:04 PM)
-         ✔ Reason: dashboard currently renders static card/chart/table data. @done (3/29/2026, 11:06:05 PM)
-    
-    ✔ Add notifications persistence and APIs. @done (4/1/2026, 3:45:58 PM)
-        ✔ Needed: list notifications per admin, mark read/unread, clear/bulk actions. @done (4/1/2026, 3:46:11 PM)
-        ✔ Reason: notifications are currently seeded and stored locally. @done (4/1/2026, 3:46:12 PM)
-    
-    ✔ Add activity/audit log storage. @done (4/1/2026, 3:56:20 PM)
-        ✔ - Needed: backend audit trail endpoint and DB table so activity survives device/browser reset. @done (4/1/2026, 3:56:20 PM)
-        ✔ - Reason: activity log is currently local state history. @done (4/1/2026, 3:56:20 PM)
-    
-    ✔ Decide department source of truth. @done (4/1/2026, 3:56:20 PM)
-        ✔ - Needed: Option A: keep as backend constant and expose one endpoint for frontend consumption. @done (4/1/2026, 3:56:20 PM)
-                  Option B: move to departments table in DB for full admin configurability.
-        ✔ - Reason: avoid duplicated static department lists across layers. @done (4/1/2026, 3:56:20 PM)
+☐ create a function that will send mobile users (citizens) notifications about the status of their reports (e.g., when a report is received, when it's being processed, and when it's resolved). This function should be integrated with the existing reporting system to ensure timely updates for users.
+☐ develop a user-friendly interface for citizens to view the status of their reports and receive notifications. This interface should be accessible via the mobile app and should provide clear and concise information about the progress of their reports.
+☐ implement a backend system that can handle the notification logic, including determining when to send notifications based on the status of reports and ensuring that notifications are sent in a timely manner.
+☐ test the notification system thoroughly to ensure that it works correctly and that users receive accurate and timely updates about their reports. This should include testing for various scenarios, such as different report statuses and potential edge cases.

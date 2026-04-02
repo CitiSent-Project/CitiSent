@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
-import { adminApiService } from '../../services/adminApiService'
+import { usersApiService } from '../../services/api/admin/usersApiService'
 import {
   mapBackendUserToUiRow,
   mapUiStatusToBackendUserStatus,
-} from '../../services/adminApiMappers'
+} from '../../services/api/admin/accountsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { isSuperadmin, normalizeUserRole } from '../../models/roleAccessModel'
@@ -111,7 +111,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       setIsLoading(true)
 
       try {
-        const response = await adminApiService.listUsers(token, {
+        const response = await usersApiService.listUsers(token, {
           limit: pageSize,
           offset: (pageNumber - 1) * pageSize,
           search: debouncedSearchTerm || undefined,
@@ -145,8 +145,8 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
     try {
       const [activeResponse, bannedResponse] = await Promise.all([
-        adminApiService.listUsers(token, { limit: 1, offset: 0, status: 'active' }),
-        adminApiService.listUsers(token, { limit: 1, offset: 0, status: 'banned' }),
+        usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'active' }),
+        usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'banned' }),
       ])
 
       const activeTotal = Number(activeResponse?.pagination?.total)
@@ -246,7 +246,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     try {
-      const response = await adminApiService.createUser(token, {
+      const response = await usersApiService.createUser(token, {
         fullName: name,
         email,
         address,
@@ -303,7 +303,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     try {
-      const response = await adminApiService.getUserById(token, user.id)
+      const response = await usersApiService.getUserById(token, user.id)
       const detailedUser = mapBackendUserToUiRow(response?.data || {})
       setSelectedUser(detailedUser)
 
@@ -347,7 +347,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     try {
-      const response = await adminApiService.updateUser(token, selectedUser.id, {
+      const response = await usersApiService.updateUser(token, selectedUser.id, {
         fullName: name,
         address,
       })
@@ -386,8 +386,8 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     try {
       const response =
         targetUser.status === 'Banned'
-          ? await adminApiService.unbanUser(token, targetUser.id)
-          : await adminApiService.banUser(token, targetUser.id, {
+          ? await usersApiService.unbanUser(token, targetUser.id)
+          : await usersApiService.banUser(token, targetUser.id, {
               reason: 'Banned by administrator from Users page',
             })
 
@@ -447,7 +447,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
     const operations = await Promise.allSettled(
       selectedUserIds.map((userId) =>
-        adminApiService.banUser(token, userId, {
+        usersApiService.banUser(token, userId, {
           reason: 'Bulk ban from Users page',
         })
       )
@@ -488,7 +488,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     const operations = await Promise.allSettled(
-      selectedUserIds.map((userId) => adminApiService.unbanUser(token, userId))
+      selectedUserIds.map((userId) => usersApiService.unbanUser(token, userId))
     )
 
     const successfulCount = operations.filter((result) => result.status === 'fulfilled').length

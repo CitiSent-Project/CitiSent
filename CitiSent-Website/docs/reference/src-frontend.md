@@ -343,7 +343,7 @@ Scope: files grouped under src-frontend for CitiSent-Website.
 
 - Purpose: Page-level composition module that assembles controllers, hooks, and UI components.
 - Export Surface: Exports: Reports
-- Imports: react, ./ByCategory, ./ByUrgencyLevels, ../../controllers/reportAccessController, ../../components/ui/toastHelpers, ../../services/adminApiService, ../../services/adminApiMappers, ../../services/storageService
+- Imports: react, ./ByCategory, ./ByUrgencyLevels, ../../controllers/reportAccessController, ../../components/ui/toastHelpers, ../../services/api/admin/reportsApiService, ../../services/api/admin/reportsApiMappers, ../../services/storageService
 - Functions Declared: 3
 
 ### Function: Reports({ section = 'category', profile, onViewReport, onUpdateStatus })

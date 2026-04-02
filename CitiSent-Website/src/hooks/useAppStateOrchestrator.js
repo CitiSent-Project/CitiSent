@@ -41,17 +41,24 @@ import { buildPageAccessDecision } from '../controllers/accessControlController'
 import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
 import { canReviewTransferRequest, normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
 import { getStorageSchemaRule } from '../models/storageSchemaModel'
-import { authApiService } from '../services/authApiService'
-import { adminApiService } from '../services/adminApiService'
+import { authApiService } from '../services/api/auth/authApiService'
+import { activityLogApiService } from '../services/api/admin/activityLogApiService'
+import { departmentsApiService } from '../services/api/admin/departmentsApiService'
+import { notificationsApiService } from '../services/api/admin/notificationsApiService'
+import { officeAdminsApiService } from '../services/api/admin/officeAdminsApiService'
+import { reportsApiService } from '../services/api/admin/reportsApiService'
+import { transferRequestsApiService } from '../services/api/admin/transferRequestsApiService'
 import {
-  mapBackendActivityLogEntry,
   mapBackendOfficeAdmin,
-  mapBackendNotification,
   mapBackendProfileToAdminProfile,
+} from '../services/api/admin/accountsApiMappers'
+import { mapBackendActivityLogEntry } from '../services/api/admin/activityLogApiMappers'
+import { mapBackendNotification } from '../services/api/admin/notificationsApiMappers'
+import {
   mapBackendReportToUiRow,
-  mapBackendTransferRequest,
   mapUiStatusToBackendStatus,
-} from '../services/adminApiMappers'
+} from '../services/api/admin/reportsApiMappers'
+import { mapBackendTransferRequest } from '../services/api/admin/transferRequestsApiMappers'
 
 function loadSchemaBackedValue(key, fallbackValue, overrides = {}) {
   const schemaRule = getStorageSchemaRule(key)
@@ -112,7 +119,7 @@ export function useAppStateOrchestrator() {
 
     async function fetchDepartments() {
       try {
-        const response = await adminApiService.getDepartments()
+        const response = await departmentsApiService.getDepartments()
         if (response && Array.isArray(response.departments) && isMounted) {
           setDepartmentOptions(response.departments)
         }
@@ -269,7 +276,7 @@ export function useAppStateOrchestrator() {
       return
     }
 
-    adminApiService
+    activityLogApiService
       .createActivityLogEntry(accessToken, {
         action,
         detail,
@@ -340,15 +347,15 @@ export function useAppStateOrchestrator() {
         }
 
         const [transferResponse, officeAdminsResponse] = await Promise.all([
-          adminApiService.listTransferRequests(accessToken),
+          transferRequestsApiService.listTransferRequests(accessToken),
           normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
-            ? adminApiService.listOfficeAdmins(accessToken)
+            ? officeAdminsApiService.listOfficeAdmins(accessToken)
             : Promise.resolve({ data: [] }),
         ])
 
         let hydratedActivityLog = null
         try {
-          const activityResponse = await adminApiService.getActivityLog(accessToken, {
+          const activityResponse = await activityLogApiService.getActivityLog(accessToken, {
             limit: 200,
             offset: 0,
           })
@@ -371,7 +378,7 @@ export function useAppStateOrchestrator() {
 
         const notificationResponses = await Promise.allSettled(
           notificationAdminIds.map((adminId) =>
-            adminApiService.listNotifications(
+            notificationsApiService.listNotifications(
               accessToken,
               normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
                 ? { adminId, limit: 200, offset: 0 }
@@ -540,7 +547,7 @@ export function useAppStateOrchestrator() {
         throw new Error('Your session has expired. Please sign in again.')
       }
 
-      const response = await adminApiService.updateNotificationReadState(
+      const response = await notificationsApiService.updateNotificationReadState(
         accessToken,
         notificationId,
         {
@@ -560,7 +567,7 @@ export function useAppStateOrchestrator() {
         throw new Error('Your session has expired. Please sign in again.')
       }
 
-      await adminApiService.clearNotifications(accessToken, {
+      await notificationsApiService.clearNotifications(accessToken, {
         clearAll: true,
         ...(normalizeUserRole(profile.role) === USER_ROLES.SUPERADMIN
           ? { adminId: profile.id }
@@ -779,7 +786,7 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await adminApiService.createTransferRequest(accessToken, {
+      const response = await transferRequestsApiService.createTransferRequest(accessToken, {
         requestedDepartmentId,
         requestedDepartmentLabel,
         reason,
@@ -836,7 +843,7 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await adminApiService.assignOfficeDepartment(accessToken, adminId, {
+      const response = await officeAdminsApiService.assignOfficeDepartment(accessToken, adminId, {
         departmentId,
         departmentLabel,
       })
@@ -897,9 +904,13 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await adminApiService.approveTransferRequest(accessToken, requestId, {
+      const response = await transferRequestsApiService.approveTransferRequest(
+        accessToken,
+        requestId,
+        {
         reviewNotes,
-      })
+        }
+      )
       const reviewedRequest = mapBackendTransferRequest(response?.data)
 
       setTransferRequests((previous) =>
@@ -983,9 +994,13 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await adminApiService.rejectTransferRequest(accessToken, requestId, {
+      const response = await transferRequestsApiService.rejectTransferRequest(
+        accessToken,
+        requestId,
+        {
         reviewNotes,
-      })
+        }
+      )
       const reviewedRequest = mapBackendTransferRequest(response?.data)
 
       setTransferRequests((previous) =>
@@ -1051,7 +1066,7 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await adminApiService.updateReport(accessToken, reportId, {
+      const response = await reportsApiService.updateReport(accessToken, reportId, {
         status: mapUiStatusToBackendStatus(newStatus),
       })
       const updatedReport = mapBackendReportToUiRow(response?.data)

@@ -7,7 +7,6 @@ import {
   AuthBrandMark,
   AuthCityFooter,
   AuthInputField,
-  RememberMeToggle,
   authApi,
   isEmptyIdentifier,
   parseLoginIdentifier,
@@ -17,7 +16,6 @@ export default function LoginFormScreen() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -89,7 +87,6 @@ export default function LoginFormScreen() {
         username: parsedIdentifier.username,
         phoneNumber: parsedIdentifier.phoneNumber,
         password,
-        rememberMe,
       });
       router.replace("/(tabs)");
     } catch (error) {
@@ -147,21 +144,15 @@ export default function LoginFormScreen() {
               error={fieldErrors.password}
             />
 
-<View className="mb-6 flex-row items-center justify-end">
-  
-  {/* <RememberMeToggle checked={rememberMe} onToggle={() => setRememberMe((prev) => !prev)} /> */}
-
-
-  <Pressable
-    accessibilityRole="button"
-    accessibilityLabel="Forgot password"
-    onPress={() => router.push("/auth/ForgotPassword")}
-  >
-    <Text className="text-[14px] text-[#8CA8C9]">
-      Forgot your Password?
-    </Text>
-  </Pressable>
-</View>
+            <View className="mb-6 flex-row items-center justify-end">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password"
+                onPress={() => router.push("/auth/ForgotPassword")}
+              >
+                <Text className="text-[14px] text-[#8CA8C9]">Forgot your Password?</Text>
+              </Pressable>
+            </View>
 
             <View>
               <AuthActionButton

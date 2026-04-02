@@ -18,7 +18,7 @@ export default function NotificationsPage() {
 
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setFilterMode("all");
-    resetNotifications();
+    await resetNotifications();
   });
 
   const visibleNotifications = useMemo(() => {
@@ -29,12 +29,20 @@ export default function NotificationsPage() {
     return notifications;
   }, [filterMode, notifications]);
 
-  const handleMarkAllAsRead = () => {
-    markAllNotificationsAsRead();
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+    } catch (error) {
+      console.warn("Failed to mark all notifications as read:", error?.message || error);
+    }
   };
 
-  const handleMarkSingleAsRead = (notificationId) => {
-    markNotificationAsRead(notificationId);
+  const handleMarkSingleAsRead = async (notificationId) => {
+    try {
+      await markNotificationAsRead(notificationId);
+    } catch (error) {
+      console.warn("Failed to mark notification as read:", error?.message || error);
+    }
   };
 
   return (
@@ -81,7 +89,9 @@ export default function NotificationsPage() {
           <NotificationItemCard
             key={item.id}
             item={item}
-            onPress={() => handleMarkSingleAsRead(item.id)}
+            onPress={() => {
+              void handleMarkSingleAsRead(item.id);
+            }}
           />
         ))
       ) : (

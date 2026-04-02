@@ -16,21 +16,45 @@ function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
 
+function resolveTargetUserId({ adminUserId, userId }) {
+  const targetUserId = String(userId || adminUserId || "").trim();
+
+  if (!targetUserId) {
+    throw new AppError("Target user is required", StatusCodes.BAD_REQUEST);
+  }
+
+  return targetUserId;
+}
+
 export const notificationsRepository = {
-  async listNotifications({ accessToken, adminUserId, limit, offset, isRead }) {
+  async listNotifications({
+    accessToken,
+    adminUserId,
+    userId,
+    limit,
+    offset,
+    isRead,
+    reportId,
+  }) {
     const db = getDb(accessToken);
+    const targetUserId = resolveTargetUserId({ adminUserId, userId });
     const normalizedLimit = Number.isFinite(Number(limit)) ? Number(limit) : 50;
     const normalizedOffset = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+    const normalizedReportId = String(reportId || "").trim();
 
     let query = db
       .from(NOTIFICATIONS_TABLE)
       .select("*", { count: "exact" })
-      .eq("user_id", adminUserId)
+      .eq("user_id", targetUserId)
       .order("created_at", { ascending: false })
       .range(normalizedOffset, normalizedOffset + normalizedLimit - 1);
 
     if (typeof isRead === "boolean") {
       query = query.eq("is_read", isRead);
+    }
+
+    if (normalizedReportId) {
+      query = query.eq("report_id", normalizedReportId);
     }
 
     const { data, error, count } = await query;
@@ -48,10 +72,12 @@ export const notificationsRepository = {
   async updateNotificationReadState({
     accessToken,
     adminUserId,
+    userId,
     notificationId,
     isRead,
   }) {
     const db = getDb(accessToken);
+    const targetUserId = resolveTargetUserId({ adminUserId, userId });
 
     const { data, error } = await db
       .from(NOTIFICATIONS_TABLE)
@@ -60,7 +86,7 @@ export const notificationsRepository = {
         read_at: isRead ? new Date().toISOString() : null,
       })
       .eq("id", notificationId)
-      .eq("user_id", adminUserId)
+      .eq("user_id", targetUserId)
       .select("*")
       .maybeSingle();
 
@@ -74,11 +100,13 @@ export const notificationsRepository = {
   async bulkUpdateNotificationReadState({
     accessToken,
     adminUserId,
+    userId,
     notificationIds,
     markAll,
     isRead,
   }) {
     const db = getDb(accessToken);
+    const targetUserId = resolveTargetUserId({ adminUserId, userId });
 
     let query = db
       .from(NOTIFICATIONS_TABLE)
@@ -86,7 +114,7 @@ export const notificationsRepository = {
         is_read: isRead,
         read_at: isRead ? new Date().toISOString() : null,
       })
-      .eq("user_id", adminUserId);
+      .eq("user_id", targetUserId);
 
     if (!markAll) {
       query = query.in("id", notificationIds);
@@ -101,10 +129,17 @@ export const notificationsRepository = {
     return data || [];
   },
 
-  async clearNotifications({ accessToken, adminUserId, notificationIds, clearAll }) {
+  async clearNotifications({
+    accessToken,
+    adminUserId,
+    userId,
+    notificationIds,
+    clearAll,
+  }) {
     const db = getDb(accessToken);
+    const targetUserId = resolveTargetUserId({ adminUserId, userId });
 
-    let query = db.from(NOTIFICATIONS_TABLE).delete().eq("user_id", adminUserId);
+    let query = db.from(NOTIFICATIONS_TABLE).delete().eq("user_id", targetUserId);
 
     if (!clearAll) {
       query = query.in("id", notificationIds);
@@ -117,5 +152,28 @@ export const notificationsRepository = {
     }
 
     return data || [];
+  },
+
+  async createNotification({ accessToken, userId, type, title, message, reportId }) {
+    const db = getDb(accessToken);
+    const targetUserId = resolveTargetUserId({ userId });
+
+    const { data, error } = await db
+      .from(NOTIFICATIONS_TABLE)
+      .insert({
+        user_id: targetUserId,
+        type,
+        title,
+        message,
+        report_id: reportId || null,
+      })
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to create notification", error);
+    }
+
+    return data;
   },
 };

@@ -1,102 +1,26 @@
-import { useState, useRef, useEffect } from "react";
-import {
-  FiMoreVertical,
-  FiEye,
-  FiCheckCircle,
-  FiXCircle,
-  FiClock,
-} from "react-icons/fi";
-import { notifySuccess } from "../ui/toastHelpers";
+import { FiEye } from "react-icons/fi";
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,
   normalizeReportStatus,
 } from "../../models/reportStatusModel";
 
-function ActionMenu({ report, onViewReport, onUpdateStatus, canUpdateReport }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
-
-  async function handleQuickStatus(status) {
-    if (!canUpdateReport) {
-      setOpen(false)
-      return
-    }
-
-    const result = await onUpdateStatus?.(report.id, status)
-    if (result?.ok) {
-      notifySuccess(`Report ${report.id} set to ${status}.`)
-    }
-    setOpen(false);
-  }
-
+function ActionMenu({ report, onViewReport }) {
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors"
+        onClick={() => onViewReport?.(report)}
+        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100"
       >
-        <FiMoreVertical className="text-sm" />
+        <FiEye className="text-sm text-slate-500" />
+        View
       </button>
-
-      {open && (
-        <div className="absolute right-0 top-9 z-30 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-          <button
-            type="button"
-            onClick={() => {
-              onViewReport?.(report);
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            <FiEye className="text-slate-400" /> View Details
-          </button>
-          {canUpdateReport ? (
-            <>
-              <hr className="my-1 border-slate-100" />
-              <button
-                type="button"
-                onClick={() => handleQuickStatus("In Progress")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-slate-100"
-              >
-                <FiClock className="text-blue-400" /> Mark In Progress
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickStatus("Resolved")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-slate-100"
-              >
-                <FiCheckCircle className="text-emerald-400" /> Mark Resolved
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickStatus("Unresolved")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-slate-100"
-              >
-                <FiXCircle className="text-rose-400" /> Mark Unresolved
-              </button>
-            </>
-          ) : (
-            <div className="px-3 py-2 text-xs text-slate-500">
-              Status updates are restricted to your department.
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus, canUpdateReport }) {
+export function UrgencyFeedTable({ rows = [], onViewReport }) {
   if (rows.length === 0) {
     return (
       <div className="px-4 py-10 text-center text-sm text-slate-400">
@@ -116,7 +40,6 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus, canU
             <th className="px-4 py-3">Urgency</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3 hidden lg:table-cell">Date</th>
-            <th className="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -156,8 +79,6 @@ export function UrgencyFeedTable({ rows = [], onViewReport, onUpdateStatus, canU
                   <ActionMenu
                     report={row}
                     onViewReport={onViewReport}
-                    onUpdateStatus={onUpdateStatus}
-                    canUpdateReport={canUpdateReport?.(row)}
                   />
                 </td>
               </tr>

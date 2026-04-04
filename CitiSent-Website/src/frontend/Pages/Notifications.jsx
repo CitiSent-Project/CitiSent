@@ -3,7 +3,7 @@ import {
   NotificationFilterChips,
   NotificationItem,
   NotificationsEmptyState,
-} from '../components/Notifications-Ui'
+} from '../../components/Notifications-Ui'
 
 export function Notifications({ notifications, onToggleRead, onClearAll, onRevealTemporaryPassword }) {
   const [filter, setFilter] = useState('All')

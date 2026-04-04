@@ -1,15 +1,15 @@
 import { useMemo, useRef } from 'react'
-import { getPendingTransferRequests } from '../controllers/departmentTransferController'
-import { getOfficeAdmins } from '../controllers/adminManagementController'
-import { USER_ROLES } from '../models/roleAccessModel'
-import { notifyError } from '../components/ui/toastHelpers'
-import { useModalAccessibility } from '../hooks/useModalAccessibility'
-import { useAdminManagementState } from '../hooks/useAdminManagementState'
+import { getPendingTransferRequests } from '../../controllers/departmentTransferController'
+import { getOfficeAdmins } from '../../controllers/adminManagementController'
+import { USER_ROLES } from '../../models/roleAccessModel'
+import { notifyError } from '../../components/ui/toastHelpers'
+import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useAdminManagementState } from '../../hooks/useAdminManagementState'
 import {
   OfficeAdminAssignmentsSection,
   TransferRequestQueueSection,
   TransferReviewModal,
-} from '../components/AdminManagement-Ui'
+} from '../../components/AdminManagement-Ui'
 
 export function AdminManagement({
   profile,

@@ -6,20 +6,20 @@ import {
     DashboardTableCard,
     PieChart,
     VerticalChart,
-} from '../components/Dashboard-Ui'
-import { ADMIN_STORAGE_KEYS } from '../models/data'
-import { buildDashboardStatCards } from '../controllers/dashboardController'
+} from '../../components/Dashboard-Ui'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
+import { buildDashboardStatCards } from '../../controllers/dashboardController'
 import {
     mapDashboardCategoryBreakdown,
     mapDashboardRecentAdmins,
     mapDashboardRecentUsers,
     mapDashboardSummaryToStatCards,
     mapDashboardWeeklyTrend,
-} from '../services/api/admin/dashboardApiMappers'
-import { dashboardApiService } from '../services/api/admin/dashboardApiService'
-import { notifyError } from '../components/ui/toastHelpers'
-import { loadFromStorageWithSchema } from '../services/storageService'
-import { getStorageSchemaRule } from '../models/storageSchemaModel'
+} from '../../services/api/admin/dashboardApiMappers'
+import { dashboardApiService } from '../../services/api/admin/dashboardApiService'
+import { notifyError } from '../../components/ui/toastHelpers'
+import { loadFromStorageWithSchema } from '../../services/storageService'
+import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
 const MotionDiv = motion.div
 

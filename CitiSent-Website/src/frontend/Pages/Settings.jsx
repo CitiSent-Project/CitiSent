@@ -2,9 +2,9 @@ import { useState } from 'react'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_PREFERENCES,
-} from '../models/data'
-import { usePersistToStorage } from '../hooks/usePersistToStorage'
-import { loadFromStorage } from '../services/storageService'
+} from '../../models/data'
+import { usePersistToStorage } from '../../hooks/usePersistToStorage'
+import { loadFromStorage } from '../../services/storageService'
 import {
   AccountSettingsTab,
   AppearanceSettingsTab,
@@ -12,7 +12,7 @@ import {
   NotificationSettingsTab,
   SecuritySettingsTab,
   SettingsTabNav,
-} from '../components/Settings-Ui'
+} from '../../components/Settings-Ui'
 
 const tabs = ['Account', 'Notifications', 'Appearance', 'Security', 'Transfers']
 

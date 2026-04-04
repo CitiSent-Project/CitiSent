@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AuthInputField, AuthPageShell, AuthPasswordField } from '../components/Auth-Ui'
+import { AuthInputField, AuthPageShell, AuthPasswordField } from '../../components/Auth-Ui'
 
 export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 	const [form, setForm] = useState({

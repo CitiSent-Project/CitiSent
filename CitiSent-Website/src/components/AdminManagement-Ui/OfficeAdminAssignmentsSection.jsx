@@ -101,9 +101,9 @@ export function OfficeAdminAssignmentsSection({
                   <button
                     type="button"
                     onClick={() => onSaveAssignment(admin)}
-                    className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+                    className="rounded-lg bg-blue-700 px-5 py-2 text-md font-semibold text-white hover:bg-blue-600"
                   >
-                    Save assignment
+                    Save
                   </button>
                 </td>
               </tr>

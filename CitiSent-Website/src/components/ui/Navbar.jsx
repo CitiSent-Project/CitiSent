@@ -5,6 +5,7 @@ import {
 	FiUser,
 	FiBarChart,
 	FiUsers,
+	FiShield,
 	FiFileText,
 	FiSettings,
 	FiLogOut,
@@ -21,7 +22,7 @@ const navItems = [
 	{
 		label: 'Admin Management',
 		pageKey: APP_PAGES.ADMIN_MANAGEMENT,
-		icon: FiUsers,
+		icon: FiShield,
 		roles: [USER_ROLES.SUPERADMIN],
 	},
 	{

@@ -157,12 +157,16 @@ export function ByUrgencyLevels({
             Loading reports...
           </div>
         ) : null}
-        <UrgencyFeedTable
-          rows={isLoading ? [] : visibleRows}
-          onViewReport={onViewReport}
-          onUpdateStatus={onUpdateStatus}
-          canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
-        />
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <UrgencyFeedTable
+            rows={isLoading ? [] : visibleRows}
+            onViewReport={onViewReport}
+            onUpdateStatus={onUpdateStatus}
+            canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
+          />
+        </div>
+
         <Pagination
           currentPage={safeCurrentPage}
           totalPages={totalPages}

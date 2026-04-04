@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
-import { AuthInputField, AuthPageShell, AuthPasswordField } from '../components/Auth-Ui'
+import { useMemo, useState } from 'react'
+import { AuthInputField, AuthPageShell, AuthPasswordField } from '../../components/Auth-Ui'
 
 export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions }) {
-	const availableDepartments = Array.isArray(departmentOptions) ? departmentOptions : []
+	const availableDepartments = useMemo(
+		() => (Array.isArray(departmentOptions) ? departmentOptions : []),
+		[departmentOptions],
+	)
 
 	const initialForm = {
 		fullName: '',
@@ -19,22 +22,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
 	const [submitting, setSubmitting] = useState(false)
 
-	useEffect(() => {
-		if (availableDepartments.length === 0) {
-			return
-		}
-
-		setForm((previous) => {
-			if (previous.departmentId) {
-				return previous
-			}
-
-			return {
-				...previous,
-				departmentId: availableDepartments[0].id,
-			}
-		})
-	}, [availableDepartments])
+	const resolvedDepartmentId = form.departmentId || availableDepartments[0]?.id || ''
 
 	function updateField(field, value) {
 		setForm((previous) => ({ ...previous, [field]: value }))
@@ -45,7 +33,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			return 'No departments are available yet. Please try again in a moment.'
 		}
 
-		if (!form.fullName.trim() || !form.email.trim() || !form.departmentId.trim() || !form.password) {
+		if (!form.fullName.trim() || !form.email.trim() || !resolvedDepartmentId.trim() || !form.password) {
 			return 'Please complete all required fields.'
 		}
 
@@ -70,13 +58,13 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 		}
 
 		const selectedDepartment =
-			availableDepartments.find((department) => department.id === form.departmentId) || null
+			availableDepartments.find((department) => department.id === resolvedDepartmentId) || null
 
 		setSubmitting(true)
 		const result = await onRegister({
 			fullName: form.fullName.trim(),
 			email: form.email.trim().toLowerCase(),
-			departmentId: form.departmentId,
+			departmentId: resolvedDepartmentId,
 			departmentLabel: selectedDepartment?.label || '',
 			role: form.role,
 			phone: form.phone.trim(),
@@ -94,6 +82,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 
 	return (
 		<AuthPageShell
+			layout="split"
 			variant="admin-login"
 			title="Create Admin Account"
 			subtitle="Set up your account to access the CitiSent admin workspace."
@@ -111,7 +100,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 				</p>
 			}
 		>
-			<form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+			<form className="grid gap-4 md:grid-cols-2 md:gap-x-5 md:gap-y-4" onSubmit={handleSubmit}>
 				<AuthInputField
 					id="register-name"
 					label="Full Name"
@@ -131,30 +120,20 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					variant="admin-login"
 				/>
 
-				<AuthInputField
-					id="register-department"
-					label="Department"
-					value={availableDepartments.find((department) => department.id === form.departmentId)?.label || ''}
-					onChange={() => {}}
-					placeholder=""
-					variant="admin-login"
-					disabled
-				/>
-
 				<div>
 					<label htmlFor="register-department-select" className="mb-1 block text-sm font-medium text-white/95">
 						Assigned Department
 					</label>
 					<select
 						id="register-department-select"
-						value={form.departmentId}
+						value={resolvedDepartmentId}
 						onChange={(event) => updateField('departmentId', event.target.value)}
-							disabled={availableDepartments.length === 0}
+						disabled={availableDepartments.length === 0}
 						className="w-full rounded-xl border border-white/50 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-white focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
 					>
-							{availableDepartments.length === 0 ? (
-								<option value="">No departments available</option>
-							) : null}
+						{availableDepartments.length === 0 ? (
+							<option value="">No departments available</option>
+						) : null}
 						{availableDepartments.map((department) => (
 							<option key={department.id} value={department.id}>
 								{department.label}
@@ -229,8 +208,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 
 					<button
 						type="submit"
-							disabled={submitting || availableDepartments.length === 0}
-							className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-base font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:opacity-70"
+						disabled={submitting || availableDepartments.length === 0}
+						className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-base font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:opacity-70"
 					>
 						{submitting ? 'Registering...' : 'Register Admin'}
 					</button>

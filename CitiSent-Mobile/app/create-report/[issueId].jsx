@@ -1,6 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, Text, View } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AttachmentSection,
@@ -9,7 +15,13 @@ import {
   SubmitReportButton,
   getCreateReportIssueById,
 } from "../../modules/createReport";
-import { PageTopBar, RefreshableScrollView, Colors, usePullToRefresh, api } from "../../modules/shared";
+import {
+  PageTopBar,
+  RefreshableScrollView,
+  Colors,
+  usePullToRefresh,
+  api,
+} from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
 
 export default function CreateReportIssueDetailScreen() {
@@ -22,6 +34,7 @@ export default function CreateReportIssueDetailScreen() {
 
   const [issueLocation, setIssueLocation] = useState("");
   const [report, setReport] = useState("");
+  const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh();
   const scrollViewRef = useRef(null);
@@ -29,7 +42,8 @@ export default function CreateReportIssueDetailScreen() {
   const reportContentHeightRef = useRef(0);
 
   // Enforce backend validation: location min 1, description min 10, issueType min 1
-  const canSubmit = issueLocation.trim().length > 0 && report.trim().length >= 10;
+  const canSubmit =
+    issueLocation.trim().length > 0 && report.trim().length >= 10;
 
   function handleInputLayout(field, y) {
     inputPositionsRef.current[field] = y;
@@ -64,15 +78,20 @@ export default function CreateReportIssueDetailScreen() {
       return;
     }
     if (report.trim().length < 10) {
-      Alert.alert("Description too short", "Please provide a more detailed report (at least 10 characters).");
+      Alert.alert(
+        "Description too short",
+        "Please provide a more detailed report (at least 10 characters).",
+      );
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Only send attachmentUrl if valid (not used in current UI, but placeholder for future)
       let attachmentUrl;
-      // If you add attachment support, validate URL here
+
+      if (imageUri) {
+        attachmentUrl = await reportsApi.uploadImage(imageUri);
+      }
 
       await reportsApi.createReport({
         issueType: issue.label,
@@ -81,28 +100,46 @@ export default function CreateReportIssueDetailScreen() {
         ...(attachmentUrl ? { attachmentUrl } : {}),
       });
       setIsSubmitting(false);
-      Alert.alert("Report submitted", "Your report has been submitted successfully.", [
-        {
-          text: "OK",
-          onPress: () => {
-            setIssueLocation("");
-            setReport("");
-            router.back();
+      Alert.alert(
+        "Report submitted",
+        "Your report has been submitted successfully.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setIssueLocation("");
+              setReport("");
+              setImageUri(null);
+              router.back();
+            },
           },
-        },
-      ]);
+        ],
+      );
     } catch (error) {
       setIsSubmitting(false);
-      Alert.alert("Submission failed", error?.message || "Unable to submit report. Please try again.");
+      Alert.alert(
+        "Submission failed",
+        error?.message || "Unable to submit report. Please try again.",
+      );
     }
   }
 
   if (!issue) {
     return (
-      <View className="flex-1 items-center justify-center px-5" style={{ backgroundColor: Colors.screen.tabs }}>
-        <Text className="mb-2 text-lg font-semibold text-[#111827]">Issue not found</Text>
-        <Text className="text-center text-sm text-[#6B7280]">Please go back and select an issue again.</Text>
-        <Text className="mt-4 text-sm font-semibold text-[#223D68]" onPress={() => router.back()}>
+      <View
+        className="flex-1 items-center justify-center px-5"
+        style={{ backgroundColor: Colors.screen.tabs }}
+      >
+        <Text className="mb-2 text-lg font-semibold text-[#111827]">
+          Issue not found
+        </Text>
+        <Text className="text-center text-sm text-[#6B7280]">
+          Please go back and select an issue again.
+        </Text>
+        <Text
+          className="mt-4 text-sm font-semibold text-[#223D68]"
+          onPress={() => router.back()}
+        >
           Go Back
         </Text>
       </View>
@@ -135,7 +172,7 @@ export default function CreateReportIssueDetailScreen() {
             flexGrow: 1,
           }}
         >
-          <AttachmentSection />
+          <AttachmentSection imageUri={imageUri} onImageSelect={setImageUri} />
 
           <IssueReportForm
             requestType={issue.label}
@@ -148,7 +185,11 @@ export default function CreateReportIssueDetailScreen() {
             onReportSizeChange={handleReportSizeChange}
           />
 
-          <SubmitReportButton onPress={handleSubmitReport} disabled={!canSubmit} loading={isSubmitting} />
+          <SubmitReportButton
+            onPress={handleSubmitReport}
+            disabled={!canSubmit}
+            loading={isSubmitting}
+          />
         </RefreshableScrollView>
       </KeyboardAvoidingView>
     </View>

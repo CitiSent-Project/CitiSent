@@ -30,12 +30,18 @@ export default function LoginFormScreen() {
       password: "",
     };
 
-    if (isEmptyIdentifier(identifier)) {
+    const trimmedIdentifier = identifier.trim();
+
+    if (isEmptyIdentifier(trimmedIdentifier)) {
       nextErrors.identifier = "Username or phone number is required.";
+    } else if (trimmedIdentifier.length < 3) {
+      nextErrors.identifier = "Username or phone number must be at least 3 characters.";
     }
 
     if (!password) {
       nextErrors.password = "Password is required.";
+    } else if (password.length < 6) {
+      nextErrors.password = "Password must be at least 6 characters.";
     }
 
     setFieldErrors(nextErrors);
@@ -72,7 +78,7 @@ export default function LoginFormScreen() {
     const { isValid } = validateFields();
 
     if (!isValid) {
-      setErrorMessage("Please enter your username/phone number and password.");
+      setErrorMessage("Please check your inputs and resolve the errors.");
       return;
     }
 
@@ -80,7 +86,7 @@ export default function LoginFormScreen() {
     setIsSubmitting(true);
 
     try {
-      const parsedIdentifier = parseLoginIdentifier(identifier);
+      const parsedIdentifier = parseLoginIdentifier(identifier.trim());
 
       await authApi.login({
         identifier: parsedIdentifier.raw,
@@ -90,7 +96,15 @@ export default function LoginFormScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
-      setErrorMessage(error?.message || "Unable to login right now. Please try again.");
+      if (error?.response?.status === 401 || error?.response?.status === 403 || error?.message?.toLowerCase().includes("invalid")) {
+        setErrorMessage("Invalid username, phone number, or password.");
+      } else if (error?.response?.status === 429) {
+        setErrorMessage("Too many login attempts. Please try again later.");
+      } else if (error?.message?.includes("network") || error?.message?.includes("Network")) {
+        setErrorMessage("Network error. Please check your connection and try again.");
+      } else {
+        setErrorMessage(error?.response?.data?.message || error?.message || "Unable to login right now. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

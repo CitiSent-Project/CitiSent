@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useState } from "react";
 import { EditProfileTextField, ProfileSubpageLayout } from "../../modules/profile";
@@ -90,46 +89,6 @@ export default function EditProfilePage() {
         className="mb-4 rounded-2xl border px-4 py-4"
         style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}
       >
-        <Text className="text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>
-          Profile Photo
-        </Text>
-
-        <View className="items-center pb-2 pt-4">
-          <Pressable
-            onPress={() => Alert.alert("Coming soon", "Photo upload will be available in a future update.")}
-            accessibilityRole="button"
-            accessibilityLabel="Change profile photo"
-            className="h-[84px] w-[84px] items-center justify-center rounded-full"
-            style={{
-              backgroundColor: Colors.ui.profileAvatarSoft,
-              borderWidth: 1,
-              borderColor: Colors.ui.headerDark,
-            }}
-          >
-            <Ionicons name="person" size={44} color={Colors.text.secondary} />
-
-            <View
-              className="absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: Colors.primary,
-                borderWidth: 1,
-                borderColor: Colors.surface,
-              }}
-            >
-              <Ionicons name="create-outline" size={14} color={Colors.text.inverse} />
-            </View>
-          </Pressable>
-
-          <Text className="mt-3 text-xs" style={{ color: Colors.text.secondary }}>
-            Tap photo to update
-          </Text>
-        </View>
-      </View>
-
-      <View
-        className="mb-4 rounded-2xl border px-4 py-4"
-        style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}
-      >
         <Text className="mb-3 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>
           Personal Information
         </Text>
@@ -138,7 +97,7 @@ export default function EditProfilePage() {
           label="Full Name"
           value={profileDraft.fullName}
           onChangeText={setField("fullName")}
-          placeholder="Enter your full name"
+          placeholder="e.g., Juan Dela Cruz"
           autoComplete="name"
           textContentType="name"
         />
@@ -147,7 +106,7 @@ export default function EditProfilePage() {
           label="Username"
           value={profileDraft.username}
           onChangeText={setField("username")}
-          placeholder="Enter your username"
+          placeholder="e.g., juandelacruz"
           autoCapitalize="none"
           autoComplete="username"
           textContentType="username"
@@ -158,7 +117,7 @@ export default function EditProfilePage() {
           label="Email"
           value={profileDraft.email}
           onChangeText={setField("email")}
-          placeholder="Enter your email"
+          placeholder="e.g., juandelacruz@email.com"
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
@@ -169,29 +128,18 @@ export default function EditProfilePage() {
           label="Phone Number"
           value={profileDraft.phoneNumber}
           onChangeText={(value) => setField("phoneNumber")(value.replace(/\D/g, ""))}
-          placeholder="Enter your phone number"
+          placeholder="e.g., 09123456789"
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
           maxLength={15}
         />
 
-        {/* <EditProfileTextField
-          label="Age"
-          value={profileDraft.age}
-            onChangeText={(value) => setField("age")(value.replace(/\D/g, ""))}
-            placeholder="Enter your age"
-            keyboardType="number-pad"
-            autoComplete="off"
-            textContentType="none"
-            maxLength={3}
-        /> */}
-
         <EditProfileTextField
           label="Address"
           value={profileDraft.address}
           onChangeText={setField("address")}
-          placeholder="Enter your address"
+          placeholder="e.g., Sto. Tomas, Batangas"
           autoComplete="street-address"
           textContentType="fullStreetAddress"
         />

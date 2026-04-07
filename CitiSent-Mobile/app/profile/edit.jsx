@@ -157,11 +157,26 @@ export default function EditProfilePage() {
 
     setIsSaving(true);
 
-    setTimeout(() => {
-      setSavedProfile(profileDraft);
-      setIsSaving(false);
+    try {
+      const response = await api.patch("/users/me", profileDraft);
+      const updatedUser = unwrapCurrentUserPayload(response);
+      
+      if (updatedUser) {
+        setAuthUser(updatedUser, {
+          fallbackUsername: updatedUser.username,
+          fallbackPhoneNumber: updatedUser.phoneNumber,
+        });
+        syncProfileState(updatedUser);
+      }
+      
       Alert.alert("Profile updated", "Your profile details were saved successfully.");
-    }, 350);
+    } catch (err) {
+      console.error("Save profile error:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || Object.values(err?.response?.data?.errors || {}).join(", ") || "Failed to update profile. Please try again.";
+      Alert.alert("Update Failed", errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -239,6 +254,17 @@ export default function EditProfilePage() {
           placeholder="e.g., Sto. Tomas, Batangas"
           autoComplete="street-address"
           textContentType="fullStreetAddress"
+        />
+
+        <EditProfileTextField
+          label="Bio"
+          value={profileDraft.bio}
+          onChangeText={setField("bio")}
+          placeholder="Tell us about yourself"
+          autoComplete="off"
+          textContentType="none"
+          multiline={true}
+          numberOfLines={4}
         />
       </View>
 

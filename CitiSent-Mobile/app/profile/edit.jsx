@@ -44,7 +44,6 @@ function buildInitialProfile(sourceUser = getAuthUser()) {
       asText(profile.address) ||
       asText(metadata.address) ||
       asText(metadata.location),
-    bio: asText(authUser.bio) || asText(profile.bio) || asText(metadata.bio),
     age: asDigits(authUser.age || profile.age || metadata.age),
   };
 }
@@ -254,17 +253,6 @@ export default function EditProfilePage() {
           placeholder="e.g., Sto. Tomas, Batangas"
           autoComplete="street-address"
           textContentType="fullStreetAddress"
-        />
-
-        <EditProfileTextField
-          label="Bio"
-          value={profileDraft.bio}
-          onChangeText={setField("bio")}
-          placeholder="Tell us about yourself"
-          autoComplete="off"
-          textContentType="none"
-          multiline={true}
-          numberOfLines={4}
         />
       </View>
 

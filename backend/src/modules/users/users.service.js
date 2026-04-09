@@ -44,7 +44,6 @@ export const usersService = {
         : {}),
       ...(payload.email !== undefined ? { email: payload.email } : {}),
       ...(payload.address !== undefined ? { address: payload.address } : {}),
-      ...(payload.bio !== undefined ? { bio: payload.bio } : {}),
     };
 
     const profile = await usersRepository.upsertProfileByUserId(

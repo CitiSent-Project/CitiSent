@@ -37,7 +37,6 @@ export const updateCurrentUserSchema = z.object({
       fullName: z.string().trim().min(1).max(255).optional(),
       email: z.string().trim().email().optional(),
       address: z.string().trim().optional(),
-      bio: z.string().trim().optional(),
     })
     .superRefine((payload, ctx) => {
       if (Object.keys(payload).length === 0) {

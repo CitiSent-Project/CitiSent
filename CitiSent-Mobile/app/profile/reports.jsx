@@ -1,10 +1,11 @@
 
 import { useMemo, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
+import FeedbackModal from "../../components/ui/FeedbackModal";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -21,6 +22,9 @@ export default function ReportsMadePage() {
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
+  
+  // Feedback modal state
+  const [feedback, setFeedback] = useState({ visible: false, type: "info", title: "", message: "" });
 
   // Use the custom hook to fetch user's reports
   const { reports, reloadMyReports, isInitialLoading } = useMyReports();
@@ -58,8 +62,20 @@ export default function ReportsMadePage() {
       await reportsApi.updateReport(editingReportId, updatedData);
       setEditingReportId(null);
       await reloadMyReports();
+      
+      setFeedback({
+        visible: true,
+        type: "success",
+        title: "Success!",
+        message: "Your report has been successfully updated.",
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to save the report. Please try again.");
+      setFeedback({
+        visible: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to save the report. Please try again.",
+      });
       throw error;
     }
   };
@@ -135,6 +151,14 @@ export default function ReportsMadePage() {
         report={editingReport}
         onClose={() => setEditingReportId(null)}
         onSave={handleSaveReport}
+      />
+
+      <FeedbackModal
+        visible={feedback.visible}
+        type={feedback.type}
+        title={feedback.title}
+        message={feedback.message}
+        onClose={() => setFeedback({ ...feedback, visible: false })}
       />
     </ProfileSubpageLayout>
   );

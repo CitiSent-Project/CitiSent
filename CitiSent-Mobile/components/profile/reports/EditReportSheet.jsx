@@ -22,12 +22,26 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
   }, [report]);
 
   const canSave = useMemo(() => {
-    return issueType.trim().length > 0 && location.trim().length > 0 && description.trim().length > 0;
-  }, [description, issueType, location]);
+    if (!report) return false;
+
+    const hasChanges =
+      issueType.trim() !== (report.issueType || "").trim() ||
+      location.trim() !== (report.location || "").trim() ||
+      description.trim() !== (report.description || "").trim();
+
+    const isFilled = issueType.trim().length > 0 && location.trim().length > 0 && description.trim().length > 0;
+
+    return isFilled && hasChanges;
+  }, [description, issueType, location, report]);
 
   const handleSave = async () => {
     if (!canSave || isSaving) {
-      if (!canSave && !isSaving) setErrorMessage("Please fill in issue type, location, and description.");
+      const isFilled = issueType.trim().length > 0 && location.trim().length > 0 && description.trim().length > 0;
+      if (!isFilled && !isSaving) {
+        setErrorMessage("Please fill in issue type, location, and description.");
+      } else if (!isSaving) {
+        setErrorMessage("No changes made to the report.");
+      }
       return;
     }
 
@@ -99,7 +113,7 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
 
           <Pressable
             onPress={handleSave}
-            disabled={isSaving}
+            disabled={!canSave || isSaving}
             className="mt-4 flex-row items-center justify-center gap-2 rounded-xl px-4 py-3"
             style={{ backgroundColor: canSave && !isSaving ? Colors.primaryStrong : Colors.primarySoft }}
           >

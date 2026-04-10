@@ -1,9 +1,10 @@
 
 import { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
+import { reportsApi } from "../../services/reports";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -49,10 +50,18 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // When saving, just close the edit modal (data will be refreshed on next reload)
-  const handleSaveReport = () => {
-    setEditingReportId(null);
-    reloadMyReports();
+  // When saving, close the edit modal and perform api call
+  const handleSaveReport = async (updatedData) => {
+    if (!editingReportId) return;
+
+    try {
+      await reportsApi.updateReport(editingReportId, updatedData);
+      setEditingReportId(null);
+      await reloadMyReports();
+    } catch (error) {
+      Alert.alert("Error", "Failed to save the report. Please try again.");
+      throw error;
+    }
   };
 
   return (

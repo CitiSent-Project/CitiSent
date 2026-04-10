@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Colors } from "../../../modules/shared";
 
 export default function EditReportSheet({ visible, report, onClose, onSave }) {
@@ -7,6 +7,7 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!report) {
@@ -17,23 +18,32 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
     setLocation(report.location || "");
     setDescription(report.description || "");
     setErrorMessage("");
+    setIsSaving(false);
   }, [report]);
 
   const canSave = useMemo(() => {
     return issueType.trim().length > 0 && location.trim().length > 0 && description.trim().length > 0;
   }, [description, issueType, location]);
 
-  const handleSave = () => {
-    if (!canSave) {
-      setErrorMessage("Please fill in issue type, location, and description.");
+  const handleSave = async () => {
+    if (!canSave || isSaving) {
+      if (!canSave && !isSaving) setErrorMessage("Please fill in issue type, location, and description.");
       return;
     }
 
-    onSave?.({
-      issueType: issueType.trim(),
-      location: location.trim(),
-      description: description.trim(),
-    });
+    setIsSaving(true);
+    setErrorMessage("");
+    try {
+      await onSave?.({
+        issueType: issueType.trim(),
+        location: location.trim(),
+        description: description.trim(),
+      });
+    } catch (e) {
+      setErrorMessage("Failed to save changes. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -89,10 +99,14 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
 
           <Pressable
             onPress={handleSave}
-            className="mt-4 rounded-xl px-4 py-3"
-            style={{ backgroundColor: canSave ? Colors.primaryStrong : Colors.primarySoft }}
+            disabled={isSaving}
+            className="mt-4 flex-row items-center justify-center gap-2 rounded-xl px-4 py-3"
+            style={{ backgroundColor: canSave && !isSaving ? Colors.primaryStrong : Colors.primarySoft }}
           >
-            <Text className="text-center text-sm font-bold text-white">Save Changes</Text>
+            {isSaving && <ActivityIndicator color="#fff" size="small" />}
+            <Text className="text-center text-sm font-bold text-white">
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Text>
           </Pressable>
         </View>
       </View>

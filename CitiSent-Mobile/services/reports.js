@@ -188,6 +188,16 @@ export const reportsApi = {
     if (!reportId) throw new Error("Missing report ID");
     return api.delete(`/reports/${reportId}`);
   },
+  updateReport: async (reportId, { issueType, location, description }) => {
+    if (!reportId) throw new Error("Missing report ID");
+
+    const payload = {};
+    if (issueType) payload.issueType = issueType;
+    if (location) payload.location = location;
+    if (description) payload.description = description;
+
+    return api.patch(`/reports/${reportId}`, payload);
+  },
   createReport: async ({
     issueType,
     location,

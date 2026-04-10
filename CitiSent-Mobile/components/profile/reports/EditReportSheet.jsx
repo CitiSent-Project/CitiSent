@@ -38,7 +38,7 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
     if (!canSave || isSaving) {
       const isFilled = issueType.trim().length > 0 && location.trim().length > 0 && description.trim().length > 0;
       if (!isFilled && !isSaving) {
-        setErrorMessage("Please fill in issue type, location, and description.");
+        setErrorMessage("Please fill in location, and description.");
       } else if (!isSaving) {
         setErrorMessage("No changes made to the report.");
       }
@@ -76,15 +76,6 @@ export default function EditReportSheet({ visible, report, onClose, onSave }) {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Issue Type</Text>
-            <TextInput
-              value={issueType}
-              onChangeText={setIssueType}
-              placeholder="Issue type"
-              className="mb-3 rounded-xl border bg-white px-3 py-3 text-sm"
-              style={{ borderColor: Colors.borderMuted, color: Colors.text.heading }}
-              placeholderTextColor={Colors.icon.muted}
-            />
 
             <Text className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Location</Text>
             <TextInput

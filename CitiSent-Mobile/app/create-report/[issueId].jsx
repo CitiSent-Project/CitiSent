@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import FeedbackModal from "../../components/ui/FeedbackModal";
 import {
   AttachmentSection,
   BreadcrumbsNav,
@@ -36,6 +36,13 @@ export default function CreateReportIssueDetailScreen() {
   const [report, setReport] = useState("");
   const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    type: "info",
+    title: "",
+    message: "",
+    onCloseAction: null,
+  });
   const { refreshing, onRefresh } = usePullToRefresh();
   const scrollViewRef = useRef(null);
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
@@ -44,6 +51,18 @@ export default function CreateReportIssueDetailScreen() {
   // Enforce backend validation: location min 1, description min 10, issueType min 1
   const canSubmit =
     issueLocation.trim().length > 0 && report.trim().length >= 10;
+
+  function showModal(type, title, message, onCloseAction = null) {
+    setModalConfig({ visible: true, type, title, message, onCloseAction });
+  }
+
+  function closeModal() {
+    const action = modalConfig.onCloseAction;
+    setModalConfig((prev) => ({ ...prev, visible: false }));
+    if (action) {
+      action();
+    }
+  }
 
   function handleInputLayout(field, y) {
     inputPositionsRef.current[field] = y;
@@ -74,13 +93,14 @@ export default function CreateReportIssueDetailScreen() {
 
   async function handleSubmitReport() {
     if (issueLocation.trim().length === 0) {
-      Alert.alert("Missing details", "Please provide the issue location.");
+      showModal("error", "Missing details", "Please provide the issue location.");
       return;
     }
     if (report.trim().length < 10) {
-      Alert.alert(
+      showModal(
+        "error",
         "Description too short",
-        "Please provide a more detailed report (at least 10 characters).",
+        "Please provide a more detailed report (at least 10 characters)."
       );
       return;
     }
@@ -100,26 +120,23 @@ export default function CreateReportIssueDetailScreen() {
         ...(attachmentUrl ? { attachmentUrl } : {}),
       });
       setIsSubmitting(false);
-      Alert.alert(
+      showModal(
+        "success",
         "Report submitted",
         "Your report has been submitted successfully.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setIssueLocation("");
-              setReport("");
-              setImageUri(null);
-              router.back();
-            },
-          },
-        ],
+        () => {
+          setIssueLocation("");
+          setReport("");
+          setImageUri(null);
+          router.back();
+        }
       );
     } catch (error) {
       setIsSubmitting(false);
-      Alert.alert(
+      showModal(
+        "error",
         "Submission failed",
-        error?.message || "Unable to submit report. Please try again.",
+        error?.message || "Unable to submit report. Please try again."
       );
     }
   }
@@ -192,6 +209,14 @@ export default function CreateReportIssueDetailScreen() {
           />
         </RefreshableScrollView>
       </KeyboardAvoidingView>
+
+      <FeedbackModal
+        visible={modalConfig.visible}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={closeModal}
+      />
     </View>
   );
 }

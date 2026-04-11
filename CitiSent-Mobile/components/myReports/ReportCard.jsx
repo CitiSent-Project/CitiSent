@@ -6,9 +6,6 @@ export default function ReportCard({ report, containerClassName = "mb-4" }) {
   return (
     <View className={`${containerClassName} rounded-2xl border bg-white px-3 py-3 shadow-sm`} style={{ borderColor: Colors.borderCard }}>
       <View className="flex-row items-start">
-        <View className="mr-2 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: Colors.ui.grayAvatar }}>
-          <Ionicons name="person" size={21} color={Colors.icon.light} />
-        </View>
 
         <View className="flex-1">
           <View className="flex-row items-center justify-between">

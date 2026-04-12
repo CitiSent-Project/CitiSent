@@ -11,7 +11,8 @@ export const validateLoginFields = (identifier, password) => {
   if (isEmptyIdentifier(trimmedIdentifier)) {
     errors.identifier = "Username or phone number is required.";
   } else if (trimmedIdentifier.length < 3) {
-    errors.identifier = "Username or phone number must be at least 3 characters.";
+    errors.identifier =
+      "Username or phone number must be at least 3 characters.";
   }
 
   if (!password) {
@@ -41,18 +42,22 @@ export const getLoginErrorMessage = (error) => {
   ) {
     return "Incorrect username, phone number, or password. Please try again.";
   }
-  
+
   if (error?.response?.status === 429) {
     return "Too many login attempts. Please try again later.";
   }
-  
+
   if (
     error?.message?.toLowerCase().includes("network") ||
-    error?.code === "ECONNABORTED" || 
+    error?.code === "ECONNABORTED" ||
     (!error?.response && error?.request)
   ) {
     return "Network error. Please check your internet connection and try again.";
   }
-  
-  return apiMessage || error?.message || "Unable to login right now. Please try again.";
+
+  return (
+    apiMessage ||
+    error?.message ||
+    "Unable to login right now. Please try again."
+  );
 };

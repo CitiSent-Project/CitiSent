@@ -8,9 +8,9 @@ import {
   AuthCityFooter,
   AuthInputField,
   authApi,
-  isEmptyIdentifier,
   parseLoginIdentifier,
 } from "../../modules/auth";
+import { validateLoginFields, getLoginErrorMessage } from "../../utils/authValidation";
 
 export default function LoginFormScreen() {
   const router = useRouter();
@@ -25,29 +25,9 @@ export default function LoginFormScreen() {
   });
 
   const validateFields = () => {
-    const nextErrors = {
-      identifier: "",
-      password: "",
-    };
-
-    const trimmedIdentifier = identifier.trim();
-
-    if (isEmptyIdentifier(trimmedIdentifier)) {
-      nextErrors.identifier = "Username or phone number is required.";
-    } else if (trimmedIdentifier.length < 3) {
-      nextErrors.identifier = "Username or phone number must be at least 3 characters.";
-    }
-
-    if (!password) {
-      nextErrors.password = "Password is required.";
-    } else if (password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters.";
-    }
-
-    setFieldErrors(nextErrors);
-    return {
-      isValid: !nextErrors.identifier && !nextErrors.password,
-    };
+    const { errors, isValid } = validateLoginFields(identifier, password);
+    setFieldErrors(errors);
+    return { isValid };
   };
 
   const handleIdentifierChange = (value) => {
@@ -96,15 +76,7 @@ export default function LoginFormScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
-      if (error?.response?.status === 401 || error?.response?.status === 403 || error?.message?.toLowerCase().includes("invalid")) {
-        setErrorMessage("Invalid username, phone number, or password.");
-      } else if (error?.response?.status === 429) {
-        setErrorMessage("Too many login attempts. Please try again later.");
-      } else if (error?.message?.includes("network") || error?.message?.includes("Network")) {
-        setErrorMessage("Network error. Please check your connection and try again.");
-      } else {
-        setErrorMessage(error?.response?.data?.message || error?.message || "Unable to login right now. Please try again.");
-      }
+      setErrorMessage(getLoginErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -8,9 +8,11 @@ import {
   AuthChoiceField,
   AuthCityFooter,
   AuthInputField,
+  AuthSelectField,
   authApi,
 } from "../../modules/auth";
 import { RefreshableScrollView, usePullToRefresh } from "../../modules/shared";
+import { fetchStoTomasBatangasBarangays } from "../../services/locationData";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -23,6 +25,10 @@ const CLIENT_TYPE_OPTIONS = [
   { label: "Citizen", value: "citizen" },
 ];
 
+const FIXED_CITY = "Sto. Tomas";
+const FIXED_PROVINCE = "Batangas";
+const FIXED_COUNTRY = "Philippines";
+
 const INITIAL_FIELD_ERRORS = {
   username: "",
   email: "",
@@ -30,7 +36,8 @@ const INITIAL_FIELD_ERRORS = {
   age: "",
   gender: "",
   clientType: "",
-  address: "",
+  streetAddress: "",
+  barangay: "",
   password: "",
   confirmPassword: "",
 };
@@ -60,8 +67,9 @@ function mapRegisterErrorToFieldErrors(errorMessage) {
     return nextErrors;
   }
 
-  if (message.includes("address")) {
-    nextErrors.address = rawMessage;
+  if (message.includes("address") || message.includes("barangay")) {
+    nextErrors.streetAddress = rawMessage;
+    nextErrors.barangay = rawMessage;
     return nextErrors;
   }
 
@@ -89,6 +97,17 @@ function mapRegisterErrorToFieldErrors(errorMessage) {
   return nextErrors;
 }
 
+function StaticAddressField({ label, value }) {
+  return (
+    <View className="mb-4 w-full">
+      <Text className="mb-2 px-1 text-[13px] font-semibold text-[#CFDAEA]">{label}</Text>
+      <View className="h-[48px] flex-row items-center rounded-full border border-[#6782A7] bg-[#263C61] px-4">
+        <Text className="text-[15px] text-[#DDEBFF]">{value}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function CreateAccountScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -97,9 +116,13 @@ export default function CreateAccountScreen() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [clientType, setClientType] = useState("");
-  const [address, setAddress] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [barangay, setBarangay] = useState("");
+  const [barangayOptions, setBarangayOptions] = useState([]);
+  const [isBarangayLoading, setIsBarangayLoading] = useState(true);
+  const [barangayLoadError, setBarangayLoadError] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,16 +137,74 @@ export default function CreateAccountScreen() {
     age: setAge,
     gender: setGender,
     clientType: setClientType,
-    address: setAddress,
+    streetAddress: setStreetAddress,
+    barangay: setBarangay,
     password: setPassword,
     confirmPassword: setConfirmPassword,
+  };
+
+  const barangaySelectOptions = useMemo(
+    () => barangayOptions.map((name) => ({ label: name, value: name })),
+    [barangayOptions],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadBarangays() {
+      setIsBarangayLoading(true);
+      setBarangayLoadError("");
+
+      try {
+        const nextBarangays = await fetchStoTomasBatangasBarangays();
+        if (!isMounted) {
+          return;
+        }
+
+        setBarangayOptions(nextBarangays);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setBarangayOptions([]);
+        setBarangayLoadError(error?.message || "Unable to load barangays right now.");
+      } finally {
+        if (isMounted) {
+          setIsBarangayLoading(false);
+        }
+      }
+    }
+
+    loadBarangays();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleRetryBarangayLoad = async () => {
+    setIsBarangayLoading(true);
+    setBarangayLoadError("");
+
+    try {
+      const nextBarangays = await fetchStoTomasBatangasBarangays();
+      setBarangayOptions(nextBarangays);
+    } catch (error) {
+      setBarangayOptions([]);
+      setBarangayLoadError(error?.message || "Unable to load barangays right now.");
+    } finally {
+      setIsBarangayLoading(false);
+    }
   };
 
   const validateFields = () => {
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
-    const trimmedAddress = address.trim();
+    const trimmedStreetAddress = streetAddress.trim();
+    const trimmedBarangay = barangay.trim();
+    const composedAddress = `${trimmedStreetAddress}, ${trimmedBarangay}, ${FIXED_CITY}, ${FIXED_PROVINCE}, ${FIXED_COUNTRY}`;
     const parsedAge = Number.parseInt(age.trim(), 10);
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
@@ -161,10 +242,16 @@ export default function CreateAccountScreen() {
       nextErrors.clientType = "Client type is required.";
     }
 
-    if (!trimmedAddress) {
-      nextErrors.address = "Address is required.";
-    } else if (trimmedAddress.length < 5) {
-      nextErrors.address = "Please enter a valid address.";
+    if (!trimmedStreetAddress) {
+      nextErrors.streetAddress = "Street address is required.";
+    } else if (trimmedStreetAddress.length < 5) {
+      nextErrors.streetAddress = "Please enter a valid street address.";
+    }
+
+    if (!trimmedBarangay) {
+      nextErrors.barangay = "Barangay is required.";
+    } else if (!barangayOptions.includes(trimmedBarangay)) {
+      nextErrors.barangay = "Please select a valid barangay.";
     }
 
     if (!password) {
@@ -191,13 +278,14 @@ export default function CreateAccountScreen() {
         !nextErrors.age &&
         !nextErrors.gender &&
         !nextErrors.clientType &&
-        !nextErrors.address &&
+        !nextErrors.streetAddress &&
+        !nextErrors.barangay &&
         !nextErrors.password &&
         !nextErrors.confirmPassword,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
-      trimmedAddress,
+      composedAddress,
       parsedAge,
     };
   };
@@ -212,7 +300,7 @@ export default function CreateAccountScreen() {
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
-      trimmedAddress,
+      composedAddress,
       parsedAge,
     } = validateFields();
 
@@ -244,7 +332,7 @@ export default function CreateAccountScreen() {
         age: parsedAge,
         gender,
         clientType,
-        address: trimmedAddress,
+        address: composedAddress,
         password,
         profileImage,
       });
@@ -269,6 +357,10 @@ export default function CreateAccountScreen() {
 
     if (setFieldValue) {
       setFieldValue(value);
+    }
+
+    if (field === "barangay" && barangayLoadError) {
+      setBarangayLoadError("");
     }
 
     setFieldErrors((prev) => ({
@@ -352,15 +444,41 @@ export default function CreateAccountScreen() {
             />
 
             <AuthInputField
-              value={address}
-              onChangeText={handleFieldChange("address")}
-              placeholder="Address"
+              value={streetAddress}
+              onChangeText={handleFieldChange("streetAddress")}
+              placeholder="Street Address"
               icon="location-outline"
               autoComplete="street-address"
               textContentType="fullStreetAddress"
               returnKeyType="next"
-              error={fieldErrors.address}
+              error={fieldErrors.streetAddress}
             />
+
+            <AuthSelectField
+              label="Barangay"
+              placeholder="Select barangay"
+              value={barangay}
+              options={barangaySelectOptions}
+              onChange={handleFieldChange("barangay")}
+              error={fieldErrors.barangay || barangayLoadError}
+              loading={isBarangayLoading}
+              disabled={isBarangayLoading || barangaySelectOptions.length === 0}
+            />
+
+            {barangayLoadError ? (
+              <Pressable
+                onPress={handleRetryBarangayLoad}
+                className="mb-4 self-start rounded-full border border-[#D5E6FF] px-4 py-2"
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading barangays"
+              >
+                <Text className="text-[12px] font-semibold text-[#CFDAEA]">Refresh and try again</Text>
+              </Pressable>
+            ) : null}
+
+            <StaticAddressField label="City" value={FIXED_CITY} />
+            <StaticAddressField label="Province" value={FIXED_PROVINCE} />
+            <StaticAddressField label="Country" value={FIXED_COUNTRY} />
 
             <AuthChoiceField
               label="Gender"

@@ -39,6 +39,11 @@ export const usersService = {
       ...(payload.avatarUrl !== undefined
         ? { avatar_url: payload.avatarUrl }
         : {}),
+      ...(payload.fullName !== undefined
+        ? { full_name: payload.fullName }
+        : {}),
+      ...(payload.email !== undefined ? { email: payload.email } : {}),
+      ...(payload.address !== undefined ? { address: payload.address } : {}),
     };
 
     const profile = await usersRepository.upsertProfileByUserId(

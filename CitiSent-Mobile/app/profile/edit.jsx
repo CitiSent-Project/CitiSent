@@ -1,17 +1,66 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EditProfileTextField, ProfileSubpageLayout } from "../../modules/profile";
 import { Colors, usePullToRefresh } from "../../modules/shared";
+import { getAuthUser, setAuthUser } from "../../services/authSession";
+import { api } from "../../services/api";
 
-const INITIAL_PROFILE = {
-  fullName: "Juan Dela Cruz",
-  username: "juandelacruz",
-  email: "juandelacruz@email.com",
-  phoneNumber: "09123456789",
-  address: "Sto. Tomas, Batangas",
-  bio: "Concerned citizen helping keep our community safe.",
-};
+function asText(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return "";
+}
+
+function asDigits(value) {
+  return asText(value).replace(/\D/g, "");
+}
+
+function buildInitialProfile(sourceUser = getAuthUser()) {
+  const authUser = sourceUser || {};
+  const metadata = authUser.user_metadata || authUser.userMetadata || authUser.metadata || {};
+  const profile = authUser.profile || {};
+
+  return {
+    fullName:
+      asText(authUser.fullName) ||
+      asText(authUser.name) ||
+      asText(profile.fullName) ||
+      asText(metadata.fullName) ||
+      asText(metadata.name),
+    username: asText(authUser.username) || asText(profile.username) || asText(metadata.username),
+    email: asText(authUser.email) || asText(profile.email) || asText(metadata.email),
+    phoneNumber:
+      asDigits(authUser.phoneNumber || authUser.phone_number || authUser.phone) ||
+      asDigits(profile.phoneNumber || profile.phone_number || profile.phone) ||
+      asDigits(metadata.phoneNumber || metadata.phone_number || metadata.phone),
+    address:
+      asText(authUser.address) ||
+      asText(profile.address) ||
+      asText(metadata.address) ||
+      asText(metadata.location),
+    age: asDigits(authUser.age || profile.age || metadata.age),
+  };
+}
+
+function unwrapCurrentUserPayload(response) {
+  if (response && typeof response === "object") {
+    if (response.data && typeof response.data === "object") {
+      return response.data;
+    }
+
+    return response;
+  }
+
+  return null;
+}
+
+const INITIAL_PROFILE = buildInitialProfile(getAuthUser());
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,9 +69,43 @@ export default function EditProfilePage() {
   const [profileDraft, setProfileDraft] = useState(INITIAL_PROFILE);
   const [isSaving, setIsSaving] = useState(false);
 
+  const syncProfileState = useCallback((user) => {
+    const nextProfile = buildInitialProfile(user);
+    setSavedProfile(nextProfile);
+    setProfileDraft(nextProfile);
+  }, []);
+
+  const hydrateCurrentUserProfile = useCallback(async () => {
+    try {
+      const response = await api.get("/users/me");
+      const currentUser = unwrapCurrentUserPayload(response);
+
+      if (!currentUser || typeof currentUser !== "object") {
+        return false;
+      }
+
+      setAuthUser(currentUser, {
+        fallbackUsername: currentUser.username,
+        fallbackPhoneNumber: currentUser.phoneNumber,
+      });
+      syncProfileState(currentUser);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [syncProfileState]);
+
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
-    setProfileDraft(savedProfile);
+    const didHydrate = await hydrateCurrentUserProfile();
+
+    if (!didHydrate) {
+      setProfileDraft(savedProfile);
+    }
   });
+
+  useEffect(() => {
+    hydrateCurrentUserProfile();
+  }, [hydrateCurrentUserProfile]);
 
   const setField = (field) => (value) => {
     setProfileDraft((prev) => ({
@@ -73,11 +156,26 @@ export default function EditProfilePage() {
 
     setIsSaving(true);
 
-    setTimeout(() => {
-      setSavedProfile(profileDraft);
-      setIsSaving(false);
+    try {
+      const response = await api.patch("/users/me", profileDraft);
+      const updatedUser = unwrapCurrentUserPayload(response);
+      
+      if (updatedUser) {
+        setAuthUser(updatedUser, {
+          fallbackUsername: updatedUser.username,
+          fallbackPhoneNumber: updatedUser.phoneNumber,
+        });
+        syncProfileState(updatedUser);
+      }
+      
       Alert.alert("Profile updated", "Your profile details were saved successfully.");
-    }, 350);
+    } catch (err) {
+      console.error("Save profile error:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || Object.values(err?.response?.data?.errors || {}).join(", ") || "Failed to update profile. Please try again.";
+      Alert.alert("Update Failed", errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -90,46 +188,6 @@ export default function EditProfilePage() {
         className="mb-4 rounded-2xl border px-4 py-4"
         style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}
       >
-        <Text className="text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>
-          Profile Photo
-        </Text>
-
-        <View className="items-center pb-2 pt-4">
-          <Pressable
-            onPress={() => Alert.alert("Coming soon", "Photo upload will be available in a future update.")}
-            accessibilityRole="button"
-            accessibilityLabel="Change profile photo"
-            className="h-[84px] w-[84px] items-center justify-center rounded-full"
-            style={{
-              backgroundColor: Colors.ui.profileAvatarSoft,
-              borderWidth: 1,
-              borderColor: Colors.ui.headerDark,
-            }}
-          >
-            <Ionicons name="person" size={44} color={Colors.text.secondary} />
-
-            <View
-              className="absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: Colors.primary,
-                borderWidth: 1,
-                borderColor: Colors.surface,
-              }}
-            >
-              <Ionicons name="create-outline" size={14} color={Colors.text.inverse} />
-            </View>
-          </Pressable>
-
-          <Text className="mt-3 text-xs" style={{ color: Colors.text.secondary }}>
-            Tap photo to update
-          </Text>
-        </View>
-      </View>
-
-      <View
-        className="mb-4 rounded-2xl border px-4 py-4"
-        style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}
-      >
         <Text className="mb-3 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>
           Personal Information
         </Text>
@@ -138,7 +196,7 @@ export default function EditProfilePage() {
           label="Full Name"
           value={profileDraft.fullName}
           onChangeText={setField("fullName")}
-          placeholder="Enter your full name"
+          placeholder="e.g., Juan Dela Cruz"
           autoComplete="name"
           textContentType="name"
         />
@@ -147,7 +205,7 @@ export default function EditProfilePage() {
           label="Username"
           value={profileDraft.username}
           onChangeText={setField("username")}
-          placeholder="Enter your username"
+          placeholder="e.g., juandelacruz"
           autoCapitalize="none"
           autoComplete="username"
           textContentType="username"
@@ -158,7 +216,7 @@ export default function EditProfilePage() {
           label="Email"
           value={profileDraft.email}
           onChangeText={setField("email")}
-          placeholder="Enter your email"
+          placeholder="e.g., juandelacruz@email.com"
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
@@ -169,29 +227,30 @@ export default function EditProfilePage() {
           label="Phone Number"
           value={profileDraft.phoneNumber}
           onChangeText={(value) => setField("phoneNumber")(value.replace(/\D/g, ""))}
-          placeholder="Enter your phone number"
+          placeholder="e.g., 09123456789"
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
           maxLength={15}
         />
 
-        {/* <EditProfileTextField
+
+        <EditProfileTextField
           label="Age"
           value={profileDraft.age}
-            onChangeText={(value) => setField("age")(value.replace(/\D/g, ""))}
-            placeholder="Enter your age"
-            keyboardType="number-pad"
-            autoComplete="off"
-            textContentType="none"
-            maxLength={3}
-        /> */}
+          onChangeText={(value) => setField("age")(value.replace(/\D/g, ""))}
+          placeholder="Enter your age"
+          keyboardType="number-pad"
+          autoComplete="off"
+          textContentType="none"
+          maxLength={3}
+        />
 
         <EditProfileTextField
           label="Address"
           value={profileDraft.address}
           onChangeText={setField("address")}
-          placeholder="Enter your address"
+          placeholder="e.g., Sto. Tomas, Batangas"
           autoComplete="street-address"
           textContentType="fullStreetAddress"
         />

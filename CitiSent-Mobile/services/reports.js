@@ -4,6 +4,8 @@ import { api } from "./api";
 import { getAuthToken } from "./authSession";
 import { runtimeFlags } from "./runtimeFlags";
 
+import { getSupabaseClient } from "./supabase";
+
 const reportedFallbackWarnings = new Set();
 const TEMP_TOKEN_PREFIX = "temp-";
 const DEFAULT_HOME_REPORT_NAME = "You";
@@ -156,9 +158,45 @@ function shouldUseLocalReportsData() {
 }
 
 export const reportsApi = {
+  uploadImage: async (imageUri) => {
+    const supabase = getSupabaseClient();
+    const fileName = `report_${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
+
+    const response = await fetch(imageUri);
+    const arrayBuffer = await response.arrayBuffer();
+
+    const { error, data } = await supabase.storage
+      .from("attachments")
+      .upload(`public/${fileName}`, arrayBuffer, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: "image/jpeg",
+      });
+
+    if (error) {
+      console.error("Upload error:", error);
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("attachments")
+      .getPublicUrl(`public/${fileName}`);
+
+    return publicUrlData.publicUrl;
+  },
   deleteReport: async (reportId) => {
     if (!reportId) throw new Error("Missing report ID");
     return api.delete(`/reports/${reportId}`);
+  },
+  updateReport: async (reportId, { issueType, location, description }) => {
+    if (!reportId) throw new Error("Missing report ID");
+
+    const payload = {};
+    if (issueType) payload.issueType = issueType;
+    if (location) payload.location = location;
+    if (description) payload.description = description;
+
+    return api.patch(`/reports/${reportId}`, payload);
   },
   createReport: async ({
     issueType,

@@ -8,9 +8,9 @@ import {
   AuthCityFooter,
   AuthInputField,
   authApi,
-  isEmptyIdentifier,
   parseLoginIdentifier,
 } from "../../modules/auth";
+import { validateLoginFields, getLoginErrorMessage } from "../../utils/authValidation";
 
 export default function LoginFormScreen() {
   const router = useRouter();
@@ -25,23 +25,9 @@ export default function LoginFormScreen() {
   });
 
   const validateFields = () => {
-    const nextErrors = {
-      identifier: "",
-      password: "",
-    };
-
-    if (isEmptyIdentifier(identifier)) {
-      nextErrors.identifier = "Username or phone number is required.";
-    }
-
-    if (!password) {
-      nextErrors.password = "Password is required.";
-    }
-
-    setFieldErrors(nextErrors);
-    return {
-      isValid: !nextErrors.identifier && !nextErrors.password,
-    };
+    const { errors, isValid } = validateLoginFields(identifier, password);
+    setFieldErrors(errors);
+    return { isValid };
   };
 
   const handleIdentifierChange = (value) => {
@@ -72,7 +58,7 @@ export default function LoginFormScreen() {
     const { isValid } = validateFields();
 
     if (!isValid) {
-      setErrorMessage("Please enter your username/phone number and password.");
+      setErrorMessage("Please check your inputs and resolve the errors.");
       return;
     }
 
@@ -80,7 +66,7 @@ export default function LoginFormScreen() {
     setIsSubmitting(true);
 
     try {
-      const parsedIdentifier = parseLoginIdentifier(identifier);
+      const parsedIdentifier = parseLoginIdentifier(identifier.trim());
 
       await authApi.login({
         identifier: parsedIdentifier.raw,
@@ -90,7 +76,7 @@ export default function LoginFormScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
-      setErrorMessage(error?.message || "Unable to login right now. Please try again.");
+      setErrorMessage(getLoginErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -4,6 +4,8 @@ import { Pressable, Text, View } from "react-native";
 import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
+import { reportsApi } from "../../services/reports";
+import FeedbackModal from "../../components/ui/FeedbackModal";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -20,6 +22,9 @@ export default function ReportsMadePage() {
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
+  
+  // Feedback modal state
+  const [feedback, setFeedback] = useState({ visible: false, type: "info", title: "", message: "" });
 
   // Use the custom hook to fetch user's reports
   const { reports, reloadMyReports, isInitialLoading } = useMyReports();
@@ -49,10 +54,30 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // When saving, just close the edit modal (data will be refreshed on next reload)
-  const handleSaveReport = () => {
-    setEditingReportId(null);
-    reloadMyReports();
+  // When saving, close the edit modal and perform api call
+  const handleSaveReport = async (updatedData) => {
+    if (!editingReportId) return;
+
+    try {
+      await reportsApi.updateReport(editingReportId, updatedData);
+      setEditingReportId(null);
+      await reloadMyReports();
+      
+      setFeedback({
+        visible: true,
+        type: "success",
+        title: "Success!",
+        message: "Your report has been successfully updated.",
+      });
+    } catch (error) {
+      setFeedback({
+        visible: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to save the report. Please try again.",
+      });
+      throw error;
+    }
   };
 
   return (
@@ -126,6 +151,14 @@ export default function ReportsMadePage() {
         report={editingReport}
         onClose={() => setEditingReportId(null)}
         onSave={handleSaveReport}
+      />
+
+      <FeedbackModal
+        visible={feedback.visible}
+        type={feedback.type}
+        title={feedback.title}
+        message={feedback.message}
+        onClose={() => setFeedback({ ...feedback, visible: false })}
       />
     </ProfileSubpageLayout>
   );

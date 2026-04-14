@@ -4,17 +4,29 @@ import { profileRepository } from "../shared/repositories/profileRepository.js";
 import { AppError } from "../shared/errors/appError.js";
 
 export async function loadActorProfile(req, _res, next) {
-  const profile = await profileRepository.getByUserId({
-    userId: req.user.id,
-    accessToken: req.accessToken,
-  });
+  try {
+    const profile = await profileRepository.getByUserId({
+      userId: req.user.id,
+      accessToken: req.accessToken,
+    });
 
-  req.actor = buildActor({
-    authUser: req.user,
-    profile,
-  });
+    req.actor = buildActor({
+      authUser: req.user,
+      profile,
+    });
 
-  return next();
+    return next();
+  } catch (error) {
+    return next(
+      new AppError(
+        "Unable to resolve actor profile",
+        StatusCodes.BAD_GATEWAY,
+        {
+          message: error.message,
+        },
+      ),
+    );
+  }
 }
 
 export function requireRole(allowedRoles = []) {

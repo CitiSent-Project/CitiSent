@@ -55,6 +55,24 @@ const CONTENT_OFFSET_CLASSES = {
 	collapsed: 'lg:ml-[4.5rem]',
 }
 
+const CONNECTION_STATUS_UI = {
+	connected: {
+		label: 'Connected',
+		containerClass: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+		dotClass: 'bg-emerald-500',
+	},
+	reconnecting: {
+		label: 'Reconnecting',
+		containerClass: 'border-amber-200 bg-amber-50 text-amber-700',
+		dotClass: 'bg-amber-500',
+	},
+	offline: {
+		label: 'Offline',
+		containerClass: 'border-rose-200 bg-rose-50 text-rose-700',
+		dotClass: 'bg-rose-500',
+	},
+}
+
 const MotionAside = motion.aside
 const MotionButton = motion.button
 const MotionDiv = motion.div
@@ -190,7 +208,28 @@ function BrandBlock({ expanded }) {
 	)
 }
 
-export function Navbar({ children, activePage, onNavigate, profileRole, unreadNotifications = 0 }) {
+function ConnectionStatusBadge({ status = 'connected' }) {
+	const ui = CONNECTION_STATUS_UI[status] || CONNECTION_STATUS_UI.connected
+
+	return (
+		<div
+			className={`hidden md:inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium ${ui.containerClass}`}
+			aria-live="polite"
+		>
+			<span className={`h-2 w-2 rounded-full ${ui.dotClass}`} />
+			<span>{ui.label}</span>
+		</div>
+	)
+}
+
+export function Navbar({
+	children,
+	activePage,
+	onNavigate,
+	profileRole,
+	unreadNotifications = 0,
+	connectionStatus = 'connected',
+}) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
 	const resolvedRole = normalizeUserRole(profileRole)
@@ -300,6 +339,7 @@ export function Navbar({ children, activePage, onNavigate, profileRole, unreadNo
 						</div>
 
 						<div className="flex items-center gap-3">
+							<ConnectionStatusBadge status={connectionStatus} />
 							<button
 								type="button"
 								onClick={() => handleNavigate(APP_PAGES.NOTIFICATIONS)}

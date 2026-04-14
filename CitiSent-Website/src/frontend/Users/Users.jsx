@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
-import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
+import { notifyError, notifyErrorWithRetry, notifySuccess } from '../../components/ui/toastHelpers'
 import { usersApiService } from '../../services/api/admin/usersApiService'
 import {
   mapBackendUserToUiRow,
@@ -64,11 +65,8 @@ function mapFilterToBackendStatus(filterValue) {
 }
 
 export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }) {
+  const queryClient = useQueryClient()
   const pageSize = 8
-  const [users, setUsers] = useState([])
-  const [totalUsers, setTotalUsers] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const [stats, setStats] = useState({ active: 0, banned: 0 })
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState(USERS_FILTERS.sortOptions[0])
@@ -82,6 +80,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
   const resolvedRole = normalizeUserRole(profile?.role)
   const canCreateUsers = isSuperadmin(resolvedRole)
   const canToggleBan = isSuperadmin(resolvedRole)
+  const hasAccessToken = Boolean(getStoredAccessToken())
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -97,53 +96,42 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     setCurrentPage(1)
   }, [debouncedSearchTerm, filterBy])
 
-  const fetchUsersPage = useCallback(
-    async (pageNumber) => {
+  const usersQuery = useQuery({
+    queryKey: ['admin-users', debouncedSearchTerm, filterBy, currentPage, pageSize],
+    enabled: hasAccessToken,
+    placeholderData: (previousData) => previousData,
+    queryFn: async () => {
       const token = getStoredAccessToken()
       if (!token) {
-        setUsers([])
-        setTotalUsers(0)
-        setIsLoading(false)
-        notifyError('Users unavailable.', 'Your session has expired. Please sign in again.')
-        return
+        throw new Error('Your session has expired. Please sign in again.')
       }
 
-      setIsLoading(true)
+      const response = await usersApiService.listUsers(token, {
+        limit: pageSize,
+        offset: (currentPage - 1) * pageSize,
+        search: debouncedSearchTerm || undefined,
+        status: mapFilterToBackendStatus(filterBy),
+      })
 
-      try {
-        const response = await usersApiService.listUsers(token, {
-          limit: pageSize,
-          offset: (pageNumber - 1) * pageSize,
-          search: debouncedSearchTerm || undefined,
-          status: mapFilterToBackendStatus(filterBy),
-        })
+      const mappedUsers = (response?.data || []).map(mapBackendUserToUiRow)
+      const total = Number(response?.pagination?.total)
 
-        const mappedUsers = (response?.data || []).map(mapBackendUserToUiRow)
-        const total = Number(response?.pagination?.total)
-
-        setUsers(mappedUsers)
-        setTotalUsers(Number.isFinite(total) ? total : mappedUsers.length)
-        setSelectedUserIds((previousIds) =>
-          previousIds.filter((id) => mappedUsers.some((user) => user.id === id))
-        )
-      } catch (error) {
-        setUsers([])
-        setTotalUsers(0)
-        notifyError('Unable to load users.', error.message)
-      } finally {
-        setIsLoading(false)
+      return {
+        users: mappedUsers,
+        totalUsers: Number.isFinite(total) ? total : mappedUsers.length,
       }
     },
-    [debouncedSearchTerm, filterBy]
-  )
+  })
 
-  const refreshUserStats = useCallback(async () => {
-    const token = getStoredAccessToken()
-    if (!token) {
-      return
-    }
+  const userStatsQuery = useQuery({
+    queryKey: ['admin-users-stats'],
+    enabled: hasAccessToken,
+    queryFn: async () => {
+      const token = getStoredAccessToken()
+      if (!token) {
+        throw new Error('Your session has expired. Please sign in again.')
+      }
 
-    try {
       const [activeResponse, bannedResponse] = await Promise.all([
         usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'active' }),
         usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'banned' }),
@@ -152,22 +140,50 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       const activeTotal = Number(activeResponse?.pagination?.total)
       const bannedTotal = Number(bannedResponse?.pagination?.total)
 
-      setStats({
+      return {
         active: Number.isFinite(activeTotal) ? activeTotal : 0,
         banned: Number.isFinite(bannedTotal) ? bannedTotal : 0,
-      })
-    } catch {
-      setStats({ active: 0, banned: 0 })
+      }
+    },
+  })
+
+  useEffect(() => {
+    if (usersQuery.error) {
+      notifyErrorWithRetry(
+        'Unable to load users.',
+        usersQuery.error.message,
+        () => usersQuery.refetch()
+      )
     }
-  }, [])
+  }, [usersQuery.error])
 
   useEffect(() => {
-    fetchUsersPage(currentPage)
-  }, [currentPage, fetchUsersPage])
+    if (userStatsQuery.error) {
+      notifyErrorWithRetry(
+        'Unable to load user statistics.',
+        userStatsQuery.error.message,
+        () => userStatsQuery.refetch()
+      )
+    }
+  }, [userStatsQuery.error])
+
+  const users = usersQuery.data?.users || []
+  const totalUsers = usersQuery.data?.totalUsers || 0
+  const isLoading = usersQuery.isLoading || usersQuery.isFetching
+  const stats = userStatsQuery.data || { active: 0, banned: 0 }
 
   useEffect(() => {
-    refreshUserStats()
-  }, [refreshUserStats])
+    setSelectedUserIds((previousIds) =>
+      previousIds.filter((id) => users.some((user) => user.id === id))
+    )
+  }, [users])
+
+  async function invalidateUsersData() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-users-stats'] }),
+    ])
+  }
 
   const visibleUsers = useMemo(() => {
     return [...users].sort((a, b) => {
@@ -268,7 +284,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
       setIsAddUserModalOpen(false)
       setCurrentPage(1)
-      await Promise.all([fetchUsersPage(1), refreshUserStats()])
+      await invalidateUsersData()
       notifySuccess(
         temporaryPassword
           ? wasStoredInNotifications
@@ -353,11 +369,9 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       })
 
       const updatedUser = mapBackendUserToUiRow(response?.data || {})
-      setUsers((previousUsers) =>
-        previousUsers.map((user) => (user.id === selectedUser.id ? updatedUser : user))
-      )
       setSelectedUser(updatedUser)
       setIsEditUserOpen(false)
+      await invalidateUsersData()
       notifySuccess('User details updated successfully.')
       return true
     } catch (error) {
@@ -392,11 +406,11 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
             })
 
       const updatedUser = mapBackendUserToUiRow(response?.data || {})
-      setUsers((previousUsers) =>
-        previousUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
-      )
+      if (selectedUser?.id === updatedUser.id) {
+        setSelectedUser(updatedUser)
+      }
 
-      await refreshUserStats()
+      await invalidateUsersData()
       notifySuccess(
         updatedUser.status === 'Banned'
           ? `${updatedUser.name} was banned successfully.`
@@ -457,7 +471,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const failedCount = operations.length - successfulCount
 
     setSelectedUserIds([])
-    await Promise.all([fetchUsersPage(safeCurrentPage), refreshUserStats()])
+    await invalidateUsersData()
 
     if (failedCount > 0) {
       notifyError(
@@ -495,7 +509,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const failedCount = operations.length - successfulCount
 
     setSelectedUserIds([])
-    await Promise.all([fetchUsersPage(safeCurrentPage), refreshUserStats()])
+    await invalidateUsersData()
 
     if (failedCount > 0) {
       notifyError(

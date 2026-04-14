@@ -3,6 +3,14 @@ import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 
 export function errorHandler(err, req, res, _next) {
+  if (res.headersSent) {
+    return _next(err);
+  }
+
+  if (err.code === "REQUEST_TIMEOUT") {
+    err.isOperational = true;
+  }
+
   const statusCode = err.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR;
   const isOperational = Boolean(err.isOperational);
 

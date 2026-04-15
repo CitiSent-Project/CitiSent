@@ -1,28 +1,53 @@
-# post_report.py - Add input validation
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from ai import analyze_report, reports_db
+
+from ai import analyze_report
 
 router = APIRouter()
 
-class ReportRequest(BaseModel):
-    text: str = Field(..., min_length=10, max_length=2000)  # Add limits
 
-@router.post("/report", status_code=201)
-def post_report(body: ReportRequest):
-    text = body.text.strip()
-    
-    if not text:
-        raise HTTPException(status_code=400, detail="Text cannot be empty")
-    
-    analysis = analyze_report(text)
-    
-    report = {
-        "id": len(reports_db) + 1,
-        "text": text,
-        "priority": analysis["name"],
-        "confidence": f"{analysis['confidence'] * 100:.2f}%"
+class AnalyzeReportRequest(BaseModel):
+    issueType: str = Field(..., min_length=1, max_length=120)
+    location: str = Field(..., min_length=1, max_length=240)
+    description: str = Field(..., min_length=10, max_length=3000)
+
+
+def _sanitize_request(body: AnalyzeReportRequest) -> tuple[str, str, str]:
+    issue_type = body.issueType.strip()
+    location = body.location.strip()
+    description = body.description.strip()
+
+    if not issue_type:
+        raise HTTPException(status_code=400, detail="Issue type cannot be empty.")
+
+    if not location:
+        raise HTTPException(status_code=400, detail="Location cannot be empty.")
+
+    if not description:
+        raise HTTPException(status_code=400, detail="Description cannot be empty.")
+
+    return issue_type, location, description
+
+
+@router.post("/analyze")
+def analyze_report_endpoint(body: AnalyzeReportRequest):
+    issue_type, location, description = _sanitize_request(body)
+
+    try:
+        analysis = analyze_report(
+            issue_type=issue_type,
+            location=location,
+            description=description,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=503,
+            detail="Sentiment analysis model is unavailable.",
+        ) from error
+
+    return {
+        "urgency": analysis["urgency"],
+        "confidence": analysis["confidence"],
     }
-    
-    reports_db.append(report)
-    return report

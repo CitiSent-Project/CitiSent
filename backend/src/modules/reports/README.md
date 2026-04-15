@@ -8,5 +8,6 @@ This module follows layered boundaries:
 - `reports.repository.js`: Supabase persistence
 - `reports.mapper.js`: DB-to-API response shape mapping
 - `reports.schema.js`: validation contract
+- `reports.sentiment.js`: AI sidecar adapter + urgency normalization
 
 Keep these boundaries strict for long-term maintainability.

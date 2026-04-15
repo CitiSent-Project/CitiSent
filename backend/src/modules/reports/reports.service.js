@@ -3,10 +3,88 @@ import { toReportResponse } from "./reports.mapper.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { AppError } from "../../shared/errors/appError.js";
 import { StatusCodes } from "http-status-codes";
+import { logger } from "../../config/logger.js";
 import {
   buildReportsListCacheKey,
   buildReportsUserCachePrefix,
 } from "./reports.cache.js";
+import {
+  reportsSentimentClient,
+  REPORT_URGENCY_FALLBACK,
+} from "./reports.sentiment.js";
+
+function buildReportCreatePayload({
+  userId,
+  issueType,
+  description,
+  location,
+  attachmentUrl,
+  urgency,
+}) {
+  return {
+    user_id: userId,
+    issue_type: issueType,
+    description,
+    location,
+    ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
+    sentiment_label: urgency,
+    status: "pending",
+  };
+}
+
+function buildReportUpdatePayload(payload) {
+  return {
+    ...(payload.issueType !== undefined ? { issue_type: payload.issueType } : {}),
+    ...(payload.description !== undefined ? { description: payload.description } : {}),
+    ...(payload.location !== undefined ? { location: payload.location } : {}),
+    ...(payload.attachmentUrl !== undefined
+      ? { attachment_url: payload.attachmentUrl }
+      : {}),
+    ...(payload.status !== undefined ? { status: payload.status } : {}),
+  };
+}
+
+function shouldReclassifyReport(payload) {
+  return (
+    payload.issueType !== undefined ||
+    payload.description !== undefined ||
+    payload.location !== undefined
+  );
+}
+
+function buildAnalysisInput(payload, existingReport = {}) {
+  return {
+    issueType: payload.issueType ?? existingReport.issue_type ?? "",
+    description: payload.description ?? existingReport.description ?? "",
+    location: payload.location ?? existingReport.location ?? "",
+  };
+}
+
+async function resolveUrgencyWithFallback({
+  issueType,
+  location,
+  description,
+  reportId = null,
+}) {
+  try {
+    const analysis = await reportsSentimentClient.analyzeReport({
+      issueType,
+      location,
+      description,
+    });
+
+    return analysis.urgency;
+  } catch (error) {
+    logger.warn("Sentiment analysis failed. Using fallback urgency.", {
+      reportId,
+      issueType,
+      fallbackUrgency: REPORT_URGENCY_FALLBACK,
+      message: error?.message || String(error),
+    });
+
+    return REPORT_URGENCY_FALLBACK;
+  }
+}
 
 export const reportsService = {
   async listReports({ userId, limit, offset, status, accessToken }) {
@@ -48,21 +126,23 @@ export const reportsService = {
     description,
     location,
     attachmentUrl,
-    sentimentLabel,
     accessToken,
   }) {
-    // Use correct snake_case keys for DB insert
+    const urgency = await resolveUrgencyWithFallback({
+      issueType,
+      description,
+      location,
+    });
+
     const created = await reportsRepository.create(
-      {
-        user_id: userId,
-        issue_type: issueType,
+      buildReportCreatePayload({
+        userId,
+        issueType,
         description,
         location,
-        // Only include attachment_url if present
-        ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
-        ...(sentimentLabel ? { sentiment_label: sentimentLabel } : {}),
-        status: "pending",
-      },
+        attachmentUrl,
+        urgency,
+      }),
       accessToken,
     );
 
@@ -86,22 +166,25 @@ export const reportsService = {
   },
 
   async updateReport({ userId, reportId, payload, accessToken }) {
-    const updatePayload = {
-      ...(payload.issueType !== undefined
-        ? { issue_type: payload.issueType }
-        : {}),
-      ...(payload.description !== undefined
-        ? { description: payload.description }
-        : {}),
-      ...(payload.location !== undefined ? { location: payload.location } : {}),
-      ...(payload.attachmentUrl !== undefined
-        ? { attachment_url: payload.attachmentUrl }
-        : {}),
-      ...(payload.sentimentLabel !== undefined
-        ? { sentiment_label: payload.sentimentLabel }
-        : {}),
-      ...(payload.status !== undefined ? { status: payload.status } : {}),
-    };
+    const existingReport = await reportsRepository.getById({
+      userId,
+      reportId,
+      accessToken,
+    });
+
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    const updatePayload = buildReportUpdatePayload(payload);
+
+    if (shouldReclassifyReport(payload)) {
+      const nextAnalysisInput = buildAnalysisInput(payload, existingReport);
+      updatePayload.sentiment_label = await resolveUrgencyWithFallback({
+        reportId,
+        ...nextAnalysisInput,
+      });
+    }
 
     const updated = await reportsRepository.updateById({
       userId,

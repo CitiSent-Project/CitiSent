@@ -50,7 +50,7 @@ export function mapBackendReportToUiRow(payload = {}) {
     category: department.label,
     source: payload.source || 'Website',
     message: payload.description || '',
-    urgency: payload.urgency || 'Calm',
+    urgency: payload.urgency || payload.sentimentLabel || 'Calm',
     status: normalizeReportStatus(
       REPORT_STATUS_LABEL_MAP[payload.status] || payload.statusLabel || payload.status
     ),

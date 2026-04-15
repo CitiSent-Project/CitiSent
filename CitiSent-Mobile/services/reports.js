@@ -203,7 +203,6 @@ export const reportsApi = {
     location,
     description,
     attachmentUrl,
-    sentimentLabel,
   }) => {
     // Only include attachmentUrl if it's a valid, non-empty URL
     const payload = {
@@ -215,7 +214,6 @@ export const reportsApi = {
       attachmentUrl.startsWith("http")
         ? { attachmentUrl }
         : {}),
-      ...(sentimentLabel ? { sentimentLabel } : {}),
     };
     return api.post("/reports", payload);
   },

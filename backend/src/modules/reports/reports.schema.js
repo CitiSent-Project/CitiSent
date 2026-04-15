@@ -16,13 +16,14 @@ export const listReportsSchema = z.object({
 export const createReportSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),
-  body: z.object({
-    issueType: z.string().min(1).max(120),
-    description: z.string().min(10).max(3000),
-    location: z.string().min(1).max(240),
-    attachmentUrl: z.string().url().optional(),
-    sentimentLabel: z.string().max(32).optional(),
-  }),
+  body: z
+    .object({
+      issueType: z.string().min(1).max(120),
+      description: z.string().min(10).max(3000),
+      location: z.string().min(1).max(240),
+      attachmentUrl: z.string().url().optional(),
+    })
+    .strict(),
 });
 
 export const getReportByIdSchema = z.object({
@@ -44,9 +45,9 @@ export const updateReportSchema = z.object({
       description: z.string().min(10).max(3000).optional(),
       location: z.string().min(1).max(240).optional(),
       attachmentUrl: z.string().url().nullable().optional(),
-      sentimentLabel: z.string().max(32).nullable().optional(),
       status: z.enum(allowedStatus).optional(),
     })
+    .strict()
     .superRefine((payload, ctx) => {
       if (Object.keys(payload).length === 0) {
         ctx.addIssue({

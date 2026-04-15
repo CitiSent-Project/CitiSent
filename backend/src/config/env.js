@@ -136,6 +136,11 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(8_000),
+  SENTIMENT_API_URL: z
+    .string()
+    .url()
+    .default("http://127.0.0.1:8000/analyze"),
+  SENTIMENT_API_TIMEOUT_MS: z.coerce.number().int().positive().default(5_000),
   ENABLE_RUNTIME_METRICS: envBoolean.default(false),
   RUNTIME_METRICS_INTERVAL_MS: z.coerce
     .number()

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { FiCheckCircle, FiFileText, FiTarget, FiUsers } from 'react-icons/fi'
 import {
@@ -17,7 +18,7 @@ import {
     mapDashboardWeeklyTrend,
 } from '../../services/api/admin/dashboardApiMappers'
 import { dashboardApiService } from '../../services/api/admin/dashboardApiService'
-import { notifyError } from '../../components/ui/toastHelpers'
+import { notifyErrorWithRetry } from '../../components/ui/toastHelpers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
@@ -102,6 +103,31 @@ function getStoredAccessToken() {
 }
 
 export function Dashboard() {
+    const accessToken = useMemo(() => getStoredAccessToken(), [])
+
+    const dashboardQuery = useQuery({
+        queryKey: ['dashboard-overview', accessToken],
+        enabled: Boolean(accessToken),
+        queryFn: async () => {
+            const [summaryResponse, categoryResponse, weeklyResponse, adminsResponse, usersResponse] =
+                await Promise.all([
+                    dashboardApiService.getDashboardSummary(accessToken),
+                    dashboardApiService.getDashboardReportsByCategory(accessToken),
+                    dashboardApiService.getDashboardWeeklyTrend(accessToken),
+                    dashboardApiService.getDashboardRecentAdmins(accessToken, { limit: 5 }),
+                    dashboardApiService.getDashboardRecentUsers(accessToken, { limit: 5 }),
+                ])
+
+            return {
+                summary: summaryResponse?.data,
+                category: categoryResponse?.data,
+                weekly: weeklyResponse?.data,
+                admins: adminsResponse?.data,
+                users: usersResponse?.data,
+            }
+        },
+    })
+
     const iconMap = useMemo(
         () => ({
             users: FiUsers,
@@ -117,68 +143,56 @@ export function Dashboard() {
         [iconMap]
     )
 
-    const [statCards, setStatCards] = useState(fallbackStatCards)
-    const [categoryData, setCategoryData] = useState(EMPTY_CATEGORY_DATA)
-    const [weeklyData, setWeeklyData] = useState(EMPTY_WEEKLY_DATA)
-    const [adminsTableRows, setAdminsTableRows] = useState([])
-    const [newUsersTableRows, setNewUsersTableRows] = useState([])
-    const [isLoadingDashboard, setIsLoadingDashboard] = useState(true)
-
     useEffect(() => {
-        let isCancelled = false
+        if (dashboardQuery.error) {
+            notifyErrorWithRetry(
+                'Unable to load dashboard.',
+                dashboardQuery.error.message,
+                () => dashboardQuery.refetch()
+            )
+        }
+    }, [dashboardQuery.error])
 
-        async function loadDashboard() {
-            const token = getStoredAccessToken()
-            if (!token) {
-                setIsLoadingDashboard(false)
-                return
-            }
+    const isLoadingDashboard = Boolean(accessToken) && (dashboardQuery.isLoading || dashboardQuery.isFetching)
 
-            try {
-                setIsLoadingDashboard(true)
-
-                const [summaryResponse, categoryResponse, weeklyResponse, adminsResponse, usersResponse] =
-                    await Promise.all([
-                        dashboardApiService.getDashboardSummary(token),
-                        dashboardApiService.getDashboardReportsByCategory(token),
-                        dashboardApiService.getDashboardWeeklyTrend(token),
-                        dashboardApiService.getDashboardRecentAdmins(token, { limit: 5 }),
-                        dashboardApiService.getDashboardRecentUsers(token, { limit: 5 }),
-                    ])
-
-                if (isCancelled) {
-                    return
-                }
-
-                const summaryCards = mapDashboardSummaryToStatCards(
-                    summaryResponse?.data,
-                    DASHBOARD_STAT_CARDS_TEMPLATE
-                )
-
-                setStatCards(buildDashboardStatCards({ statCards: summaryCards, iconMap }))
-                setCategoryData(
-                    mapDashboardCategoryBreakdown(categoryResponse?.data, DASHBOARD_CATEGORY_COLORS)
-                )
-                setWeeklyData(mapDashboardWeeklyTrend(weeklyResponse?.data))
-                setAdminsTableRows(mapDashboardRecentAdmins(adminsResponse?.data))
-                setNewUsersTableRows(mapDashboardRecentUsers(usersResponse?.data))
-            } catch (error) {
-                if (!isCancelled) {
-                    notifyError('Unable to load dashboard.', error.message)
-                }
-            } finally {
-                if (!isCancelled) {
-                    setIsLoadingDashboard(false)
-                }
-            }
+    const statCards = useMemo(() => {
+        if (!dashboardQuery.data?.summary) {
+            return fallbackStatCards
         }
 
-        loadDashboard()
+        const summaryCards = mapDashboardSummaryToStatCards(
+            dashboardQuery.data.summary,
+            DASHBOARD_STAT_CARDS_TEMPLATE
+        )
 
-        return () => {
-            isCancelled = true
+        return buildDashboardStatCards({ statCards: summaryCards, iconMap })
+    }, [dashboardQuery.data?.summary, fallbackStatCards, iconMap])
+
+    const categoryData = useMemo(() => {
+        if (!dashboardQuery.data?.category) {
+            return EMPTY_CATEGORY_DATA
         }
-    }, [iconMap])
+
+        return mapDashboardCategoryBreakdown(dashboardQuery.data.category, DASHBOARD_CATEGORY_COLORS)
+    }, [dashboardQuery.data?.category])
+
+    const weeklyData = useMemo(() => {
+        if (!dashboardQuery.data?.weekly) {
+            return EMPTY_WEEKLY_DATA
+        }
+
+        return mapDashboardWeeklyTrend(dashboardQuery.data.weekly)
+    }, [dashboardQuery.data?.weekly])
+
+    const adminsTableRows = useMemo(
+        () => mapDashboardRecentAdmins(dashboardQuery.data?.admins || []),
+        [dashboardQuery.data?.admins]
+    )
+
+    const newUsersTableRows = useMemo(
+        () => mapDashboardRecentUsers(dashboardQuery.data?.users || []),
+        [dashboardQuery.data?.users]
+    )
 
     return (
         <div className="min-h-screen bg-slate-50 p-8">

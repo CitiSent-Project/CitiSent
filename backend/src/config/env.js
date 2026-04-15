@@ -77,6 +77,26 @@ const optionalString = (schema) =>
     return normalized === "" ? undefined : normalized;
   }, schema.optional());
 
+const envBoolean = z.preprocess((value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off", ""].includes(normalized)) {
+    return false;
+  }
+
+  return value;
+}, z.boolean());
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -110,6 +130,18 @@ const envSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+  REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+  STARTUP_SUPABASE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(8_000),
+  ENABLE_RUNTIME_METRICS: envBoolean.default(false),
+  RUNTIME_METRICS_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(60_000),
 });
 
 const parsed = envSchema.safeParse(process.env);

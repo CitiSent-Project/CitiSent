@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { notifyError, notifySuccess } from '../components/ui/toastHelpers'
+import { notifyError, notifyErrorWithRetry, notifySuccess } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_ADMIN_ACCOUNTS,
@@ -85,6 +85,23 @@ function findDepartmentOption(value, departmentOptions) {
   )
 }
 
+function isBackendUnavailableError(error) {
+  const status = Number(error?.status)
+  const message = String(error?.message || '').toLowerCase()
+
+  if (Number.isFinite(status) && status >= 500) {
+    return true
+  }
+
+  return (
+    message.includes('unable to reach the api server') ||
+    message.includes('request timed out') ||
+    message.includes('networkerror') ||
+    message.includes('failed to fetch') ||
+    message.includes('service unavailable')
+  )
+}
+
 export function useAppStateOrchestrator() {
   // Department options state (dynamic from backend)
   const [departmentOptions, setDepartmentOptions] = useState([])
@@ -107,6 +124,8 @@ export function useAppStateOrchestrator() {
   const [isPageLoading, setIsPageLoading] = useState(false)
   const [authPage, setAuthPage] = useState(AUTH_PAGES.LOGIN)
   const [accessToken, setAccessToken] = useState(() => storedAccessToken)
+  const [sessionBootstrapAttempt, setSessionBootstrapAttempt] = useState(0)
+  const [sessionBootstrapError, setSessionBootstrapError] = useState(null)
   const [authReady, setAuthReady] = useState(() => !storedAccessToken)
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     Boolean(storedAccessToken) &&
@@ -284,6 +303,11 @@ export function useAppStateOrchestrator() {
       .catch(() => {})
   }
 
+  function handleRetrySessionBootstrap() {
+    setSessionBootstrapError(null)
+    setSessionBootstrapAttempt((previous) => previous + 1)
+  }
+
   async function refreshProfileForAccessCheck() {
     if (!accessToken) {
       return null
@@ -332,6 +356,7 @@ export function useAppStateOrchestrator() {
 
     async function hydrateSession() {
       if (!accessToken) {
+        setSessionBootstrapError(null)
         setAuthReady(true)
         return
       }
@@ -353,17 +378,6 @@ export function useAppStateOrchestrator() {
             : Promise.resolve({ data: [] }),
         ])
 
-        let hydratedActivityLog = null
-        try {
-          const activityResponse = await activityLogApiService.getActivityLog(accessToken, {
-            limit: 200,
-            offset: 0,
-          })
-          hydratedActivityLog = (activityResponse?.data || []).map(mapBackendActivityLogEntry)
-        } catch {
-          hydratedActivityLog = null
-        }
-
         const mappedOfficeAdmins = (officeAdminsResponse?.data || []).map(mapBackendOfficeAdmin)
         const notificationAdminIds = Array.from(
           new Set(
@@ -376,16 +390,32 @@ export function useAppStateOrchestrator() {
           )
         )
 
-        const notificationResponses = await Promise.allSettled(
-          notificationAdminIds.map((adminId) =>
-            notificationsApiService.listNotifications(
-              accessToken,
-              normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
-                ? { adminId, limit: 200, offset: 0 }
-                : { limit: 200, offset: 0 }
+          const [activityResult, notificationsResult] = await Promise.allSettled([
+            activityLogApiService.getActivityLog(accessToken, {
+              limit: 200,
+              offset: 0,
+            }),
+            Promise.allSettled(
+              notificationAdminIds.map((adminId) =>
+                notificationsApiService.listNotifications(
+                  accessToken,
+                  normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
+                    ? { adminId, limit: 200, offset: 0 }
+                    : { limit: 200, offset: 0 }
+                )
             )
-          )
-        )
+            ),
+          ])
+
+          const hydratedActivityLog =
+            activityResult.status === 'fulfilled'
+              ? (activityResult.value?.data || []).map(mapBackendActivityLogEntry)
+              : null
+
+          const notificationResponses =
+            notificationsResult.status === 'fulfilled'
+              ? notificationsResult.value
+              : notificationAdminIds.map(() => ({ status: 'rejected' }))
 
         const hydratedNotificationsByAdmin = notificationAdminIds.reduce((accumulator, adminId, index) => {
           const response = notificationResponses[index]
@@ -400,6 +430,7 @@ export function useAppStateOrchestrator() {
           return
         }
 
+        setSessionBootstrapError(null)
         setProfile(nextProfile)
         setIsAuthenticated(true)
         setPreferences((previous) => ({
@@ -418,8 +449,28 @@ export function useAppStateOrchestrator() {
           return
         }
 
+        if (isBackendUnavailableError(error)) {
+          const fallbackMessage =
+            error?.message || 'The backend is unavailable. Please retry in a few seconds.'
+
+          setSessionBootstrapError({
+            title: 'Unable to reach backend services',
+            message: fallbackMessage,
+          })
+
+          notifyErrorWithRetry(
+            'Session bootstrap interrupted.',
+            fallbackMessage,
+            handleRetrySessionBootstrap,
+            'Retry bootstrap'
+          )
+
+          return
+        }
+
         setAccessToken('')
         setIsAuthenticated(false)
+        setSessionBootstrapError(null)
         setProfile(DEFAULT_ADMIN_PROFILE)
         setAdminAccounts([])
         setTransferRequests([])
@@ -439,7 +490,7 @@ export function useAppStateOrchestrator() {
     return () => {
       isCancelled = true
     }
-  }, [accessToken])
+  }, [accessToken, sessionBootstrapAttempt])
 
   useEffect(() => {
     const relatedAdmins = profile.id
@@ -1103,6 +1154,7 @@ export function useAppStateOrchestrator() {
     isPageLoading,
     isAuthenticated,
     authReady,
+    sessionBootstrapError,
     profile,
     activityLog,
     adminAccounts,
@@ -1121,6 +1173,7 @@ export function useAppStateOrchestrator() {
     onRegister: handleRegister,
     onLogin: handleLogin,
     onLogout: handleLogout,
+    onRetrySessionBootstrap: handleRetrySessionBootstrap,
     onNavigate: handleNavigate,
     onViewUserProfile: handleViewUserProfile,
     onViewReport: handleViewReport,
@@ -1150,6 +1203,7 @@ export function useAppStateOrchestrator() {
     isPageLoading,
     isAuthenticated,
     authReady,
+    sessionBootstrapError,
     profile,
     activityLog,
     adminAccounts,
@@ -1164,6 +1218,7 @@ export function useAppStateOrchestrator() {
     handleRegister,
     handleLogin,
     handleLogout,
+    handleRetrySessionBootstrap,
     handleNavigate,
     handleViewUserProfile,
     handleViewReport,

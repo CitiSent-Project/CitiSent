@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
 import { canAdminUpdateReport, filterReportsForAdmin } from '../../controllers/reportAccessController'
-import { notifyError } from '../../components/ui/toastHelpers'
+import { notifyError, notifyErrorWithRetry } from '../../components/ui/toastHelpers'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
@@ -16,71 +17,102 @@ export function Reports({
   onViewReport,
   onUpdateStatus,
 }) {
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+  const accessToken = loadFromStorageWithSchema(
+    ADMIN_STORAGE_KEYS.accessToken,
+    '',
+    {
+      schemaVersion: schemaRule.schemaVersion,
+      migrate: schemaRule.migrate,
+      validate: schemaRule.validate,
+    }
+  )
+
+  const reportsQuery = useQuery({
+    queryKey: ['admin-reports', accessToken],
+    enabled: Boolean(accessToken),
+    queryFn: async () => {
+      const response = await reportsApiService.listReports(accessToken, { limit: 100, offset: 0 })
+      return (response?.data || []).map(mapBackendReportToUiRow)
+    },
+  })
+
+  const updateReportMutation = useMutation({
+    mutationFn: async ({ reportId, newStatus }) => {
+      const currentRows = queryClient.getQueryData(['admin-reports', accessToken]) || []
+      const report = currentRows.find((entry) => entry.id === reportId)
+
+      if (!canAdminUpdateReport({ profile, report })) {
+        throw new Error('You can only process reports assigned to your department.')
+      }
+
+      const result = await onUpdateStatus?.(reportId, newStatus)
+      if (!result?.ok || !result.report) {
+        throw new Error(result?.message || 'Unable to update report status.')
+      }
+
+      return {
+        reportId,
+        report: result.report,
+      }
+    },
+    onMutate: async ({ reportId, newStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-reports', accessToken] })
+
+      const previousRows = queryClient.getQueryData(['admin-reports', accessToken]) || []
+      queryClient.setQueryData(
+        ['admin-reports', accessToken],
+        previousRows.map((entry) =>
+          entry.id === reportId ? { ...entry, status: newStatus } : entry
+        )
+      )
+
+      return { previousRows }
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previousRows) {
+        queryClient.setQueryData(['admin-reports', accessToken], context.previousRows)
+      }
+
+      notifyError('Status update denied.', error.message)
+    },
+    onSuccess: ({ reportId, report }) => {
+      const currentRows = queryClient.getQueryData(['admin-reports', accessToken]) || []
+      queryClient.setQueryData(
+        ['admin-reports', accessToken],
+        currentRows.map((entry) =>
+          entry.id === reportId ? { ...entry, ...report } : entry
+        )
+      )
+    },
+  })
 
   useEffect(() => {
-    let isCancelled = false
-
-    async function loadReports() {
-      setLoading(true)
-
-      try {
-        const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
-        const parsedToken = loadFromStorageWithSchema(
-          ADMIN_STORAGE_KEYS.accessToken,
-          '',
-          {
-            schemaVersion: schemaRule.schemaVersion,
-            migrate: schemaRule.migrate,
-            validate: schemaRule.validate,
-          }
-        )
-        const response = await reportsApiService.listReports(parsedToken, { limit: 100, offset: 0 })
-
-        if (isCancelled) {
-          return
-        }
-
-        setRows((response?.data || []).map(mapBackendReportToUiRow))
-      } catch (error) {
-        if (!isCancelled) {
-          notifyError('Reports unavailable.', error.message)
-          setRows([])
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoading(false)
-        }
-      }
+    if (reportsQuery.error) {
+      notifyErrorWithRetry(
+        'Reports unavailable.',
+        reportsQuery.error.message,
+        () => reportsQuery.refetch()
+      )
     }
+  }, [reportsQuery.error])
 
-    loadReports()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [])
+  const rows = reportsQuery.data || []
+  const loading = Boolean(accessToken) && (reportsQuery.isLoading || reportsQuery.isFetching)
 
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])
 
   async function handleUpdateStatus(reportId, newStatus) {
-    const report = rows.find((entry) => entry.id === reportId)
-    if (!canAdminUpdateReport({ profile, report })) {
-      notifyError('Status update denied.', 'You can only process reports assigned to your department.')
+    try {
+      const result = await updateReportMutation.mutateAsync({ reportId, newStatus })
+      return {
+        ok: true,
+        report: result.report,
+      }
+    } catch {
       return { ok: false }
     }
-
-    const result = await onUpdateStatus?.(reportId, newStatus)
-    if (!result?.ok || !result.report) {
-      return result || { ok: false }
-    }
-
-    setRows((previousRows) =>
-      previousRows.map((entry) => (entry.id === reportId ? { ...entry, ...result.report } : entry))
-    )
-
-    return result
   }
 
   if (section === 'urgency') {

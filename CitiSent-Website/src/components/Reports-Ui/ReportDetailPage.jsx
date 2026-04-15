@@ -22,6 +22,7 @@ const STATUS_ICONS = {
 
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
   const [timeline, setTimeline] = useState(() => [
     {
       id: 1,
@@ -54,15 +55,19 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
   const canProcessReport = canAdminUpdateReport({ profile, report })
 
-  async function handleStatusChange(newStatus) {
+  async function handleStatusSave() {
     if (!canProcessReport) {
       notifyError('Status update denied.', 'You can only process reports assigned to your department.')
       return
     }
 
+    if (selectedStatus === currentStatus) {
+      return
+    }
+
     const validation = validateReportStatusChange({
       currentStatus,
-      nextStatus: newStatus,
+      nextStatus: selectedStatus,
       adminNotes,
     })
 
@@ -89,6 +94,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
 
     notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
     setAdminNotes('')
+    setSelectedStatus(validation.nextStatus)
   }
 
   return (
@@ -181,36 +187,56 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               onChange={(event) => setAdminNotes(event.target.value)}
               placeholder="Add remarks, resolution details, or reason for status change..."
               disabled={!canProcessReport}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </label>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {REPORT_STATUS_OPTIONS.map((status) => {
-              const isActive = status === currentStatus
+              const isCurrent = status === currentStatus
+              const isSelected = status === selectedStatus
 
               return (
-                <button
+                <label
                   key={status}
-                  type="button"
-                  onClick={() => handleStatusChange(status)}
-                  disabled={isActive || !canProcessReport}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive || !canProcessReport
-                      ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                      : status === 'Resolved'
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                        : status === 'Unresolved'
-                          ? 'bg-rose-600 text-white hover:bg-rose-500'
-                          : status === 'In Progress'
-                            ? 'bg-blue-600 text-white hover:bg-blue-500'
-                            : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                  className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    !canProcessReport
+                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                      : isSelected
+                        ? 'border-blue-500 bg-blue-50 text-blue-900'
+                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {isActive ? `* ${status} (Current)` : status}
-                </button>
+                  <input
+                    type="radio"
+                    name="report-status"
+                    value={status}
+                    checked={isSelected}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    disabled={!canProcessReport}
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                  <span className={isCurrent ? 'font-semibold' : ''}>
+                    {isCurrent ? `${status} (Current)` : status}
+                  </span>
+                </label>
               )
             })}
+          </div>
+
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleStatusSave}
+              disabled={!canProcessReport || selectedStatus === currentStatus}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                !canProcessReport || selectedStatus === currentStatus
+                  ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                  : 'bg-blue-700 text-white hover:bg-blue-600'
+              }`}
+            >
+              Save Status
+            </button>
           </div>
         </section>
 

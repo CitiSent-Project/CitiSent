@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 
 const initialForm = {
@@ -11,6 +11,11 @@ const initialForm = {
 export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   const [form, setForm] = useState(initialForm)
   const dialogRef = useRef(null)
+
+  const handleClose = useCallback(() => {
+    onClose()
+    setForm(initialForm)
+  }, [onClose])
 
   useModalAccessibility({
     isOpen,
@@ -33,11 +38,6 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
     if (submitted) {
       setForm(initialForm)
     }
-  }
-
-  function handleClose() {
-    onClose()
-    setForm(initialForm)
   }
 
   return (

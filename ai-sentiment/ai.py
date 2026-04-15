@@ -7,10 +7,10 @@ print("Loading Smart LGU System...")
 classifier = pipeline("zero-shot-classification", model="cross-encoder/nli-MiniLM2-L6-H768")
 
 priority_map = {
-    "life-threatening emergency": "CRITICAL",
-    "urgent infrastructure repair": "HIGH",
-    "routine maintenance": "MEDIUM",
-    "community suggestion": "LOW"
+    "life-threatening emergency": "Emergency",
+    "urgent infrastructure repair": "Urgent",
+    "routine maintenance": "Moderate",
+    "community suggestion": "Calm"
 }
 
 candidate_labels = list(priority_map.keys())

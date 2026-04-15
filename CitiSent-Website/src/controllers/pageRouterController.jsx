@@ -56,6 +56,7 @@ export function renderActivePage({
         selectedReport,
         transferRequests,
         departmentOptions,
+        departmentCatalog,
     } = appState
 
     const {
@@ -75,6 +76,10 @@ export function renderActivePage({
         onUpdateReportStatus,
         onSubmitTransferRequest,
         onAssignOfficeDepartment,
+        onCreateDepartment,
+        onUpdateDepartment,
+        onSetDepartmentActive,
+        onDeleteDepartment,
         onApproveTransfer,
         onRejectTransfer,
     } = appActions
@@ -90,9 +95,14 @@ export function renderActivePage({
                     notificationsByAdmin={notificationsByAdmin}
                     transferRequests={transferRequests}
                     onAssignOfficeDepartment={onAssignOfficeDepartment}
+                    onCreateDepartment={onCreateDepartment}
+                    onUpdateDepartment={onUpdateDepartment}
+                    onSetDepartmentActive={onSetDepartmentActive}
+                    onDeleteDepartment={onDeleteDepartment}
                     onApproveTransfer={onApproveTransfer}
                     onRejectTransfer={onRejectTransfer}
                     departmentOptions={departmentOptions}
+                    departmentCatalog={departmentCatalog}
                 />
             )
         case APP_PAGES.USERS:

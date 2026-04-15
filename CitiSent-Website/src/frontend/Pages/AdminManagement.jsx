@@ -6,6 +6,7 @@ import { notifyError } from '../../components/ui/toastHelpers'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { useAdminManagementState } from '../../hooks/useAdminManagementState'
 import {
+  AgencyCatalogSection,
   OfficeAdminAssignmentsSection,
   TransferRequestQueueSection,
   TransferReviewModal,
@@ -17,9 +18,14 @@ export function AdminManagement({
   notificationsByAdmin,
   transferRequests,
   onAssignOfficeDepartment,
+  onCreateDepartment,
+  onUpdateDepartment,
+  onSetDepartmentActive,
+  onDeleteDepartment,
   onApproveTransfer,
   onRejectTransfer,
   departmentOptions,
+  departmentCatalog,
 }) {
   const officeAdmins = useMemo(() => getOfficeAdmins(adminAccounts), [adminAccounts])
   const pendingRequests = useMemo(
@@ -105,6 +111,14 @@ export function AdminManagement({
           getSelectedDepartmentId={getSelectedDepartmentId}
           onDraftDepartmentChange={handleDraftDepartmentChange}
           onSaveAssignment={handleSaveAssignment}
+        />
+
+        <AgencyCatalogSection
+          departmentCatalog={departmentCatalog}
+          onCreateDepartment={onCreateDepartment}
+          onUpdateDepartment={onUpdateDepartment}
+          onSetDepartmentActive={onSetDepartmentActive}
+          onDeleteDepartment={onDeleteDepartment}
         />
 
         <TransferRequestQueueSection

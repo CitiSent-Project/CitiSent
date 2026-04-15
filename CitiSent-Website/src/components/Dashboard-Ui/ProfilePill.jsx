@@ -9,7 +9,7 @@ export function ProfilePill({ label }) {
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-100 text-xs font-semibold text-cyan-700">
+      <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-100 text-xs font-semibold text-cyan-900">
         {initials || 'U'}
       </span>
       <span>{label}</span>

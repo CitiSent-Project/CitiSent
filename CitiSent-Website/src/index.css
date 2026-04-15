@@ -82,7 +82,7 @@ body {
   color: #67e8f9 !important;
 }
 
-:root[data-theme='dark'] .text-cyan-700 {
+:root[data-theme='dark'] .text-cyan-900 {
   color: #a5f3fc !important;
 }
 

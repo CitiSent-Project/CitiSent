@@ -1,3 +1,4 @@
 export * from './OfficeAdminAssignmentsSection'
+export * from './AgencyCatalogSection'
 export * from './TransferRequestQueueSection'
 export * from './TransferReviewModal'

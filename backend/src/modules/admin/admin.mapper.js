@@ -98,14 +98,20 @@ export function toAdminUserResponse({ profile, activeBan }) {
 
 export function toAdminReportResponse({ reportRow, reporterProfile }) {
   const normalizedStatus = normalizeStatusValue(reportRow?.status);
+  const resolvedDepartmentId =
+    String(reportRow?.department_slug || "").trim() ||
+    resolveDepartmentId(reportRow?.issue_type);
+  const resolvedDepartmentLabel =
+    String(reportRow?.department_name || "").trim() ||
+    resolveDepartmentLabel(reportRow?.issue_type);
 
   return {
     id: reportRow?.id,
     issueType: reportRow?.issue_type || "",
     description: reportRow?.description || "",
     location: reportRow?.location || "",
-    departmentId: resolveDepartmentId(reportRow?.issue_type),
-    departmentLabel: resolveDepartmentLabel(reportRow?.issue_type),
+    departmentId: resolvedDepartmentId,
+    departmentLabel: resolvedDepartmentLabel,
     status: normalizedStatus,
     statusLabel: STATUS_LABELS[normalizedStatus],
     urgency: resolveUrgency(reportRow?.urgency || reportRow?.sentiment_label),

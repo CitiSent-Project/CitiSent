@@ -36,7 +36,6 @@ const INITIAL_FIELD_ERRORS = {
   age: "",
   gender: "",
   clientType: "",
-  streetAddress: "",
   barangay: "",
   password: "",
   confirmPassword: "",
@@ -67,8 +66,7 @@ function mapRegisterErrorToFieldErrors(errorMessage) {
     return nextErrors;
   }
 
-  if (message.includes("address") || message.includes("barangay")) {
-    nextErrors.streetAddress = rawMessage;
+  if (message.includes("barangay")) {
     nextErrors.barangay = rawMessage;
     return nextErrors;
   }
@@ -116,7 +114,6 @@ export default function CreateAccountScreen() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [clientType, setClientType] = useState("");
-  const [streetAddress, setStreetAddress] = useState("");
   const [barangay, setBarangay] = useState("");
   const [barangayOptions, setBarangayOptions] = useState([]);
   const [isBarangayLoading, setIsBarangayLoading] = useState(true);
@@ -137,7 +134,6 @@ export default function CreateAccountScreen() {
     age: setAge,
     gender: setGender,
     clientType: setClientType,
-    streetAddress: setStreetAddress,
     barangay: setBarangay,
     password: setPassword,
     confirmPassword: setConfirmPassword,
@@ -202,9 +198,7 @@ export default function CreateAccountScreen() {
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
-    const trimmedStreetAddress = streetAddress.trim();
     const trimmedBarangay = barangay.trim();
-    const composedAddress = `${trimmedStreetAddress}, ${trimmedBarangay}, ${FIXED_CITY}, ${FIXED_PROVINCE}, ${FIXED_COUNTRY}`;
     const parsedAge = Number.parseInt(age.trim(), 10);
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
@@ -242,12 +236,6 @@ export default function CreateAccountScreen() {
       nextErrors.clientType = "Client type is required.";
     }
 
-    if (!trimmedStreetAddress) {
-      nextErrors.streetAddress = "Street address is required.";
-    } else if (trimmedStreetAddress.length < 5) {
-      nextErrors.streetAddress = "Please enter a valid street address.";
-    }
-
     if (!trimmedBarangay) {
       nextErrors.barangay = "Barangay is required.";
     } else if (!barangayOptions.includes(trimmedBarangay)) {
@@ -278,15 +266,14 @@ export default function CreateAccountScreen() {
         !nextErrors.age &&
         !nextErrors.gender &&
         !nextErrors.clientType &&
-        !nextErrors.streetAddress &&
         !nextErrors.barangay &&
         !nextErrors.password &&
         !nextErrors.confirmPassword,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
-      composedAddress,
       parsedAge,
+      trimmedBarangay,
     };
   };
 
@@ -300,8 +287,8 @@ export default function CreateAccountScreen() {
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
-      composedAddress,
       parsedAge,
+      trimmedBarangay,
     } = validateFields();
 
     if (!isValid) {
@@ -313,18 +300,6 @@ export default function CreateAccountScreen() {
     setIsSubmitting(true);
 
     try {
-
-      // Assign default profile image based on gender
-      let profileImage = null;
-      try {
-        const { DEFAULT_PROFILE_IMAGES } = require("../../constants/profileImages");
-        if (gender === "male") {
-          profileImage = DEFAULT_PROFILE_IMAGES.male;
-        } else if (gender === "female") {
-          profileImage = DEFAULT_PROFILE_IMAGES.female;
-        }
-      } catch (e) {}
-
       await authApi.register({
         username: trimmedUsername,
         email: trimmedEmail,
@@ -332,9 +307,8 @@ export default function CreateAccountScreen() {
         age: parsedAge,
         gender,
         clientType,
-        address: composedAddress,
+        barangay: trimmedBarangay,
         password,
-        profileImage,
       });
 
       setSuccessMessage("Account created successfully! Please login to continue.");
@@ -441,17 +415,6 @@ export default function CreateAccountScreen() {
               keyboardType="number-pad"
               returnKeyType="next"
               error={fieldErrors.age}
-            />
-
-            <AuthInputField
-              value={streetAddress}
-              onChangeText={handleFieldChange("streetAddress")}
-              placeholder="Street Address"
-              icon="location-outline"
-              autoComplete="street-address"
-              textContentType="fullStreetAddress"
-              returnKeyType="next"
-              error={fieldErrors.streetAddress}
             />
 
             <AuthSelectField

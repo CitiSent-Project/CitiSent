@@ -180,6 +180,97 @@ function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
 
+function shouldAttemptAdminRegistrationFallback(error) {
+  const message = toErrorText(error);
+  const status = Number(error?.status || error?.statusCode || 0);
+
+  const isClearlyClientInputError =
+    status === StatusCodes.BAD_REQUEST &&
+    (message.includes("invalid email") ||
+      message.includes("email address") ||
+      message.includes("password") ||
+      message.includes("weak") ||
+      message.includes("validation"));
+
+  if (isClearlyClientInputError) {
+    return false;
+  }
+
+  if (
+    status === StatusCodes.TOO_MANY_REQUESTS ||
+    message.includes("rate limit") ||
+    message.includes("too many")
+  ) {
+    return false;
+  }
+
+  return (
+    status >= StatusCodes.INTERNAL_SERVER_ERROR ||
+    status === 0 ||
+    message.includes("error sending confirmation email") ||
+    message.includes("failed to send") ||
+    message.includes("confirm") ||
+    message.includes("smtp") ||
+    message.includes("mailer") ||
+    message.includes("mail") ||
+    message.includes("email provider") ||
+    message.includes("database error saving new user") ||
+    message.includes("unexpected_failure") ||
+    message.includes("signups not allowed") ||
+    message.includes("signup disabled")
+  );
+}
+
+async function registerWithAdminFallback({ email, password, userMetadata }) {
+  const adminDb = createAdminSupabaseClient();
+  if (!adminDb) {
+    return null;
+  }
+
+  const { data, error } = await adminDb.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: userMetadata,
+  });
+
+  if (error) {
+    return { error, data: null };
+  }
+
+  const createdUser = data?.user || null;
+
+  if (!createdUser) {
+    return {
+      error: new Error("Admin registration did not return a user record."),
+      data: null,
+    };
+  }
+
+  const signInResult = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (signInResult.error) {
+    return {
+      error: null,
+      data: {
+        user: createdUser,
+        session: null,
+      },
+    };
+  }
+
+  return {
+    error: null,
+    data: {
+      user: signInResult.data?.user || createdUser,
+      session: signInResult.data?.session || null,
+    },
+  };
+}
+
 async function queryProfileByIdentifier(db, identifier) {
   const { data, error } = await db
     .from(PROFILES_TABLE)
@@ -362,6 +453,8 @@ export const authRepository = {
 
     let { data, error } = await signUp();
 
+    console.error("DEBUG SIGNUP ERROR:", error);
+
     if (!error) {
       return data;
     }
@@ -380,6 +473,23 @@ export const authRepository = {
       }
     }
 
+    if (shouldAttemptAdminRegistrationFallback(error)) {
+      const fallbackResult = await registerWithAdminFallback({
+        email,
+        password,
+        userMetadata,
+      });
+
+      if (fallbackResult && !fallbackResult.error) {
+        return fallbackResult.data;
+      }
+
+      if (fallbackResult?.error) {
+        error = fallbackResult.error;
+      }
+    }
+
+    console.error("DEBUG REGISTER ERROR:", error);
     throw toRegisterError(error);
   },
 
@@ -413,7 +523,10 @@ export const authRepository = {
         );
       }
 
-      throw toGatewayError("Authentication provider is currently unavailable", error);
+      throw toGatewayError(
+        "Authentication provider is currently unavailable",
+        error,
+      );
     }
 
     return data;

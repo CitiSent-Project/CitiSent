@@ -119,10 +119,7 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
   ]);
 
   if (!profileEmail) {
-    throw new AppError(
-      "Invalid credentials",
-      StatusCodes.UNAUTHORIZED,
-    );
+    throw new AppError("Invalid credentials", StatusCodes.UNAUTHORIZED);
   }
 
   return profileEmail;
@@ -135,7 +132,10 @@ export const authService = {
       ? normalizePhoneNumber(payload.phoneNumber)
       : null;
     const normalizedRole = normalizeUserRole(payload.role);
-    const accountType = normalizeAccountType(payload.accountType, normalizedRole);
+    const accountType = normalizeAccountType(
+      payload.accountType,
+      normalizedRole,
+    );
     const rawDepartmentValue = payload.departmentLabel || payload.departmentId;
 
     await assertRegistrationIdentifiersAreUnique({
@@ -147,7 +147,6 @@ export const authService = {
       username: payload.username,
       full_name: normalizeOptionalString(payload.fullName),
       phone_number: normalizedPhoneNumber,
-      address: normalizeOptionalString(payload.address),
       role: normalizedRole || null,
       account_type: accountType,
       department_id:
@@ -159,16 +158,36 @@ export const authService = {
       age: payload.age ?? null,
       gender: payload.gender ?? null,
       client_type: payload.clientType ?? null,
-      address: payload.address ?? null,
+      barangay: payload.barangay ?? null,
+      profile_image: payload.profileImage ?? null,
     };
+
+    const rawUserMetadata = {
+      username: payload.username,
+      full_name: normalizeOptionalString(payload.fullName),
+      phoneNumber: normalizedPhoneNumber,
+      phone_number: normalizedPhoneNumber,
+      barangay: payload.barangay,
+      age: payload.age,
+      gender: payload.gender,
+      clientType: payload.clientType,
+      client_type: payload.clientType,
+      profileImage: payload.profileImage,
+      profile_image: payload.profileImage,
+      role: normalizedRole || null,
+      account_type: accountType,
+      department_label: payload.departmentLabel || null,
+      department_id: payload.departmentId || null,
+    };
+
+    const userMetadata = Object.fromEntries(
+      Object.entries(rawUserMetadata).filter(([_, v]) => v != null),
+    );
 
     const signUpData = await authRepository.registerWithEmailPassword({
       email: normalizedEmail,
       password: payload.password,
-      userMetadata: {
-        username: payload.username,
-        phoneNumber: normalizedPhoneNumber,
-      },
+      userMetadata,
     });
 
     const userId = signUpData?.user?.id;

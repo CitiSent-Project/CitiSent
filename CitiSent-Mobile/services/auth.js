@@ -114,18 +114,8 @@ export const authApi = {
     return authPayload;
   },
   register: async (payload) => {
-    try {
-      const response = await api.post("/auth/register", payload);
-      return unwrapAuthPayload(response);
-    } catch (error) {
-      if (!hasDemographicFields(payload) || !isLikelySchemaRejection(error)) {
-        throw error;
-      }
-
-      const corePayload = pickCoreRegisterPayload(payload);
-      const response = await api.post("/auth/register", corePayload);
-      return unwrapAuthPayload(response);
-    }
+    const response = await api.post("/auth/register", payload);
+    return unwrapAuthPayload(response);
   },
 
   logout: () => {

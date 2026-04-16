@@ -15,9 +15,12 @@ export function validateRequest(schema) {
         message: issue.message,
       }));
 
+      const firstPath =
+        details.length > 0 ? ` (${details[0].path.replace("body.", "")})` : "";
+
       return next(
         new AppError(
-          "Request validation failed",
+          `Request validation failed${firstPath}`,
           StatusCodes.BAD_REQUEST,
           details,
         ),

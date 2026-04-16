@@ -10,9 +10,6 @@ import {
 import { AppError } from "../../shared/errors/appError.js";
 import {
   buildDepartmentCandidates,
-  DEPARTMENTS,
-  resolveDepartmentId,
-  resolveDepartmentLabel,
 } from "../../shared/data/departments.js";
 import {
   mapReportStatusInputToPersisted,
@@ -24,6 +21,7 @@ import {
 import { notificationsRepository } from "./notifications/notifications.repository.js";
 import { logger } from "../../config/logger.js";
 import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
+import { departmentsService } from "../departments/departments.service.js";
 
 const MANILA_TIME_ZONE = "Asia/Manila";
 const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
@@ -133,6 +131,63 @@ function normalizePhoneNumber(value) {
 function normalizeOptionalString(value) {
   const normalizedValue = String(value || "").trim();
   return normalizedValue || null;
+}
+
+function buildDepartmentLookup(departments = []) {
+  const lookup = new Map();
+
+  departments.forEach((department) => {
+    const slugKey = String(department?.slug || department?.id || "")
+      .trim()
+      .toLowerCase();
+    const nameKey = String(department?.name || department?.label || "")
+      .trim()
+      .toLowerCase();
+
+    if (slugKey) {
+      lookup.set(slugKey, department);
+    }
+
+    if (nameKey) {
+      lookup.set(nameKey, department);
+    }
+  });
+
+  return lookup;
+}
+
+function applyDepartmentMetadataToReportRow(reportRow, departmentLookup) {
+  const issueTypeKey = String(reportRow?.issue_type || "")
+    .trim()
+    .toLowerCase();
+
+  if (!issueTypeKey || !departmentLookup.has(issueTypeKey)) {
+    return reportRow;
+  }
+
+  const department = departmentLookup.get(issueTypeKey);
+
+  return {
+    ...reportRow,
+    department_slug: department?.slug || department?.id || reportRow?.issue_type,
+    department_name: department?.name || department?.label || reportRow?.issue_type,
+  };
+}
+
+async function resolveActiveDepartmentOrThrow({ accessToken, value, fieldName }) {
+  const department = await departmentsService.getActiveDepartmentByValue({
+    accessToken,
+    value,
+  });
+
+  if (!department) {
+    throw new AppError(
+      `Invalid or inactive ${fieldName}.`,
+      StatusCodes.BAD_REQUEST,
+    );
+  }
+
+  return department;
 }
 
 function buildUsername({ username, fullName, email }) {
@@ -259,6 +314,25 @@ export const adminService = {
       normalizedAccountType === "admin"
         ? normalizeUserRole(payload.role || USER_ROLES.OFFICE_ADMIN)
         : "";
+    const requestedDepartmentValue =
+      payload.departmentId || payload.departmentLabel;
+    const normalizedDepartmentValue = String(requestedDepartmentValue || "").trim();
+
+    const matchedDepartment = normalizedDepartmentValue
+      ? await resolveActiveDepartmentOrThrow({
+          accessToken,
+          value: normalizedDepartmentValue,
+          fieldName: "department",
+        })
+      : null;
+
+    if (normalizedAccountType === "admin" && !matchedDepartment) {
+      throw new AppError(
+        "Department is required for admin accounts.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
     const username = buildUsername({
       username: payload.username,
       fullName: payload.fullName,
@@ -297,8 +371,10 @@ export const adminService = {
           address: normalizeOptionalString(payload.address),
           account_type: normalizedAccountType,
           role: normalizedRole || null,
-          department_id: normalizeOptionalString(payload.departmentId),
-          department_label: normalizeOptionalString(payload.departmentLabel),
+          department_id:
+            matchedDepartment?.slug || normalizeOptionalString(payload.departmentId),
+          department_label:
+            matchedDepartment?.name || normalizeOptionalString(payload.departmentLabel),
         },
       });
     } catch (error) {
@@ -361,6 +437,19 @@ export const adminService = {
           ? normalizePhoneNumber(payload.phoneNumber)
           : null
         : undefined;
+    const requestedDepartmentValue =
+      payload.departmentId !== undefined
+        ? payload.departmentId
+        : payload.departmentLabel;
+    const normalizedDepartmentValue = String(requestedDepartmentValue || "").trim();
+
+    const matchedDepartment = normalizedDepartmentValue
+      ? await resolveActiveDepartmentOrThrow({
+          accessToken,
+          value: normalizedDepartmentValue,
+          fieldName: "department",
+        })
+      : null;
 
     const profilePayload = {
       ...(payload.fullName !== undefined ? { full_name: payload.fullName } : {}),
@@ -372,11 +461,11 @@ export const adminService = {
         ? { address: normalizeOptionalString(payload.address) }
         : {}),
       ...(normalizedRole !== undefined ? { role: normalizedRole } : {}),
-      ...(payload.departmentId !== undefined
-        ? { department_id: normalizeOptionalString(payload.departmentId) }
-        : {}),
-      ...(payload.departmentLabel !== undefined
-        ? { department_label: normalizeOptionalString(payload.departmentLabel) }
+      ...(matchedDepartment
+        ? {
+            department_id: matchedDepartment.slug,
+            department_label: matchedDepartment.name,
+          }
         : {}),
     };
 
@@ -486,16 +575,26 @@ export const adminService = {
   },
 
   async listReports({ actor, accessToken, limit, offset, status }) {
-    const result = await adminRepository.listReports({
-      actor,
-      accessToken,
-      limit,
-      offset,
-      status,
-    });
+    const [result, departmentCatalog] = await Promise.all([
+      adminRepository.listReports({
+        actor,
+        accessToken,
+        limit,
+        offset,
+        status,
+      }),
+      departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      }),
+    ]);
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
+    const rowsWithDepartmentMeta = result.rows.map((row) =>
+      applyDepartmentMetadataToReportRow(row, departmentLookup),
+    );
 
     return {
-      data: result.rows.map((row) =>
+      data: rowsWithDepartmentMeta.map((row) =>
         toAdminReportResponse({
           reportRow: row,
           reporterProfile: result.reporterProfilesByUserId[row.user_id] || null,
@@ -510,18 +609,30 @@ export const adminService = {
   },
 
   async getReportById({ actor, accessToken, reportId }) {
-    const result = await adminRepository.getReportById({
-      actor,
-      accessToken,
-      reportId,
-    });
+    const [result, departmentCatalog] = await Promise.all([
+      adminRepository.getReportById({
+        actor,
+        accessToken,
+        reportId,
+      }),
+      departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      }),
+    ]);
 
     if (!result) {
       throw new AppError("Report not found", StatusCodes.NOT_FOUND);
     }
 
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
+    const reportRow = applyDepartmentMetadataToReportRow(
+      result.row,
+      departmentLookup,
+    );
+
     return toAdminReportResponse({
-      reportRow: result.row,
+      reportRow,
       reporterProfile: result.reporterProfile,
     });
   },
@@ -541,8 +652,17 @@ export const adminService = {
     const previousStatus = normalizeReportStatus(existingReport.row?.status);
 
     if (previousStatus === nextStatus) {
+      const departmentCatalog = await departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      });
+      const departmentLookup = buildDepartmentLookup(departmentCatalog);
+
       return toAdminReportResponse({
-        reportRow: existingReport.row,
+        reportRow: applyDepartmentMetadataToReportRow(
+          existingReport.row,
+          departmentLookup,
+        ),
         reporterProfile: existingReport.reporterProfile,
       });
     }
@@ -574,8 +694,17 @@ export const adminService = {
       });
     }
 
+    const departmentCatalog = await departmentsService.listDepartments({
+      accessToken,
+      includeInactive: true,
+    });
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
+
     return toAdminReportResponse({
-      reportRow: result.row,
+      reportRow: applyDepartmentMetadataToReportRow(
+        result.row,
+        departmentLookup,
+      ),
       reporterProfile: result.reporterProfile,
     });
   },
@@ -603,16 +732,17 @@ export const adminService = {
       throw new AppError("Office admin not found", StatusCodes.NOT_FOUND);
     }
 
-    const resolvedDepartmentId = resolveDepartmentId(departmentId || departmentLabel);
-    const resolvedDepartmentLabel = resolveDepartmentLabel(
-      departmentLabel || departmentId,
-    );
+    const resolvedDepartment = await resolveActiveDepartmentOrThrow({
+      accessToken,
+      value: departmentId || departmentLabel,
+      fieldName: "department",
+    });
 
     const updatedOfficeAdmin = await adminRepository.updateOfficeAdminDepartment({
       accessToken,
       adminUserId,
-      departmentId: resolvedDepartmentId || departmentId,
-      departmentLabel: resolvedDepartmentLabel || departmentLabel,
+      departmentId: resolvedDepartment.slug,
+      departmentLabel: resolvedDepartment.name,
     });
 
     if (!updatedOfficeAdmin) {
@@ -655,12 +785,11 @@ export const adminService = {
       );
     }
 
-    const resolvedDepartmentId = resolveDepartmentId(
-      requestedDepartmentId || requestedDepartmentLabel,
-    );
-    const resolvedDepartmentLabel = resolveDepartmentLabel(
-      requestedDepartmentLabel || requestedDepartmentId,
-    );
+    const resolvedDepartment = await resolveActiveDepartmentOrThrow({
+      accessToken,
+      value: requestedDepartmentId || requestedDepartmentLabel,
+      fieldName: "requested department",
+    });
 
     const createdRequest = await adminRepository.createTransferRequest({
       accessToken,
@@ -669,9 +798,8 @@ export const adminService = {
         admin_name: actor.fullName || actor.email || "Office Admin",
         current_department_id: actor.departmentId,
         current_department_label: actor.departmentLabel,
-        requested_department_id: resolvedDepartmentId || requestedDepartmentId,
-        requested_department_label:
-          resolvedDepartmentLabel || requestedDepartmentLabel,
+        requested_department_id: resolvedDepartment.slug,
+        requested_department_label: resolvedDepartment.name,
         reason,
         status: "pending",
       },
@@ -829,17 +957,24 @@ export const adminService = {
   },
 
   async getDashboardReportsByCategory({ actor, accessToken }) {
-    const reportRows = await adminRepository.listDashboardReports({
-      actor,
-      accessToken,
-    });
+    const [reportRows, departmentCatalog] = await Promise.all([
+      adminRepository.listDashboardReports({
+        actor,
+        accessToken,
+      }),
+      departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      }),
+    ]);
 
-    const categories = DEPARTMENTS.map((department) => ({
-      id: department.id,
-      label: department.label,
+    const categories = departmentCatalog.map((department) => ({
+      id: department.slug,
+      label: department.name,
       count: 0,
     }));
 
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
     const categoryIndex = categories.reduce((accumulator, category, index) => {
       accumulator[category.id] = index;
       return accumulator;
@@ -848,7 +983,12 @@ export const adminService = {
     let unknownCount = 0;
 
     reportRows.forEach((row) => {
-      const categoryId = resolveDepartmentId(row?.issue_type);
+      const issueTypeKey = String(row?.issue_type || "")
+        .trim()
+        .toLowerCase();
+      const matchedDepartment = departmentLookup.get(issueTypeKey);
+      const categoryId = matchedDepartment?.slug || "";
+
       if (!categoryId || categoryIndex[categoryId] === undefined) {
         unknownCount += 1;
         return;

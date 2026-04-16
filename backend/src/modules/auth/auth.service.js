@@ -6,10 +6,7 @@ import {
   normalizeAccountType,
   normalizeUserRole,
 } from "../../shared/auth/roleAccess.js";
-import {
-  resolveDepartmentId,
-  resolveDepartmentLabel,
-} from "../../shared/data/departments.js";
+import { departmentsService } from "../departments/departments.service.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -137,6 +134,20 @@ export const authService = {
       normalizedRole,
     );
     const rawDepartmentValue = payload.departmentLabel || payload.departmentId;
+    const normalizedDepartmentValue = String(rawDepartmentValue || "").trim();
+
+    const matchedDepartment = normalizedDepartmentValue
+      ? await departmentsService.getActiveDepartmentByValue({
+          value: normalizedDepartmentValue,
+        })
+      : null;
+
+    if (normalizedDepartmentValue && !matchedDepartment) {
+      throw new AppError(
+        "Invalid or inactive department selection.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
 
     await assertRegistrationIdentifiersAreUnique({
       username: payload.username,
@@ -149,12 +160,9 @@ export const authService = {
       phone_number: normalizedPhoneNumber,
       role: normalizedRole || null,
       account_type: accountType,
-      department_id:
-        resolveDepartmentId(rawDepartmentValue) ||
-        normalizeOptionalString(payload.departmentId),
+      department_id: matchedDepartment?.slug || normalizeOptionalString(payload.departmentId),
       department_label:
-        resolveDepartmentLabel(rawDepartmentValue) ||
-        normalizeOptionalString(payload.departmentLabel),
+        matchedDepartment?.name || normalizeOptionalString(payload.departmentLabel),
       age: payload.age ?? null,
       gender: payload.gender ?? null,
       client_type: payload.clientType ?? null,

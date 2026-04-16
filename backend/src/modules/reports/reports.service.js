@@ -12,6 +12,7 @@ import {
   reportsSentimentClient,
   REPORT_URGENCY_FALLBACK,
 } from "./reports.sentiment.js";
+import { departmentsService } from "../departments/departments.service.js";
 
 function buildReportCreatePayload({
   userId,
@@ -86,6 +87,13 @@ async function resolveUrgencyWithFallback({
   }
 }
 
+async function resolveActiveDepartment({ accessToken, value }) {
+  return departmentsService.getActiveDepartmentByValue({
+    accessToken,
+    value,
+  });
+}
+
 export const reportsService = {
   async listReports({ userId, limit, offset, status, accessToken }) {
     const cacheKey = buildReportsListCacheKey({
@@ -128,8 +136,13 @@ export const reportsService = {
     attachmentUrl,
     accessToken,
   }) {
+    const department = await resolveActiveDepartment({
+      accessToken,
+      value: issueType,
+    });
+
     const urgency = await resolveUrgencyWithFallback({
-      issueType,
+      issueType: department?.name || issueType,
       description,
       location,
     });
@@ -137,7 +150,7 @@ export const reportsService = {
     const created = await reportsRepository.create(
       buildReportCreatePayload({
         userId,
-        issueType,
+        issueType: department?.slug || issueType,
         description,
         location,
         attachmentUrl,
@@ -177,9 +190,24 @@ export const reportsService = {
     }
 
     const updatePayload = buildReportUpdatePayload(payload);
+    let resolvedDepartment = null;
+
+    if (payload.issueType !== undefined) {
+      resolvedDepartment = await resolveActiveDepartment({
+        accessToken,
+        value: payload.issueType,
+      });
+      updatePayload.issue_type = resolvedDepartment?.slug || payload.issueType;
+    }
 
     if (shouldReclassifyReport(payload)) {
-      const nextAnalysisInput = buildAnalysisInput(payload, existingReport);
+      const nextAnalysisInput = buildAnalysisInput(
+        {
+          ...payload,
+          issueType: resolvedDepartment?.name || payload.issueType,
+        },
+        existingReport,
+      );
       updatePayload.sentiment_label = await resolveUrgencyWithFallback({
         reportId,
         ...nextAnalysisInput,

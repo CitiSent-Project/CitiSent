@@ -85,6 +85,36 @@ function findDepartmentOption(value, departmentOptions) {
   )
 }
 
+function normalizeDepartmentOption(department) {
+  if (!department || typeof department !== 'object') {
+    return null
+  }
+
+  const id = String(department.id || department.slug || '').trim()
+  const label = String(department.label || department.name || '').trim()
+
+  if (!id || !label) {
+    return null
+  }
+
+  return {
+    id,
+    label,
+    slug: String(department.slug || id).trim(),
+    name: String(department.name || label).trim(),
+    description: String(department.description || '').trim(),
+    isActive: department.isActive !== false,
+    createdAt: department.createdAt || null,
+    updatedAt: department.updatedAt || null,
+  }
+}
+
+function normalizeDepartmentOptions(departments) {
+  return (Array.isArray(departments) ? departments : [])
+    .map(normalizeDepartmentOption)
+    .filter((department) => department !== null)
+}
+
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
   const message = String(error?.message || '').toLowerCase()
@@ -105,6 +135,7 @@ function isBackendUnavailableError(error) {
 export function useAppStateOrchestrator() {
   // Department options state (dynamic from backend)
   const [departmentOptions, setDepartmentOptions] = useState([])
+  const [departmentCatalog, setDepartmentCatalog] = useState([])
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
   const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
 
@@ -132,26 +163,50 @@ export function useAppStateOrchestrator() {
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
   )
   const [profile, setProfile] = useState(() => storedProfile)
-  // Fetch departments from backend on session boot.
+  // Fetch active department options for all users and full catalog for superadmins.
   useEffect(() => {
     let isMounted = true
 
-    async function fetchDepartments() {
+    async function hydrateDepartments() {
       try {
-        const response = await departmentsApiService.getDepartments()
-        if (response && Array.isArray(response.departments) && isMounted) {
-          setDepartmentOptions(response.departments)
+        const response = await departmentsApiService.getDepartments(accessToken)
+        if (isMounted) {
+          const normalizedOptions = normalizeDepartmentOptions(response?.departments)
+          setDepartmentOptions(normalizedOptions.filter((department) => department.isActive))
         }
       } catch {
-        // Keep empty list until API is reachable.
+        if (isMounted) {
+          setDepartmentOptions([])
+        }
+      }
+
+      if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN || !accessToken) {
+        if (isMounted) {
+          setDepartmentCatalog([])
+        }
+        return
+      }
+
+      try {
+        const response = await departmentsApiService.getDepartmentsCatalog(accessToken, {
+          includeInactive: true,
+        })
+
+        if (isMounted) {
+          setDepartmentCatalog(normalizeDepartmentOptions(response?.departments))
+        }
+      } catch {
+        if (isMounted) {
+          setDepartmentCatalog([])
+        }
       }
     }
 
-    fetchDepartments()
+    hydrateDepartments()
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [accessToken, profile.role])
   const [adminAccounts, setAdminAccounts] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.adminAccounts, DEFAULT_ADMIN_ACCOUNTS)
   )
@@ -306,6 +361,22 @@ export function useAppStateOrchestrator() {
   function handleRetrySessionBootstrap() {
     setSessionBootstrapError(null)
     setSessionBootstrapAttempt((previous) => previous + 1)
+  }
+
+  async function refreshDepartmentsState() {
+    const activeResponse = await departmentsApiService.getDepartments(accessToken)
+    const normalizedOptions = normalizeDepartmentOptions(activeResponse?.departments)
+    setDepartmentOptions(normalizedOptions.filter((department) => department.isActive))
+
+    if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN || !accessToken) {
+      setDepartmentCatalog([])
+      return
+    }
+
+    const catalogResponse = await departmentsApiService.getDepartmentsCatalog(accessToken, {
+      includeInactive: true,
+    })
+    setDepartmentCatalog(normalizeDepartmentOptions(catalogResponse?.departments))
   }
 
   async function refreshProfileForAccessCheck() {
@@ -937,6 +1008,137 @@ export function useAppStateOrchestrator() {
     }
   }
 
+  async function handleCreateDepartment({ slug, name, description }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Creation denied.', 'Only superadmins can add departments.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Creation denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.createDepartment(accessToken, {
+        slug,
+        name,
+        description,
+      })
+      const createdDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        'Department created',
+        `${createdDepartment?.label || name} added to department catalog`
+      )
+      notifySuccess('Department added successfully.')
+      return { ok: true, department: createdDepartment }
+    } catch (error) {
+      notifyError('Creation denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
+  async function handleUpdateDepartment({ departmentSlug, name, description }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Update denied.', 'Only superadmins can update departments.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Update denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.updateDepartment(
+        accessToken,
+        departmentSlug,
+        {
+          ...(name !== undefined ? { name } : {}),
+          ...(description !== undefined ? { description } : {}),
+        }
+      )
+      const updatedDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        'Department updated',
+        `${updatedDepartment?.label || departmentSlug} details updated`
+      )
+      notifySuccess('Department updated successfully.')
+      return { ok: true, department: updatedDepartment }
+    } catch (error) {
+      notifyError('Update denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
+  async function handleSetDepartmentActive({ departmentSlug, isActive }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Status update denied.', 'Only superadmins can manage department status.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Status update denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.setDepartmentActive(
+        accessToken,
+        departmentSlug,
+        isActive
+      )
+      const updatedDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        isActive ? 'Department activated' : 'Department deactivated',
+        `${updatedDepartment?.label || departmentSlug} status set to ${
+          isActive ? 'active' : 'inactive'
+        }`
+      )
+      notifySuccess(
+        `Department ${isActive ? 'activated' : 'deactivated'} successfully.`
+      )
+      return { ok: true, department: updatedDepartment }
+    } catch (error) {
+      notifyError('Status update denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
+  async function handleDeleteDepartment({ departmentSlug, departmentLabel }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Delete denied.', 'Only superadmins can delete departments.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Delete denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.deleteDepartment(accessToken, departmentSlug)
+      const deletedDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        'Department deleted',
+        `${deletedDepartment?.label || departmentLabel || departmentSlug} removed from department catalog`
+      )
+      notifySuccess('Department deleted successfully.')
+      return { ok: true, department: deletedDepartment }
+    } catch (error) {
+      notifyError('Delete denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
   async function handleApproveTransfer({ requestId, reviewNotes }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Approval denied.', 'Only superadmins can approve transfer requests.')
@@ -1164,6 +1366,7 @@ export function useAppStateOrchestrator() {
     preferences,
     transferRequests,
     departmentOptions,
+    departmentCatalog,
     rememberedEmail,
     selectedUserProfile,
     selectedReport,
@@ -1188,6 +1391,10 @@ export function useAppStateOrchestrator() {
     onUpdateReportStatus: handleReportStatusUpdate,
     onSubmitTransferRequest: handleSubmitTransferRequest,
     onAssignOfficeDepartment: handleAssignOfficeDepartment,
+    onCreateDepartment: handleCreateDepartment,
+    onUpdateDepartment: handleUpdateDepartment,
+    onSetDepartmentActive: handleSetDepartmentActive,
+    onDeleteDepartment: handleDeleteDepartment,
     onApproveTransfer: handleApproveTransfer,
     onRejectTransfer: handleRejectTransfer,
     onTemporaryPasswordCreated: handleTemporaryPasswordCreated,
@@ -1212,6 +1419,7 @@ export function useAppStateOrchestrator() {
     unreadNotifications,
     preferences,
     transferRequests,
+    departmentCatalog,
     rememberedEmail,
     selectedUserProfile,
     selectedReport,
@@ -1233,6 +1441,10 @@ export function useAppStateOrchestrator() {
     handleReportStatusUpdate,
     handleSubmitTransferRequest,
     handleAssignOfficeDepartment,
+    handleCreateDepartment,
+    handleUpdateDepartment,
+    handleSetDepartmentActive,
+    handleDeleteDepartment,
     handleApproveTransfer,
     handleRejectTransfer,
     handleTemporaryPasswordCreated,

@@ -12,6 +12,48 @@ const agencyIconById = {
   pwd: 'PWDSenior.png',
 }
 
+const agencyIconAliases = {
+  ...agencyIconById,
+  'city-treasury-office': 'City Treasury Office.png',
+  'bureau-of-fire-protection-bfp-processing-area': 'BFPoffice.png',
+  'city-traffic-management-division-impounding-services': 'City Traffic Management.png',
+  'city-veterinary-office': 'CityVet.png',
+  'city-agriculture-office': 'agriculture.png',
+  'city-cooperative-development-office': 'City Cooperative.png',
+  'senior-citizens-pwd-accessibility-services': 'PWDSenior.png',
+}
+
+function normalizeAgencyKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function resolveIconFileName(item) {
+  const candidates = [
+    item?.id,
+    item?.label,
+    normalizeAgencyKey(item?.id),
+    normalizeAgencyKey(item?.label),
+  ]
+
+  for (const candidate of candidates) {
+    const key = normalizeAgencyKey(candidate)
+    if (!key) {
+      continue
+    }
+
+    if (agencyIconAliases[key]) {
+      return agencyIconAliases[key]
+    }
+  }
+
+  return null
+}
+
 export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
   const selectedItem = items.find((item) => item.id === selectedItemId) || items[0]
 
@@ -53,7 +95,7 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
 
       <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
-          const iconFileName = agencyIconById[item.id]
+          const iconFileName = resolveIconFileName(item)
           const iconSrc = iconFileName ? encodeURI(`/assets/icons/${iconFileName}`) : null
           const isSelected = selectedItemId === item.id
 

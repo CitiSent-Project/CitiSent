@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SettingsSectionCard } from '../Account-Ui'
 import { USER_ROLES } from '../../models/roleAccessModel'
+import { DropdownButton } from '../ui/DropdownButton'
 
 export function DepartmentTransferTab({
   profile,
@@ -19,6 +20,14 @@ export function DepartmentTransferTab({
   const availableDepartments = departmentOptions.filter(
     (department) => department.id !== profile?.departmentId
   )
+
+  const requestedDepartmentOptions = [
+    { value: '', label: 'Select department' },
+    ...availableDepartments.map((department) => ({
+      value: department.id,
+      label: department.label,
+    })),
+  ]
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -65,18 +74,13 @@ export function DepartmentTransferTab({
         <form className="space-y-3" onSubmit={handleSubmit}>
           <div>
             <label className="mb-1 block text-sm text-slate-700">Requested department</label>
-            <select
+            <DropdownButton
+              className="w-full"
+              ariaLabel="Requested department"
               value={requestedDepartmentId}
-              onChange={(event) => setRequestedDepartmentId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"
-            >
-              <option value="">Select department</option>
-              {availableDepartments.map((department) => (
-                <option key={department.id} value={department.id}>
-                  {department.label}
-                </option>
-              ))}
-            </select>
+              onChange={setRequestedDepartmentId}
+              options={requestedDepartmentOptions}
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm text-slate-700">Reason</label>

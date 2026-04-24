@@ -1,4 +1,5 @@
-import { FiSearch, FiSliders, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiSliders } from 'react-icons/fi';
+import { DropdownButton } from '../ui/DropdownButton';
 
 export function UrgencyFilterChips({ 
   chips, 
@@ -10,6 +11,11 @@ export function UrgencyFilterChips({
   statusOptions = ['All Status', 'Pending', 'In Progress', 'Resolved', 'Unresolved'],
   onStatusChange
 }) {
+  const normalizedStatusOptions = statusOptions.map((option) => ({
+    label: option,
+    value: option === 'All Status' ? '' : option,
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -25,26 +31,15 @@ export function UrgencyFilterChips({
           />
         </div>
 
-        {/* Status Dropdown */}
-        <div className="relative inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-          <FiSliders className="text-sm shrink-0" />
-          <div className="flex items-center gap-1 overflow-hidden">
-            <span className="whitespace-nowrap font-medium text-slate-700">{statusFilter || 'All Status'}</span>
-          </div>
-          <FiChevronDown className="text-sm ml-auto shrink-0" />
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
-          >
-            {statusOptions.map((option) => (
-              <option key={option} value={option === 'All Status' ? '' : option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        <DropdownButton
+          value={statusFilter || ''}
+          options={normalizedStatusOptions}
+          onChange={onStatusChange}
+          icon={FiSliders}
+          placeholder="All Status"
+          ariaLabel="Filter reports by status"
+          className="min-w-52"
+        />
       </div>
 
       {/* Urgency Chips */}

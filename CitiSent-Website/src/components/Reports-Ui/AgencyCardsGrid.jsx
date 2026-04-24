@@ -1,4 +1,5 @@
-import { FiChevronDown, FiLayers } from 'react-icons/fi'
+import { FiLayers } from 'react-icons/fi'
+import { DropdownButton } from '../ui/DropdownButton'
 
 const agencyIconById = {
   bplo: 'bplo.png',
@@ -56,6 +57,7 @@ function resolveIconFileName(item) {
 
 export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
   const selectedItem = items.find((item) => item.id === selectedItemId) || items[0]
+  const normalizedAgencyOptions = items.map((item) => ({ label: item.label, value: item.id }))
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -70,21 +72,14 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
         <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Select Agency
         </label>
-        <div className="relative mt-2">
-          <select
-            value={selectedItemId}
-            onChange={(event) => onSelectItem(event.target.value)}
-            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm font-medium text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-            aria-label="Select agency"
-          >
-            {items.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-          <FiChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
-        </div>
+        <DropdownButton
+          value={selectedItemId ?? selectedItem?.id ?? ''}
+          options={normalizedAgencyOptions}
+          onChange={onSelectItem}
+          icon={FiLayers}
+          ariaLabel="Select agency"
+          className="mt-2 h-12 w-full rounded-xl border-slate-200 bg-slate-50 px-4 text-slate-700 focus-within:border-blue-400 focus-within:bg-white"
+        />
 
         {selectedItem ? (
           <p className="mt-3 text-sm text-slate-600">

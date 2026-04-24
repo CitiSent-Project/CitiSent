@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { DropdownButton } from '../ui/DropdownButton'
 
 const initialForm = {
   name: '',
@@ -101,14 +102,13 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
 
           <div>
             <label className="mb-1 block text-sm text-slate-700">Account Status</label>
-            <select
+            <DropdownButton
+              className="w-full"
+              ariaLabel="Account status"
               value={form.status}
-              onChange={(event) => updateField('status', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-            >
-              <option value="Active">Active</option>
-              <option value="Banned">Banned</option>
-            </select>
+              onChange={(nextStatus) => updateField('status', nextStatus)}
+              options={['Active', 'Banned']}
+            />
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">

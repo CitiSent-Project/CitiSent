@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -151,7 +152,7 @@ export function Dashboard() {
                 () => dashboardQuery.refetch()
             )
         }
-    }, [dashboardQuery.error])
+    }, [dashboardQuery, dashboardQuery.error])
 
     const isLoadingDashboard = Boolean(accessToken) && (dashboardQuery.isLoading || dashboardQuery.isFetching)
 
@@ -188,6 +189,21 @@ export function Dashboard() {
         () => mapDashboardRecentAdmins(dashboardQuery.data?.admins || []),
         [dashboardQuery.data?.admins]
     )
+
+    // Remove email column for admins view and strip email from each row
+    const adminsTableColumns = useMemo(() => DASHBOARD_ADMIN_TABLE_COLUMNS.filter((c) => c !== 'Email'), []);
+
+    const adminsTableRowsNoEmail = useMemo(
+        () =>
+            adminsTableRows.map((row) => {
+                // create shallow copy and remove common email keys if present
+                const newRow = { ...row };
+                delete newRow.email;
+                delete newRow.Email;
+                return newRow;
+            }),
+        [adminsTableRows]
+    );
 
     const newUsersTableRows = useMemo(
         () => mapDashboardRecentUsers(dashboardQuery.data?.users || []),
@@ -242,8 +258,8 @@ export function Dashboard() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <DashboardTableCard
                     title="Admins"
-                    columns={DASHBOARD_ADMIN_TABLE_COLUMNS}
-                    rows={adminsTableRows}
+                    columns={adminsTableColumns}
+                    rows={adminsTableRowsNoEmail}
                 />
                 <DashboardTableCard
                     title="Newly Joined Users"

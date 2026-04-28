@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { createPortal } from 'react-dom'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FiChevronDown } from 'react-icons/fi'
@@ -165,7 +166,7 @@ export function DropdownButton({
 		return () => {
 			window.cancelAnimationFrame(animationFrame)
 		}
-	}, [open, comparableValue, normalizedOptions.length])
+	}, [open, comparableValue, normalizedOptions.length, updatePopoverPosition])
 
 	useEffect(() => {
 		if (open) return undefined
@@ -212,7 +213,7 @@ export function DropdownButton({
 			window.removeEventListener('resize', handleReposition)
 			document.removeEventListener('scroll', handleReposition, true)
 		}
-	}, [open])
+	}, [open, updatePopoverPosition])
 
 	return (
 		<div className={`relative inline-flex ${className}`}>

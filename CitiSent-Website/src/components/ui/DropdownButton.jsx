@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FiChevronDown } from 'react-icons/fi'
 
 function normalizeOption(option, index) {
@@ -49,7 +50,10 @@ export function DropdownButton({
 	const triggerRef = useRef(null)
 	const popoverRef = useRef(null)
 	const [open, setOpen] = useState(false)
+	const [rendered, setRendered] = useState(false)
+	const [isVisible, setIsVisible] = useState(false)
 	const [activeIndex, setActiveIndex] = useState(-1)
+	const [popoverStyle, setPopoverStyle] = useState(null)
 
 	const normalizedOptions = useMemo(
 		() => options.map((option, index) => normalizeOption(option, index)),
@@ -68,7 +72,37 @@ export function DropdownButton({
 
 	const isPlaceholder = !selectedOption && !comparableValue
 
+	function updatePopoverPosition() {
+		const triggerElement = triggerRef.current
+		if (!triggerElement || typeof window === 'undefined') return
+
+		const triggerRect = triggerElement.getBoundingClientRect()
+		const viewportPadding = 8
+		const estimatedMenuHeight = Math.min(normalizedOptions.length * 40 + 8, 288)
+		const spaceBelow = window.innerHeight - triggerRect.bottom - viewportPadding
+		const spaceAbove = triggerRect.top - viewportPadding
+		const openAbove = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow
+		const top = openAbove
+			? Math.max(viewportPadding, triggerRect.top - estimatedMenuHeight - 8)
+			: Math.min(window.innerHeight - viewportPadding, triggerRect.bottom + 8)
+		const left = Math.max(
+			viewportPadding,
+			Math.min(triggerRect.left, window.innerWidth - triggerRect.width - viewportPadding),
+		)
+
+		setPopoverStyle({
+			position: 'fixed',
+			top: Math.round(top),
+			left: Math.round(left),
+			width: Math.round(triggerRect.width),
+			maxWidth: 'calc(100vw - 16px)',
+			boxSizing: 'border-box',
+			zIndex: 70,
+		})
+	}
+
 	function closePopover({ restoreFocus = true } = {}) {
+		setIsVisible(false)
 		setOpen(false)
 		setActiveIndex(-1)
 		if (restoreFocus) {
@@ -118,8 +152,41 @@ export function DropdownButton({
 		}
 	}
 
+	useLayoutEffect(() => {
+		if (!open) return
+
+		setRendered(true)
+		const animationFrame = window.requestAnimationFrame(() => {
+			setIsVisible(true)
+		})
+
+		updatePopoverPosition()
+
+		return () => {
+			window.cancelAnimationFrame(animationFrame)
+		}
+	}, [open, comparableValue, normalizedOptions.length])
+
+	useEffect(() => {
+		if (open) return undefined
+
+		if (!rendered) return undefined
+
+		const timeoutId = window.setTimeout(() => {
+			setRendered(false)
+		}, 160)
+
+		return () => {
+			window.clearTimeout(timeoutId)
+		}
+	}, [open, rendered])
+
 	useEffect(() => {
 		if (!open) return
+
+		function handleReposition() {
+			updatePopoverPosition()
+		}
 
 		function onPointerDown(event) {
 			const target = event.target
@@ -137,9 +204,13 @@ export function DropdownButton({
 
 		document.addEventListener('pointerdown', onPointerDown)
 		document.addEventListener('keydown', onEscape)
+		window.addEventListener('resize', handleReposition)
+		document.addEventListener('scroll', handleReposition, true)
 		return () => {
 			document.removeEventListener('pointerdown', onPointerDown)
 			document.removeEventListener('keydown', onEscape)
+			window.removeEventListener('resize', handleReposition)
+			document.removeEventListener('scroll', handleReposition, true)
 		}
 	}, [open])
 
@@ -215,11 +286,17 @@ export function DropdownButton({
 				/>
 			</button>
 
-			{open ? (
-				<div
-					ref={popoverRef}
-					className="absolute left-0 top-full z-50 mt-2 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
-				>
+			{rendered && popoverStyle && typeof document !== 'undefined'
+				? createPortal(
+					<div
+						ref={popoverRef}
+						style={popoverStyle}
+						className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl transition-all duration-150 ease-out ${
+							isVisible
+								? 'opacity-100 translate-y-0 scale-100'
+								: 'opacity-0 -translate-y-1 scale-[0.98]'
+						}`}
+					>
 					<div
 						id={listboxId}
 						role="listbox"
@@ -291,8 +368,10 @@ export function DropdownButton({
 							<div className="px-3 py-2 text-sm text-slate-400">No options</div>
 						)}
 					</div>
-				</div>
-			) : null}
+				</div>,
+				document.body,
+			)
+			: null}
 		</div>
 	)
 }

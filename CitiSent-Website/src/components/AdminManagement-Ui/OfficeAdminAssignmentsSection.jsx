@@ -1,3 +1,5 @@
+import { DropdownButton } from '../ui/DropdownButton'
+
 export function OfficeAdminAssignmentsSection({
   totalOfficeUnread,
   searchTerm,
@@ -11,6 +13,16 @@ export function OfficeAdminAssignmentsSection({
   onDraftDepartmentChange,
   onSaveAssignment,
 }) {
+  const departmentFilterOptions = [
+    { value: 'all', label: 'All Departments' },
+    ...departmentOptions.map((department) => ({ value: department.id, label: department.label })),
+  ]
+
+  const departmentAssignmentOptions = departmentOptions.map((department) => ({
+    value: department.id,
+    label: department.label,
+  }))
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -39,18 +51,13 @@ export function OfficeAdminAssignmentsSection({
 
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           Department filter
-          <select
+          <DropdownButton
+            className="w-full"
+            ariaLabel="Department filter"
             value={departmentFilter}
-            onChange={(event) => onDepartmentFilterChange(event.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-          >
-            <option value="all">All Departments</option>
-            {departmentOptions.map((department) => (
-              <option key={department.id} value={department.id}>
-                {department.label}
-              </option>
-            ))}
-          </select>
+            onChange={onDepartmentFilterChange}
+            options={departmentFilterOptions}
+          />
         </label>
 
       </div>
@@ -85,17 +92,13 @@ export function OfficeAdminAssignmentsSection({
                   </span>
                 </td>
                 <td className="px-3 py-3 text-center">
-                  <select
+                  <DropdownButton
+                    className="h-9 w-full rounded-lg px-3"
+                    ariaLabel={`Assign department for ${admin.fullName}`}
                     value={getSelectedDepartmentId(admin)}
-                    onChange={(event) => onDraftDepartmentChange(admin.id, event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-1.5"
-                  >
-                    {departmentOptions.map((department) => (
-                      <option key={department.id} value={department.id}>
-                        {department.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(nextDepartmentId) => onDraftDepartmentChange(admin.id, nextDepartmentId)}
+                    options={departmentAssignmentOptions}
+                  />
                 </td>
                 <td className="px-3 py-3 text-center">
                   <button

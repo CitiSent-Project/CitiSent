@@ -122,20 +122,37 @@ function shutdown(signal, options = {}) {
     return;
   }
 
-  server.close((error) => {
+  // If the server is not in a listening state, avoid calling close()
+  // to prevent attempting to close handles that are already closing/closed.
+  if (!server.listening) {
     clearTimeout(forceExitTimer);
-
-    if (error) {
-      logger.error("Error while shutting down server", {
-        message: error.message,
-      });
-      process.exit(1);
-      return;
-    }
-
-    logger.info("HTTP server closed gracefully");
     process.exit(exitCode);
-  });
+    return;
+  }
+
+  try {
+    server.close((error) => {
+      clearTimeout(forceExitTimer);
+
+      if (error) {
+        logger.error("Error while shutting down server", {
+          message: error.message,
+        });
+        process.exit(1);
+        return;
+      }
+
+      logger.info("HTTP server closed gracefully");
+      server = null;
+      process.exit(exitCode);
+    });
+  } catch (err) {
+    // Defensive: if close throws synchronously, log and exit.
+    clearTimeout(forceExitTimer);
+    logger.error("Error while shutting down server (sync)", { message: err.message });
+    process.exit(1);
+  }
+  
 }
 
 async function startServer() {

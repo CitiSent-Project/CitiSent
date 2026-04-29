@@ -27,7 +27,7 @@ export function OfficeAdminAssignmentsSection({
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Office admin assignments</h2>676
+          <h2 className="text-lg font-semibold text-slate-900">Office admin assignments</h2>
           <p className="mt-1 text-sm text-slate-600">
             Update department assignments for office admins.
           </p>

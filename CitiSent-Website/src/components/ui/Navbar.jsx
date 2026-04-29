@@ -11,7 +11,6 @@ import {
 	FiLogOut,
 	FiChevronDown,
 	FiChevronUp,
-	FiSearch,
 } from 'react-icons/fi'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../../models/pageModel'
@@ -86,7 +85,7 @@ function CitiSentLogoIcon({ className = '' }) {
 	return <img src={CitiSentLogo} alt="CitiSent logo" className={className} />
 }
 
-function NavOption({ item, activePage, onNavigate, expanded, index }) {
+function NavOption({ item, activePage, onNavigate, expanded }) {
 	const hasChildren = Boolean(item.children?.length)
 	const isReportsSection = activePage.startsWith(`${APP_PAGES.REPORTS}:`)
 	const isSelected = hasChildren ? isReportsSection : activePage === item.pageKey
@@ -120,40 +119,29 @@ function NavOption({ item, activePage, onNavigate, expanded, index }) {
 							? 'text-rose-200 hover:bg-rose-900/30 hover:text-rose-100'
 							: 'text-slate-100/90 hover:bg-blue-900/30 hover:text-white'
 				}`}
-				initial={{ opacity: 0, x: -12 }}
-				animate={{ opacity: 1, x: 0 }}
-				transition={{ delay: 0.05 * index, duration: 0.26 }}
 			>
 				<MotionDiv className="grid h-full w-10 place-content-center text-lg">
 					<Icon />
 				</MotionDiv>
 
-				{expanded && (
-					<MotionSpan
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.1 }}
-						className="text-sm font-medium"
-					>
-						{item.label}
-					</MotionSpan>
-				)}
+			{expanded && (
+				<span className="text-sm font-medium">
+					{item.label}
+				</span>
+			)}
 
-				{hasChildren && expanded ? (
-					<span className="ml-auto pr-1 text-cyan-100/90">
-						{submenuOpen ? <FiChevronUp className="text-lg" /> : <FiChevronDown className="text-lg" />}
-					</span>
-				) : null}
+			{hasChildren && expanded ? (
+				<span className="ml-auto pr-1 text-cyan-100/90">
+					{submenuOpen ? <FiChevronUp className="text-lg" /> : <FiChevronDown className="text-lg" />}
+				</span>
+			) : null}
 
-				{item.notifications && expanded && (
-					<MotionSpan
-						initial={{ scale: 0.5, opacity: 0 }}
-						animate={{ scale: 1, opacity: 1 }}
-						transition={{ delay: 0.2 }}
-						className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67] font-numeric"
-					>
-						{item.notifications}
-					</MotionSpan>
+			{item.notifications && expanded && (
+				<span
+					className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67] font-numeric"
+				>
+					{item.notifications}
+				</span>
 				)}
 			</MotionButton>
 
@@ -193,14 +181,10 @@ function BrandBlock({ expanded }) {
 					</MotionDiv>
 
 					{expanded && (
-						<MotionDiv
-							initial={{ opacity: 0, y: 8 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: 0.1 }}
-						>
-							<span className="block text-sm font-semibold tracking-wide text-cyan-100">CitiSent</span>
-							<span className="block text-xs text-cyan-100/70">Admin Workspace</span>
-						</MotionDiv>
+					<div>
+						<span className="block text-sm font-semibold tracking-wide text-cyan-100">CitiSent</span>
+						<span className="block text-xs text-cyan-100/70">Admin Workspace</span>
+					</div>
 					)}
 				</div>
 			</div>
@@ -270,14 +254,13 @@ export function Navbar({
 					<BrandBlock expanded={expanded} />
 
 					<nav className="flex-1 space-y-2">
-						{visibleNavItems.map((item, index) => (
+						{visibleNavItems.map((item) => (
 							<NavOption
 								key={item.label}
 								item={item}
 								activePage={activePage}
 								onNavigate={handleNavigate}
 								expanded={expanded}
-								index={index}
 							/>
 						))}
 					</nav>
@@ -289,17 +272,12 @@ export function Navbar({
 					>
 						<div className={`flex items-center py-2 ${expanded ? 'px-3' : 'px-2'}`}>
 							<MotionDiv className="grid h-10 w-10 place-content-center text-lg text-cyan-100">
-								<span className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>{'>>'}</span>
+								<span>{'>>'}</span>
 							</MotionDiv>
 							{expanded && (
-								<MotionSpan
-									initial={{ opacity: 0, y: 10 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.1 }}
-									className="text-sm font-medium text-cyan-100"
-								>
-									Hide
-								</MotionSpan>
+							<span className="text-sm font-medium text-cyan-100">
+								Hide
+							</span>
 							)}
 						</div>
 					</MotionButton>
@@ -326,16 +304,6 @@ export function Navbar({
 									<span className="block h-0.5 w-4 bg-slate-700" />
 								</span>
 							</button>
-
-							<label className="hidden items-center rounded-lg border border-slate-200 bg-white px-3 py-2 md:flex md:min-w-75">
-								<FiSearch className="mr-2 text-sm text-slate-400" aria-hidden="true" />
-								<span className="sr-only">Search</span>
-								<input
-									type="text"
-									placeholder="Search"
-									className="w-full border-none bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
-								/>
-							</label>
 						</div>
 
 						<div className="flex items-center gap-3">

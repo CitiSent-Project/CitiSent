@@ -44,13 +44,29 @@ export function buildProfileSubmissionState({
   const normalizedRole = normalizeUserRole(profile?.role)
   const didDepartmentChange = draft.department !== profile.department
 
+  if (normalizedRole === USER_ROLES.SUPERADMIN) {
+    return {
+      ok: true,
+      shouldUpdateProfile: true,
+      profileUpdates: {
+        fullName: draft.fullName,
+        username: draft.username,
+        email: draft.email,
+        phone: draft.phone,
+        address: draft.address,
+      },
+      transferRequestPayload: null,
+    }
+  }
+
   const profileUpdates = {
     fullName: draft.fullName,
+    email: draft.email,
     phone: draft.phone,
     address: draft.address,
   }
 
-  if (normalizedRole !== USER_ROLES.OFFICE_ADMIN || !didDepartmentChange) {
+  if (!didDepartmentChange) {
     return {
       ok: true,
       shouldUpdateProfile: true,

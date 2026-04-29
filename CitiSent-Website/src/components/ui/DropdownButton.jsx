@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { createPortal } from 'react-dom'
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FiChevronDown } from 'react-icons/fi'
 
 function normalizeOption(option, index) {
@@ -73,7 +72,7 @@ export function DropdownButton({
 
 	const isPlaceholder = !selectedOption && !comparableValue
 
-	function updatePopoverPosition() {
+	const updatePopoverPosition = useCallback(() => {
 		const triggerElement = triggerRef.current
 		if (!triggerElement || typeof window === 'undefined') return
 
@@ -100,7 +99,7 @@ export function DropdownButton({
 			boxSizing: 'border-box',
 			zIndex: 70,
 		})
-	}
+	}, [normalizedOptions.length])
 
 	function closePopover({ restoreFocus = true } = {}) {
 		setIsVisible(false)
@@ -113,6 +112,7 @@ export function DropdownButton({
 
 	function openPopover() {
 		if (disabled) return
+		setRendered(true)
 		setOpen(true)
 		const selectedIndex = normalizedOptions.findIndex(
 			(option) => toComparableValue(option.value) === comparableValue,
@@ -156,7 +156,6 @@ export function DropdownButton({
 	useLayoutEffect(() => {
 		if (!open) return
 
-		setRendered(true)
 		const animationFrame = window.requestAnimationFrame(() => {
 			setIsVisible(true)
 		})
@@ -166,7 +165,7 @@ export function DropdownButton({
 		return () => {
 			window.cancelAnimationFrame(animationFrame)
 		}
-	}, [open, comparableValue, normalizedOptions.length, updatePopoverPosition])
+	}, [open, comparableValue, updatePopoverPosition])
 
 	useEffect(() => {
 		if (open) return undefined

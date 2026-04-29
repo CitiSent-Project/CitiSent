@@ -29,6 +29,7 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
   return {
     id: payload.id || '',
     fullName: payload.fullName || payload.username || '',
+    username: payload.username || '',
     email: payload.email || '',
     departmentId: payload.departmentId || '',
     department: payload.departmentLabel || '',

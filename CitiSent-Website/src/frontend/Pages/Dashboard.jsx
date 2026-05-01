@@ -260,11 +260,13 @@ export function Dashboard() {
                     title="Admins"
                     columns={adminsTableColumns}
                     rows={adminsTableRowsNoEmail}
+                    isLoading={isLoadingDashboard}
                 />
                 <DashboardTableCard
                     title="Newly Joined Users"
                     columns={DASHBOARD_NEW_USERS_TABLE_COLUMNS}
                     rows={newUsersTableRows}
+                    isLoading={isLoadingDashboard}
                 />
             </div>
         </div>

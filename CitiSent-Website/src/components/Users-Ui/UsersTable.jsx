@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FiMoreHorizontal } from 'react-icons/fi'
+import { TableLoader } from '../ui/TableLoader'
 import { UserStatusPill } from './UserStatusPill'
 
 function UserInitialsAvatar({ name }) {
@@ -121,9 +122,11 @@ export function UsersTable({
   onEditUser,
   onToggleBanUser,
   canToggleBan = false,
+  isLoading = false,
 }) {
   const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
   const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
+  const shouldShowLoader = isLoading && users.length > 0
 
   return (
     <div className="overflow-x-auto">
@@ -131,6 +134,18 @@ export function UsersTable({
         <UsersTableHeader allSelected={allSelected} onToggleAll={onToggleSelectAllUsers} />
 
         <div className="divide-y divide-slate-200">
+          <TableLoader
+            isLoading={shouldShowLoader}
+            delayMs={0}
+            layout="users-grid"
+            variant="refreshing"
+            label="Refreshing users..."
+            refreshText="Refreshing users..."
+            rows={1}
+            gridTemplateColumnsClass="grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr]"
+            className="bg-white"
+          />
+
           {users.length ? (
             users.map((user) => (
               <UsersTableRow

@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion'
 import { ProfilePill } from './ProfilePill'
+import { TableLoader } from '../ui/TableLoader'
 
 const MotionDiv = motion.div
 
-export function DashboardTableCard({ title, columns, rows }) {
+export function DashboardTableCard({ title, columns, rows, isLoading = false }) {
+  const shouldShowLoader = isLoading && rows.length > 0
+
   return (
     <MotionDiv
       className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
@@ -28,6 +31,16 @@ export function DashboardTableCard({ title, columns, rows }) {
               ))}
             </tr>
           </thead>
+          <TableLoader
+            isLoading={shouldShowLoader}
+            delayMs={0}
+            variant="refreshing"
+            label="Refreshing table..."
+            refreshText="Refreshing..."
+            rows={1}
+            columns={columns.length}
+            cellClassName="h-4 w-24"
+          />
           <tbody>
             {rows.map((row, idx) => (
               <tr key={idx} className="border-b border-slate-100 transition hover:bg-slate-50">

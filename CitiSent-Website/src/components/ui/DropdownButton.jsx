@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { createPortal } from 'react-dom'
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FiChevronDown } from 'react-icons/fi'
 
 function normalizeOption(option, index) {
@@ -31,6 +30,21 @@ function normalizeOption(option, index) {
 
 function toComparableValue(value) {
 	return String(value ?? '')
+}
+
+function arePopoverStylesEqual(previousStyle, nextStyle) {
+	if (previousStyle === nextStyle) return true
+	if (!previousStyle || !nextStyle) return false
+
+	return (
+		previousStyle.position === nextStyle.position &&
+		previousStyle.top === nextStyle.top &&
+		previousStyle.left === nextStyle.left &&
+		previousStyle.width === nextStyle.width &&
+		previousStyle.maxWidth === nextStyle.maxWidth &&
+		previousStyle.boxSizing === nextStyle.boxSizing &&
+		previousStyle.zIndex === nextStyle.zIndex
+	)
 }
 
 export function DropdownButton({
@@ -73,7 +87,7 @@ export function DropdownButton({
 
 	const isPlaceholder = !selectedOption && !comparableValue
 
-	function updatePopoverPosition() {
+	const updatePopoverPosition = useCallback(() => {
 		const triggerElement = triggerRef.current
 		if (!triggerElement || typeof window === 'undefined') return
 
@@ -91,7 +105,7 @@ export function DropdownButton({
 			Math.min(triggerRect.left, window.innerWidth - triggerRect.width - viewportPadding),
 		)
 
-		setPopoverStyle({
+		const nextPopoverStyle = {
 			position: 'fixed',
 			top: Math.round(top),
 			left: Math.round(left),
@@ -99,8 +113,12 @@ export function DropdownButton({
 			maxWidth: 'calc(100vw - 16px)',
 			boxSizing: 'border-box',
 			zIndex: 70,
-		})
-	}
+		}
+
+		setPopoverStyle((previousStyle) =>
+			arePopoverStylesEqual(previousStyle, nextPopoverStyle) ? previousStyle : nextPopoverStyle,
+		)
+	}, [normalizedOptions.length])
 
 	function closePopover({ restoreFocus = true } = {}) {
 		setIsVisible(false)
@@ -113,6 +131,7 @@ export function DropdownButton({
 
 	function openPopover() {
 		if (disabled) return
+		setRendered(true)
 		setOpen(true)
 		const selectedIndex = normalizedOptions.findIndex(
 			(option) => toComparableValue(option.value) === comparableValue,
@@ -156,7 +175,6 @@ export function DropdownButton({
 	useLayoutEffect(() => {
 		if (!open) return
 
-		setRendered(true)
 		const animationFrame = window.requestAnimationFrame(() => {
 			setIsVisible(true)
 		})

@@ -69,6 +69,7 @@ describe('profileController', () => {
       },
       draft: {
         fullName: 'BPLO Admin',
+        email: 'bplo.admin@citisent.gov',
         department: 'City Treasury Office',
         phone: '0900',
         address: 'City Hall',
@@ -84,6 +85,7 @@ describe('profileController', () => {
     expect(result.ok).toBe(true)
     expect(result.profileUpdates).toEqual({
       fullName: 'BPLO Admin',
+      email: 'bplo.admin@citisent.gov',
       phone: '0900',
       address: 'City Hall',
     })
@@ -92,5 +94,67 @@ describe('profileController', () => {
       requestedDepartmentLabel: 'City Treasury Office',
       reason: 'Departmental workload balancing.',
     })
+  })
+
+  it('keeps office admin email editable when the department is unchanged', () => {
+    const result = buildProfileSubmissionState({
+      profile: {
+        role: USER_ROLES.OFFICE_ADMIN,
+        department: 'Business Permits and Licensing Office (BPLO)',
+      },
+      draft: {
+        fullName: 'BPLO Admin',
+        email: 'updated.bplo.admin@citisent.gov',
+        department: 'Business Permits and Licensing Office (BPLO)',
+        phone: '0900',
+        address: 'City Hall',
+      },
+      transferReason: '',
+      departmentCatalog: [
+        { id: 'bplo', label: 'Business Permits and Licensing Office (BPLO)' },
+        { id: 'cto', label: 'City Treasury Office' },
+      ],
+      hasPendingTransferRequest: false,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(result.profileUpdates).toEqual({
+      fullName: 'BPLO Admin',
+      email: 'updated.bplo.admin@citisent.gov',
+      phone: '0900',
+      address: 'City Hall',
+      department: 'Business Permits and Licensing Office (BPLO)',
+    })
+    expect(result.transferRequestPayload).toBeNull()
+  })
+
+  it('lets superadmins update account identity fields without department changes', () => {
+    const result = buildProfileSubmissionState({
+      profile: {
+        role: USER_ROLES.SUPERADMIN,
+        department: 'All Departments',
+      },
+      draft: {
+        fullName: 'City Superadmin',
+        username: 'city_superadmin',
+        email: 'superadmin@citisent.gov',
+        department: 'All Departments',
+        phone: '+639000000000',
+        address: 'City Hall',
+      },
+      transferReason: '',
+      departmentCatalog: [],
+      hasPendingTransferRequest: false,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(result.profileUpdates).toEqual({
+      fullName: 'City Superadmin',
+      username: 'city_superadmin',
+      email: 'superadmin@citisent.gov',
+      phone: '+639000000000',
+      address: 'City Hall',
+    })
+    expect(result.transferRequestPayload).toBeNull()
   })
 })

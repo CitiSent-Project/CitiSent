@@ -184,7 +184,7 @@ export function DropdownButton({
 		return () => {
 			window.cancelAnimationFrame(animationFrame)
 		}
-	}, [open, comparableValue, normalizedOptions.length, updatePopoverPosition])
+	}, [open, comparableValue, updatePopoverPosition])
 
 	useEffect(() => {
 		if (open) return undefined

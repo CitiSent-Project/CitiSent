@@ -18,6 +18,7 @@ export function ProfileInformation({
     label: agency.label,
   }))
   const departmentLabels = departmentCatalog.map((agency) => agency.label)
+  const isSuperAdmin = normalizeUserRole(profile.role) === USER_ROLES.SUPERADMIN
   const isOfficeAdmin = normalizeUserRole(profile.role) === USER_ROLES.OFFICE_ADMIN
   const hasPendingTransferRequest = transferRequests.some(
     (request) =>
@@ -28,6 +29,8 @@ export function ProfileInformation({
   const [submissionFeedback, setSubmissionFeedback] = useState(null)
   const [draft, setDraft] = useState({
     fullName: profile.fullName,
+    username: profile.username,
+    email: profile.email,
     department: profile.department,
     phone: profile.phone,
     address: profile.address,
@@ -40,6 +43,8 @@ export function ProfileInformation({
   function startEditing() {
     setDraft({
       fullName: profile.fullName,
+      username: profile.username,
+      email: profile.email,
       department: profile.department,
       phone: profile.phone,
       address: profile.address,
@@ -162,33 +167,52 @@ export function ProfileInformation({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Department</label>
-                <select
-                  value={draft.department}
-                  onChange={(event) => updateDraft('department', event.target.value)}
-                  disabled={isOfficeAdmin && hasPendingTransferRequest}
+                <label className="mb-1 block text-sm text-slate-700">Email</label>
+                <input
+                  value={draft.email}
+                  onChange={(event) => updateDraft('email', event.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                >
-                  {!departmentLabels.includes(draft.department) ? (
-                    <option value={draft.department}>{draft.department}</option>
-                  ) : null}
-                  {departmentLabels.map((department) => (
-                    <option key={department} value={department}>
-                      {department}
-                    </option>
-                  ))}
-                </select>
-                {isOfficeAdmin ? (
-                  <p className="mt-1 text-xs text-slate-500">
-                    Department changes are processed as transfer requests and require superadmin approval.
-                  </p>
-                ) : null}
-                {isOfficeAdmin && hasPendingTransferRequest ? (
-                  <p className="mt-1 text-xs text-amber-700">
-                    You already have a pending transfer request. Department edits are temporarily locked.
-                  </p>
-                ) : null}
+                />
               </div>
+              {isSuperAdmin ? (
+                <div>
+                  <label className="mb-1 block text-sm text-slate-700">Username</label>
+                  <input
+                    value={draft.username}
+                    onChange={(event) => updateDraft('username', event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-1 block text-sm text-slate-700">Department</label>
+                  <select
+                    value={draft.department}
+                    onChange={(event) => updateDraft('department', event.target.value)}
+                    disabled={isOfficeAdmin && hasPendingTransferRequest}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  >
+                    {!departmentLabels.includes(draft.department) ? (
+                      <option value={draft.department}>{draft.department}</option>
+                    ) : null}
+                    {departmentLabels.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </select>
+                  {isOfficeAdmin ? (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Department changes are processed as transfer requests and require superadmin approval.
+                    </p>
+                  ) : null}
+                  {isOfficeAdmin && hasPendingTransferRequest ? (
+                    <p className="mt-1 text-xs text-amber-700">
+                      You already have a pending transfer request. Department edits are temporarily locked.
+                    </p>
+                  ) : null}
+                </div>
+              )}
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Phone</label>
                 <input

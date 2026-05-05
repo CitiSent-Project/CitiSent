@@ -2,67 +2,77 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { DropdownButton } from '../DropdownButton'
 
 describe('DropdownButton', () => {
   let container
   let root
-  let originalRequestAnimationFrame
-  let originalCancelAnimationFrame
-  let originalActEnvironment
+  let requestAnimationFrameSpy
+  let cancelAnimationFrameSpy
 
   beforeEach(() => {
-    originalActEnvironment = globalThis.IS_REACT_ACT_ENVIRONMENT
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
-
-    originalRequestAnimationFrame = window.requestAnimationFrame
-    originalCancelAnimationFrame = window.cancelAnimationFrame
-    window.requestAnimationFrame = (callback) => window.setTimeout(() => callback(Date.now()), 0)
-    window.cancelAnimationFrame = (handle) => window.clearTimeout(handle)
-
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
+    requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        callback(0)
+        return 1
+      })
+    cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
   })
 
   afterEach(() => {
     act(() => {
       root.unmount()
     })
-
     container.remove()
-    window.requestAnimationFrame = originalRequestAnimationFrame
-    window.cancelAnimationFrame = originalCancelAnimationFrame
-    globalThis.IS_REACT_ACT_ENVIRONMENT = originalActEnvironment
+    requestAnimationFrameSpy.mockRestore()
+    cancelAnimationFrameSpy.mockRestore()
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
   })
 
-  it('opens without triggering a render loop', async () => {
-    const onChange = vi.fn()
+  it('opens without triggering the error boundary and still returns the selected value', async () => {
+    const handleChange = vi.fn()
 
     await act(async () => {
       root.render(
         <DropdownButton
           label="Theme"
           value="System"
-          onChange={onChange}
-          options={['Light', 'Dark', 'System']}
-        />,
+          onChange={handleChange}
+          options={[
+            { label: 'Light', value: 'Light' },
+            { label: 'System', value: 'System' },
+          ]}
+        />
       )
     })
 
-    const button = container.querySelector('button')
-    expect(button).toBeTruthy()
+    const trigger = container.querySelector('button')
+    expect(trigger?.textContent).toContain('System')
 
     await act(async () => {
-      button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-      await new Promise((resolve) => window.setTimeout(resolve, 0))
+      trigger.click()
     })
 
-    expect(document.body.textContent).toContain('Light')
-    expect(document.body.textContent).toContain('Dark')
-    expect(document.body.textContent).toContain('System')
-    expect(document.body.querySelector('[role="listbox"]')).toBeTruthy()
-    expect(onChange).not.toHaveBeenCalled()
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+
+    const listbox = document.body.querySelector('[role="listbox"]')
+    expect(listbox).not.toBeNull()
+    expect(listbox.textContent).toContain('Light')
+
+    const option = Array.from(document.body.querySelectorAll('[role="option"]')).find((node) =>
+      String(node.textContent || '').includes('Light')
+    )
+
+    await act(async () => {
+      option.click()
+    })
+
+    expect(handleChange).toHaveBeenCalledWith('Light')
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 })

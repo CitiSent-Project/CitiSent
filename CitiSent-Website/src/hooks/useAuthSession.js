@@ -7,6 +7,7 @@ import {
 } from '../controllers/navigationController'
 import { DEFAULT_ADMIN_PROFILE } from '../models/data'
 import { APP_PAGES } from '../models/pageModel'
+import { composeFullName } from '../models/nameModel'
 
 function normalizeLoginIdentifier(payload = {}) {
   const candidate = String(payload.identifier || payload.email || '').trim()
@@ -23,7 +24,13 @@ function buildRegistrationUsername(payload = {}) {
     .trim()
     .toLowerCase()
     .split('@')[0]
-  const fullNameCandidate = String(payload.fullName || '').trim().toLowerCase()
+  const fullNameCandidate = composeFullName({
+    fname: payload.fname,
+    mname: payload.mname,
+    lname: payload.lname,
+  })
+    .trim()
+    .toLowerCase()
   const baseCandidate = emailLocalPart || fullNameCandidate || 'admin_user'
 
   const normalized = baseCandidate
@@ -64,7 +71,9 @@ export function useAuthSession({
         username: buildRegistrationUsername(payload),
         email: payload.email,
         password: payload.password,
-        fullName: payload.fullName,
+        fname: payload.fname,
+        mname: payload.mname,
+        lname: payload.lname,
         phoneNumber: payload.phone,
         address: payload.address,
         role: payload.role,

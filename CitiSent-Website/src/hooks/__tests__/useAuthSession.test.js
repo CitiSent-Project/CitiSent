@@ -56,7 +56,9 @@ describe('useAuthSession', () => {
     const { handleRegister } = useAuthSession(deps)
 
     const result = await handleRegister({
-      fullName: 'Admin Name',
+      fname: 'Admin',
+      mname: '',
+      lname: 'Name',
       email: 'admin@citisent.gov',
       departmentId: 'cto',
       departmentLabel: 'City Treasury Office',

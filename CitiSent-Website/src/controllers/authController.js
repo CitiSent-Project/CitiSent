@@ -1,16 +1,23 @@
 import { APP_PAGES } from '../models/pageModel'
+import { composeFullName } from '../models/nameModel'
 
 export function buildRegistrationState({ currentProfile, payload }) {
   const now = new Date().toISOString()
+  const displayName = composeFullName({
+    fname: payload.fname,
+    mname: payload.mname,
+    lname: payload.lname,
+  })
   const nextProfile = {
     ...currentProfile,
     ...payload,
+    fullName: displayName,
     joinedAt: now,
     lastLoginAt: '',
   }
 
   const nextPreferencesPatch = {
-    displayName: payload.fullName,
+    displayName: displayName,
     department: payload.department,
   }
 

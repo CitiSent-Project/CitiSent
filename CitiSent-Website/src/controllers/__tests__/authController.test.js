@@ -18,7 +18,9 @@ describe('authController', () => {
 
     const currentProfile = { fullName: 'Old Name', role: 'Administrator' }
     const payload = {
-      fullName: 'New Admin',
+      fname: 'New',
+      mname: '',
+      lname: 'Admin',
       email: 'admin@citisent.gov',
       department: 'Operations',
     }
@@ -26,6 +28,9 @@ describe('authController', () => {
     const result = buildRegistrationState({ currentProfile, payload })
 
     expect(result.nextProfile).toEqual({
+      fname: 'New',
+      mname: '',
+      lname: 'Admin',
       fullName: 'New Admin',
       role: 'Administrator',
       email: 'admin@citisent.gov',

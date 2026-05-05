@@ -68,7 +68,8 @@ test("buildActor prefers profile role and profile metadata", () => {
     profile: {
       user_id: "user-1",
       email: "admin@citisent.gov",
-      full_name: "City Admin",
+      fname: "City",
+      lname: "Admin",
       role: "Office Admin",
       account_type: ACCOUNT_TYPES.ADMIN,
       department_id: "cto",

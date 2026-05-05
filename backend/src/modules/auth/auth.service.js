@@ -7,6 +7,7 @@ import {
   normalizeUserRole,
 } from "../../shared/auth/roleAccess.js";
 import { departmentsService } from "../departments/departments.service.js";
+import { normalizeNamePart } from "../../shared/utils/name.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -128,6 +129,9 @@ export const authService = {
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
       : null;
+    const normalizedFname = normalizeNamePart(payload.fname);
+    const normalizedMname = normalizeNamePart(payload.mname);
+    const normalizedLname = normalizeNamePart(payload.lname);
     const normalizedRole = normalizeUserRole(payload.role);
     const accountType = normalizeAccountType(
       payload.accountType,
@@ -156,11 +160,14 @@ export const authService = {
     const profilePayload = {
       email: normalizedEmail,
       username: payload.username,
-      full_name: normalizeOptionalString(payload.fullName),
+      fname: normalizedFname,
+      mname: normalizedMname,
+      lname: normalizedLname,
       phone_number: normalizedPhoneNumber,
       role: normalizedRole || null,
       account_type: accountType,
-      department_id: matchedDepartment?.slug || normalizeOptionalString(payload.departmentId),
+      department_id:
+        matchedDepartment?.slug || normalizeOptionalString(payload.departmentId),
       department_label:
         matchedDepartment?.name || normalizeOptionalString(payload.departmentLabel),
       age: payload.age ?? null,
@@ -172,7 +179,9 @@ export const authService = {
 
     const rawUserMetadata = {
       username: payload.username,
-      full_name: normalizeOptionalString(payload.fullName),
+      fname: normalizedFname,
+      mname: normalizedMname,
+      lname: normalizedLname,
       phoneNumber: normalizedPhoneNumber,
       phone_number: normalizedPhoneNumber,
       barangay: payload.barangay,

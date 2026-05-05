@@ -611,7 +611,9 @@ export function useAppStateOrchestrator() {
 
     try {
       const response = await authApiService.updateCurrentUser(accessToken, {
-        ...(updates.fullName !== undefined ? { fullName: updates.fullName } : {}),
+        ...(updates.fname !== undefined ? { fname: updates.fname } : {}),
+        ...(updates.mname !== undefined ? { mname: updates.mname } : {}),
+        ...(updates.lname !== undefined ? { lname: updates.lname } : {}),
         ...(updates.username !== undefined ? { username: updates.username } : {}),
         ...(updates.email !== undefined ? { email: updates.email } : {}),
         ...(updates.phone !== undefined ? { phoneNumber: updates.phone } : {}),

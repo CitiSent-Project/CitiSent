@@ -8,7 +8,9 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 	)
 
 	const initialForm = {
-		fullName: '',
+		fname: '',
+		mname: '',
+		lname: '',
 		email: '',
 		departmentId: availableDepartments[0]?.id || '',
 		role: 'Office Admin',
@@ -33,7 +35,13 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			return 'No departments are available yet. Please try again in a moment.'
 		}
 
-		if (!form.fullName.trim() || !form.email.trim() || !resolvedDepartmentId.trim() || !form.password) {
+		if (
+			!form.fname.trim() ||
+			!form.lname.trim() ||
+			!form.email.trim() ||
+			!resolvedDepartmentId.trim() ||
+			!form.password
+		) {
 			return 'Please complete all required fields.'
 		}
 
@@ -62,7 +70,9 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 
 		setSubmitting(true)
 		const result = await onRegister({
-			fullName: form.fullName.trim(),
+			fname: form.fname.trim(),
+			mname: form.mname.trim() || null,
+			lname: form.lname.trim(),
 			email: form.email.trim().toLowerCase(),
 			departmentId: resolvedDepartmentId,
 			departmentLabel: selectedDepartment?.label || '',
@@ -101,14 +111,32 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			}
 		>
 			<form className="grid gap-4 md:grid-cols-2 md:gap-x-5 md:gap-y-4" onSubmit={handleSubmit}>
-				<AuthInputField
-					id="register-name"
-					label="Full Name"
-					value={form.fullName}
-					onChange={(value) => updateField('fullName', value)}
-					placeholder="Juan Dela Cruz"
-					variant="admin-login"
-				/>
+				<div className="md:col-span-2 grid gap-4 md:grid-cols-3">
+					<AuthInputField
+						id="register-fname"
+						label="First Name"
+						value={form.fname}
+						onChange={(value) => updateField('fname', value)}
+						placeholder="Juan"
+						variant="admin-login"
+					/>
+					<AuthInputField
+						id="register-mname"
+						label="Middle Name (Optional)"
+						value={form.mname}
+						onChange={(value) => updateField('mname', value)}
+						placeholder="Santos"
+						variant="admin-login"
+					/>
+					<AuthInputField
+						id="register-lname"
+						label="Last Name"
+						value={form.lname}
+						onChange={(value) => updateField('lname', value)}
+						placeholder="Dela Cruz"
+						variant="admin-login"
+					/>
+				</div>
 
 				<AuthInputField
 					id="register-email"

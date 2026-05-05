@@ -22,6 +22,7 @@ import { notificationsRepository } from "./notifications/notifications.repositor
 import { logger } from "../../config/logger.js";
 import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
 import { departmentsService } from "../departments/departments.service.js";
+import { composeFullName, normalizeNamePart } from "../../shared/utils/name.js";
 
 const MANILA_TIME_ZONE = "Asia/Manila";
 const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
@@ -190,13 +191,14 @@ async function resolveActiveDepartmentOrThrow({ accessToken, value, fieldName })
   return department;
 }
 
-function buildUsername({ username, fullName, email }) {
+function buildUsername({ username, fname, mname, lname, email }) {
   const provided = normalizeOptionalString(username);
   if (provided) {
     return provided.toLowerCase();
   }
 
-  const fullNameCandidate = String(fullName || "")
+  const fullNameCandidate = composeFullName({ fname, mname, lname });
+  const normalizedFullName = String(fullNameCandidate || "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, "_")
@@ -211,7 +213,7 @@ function buildUsername({ username, fullName, email }) {
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-  return (fullNameCandidate || emailCandidate || "user").slice(0, 40);
+  return (normalizedFullName || emailCandidate || "user").slice(0, 40);
 }
 
 function buildTemporaryPassword() {
@@ -310,6 +312,9 @@ export const adminService = {
       payload.accountType,
       payload.role,
     );
+    const normalizedFname = normalizeNamePart(payload.fname);
+    const normalizedMname = normalizeNamePart(payload.mname);
+    const normalizedLname = normalizeNamePart(payload.lname);
     const normalizedRole =
       normalizedAccountType === "admin"
         ? normalizeUserRole(payload.role || USER_ROLES.OFFICE_ADMIN)
@@ -335,7 +340,9 @@ export const adminService = {
 
     const username = buildUsername({
       username: payload.username,
-      fullName: payload.fullName,
+      fname: normalizedFname,
+      mname: normalizedMname,
+      lname: normalizedLname,
       email: normalizedEmail,
     });
     const temporaryPassword = buildTemporaryPassword();
@@ -345,7 +352,9 @@ export const adminService = {
       password: temporaryPassword,
       userMetadata: {
         username,
-        fullName: payload.fullName,
+        fname: normalizedFname,
+        mname: normalizedMname,
+        lname: normalizedLname,
         phoneNumber: normalizedPhoneNumber,
       },
     });
@@ -366,7 +375,9 @@ export const adminService = {
         payload: {
           email: normalizedEmail,
           username,
-          full_name: payload.fullName,
+          fname: normalizedFname,
+          mname: normalizedMname,
+          lname: normalizedLname,
           phone_number: normalizedPhoneNumber,
           address: normalizeOptionalString(payload.address),
           account_type: normalizedAccountType,
@@ -437,6 +448,12 @@ export const adminService = {
           ? normalizePhoneNumber(payload.phoneNumber)
           : null
         : undefined;
+    const normalizedFname =
+      payload.fname !== undefined ? normalizeNamePart(payload.fname) : undefined;
+    const normalizedMname =
+      payload.mname !== undefined ? normalizeNamePart(payload.mname) : undefined;
+    const normalizedLname =
+      payload.lname !== undefined ? normalizeNamePart(payload.lname) : undefined;
     const requestedDepartmentValue =
       payload.departmentId !== undefined
         ? payload.departmentId
@@ -452,7 +469,9 @@ export const adminService = {
       : null;
 
     const profilePayload = {
-      ...(payload.fullName !== undefined ? { full_name: payload.fullName } : {}),
+      ...(normalizedFname !== undefined ? { fname: normalizedFname } : {}),
+      ...(normalizedMname !== undefined ? { mname: normalizedMname } : {}),
+      ...(normalizedLname !== undefined ? { lname: normalizedLname } : {}),
       ...(payload.username !== undefined ? { username: payload.username } : {}),
       ...(normalizedPhoneNumber !== undefined
         ? { phone_number: normalizedPhoneNumber }
@@ -1092,7 +1111,12 @@ export const adminService = {
     return rows.map((profile) => ({
       id: profile?.user_id || "",
       username: profile?.username || "",
-      fullName: profile?.full_name || profile?.username || profile?.email || "",
+      fullName:
+        composeFullName({
+          fname: profile?.fname,
+          mname: profile?.mname,
+          lname: profile?.lname,
+        }) || profile?.username || profile?.email || "",
       email: profile?.email || null,
       joinedAt: profile?.created_at || null,
     }));

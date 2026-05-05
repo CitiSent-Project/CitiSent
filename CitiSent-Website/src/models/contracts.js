@@ -1,6 +1,9 @@
 /**
  * @typedef {Object} AdminProfile
  * @property {string} id
+ * @property {string} fname
+ * @property {string} mname
+ * @property {string} lname
  * @property {string} fullName
  * @property {string} email
  * @property {string} departmentId

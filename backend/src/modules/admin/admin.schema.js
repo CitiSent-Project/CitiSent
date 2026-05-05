@@ -49,7 +49,9 @@ export const createAdminUserSchema = z.object({
   query: z.object({}).optional().default({}),
   body: z.object({
     email: z.string().trim().email().max(254),
-    fullName: z.string().trim().min(2).max(120),
+    fname: z.string().trim().min(1).max(120),
+    mname: z.string().trim().min(1).max(120).nullable().optional(),
+    lname: z.string().trim().min(1).max(120),
     username: usernameSchema.optional(),
     phoneNumber: phoneNumberSchema.optional(),
     address: z.string().trim().min(3).max(240).optional(),
@@ -68,7 +70,9 @@ export const updateAdminUserSchema = z.object({
   }),
   body: z
     .object({
-      fullName: z.string().trim().min(2).max(120).optional(),
+      fname: z.string().trim().min(1).max(120).optional(),
+      mname: z.string().trim().min(1).max(120).nullable().optional(),
+      lname: z.string().trim().min(1).max(120).optional(),
       username: usernameSchema.optional(),
       phoneNumber: phoneNumberSchema.optional(),
       address: z.string().trim().min(3).max(240).optional(),

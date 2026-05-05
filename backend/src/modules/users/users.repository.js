@@ -77,9 +77,9 @@ export const usersRepository = {
         {
           email: payload.email,
           user_metadata: {
-            ...(payload.full_name
-              ? { fullName: payload.full_name, name: payload.full_name }
-              : {}),
+            ...(payload.fname !== undefined ? { fname: payload.fname } : {}),
+            ...(payload.mname !== undefined ? { mname: payload.mname } : {}),
+            ...(payload.lname !== undefined ? { lname: payload.lname } : {}),
             ...(payload.username ? { username: payload.username } : {}),
             ...(payload.phone_number
               ? {

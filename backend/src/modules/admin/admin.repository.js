@@ -106,7 +106,7 @@ async function loadReporterProfiles(db, rows = []) {
 
   const { data, error } = await db
     .from(PROFILES_TABLE)
-    .select("user_id, email, username, full_name")
+    .select("user_id, email, username, fname, mname, lname")
     .in("user_id", reporterIds);
 
   if (error) {
@@ -151,7 +151,7 @@ export const adminRepository = {
 
     if (normalizedSearch) {
       query = query.or(
-        `email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,full_name.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
+        `email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,fname.ilike.%${normalizedSearch}%,mname.ilike.%${normalizedSearch}%,lname.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
       );
     }
 
@@ -410,7 +410,8 @@ export const adminRepository = {
       .select("*")
       .eq("account_type", "admin")
       .eq("role", USER_ROLES.OFFICE_ADMIN)
-      .order("full_name", { ascending: true });
+      .order("lname", { ascending: true })
+      .order("fname", { ascending: true });
 
     if (error) {
       throw toGatewayError("Failed to fetch office admins", error);
@@ -607,7 +608,7 @@ export const adminRepository = {
 
     const { data, error } = await db
       .from(PROFILES_TABLE)
-      .select("user_id, username, full_name, email, created_at")
+      .select("user_id, username, fname, mname, lname, email, created_at")
       .eq("account_type", "citizen")
       .order("created_at", { ascending: false })
       .range(0, Math.max(0, normalizedLimit - 1));

@@ -62,13 +62,21 @@ describe('useAuthSession', () => {
       email: 'admin@citisent.gov',
       departmentId: 'cto',
       departmentLabel: 'City Treasury Office',
-      role: 'Office Admin',
+      role: 'Superadmin',
       phone: '+63 900 000 0000',
       address: 'City Hall',
       password: 'supersecret',
     })
 
     expect(result.ok).toBe(true)
+    expect(authApiService.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: 'Office Admin',
+        phoneNumber: '+63 900 000 0000',
+        departmentId: 'cto',
+        departmentLabel: 'City Treasury Office',
+      })
+    )
     expect(deps.setAuthPage).toHaveBeenCalledTimes(1)
     expect(deps.setRememberedEmail).toHaveBeenCalledWith('admin@citisent.gov')
     expect(deps.addActivity).toHaveBeenCalledWith(
@@ -76,6 +84,31 @@ describe('useAuthSession', () => {
       'Admin account created for admin@citisent.gov'
     )
     expect(deps.notifySuccess).toHaveBeenCalledWith('Registration successful. You can now sign in.')
+  })
+
+  it('sends null for blank optional registration phone', async () => {
+    authApiService.register.mockResolvedValue({ data: {} })
+
+    const deps = buildDependencies()
+    const { handleRegister } = useAuthSession(deps)
+
+    await handleRegister({
+      fname: 'Admin',
+      mname: '',
+      lname: 'Name',
+      email: 'admin@citisent.gov',
+      departmentId: 'cto',
+      departmentLabel: 'City Treasury Office',
+      phone: '',
+      address: 'City Hall',
+      password: 'supersecret',
+    })
+
+    expect(authApiService.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phoneNumber: null,
+      })
+    )
   })
 
   it('handles failed login with validation message', async () => {

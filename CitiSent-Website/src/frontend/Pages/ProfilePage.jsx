@@ -154,7 +154,7 @@ export function ProfileInformation({
               <p
                 className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
                   submissionFeedback.type === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    ? 'border-rose-200 bg-rose-50 text-red-900'
                     : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                 }`}
               >

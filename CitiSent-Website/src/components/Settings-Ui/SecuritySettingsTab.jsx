@@ -36,7 +36,7 @@ export function SecuritySettingsTab({
       />
 
       <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
-        <p className="text-sm font-medium text-rose-700">Security action</p>
+        <p className="text-sm font-medium text-red-900">Security action</p>
         <p className="mt-1 text-xs text-rose-600">
           For demo purposes, sign out and return to the login screen.
         </p>

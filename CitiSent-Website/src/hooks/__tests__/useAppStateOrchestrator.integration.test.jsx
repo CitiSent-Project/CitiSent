@@ -47,6 +47,7 @@ vi.mock('../../services/api/admin/activityLogApiService', () => ({
 vi.mock('../../services/api/admin/departmentsApiService', () => ({
   departmentsApiService: {
     getDepartments: vi.fn(),
+    getDepartmentsCatalog: vi.fn(),
   },
 }))
 
@@ -214,6 +215,9 @@ describe('useAppStateOrchestrator transfer review integration', () => {
       ],
     })
     departmentsApiService.getDepartments.mockResolvedValue({
+      departments: [],
+    })
+    departmentsApiService.getDepartmentsCatalog.mockResolvedValue({
       departments: [],
     })
     activityLogApiService.getActivityLog.mockResolvedValue({
@@ -476,6 +480,7 @@ describe('useAppStateOrchestrator access recovery integration', () => {
     activityLogApiService.getActivityLog.mockResolvedValue({ data: [] })
     activityLogApiService.createActivityLogEntry.mockResolvedValue({ data: null })
     departmentsApiService.getDepartments.mockResolvedValue({ departments: [] })
+    departmentsApiService.getDepartmentsCatalog.mockResolvedValue({ departments: [] })
     notificationsApiService.listNotifications.mockResolvedValue({ data: [] })
     notificationsApiService.updateNotificationReadState.mockResolvedValue({ data: null })
     notificationsApiService.clearNotifications.mockResolvedValue({ data: { clearedCount: 0 } })
@@ -508,5 +513,78 @@ describe('useAppStateOrchestrator access recovery integration', () => {
     expect(authApiService.me).toHaveBeenCalledTimes(2)
     expect(latestState.appState.profile.role).toBe('Superadmin')
     expect(latestState.appState.activePage).toBe(APP_PAGES.ADMIN_MANAGEMENT)
+  })
+})
+
+describe('useAppStateOrchestrator department hydration', () => {
+  let container
+  let root
+
+  beforeEach(() => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    window.localStorage.clear()
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+
+    departmentsApiService.getDepartments.mockResolvedValue({
+      departments: [
+        {
+          id: 'public-safety',
+          label: 'Public Safety',
+          slug: 'public-safety',
+          name: 'Public Safety',
+          isActive: true,
+        },
+        {
+          id: 'inactive-office',
+          label: 'Inactive Office',
+          slug: 'inactive-office',
+          name: 'Inactive Office',
+          isActive: false,
+        },
+      ],
+    })
+    departmentsApiService.getDepartmentsCatalog.mockResolvedValue({
+      departments: [],
+    })
+    transferRequestsApiService.listTransferRequests.mockResolvedValue({ data: [] })
+    activityLogApiService.getActivityLog.mockResolvedValue({ data: [] })
+    notificationsApiService.listNotifications.mockResolvedValue({ data: [] })
+
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    latestState = undefined
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    vi.clearAllMocks()
+  })
+
+  it('fetches active department options without an access token', async () => {
+    await act(async () => {
+      root.render(<HookHarness />)
+      await flushMicrotasks()
+    })
+
+    expect(departmentsApiService.getDepartments).toHaveBeenCalledTimes(1)
+    expect(departmentsApiService.getDepartments).toHaveBeenCalledWith()
+    expect(departmentsApiService.getDepartmentsCatalog).not.toHaveBeenCalled()
+    expect(authApiService.me).not.toHaveBeenCalled()
+    expect(latestState.appState.departmentOptions).toEqual([
+      expect.objectContaining({
+        id: 'public-safety',
+        label: 'Public Safety',
+      }),
+    ])
+    expect(latestState.appState.departmentCatalog).toEqual([])
   })
 })

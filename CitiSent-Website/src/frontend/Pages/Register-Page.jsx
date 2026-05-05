@@ -13,7 +13,6 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 		lname: '',
 		email: '',
 		departmentId: availableDepartments[0]?.id || '',
-		role: 'Office Admin',
 		phone: '',
 		address: '',
 		password: '',
@@ -76,7 +75,6 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			email: form.email.trim().toLowerCase(),
 			departmentId: resolvedDepartmentId,
 			departmentLabel: selectedDepartment?.label || '',
-			role: form.role,
 			phone: form.phone.trim(),
 			address: form.address.trim(),
 			password: form.password,
@@ -170,21 +168,6 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					</select>
 				</div>
 
-				<div>
-					<label htmlFor="register-role" className="mb-1 block text-sm font-medium text-white/95">
-						Role
-					</label>
-					<select
-						id="register-role"
-						value={form.role}
-						onChange={() => {}}
-						disabled
-						className="w-full rounded-xl border border-white/50 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-white focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
-					>
-						<option>Office Admin</option>
-					</select>
-				</div>
-
 				<AuthInputField
 					id="register-phone"
 					label="Phone"
@@ -227,7 +210,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 							className={`mb-3 rounded-lg px-3 py-2 text-sm ${
 								feedback.type === 'success'
 									? 'bg-green-100 text-green-700'
-									: 'bg-rose-100/95 text-rose-700'
+									: 'bg-rose-100/95 text-red-900'
 							}`}
 						>
 							{feedback.message}

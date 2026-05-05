@@ -138,6 +138,7 @@ export function useAppStateOrchestrator() {
   const [departmentCatalog, setDepartmentCatalog] = useState([])
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
   const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
+  const storedAuthSession = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
 
   const [activePage, setActivePage] = useState(() => {
     const storedPage = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activePage, APP_PAGES.DASHBOARD)
@@ -154,10 +155,12 @@ export function useAppStateOrchestrator() {
   })
   const [isPageLoading, setIsPageLoading] = useState(false)
   const [authPage, setAuthPage] = useState(AUTH_PAGES.LOGIN)
-  const [accessToken, setAccessToken] = useState(() => storedAccessToken)
+  const [accessToken, setAccessToken] = useState(() =>
+    storedAuthSession ? storedAccessToken : ''
+  )
   const [sessionBootstrapAttempt, setSessionBootstrapAttempt] = useState(0)
   const [sessionBootstrapError, setSessionBootstrapError] = useState(null)
-  const [authReady, setAuthReady] = useState(() => !storedAccessToken)
+  const [authReady, setAuthReady] = useState(() => !storedAuthSession || !storedAccessToken)
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     Boolean(storedAccessToken) &&
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
@@ -169,7 +172,7 @@ export function useAppStateOrchestrator() {
 
     async function hydrateDepartments() {
       try {
-        const response = await departmentsApiService.getDepartments(accessToken)
+        const response = await departmentsApiService.getDepartments()
         if (isMounted) {
           const normalizedOptions = normalizeDepartmentOptions(response?.departments)
           setDepartmentOptions(normalizedOptions.filter((department) => department.isActive))
@@ -364,6 +367,12 @@ export function useAppStateOrchestrator() {
   }
 
   async function refreshDepartmentsState() {
+    if (!accessToken) {
+      setDepartmentOptions([])
+      setDepartmentCatalog([])
+      return
+    }
+
     const activeResponse = await departmentsApiService.getDepartments(accessToken)
     const normalizedOptions = normalizeDepartmentOptions(activeResponse?.departments)
     setDepartmentOptions(normalizedOptions.filter((department) => department.isActive))

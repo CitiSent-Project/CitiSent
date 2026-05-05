@@ -51,9 +51,7 @@ function buildInitialProfile(sourceUser = getAuthUser()) {
     asText(authUser.fullName) ||
     asText(authUser.name) ||
     asText(profile.fullName) ||
-    asText(profile.full_name) ||
     asText(metadata.fullName) ||
-    asText(metadata.full_name) ||
     asText(metadata.name);
   const fallbackParts = splitFullName(fullNameCandidate);
 

@@ -174,7 +174,7 @@ export const authService = {
       gender: payload.gender ?? null,
       client_type: payload.clientType ?? null,
       barangay: payload.barangay ?? null,
-      profile_image: payload.profileImage ?? null,
+      avatar_url: payload.profileImage ?? null,
     };
 
     const rawUserMetadata = {

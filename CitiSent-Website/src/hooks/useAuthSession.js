@@ -8,6 +8,7 @@ import {
 import { DEFAULT_ADMIN_PROFILE } from '../models/data'
 import { APP_PAGES } from '../models/pageModel'
 import { composeFullName } from '../models/nameModel'
+import { USER_ROLES } from '../models/roleAccessModel'
 
 function normalizeLoginIdentifier(payload = {}) {
   const candidate = String(payload.identifier || payload.email || '').trim()
@@ -74,9 +75,9 @@ export function useAuthSession({
         fname: payload.fname,
         mname: payload.mname,
         lname: payload.lname,
-        phoneNumber: payload.phone,
+        phoneNumber: String(payload.phone || '').trim() || null,
         address: payload.address,
-        role: payload.role,
+        role: USER_ROLES.OFFICE_ADMIN,
         departmentId: payload.departmentId,
         departmentLabel: payload.departmentLabel,
         accountType: 'admin',

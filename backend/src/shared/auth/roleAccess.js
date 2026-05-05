@@ -115,9 +115,7 @@ export function buildActor({ authUser, profile }) {
   const fullName =
     profileName ||
     metadataName ||
-    profile?.full_name ||
     profile?.fullName ||
-    authUser?.user_metadata?.full_name ||
     authUser?.user_metadata?.fullName ||
     profile?.username ||
     authUser?.user_metadata?.username ||

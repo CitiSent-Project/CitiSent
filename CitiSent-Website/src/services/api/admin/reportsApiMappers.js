@@ -1,4 +1,5 @@
 import { normalizeReportStatus } from '../../../models/reportStatusModel'
+import { composeFullName } from '../../../models/nameModel'
 
 const REPORT_STATUS_LABEL_MAP = {
   pending: 'Pending',
@@ -36,13 +37,18 @@ export function mapBackendReportToUiRow(payload = {}) {
     payload.issueType
   )
   const dateValue = Date.parse(payload.createdAt || '')
+  const reporter = payload.reporter || {}
+  const reporterName =
+    composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
+    reporter.fullName ||
+    ''
 
   return {
     id: payload.id || '',
     reportNum: payload.id || '',
-    userId: payload.reporter?.id || '',
-    name: payload.reporter?.fullName || 'Unknown Reporter',
-    email: payload.reporter?.email || 'unknown@citisent.gov',
+    userId: reporter.id || '',
+    name: reporterName || 'Unknown Reporter',
+    email: reporter.email || 'unknown@citisent.gov',
     location: payload.location || 'Not specified',
     date: formatDate(payload.createdAt),
     dateValue: Number.isNaN(dateValue) ? Date.now() : dateValue,

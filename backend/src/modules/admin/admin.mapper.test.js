@@ -30,7 +30,8 @@ test("toAdminReportResponse enriches report data for the admin website", () => {
     },
     reporterProfile: {
       email: "citizen@example.com",
-      full_name: "Citizen One",
+      fname: "Citizen",
+      lname: "One",
     },
   });
 
@@ -73,7 +74,8 @@ test("toAdminUserResponse maps profile data for active users", () => {
       user_id: "user-1",
       email: "user@example.com",
       username: "user_one",
-      full_name: "User One",
+      fname: "User",
+      lname: "One",
       phone_number: "639171234567",
       account_type: "citizen",
       role: null,
@@ -97,7 +99,8 @@ test("toAdminUserResponse marks banned users with ban metadata", () => {
       user_id: "user-2",
       email: "banned@example.com",
       username: "banned_user",
-      full_name: "Banned User",
+      fname: "Banned",
+      lname: "User",
       account_type: "citizen",
       role: null,
     },

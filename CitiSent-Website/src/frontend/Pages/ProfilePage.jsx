@@ -28,7 +28,9 @@ export function ProfileInformation({
   const [transferReason, setTransferReason] = useState('')
   const [submissionFeedback, setSubmissionFeedback] = useState(null)
   const [draft, setDraft] = useState({
-    fullName: profile.fullName,
+    fname: profile.fname || '',
+    mname: profile.mname || '',
+    lname: profile.lname || '',
     username: profile.username,
     email: profile.email,
     department: profile.department,
@@ -42,7 +44,9 @@ export function ProfileInformation({
 
   function startEditing() {
     setDraft({
-      fullName: profile.fullName,
+      fname: profile.fname || '',
+      mname: profile.mname || '',
+      lname: profile.lname || '',
       username: profile.username,
       email: profile.email,
       department: profile.department,
@@ -150,7 +154,7 @@ export function ProfileInformation({
               <p
                 className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
                   submissionFeedback.type === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    ? 'border-rose-200 bg-rose-50 text-red-900'
                     : 'border-emerald-200 bg-emerald-50 text-emerald-700'
                 }`}
               >
@@ -159,10 +163,26 @@ export function ProfileInformation({
             ) : null}
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Full name</label>
+                <label className="mb-1 block text-sm text-slate-700">First name</label>
                 <input
-                  value={draft.fullName}
-                  onChange={(event) => updateDraft('fullName', event.target.value)}
+                  value={draft.fname}
+                  onChange={(event) => updateDraft('fname', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-700">Middle name (optional)</label>
+                <input
+                  value={draft.mname}
+                  onChange={(event) => updateDraft('mname', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-700">Last name</label>
+                <input
+                  value={draft.lname}
+                  onChange={(event) => updateDraft('lname', event.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 />
               </div>

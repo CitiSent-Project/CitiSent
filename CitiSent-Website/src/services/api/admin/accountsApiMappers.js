@@ -10,6 +10,8 @@ function formatDate(value) {
   })
 }
 
+import { composeFullName, splitFullName } from '../../../models/nameModel'
+
 const BACKEND_TO_UI_USER_STATUS = {
   active: 'Active',
   banned: 'Banned',
@@ -26,9 +28,18 @@ function normalizeUserStatusLabel(status) {
 }
 
 export function mapBackendProfileToAdminProfile(payload = {}) {
+  const derivedParts = splitFullName(payload.fullName)
+  const fname = payload.fname || derivedParts.fname || ''
+  const mname = payload.mname || derivedParts.mname || ''
+  const lname = payload.lname || derivedParts.lname || ''
+  const derivedFullName = composeFullName({ fname, mname, lname })
+
   return {
     id: payload.id || '',
-    fullName: payload.fullName || payload.username || '',
+    fname,
+    mname,
+    lname,
+    fullName: derivedFullName || payload.fullName || payload.username || '',
     username: payload.username || '',
     email: payload.email || '',
     departmentId: payload.departmentId || '',
@@ -44,10 +55,19 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
 
 export function mapBackendUserToUiRow(payload = {}) {
   const joinedAtValue = Date.parse(payload.joinedAt || payload.updatedAt || '')
+  const derivedFullName = composeFullName({
+    fname: payload.fname,
+    mname: payload.mname,
+    lname: payload.lname,
+  })
 
   return {
     id: payload.id || '',
-    name: payload.fullName || payload.username || payload.email || 'Unknown User',
+    name:
+      derivedFullName || payload.fullName || payload.username || payload.email || 'Unknown User',
+    fname: payload.fname || '',
+    mname: payload.mname || '',
+    lname: payload.lname || '',
     email: payload.email || 'Not available',
     address: payload.address || 'Not available',
     status: normalizeUserStatusLabel(payload.status),
@@ -70,9 +90,18 @@ export function mapUiStatusToBackendUserStatus(status) {
 }
 
 export function mapBackendOfficeAdmin(payload = {}) {
+  const derivedFullName = composeFullName({
+    fname: payload.fname,
+    mname: payload.mname,
+    lname: payload.lname,
+  })
+
   return {
     id: payload.id || '',
-    fullName: payload.fullName || '',
+    fname: payload.fname || '',
+    mname: payload.mname || '',
+    lname: payload.lname || '',
+    fullName: derivedFullName || payload.fullName || '',
     email: payload.email || '',
     departmentId: payload.departmentId || '',
     department: payload.departmentLabel || '',

@@ -3,7 +3,9 @@ import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 
 const initialForm = {
-  name: '',
+  fname: '',
+  mname: '',
+  lname: '',
   email: '',
   address: '',
   status: 'Active',
@@ -64,16 +66,39 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
-          <div>
-            <label className="mb-1 block text-sm text-slate-700">Full Name</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(event) => updateField('name', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-              placeholder="Jane Doe"
-            />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">First Name</label>
+              <input
+                type="text"
+                required
+                value={form.fname}
+                onChange={(event) => updateField('fname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="Jane"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Middle Name</label>
+              <input
+                type="text"
+                value={form.mname}
+                onChange={(event) => updateField('mname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="Santos"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Last Name</label>
+              <input
+                type="text"
+                required
+                value={form.lname}
+                onChange={(event) => updateField('lname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="Doe"
+              />
+            </div>
           </div>
 
           <div>

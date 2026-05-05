@@ -6,6 +6,7 @@ import {
   DEFAULT_TRANSFER_REQUESTS,
 } from './data'
 import { APP_PAGES } from './pageModel'
+import { composeFullName, splitFullName } from './nameModel'
 
 export const STORAGE_SCHEMA_VERSION = 1
 
@@ -31,11 +32,20 @@ function asObject(value, fallback = {}) {
 
 function normalizeAdminProfile(profile) {
   const source = isObject(profile) ? profile : {}
+  const derivedParts = splitFullName(source.fullName)
+  const fname = asString(source.fname, derivedParts.fname || DEFAULT_ADMIN_PROFILE.fname)
+  const mname = asString(source.mname, derivedParts.mname || DEFAULT_ADMIN_PROFILE.mname)
+  const lname = asString(source.lname, derivedParts.lname || DEFAULT_ADMIN_PROFILE.lname)
+  const derivedFullName = composeFullName({ fname, mname, lname })
+
   return {
     ...DEFAULT_ADMIN_PROFILE,
     ...source,
     id: asString(source.id, DEFAULT_ADMIN_PROFILE.id),
-    fullName: asString(source.fullName, DEFAULT_ADMIN_PROFILE.fullName),
+    fname,
+    mname,
+    lname,
+    fullName: derivedFullName || asString(source.fullName, DEFAULT_ADMIN_PROFILE.fullName),
     email: asString(source.email, DEFAULT_ADMIN_PROFILE.email),
     departmentId: asString(source.departmentId, DEFAULT_ADMIN_PROFILE.departmentId),
     department: asString(source.department, DEFAULT_ADMIN_PROFILE.department),

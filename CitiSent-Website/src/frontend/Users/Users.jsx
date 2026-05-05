@@ -19,6 +19,7 @@ import {
   UsersTable,
   UsersToolbar,
 } from '../../components/Users-Ui'
+import { composeFullName } from '../../models/nameModel'
 
 const USERS_STATS = [
   {
@@ -239,14 +240,17 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       return false
     }
 
-    const name = formData.name?.trim()
+    const fname = formData.fname?.trim()
+    const mname = formData.mname?.trim()
+    const lname = formData.lname?.trim()
+    const name = composeFullName({ fname, mname, lname })
     const email = formData.email?.trim().toLowerCase()
     const address = formData.address?.trim()
 
-    if (!name || !email || !address) {
+    if (!fname || !lname || !email || !address) {
       notifyError(
         'Add user failed.',
-        'Complete all required fields (name, email, address) before submitting.'
+        'Complete all required fields (first name, last name, email, address) before submitting.'
       )
       return false
     }
@@ -259,7 +263,9 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
     try {
       const response = await usersApiService.createUser(token, {
-        fullName: name,
+        fname,
+        mname: mname || null,
+        lname,
         email,
         address,
         accountType: 'citizen',
@@ -342,13 +348,16 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       return false
     }
 
-    const name = formData.name?.trim()
+    const fname = formData.fname?.trim()
+    const mname = formData.mname?.trim()
+    const lname = formData.lname?.trim()
+    const name = composeFullName({ fname, mname, lname })
     const address = formData.address?.trim()
 
-    if (!name || !address) {
+    if (!fname || !lname || !address) {
       notifyError(
         'Edit user failed.',
-        'Complete all required fields (name and address) before saving.'
+        'Complete all required fields (first name, last name, and address) before saving.'
       )
       return false
     }
@@ -361,7 +370,9 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
     try {
       const response = await usersApiService.updateUser(token, selectedUser.id, {
-        fullName: name,
+        fname,
+        mname: mname || null,
+        lname,
         address,
       })
 

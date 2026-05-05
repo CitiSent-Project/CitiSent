@@ -46,6 +46,26 @@ function toConflictError(message, details) {
   return new AppError(message, StatusCodes.CONFLICT, details);
 }
 
+function buildAuthUserMetadata(payload = {}) {
+  const userMetadata = {
+    ...(payload.fname !== undefined ? { fname: payload.fname } : {}),
+    ...(payload.mname !== undefined ? { mname: payload.mname } : {}),
+    ...(payload.lname !== undefined ? { lname: payload.lname } : {}),
+    ...(payload.username ? { username: payload.username } : {}),
+    ...(payload.phone_number
+      ? {
+          phoneNumber: payload.phone_number,
+          phone_number: payload.phone_number,
+          phone: payload.phone_number,
+        }
+      : {}),
+  };
+
+  return Object.fromEntries(
+    Object.entries(userMetadata).filter(([_, value]) => value != null),
+  );
+}
+
 export const usersRepository = {
   async getProfileByUserId(userId, accessToken) {
     const db = getDbClient(accessToken);
@@ -71,34 +91,30 @@ export const usersRepository = {
     const db = getDbClient(accessToken);
     const adminDb = createAdminSupabaseClient();
 
-    if (payload.email && adminDb) {
-      const { error: authError } = await adminDb.auth.admin.updateUserById(
-        userId,
-        {
-          email: payload.email,
-          user_metadata: {
-            ...(payload.full_name
-              ? { fullName: payload.full_name, name: payload.full_name }
-              : {}),
-            ...(payload.username ? { username: payload.username } : {}),
-            ...(payload.phone_number
-              ? {
-                  phoneNumber: payload.phone_number,
-                  phone_number: payload.phone_number,
-                  phone: payload.phone_number,
-                }
-              : {}),
+    if (adminDb) {
+      const userMetadata = buildAuthUserMetadata(payload);
+      const shouldUpdateAuthRecord =
+        payload.email !== undefined || Object.keys(userMetadata).length > 0;
+
+      if (shouldUpdateAuthRecord) {
+        const { error: authError } = await adminDb.auth.admin.updateUserById(
+          userId,
+          {
+            ...(payload.email ? { email: payload.email } : {}),
+            ...(Object.keys(userMetadata).length > 0 ? { user_metadata: userMetadata } : {}),
           },
-        },
-      );
-      if (authError) {
-        if (isDuplicateProfileError(authError)) {
-          throw toConflictError(
-            "Email address is already in use by another account.",
-            authError,
-          );
+        );
+
+        if (authError) {
+          if (isDuplicateProfileError(authError)) {
+            throw toConflictError(
+              "Email address is already in use by another account.",
+              authError,
+            );
+          }
+
+          throw toGatewayError("Failed to update user auth details", authError);
         }
-        throw toGatewayError("Failed to update user auth details", authError);
       }
     }
 

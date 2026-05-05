@@ -26,6 +26,9 @@ vi.mock('react', async () => {
       if (callCount === 4) {
         return [
           {
+            fname: 'BPLO',
+            mname: '',
+            lname: 'Admin',
             fullName: 'BPLO Admin',
             username: 'bplo.admin',
             email: 'bplo.admin@citisent.gov',
@@ -57,6 +60,9 @@ describe('ProfileInformation', () => {
         profile={{
           id: 'admin-1',
           role: 'Office Admin',
+          fname: 'BPLO',
+          mname: '',
+          lname: 'Admin',
           fullName: 'BPLO Admin',
           username: 'bplo.admin',
           email: 'bplo.admin@citisent.gov',

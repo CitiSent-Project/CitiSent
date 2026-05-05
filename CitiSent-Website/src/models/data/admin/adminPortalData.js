@@ -15,6 +15,9 @@ export const ADMIN_STORAGE_KEYS = {
 
 export const DEFAULT_ADMIN_PROFILE = {
   id: '',
+  fname: '',
+  mname: '',
+  lname: '',
   fullName: '',
   email: '',
   departmentId: '',

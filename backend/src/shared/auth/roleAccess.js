@@ -3,6 +3,7 @@ import {
   resolveDepartmentId,
   resolveDepartmentLabel,
 } from "../data/departments.js";
+import { composeFullName } from "../utils/name.js";
 
 export const USER_ROLES = Object.freeze({
   SUPERADMIN: "Superadmin",
@@ -98,11 +99,25 @@ export function canAccessDepartment({
 }
 
 export function buildActor({ authUser, profile }) {
+  const fname = profile?.fname ?? authUser?.user_metadata?.fname ?? null;
+  const mname = profile?.mname ?? authUser?.user_metadata?.mname ?? null;
+  const lname = profile?.lname ?? authUser?.user_metadata?.lname ?? null;
+  const profileName = composeFullName({
+    fname,
+    mname,
+    lname,
+  });
+  const metadataName = composeFullName({
+    fname: authUser?.user_metadata?.fname,
+    mname: authUser?.user_metadata?.mname,
+    lname: authUser?.user_metadata?.lname,
+  });
   const fullName =
-    profile?.full_name ||
+    profileName ||
+    metadataName ||
     profile?.fullName ||
+    authUser?.user_metadata?.fullName ||
     profile?.username ||
-    authUser?.user_metadata?.full_name ||
     authUser?.user_metadata?.username ||
     "";
   const role = normalizeUserRole(profile?.role || authUser?.role);
@@ -112,6 +127,9 @@ export function buildActor({ authUser, profile }) {
     id: authUser?.id || profile?.user_id || "",
     email: authUser?.email || profile?.email || null,
     fullName,
+    fname,
+    mname,
+    lname,
     username: profile?.username || authUser?.user_metadata?.username || null,
     phoneNumber:
       profile?.phone_number ||

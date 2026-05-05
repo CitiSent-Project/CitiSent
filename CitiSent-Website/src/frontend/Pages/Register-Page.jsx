@@ -8,10 +8,11 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 	)
 
 	const initialForm = {
-		fullName: '',
+		fname: '',
+		mname: '',
+		lname: '',
 		email: '',
 		departmentId: availableDepartments[0]?.id || '',
-		role: 'Office Admin',
 		phone: '',
 		address: '',
 		password: '',
@@ -33,7 +34,13 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			return 'No departments are available yet. Please try again in a moment.'
 		}
 
-		if (!form.fullName.trim() || !form.email.trim() || !resolvedDepartmentId.trim() || !form.password) {
+		if (
+			!form.fname.trim() ||
+			!form.lname.trim() ||
+			!form.email.trim() ||
+			!resolvedDepartmentId.trim() ||
+			!form.password
+		) {
 			return 'Please complete all required fields.'
 		}
 
@@ -62,11 +69,12 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 
 		setSubmitting(true)
 		const result = await onRegister({
-			fullName: form.fullName.trim(),
+			fname: form.fname.trim(),
+			mname: form.mname.trim() || null,
+			lname: form.lname.trim(),
 			email: form.email.trim().toLowerCase(),
 			departmentId: resolvedDepartmentId,
 			departmentLabel: selectedDepartment?.label || '',
-			role: form.role,
 			phone: form.phone.trim(),
 			address: form.address.trim(),
 			password: form.password,
@@ -101,14 +109,32 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			}
 		>
 			<form className="grid gap-4 md:grid-cols-2 md:gap-x-5 md:gap-y-4" onSubmit={handleSubmit}>
-				<AuthInputField
-					id="register-name"
-					label="Full Name"
-					value={form.fullName}
-					onChange={(value) => updateField('fullName', value)}
-					placeholder="Juan Dela Cruz"
-					variant="admin-login"
-				/>
+				<div className="md:col-span-2 grid gap-4 md:grid-cols-3">
+					<AuthInputField
+						id="register-fname"
+						label="First Name"
+						value={form.fname}
+						onChange={(value) => updateField('fname', value)}
+						placeholder="Juan"
+						variant="admin-login"
+					/>
+					<AuthInputField
+						id="register-mname"
+						label="Middle Name (Optional)"
+						value={form.mname}
+						onChange={(value) => updateField('mname', value)}
+						placeholder="Santos"
+						variant="admin-login"
+					/>
+					<AuthInputField
+						id="register-lname"
+						label="Last Name"
+						value={form.lname}
+						onChange={(value) => updateField('lname', value)}
+						placeholder="Dela Cruz"
+						variant="admin-login"
+					/>
+				</div>
 
 				<AuthInputField
 					id="register-email"
@@ -139,21 +165,6 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 								{department.label}
 							</option>
 						))}
-					</select>
-				</div>
-
-				<div>
-					<label htmlFor="register-role" className="mb-1 block text-sm font-medium text-white/95">
-						Role
-					</label>
-					<select
-						id="register-role"
-						value={form.role}
-						onChange={() => {}}
-						disabled
-						className="w-full rounded-xl border border-white/50 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-white focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
-					>
-						<option>Office Admin</option>
 					</select>
 				</div>
 
@@ -199,7 +210,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 							className={`mb-3 rounded-lg px-3 py-2 text-sm ${
 								feedback.type === 'success'
 									? 'bg-green-100 text-green-700'
-									: 'bg-rose-100/95 text-rose-700'
+									: 'bg-rose-100/95 text-red-900'
 							}`}
 						>
 							{feedback.message}

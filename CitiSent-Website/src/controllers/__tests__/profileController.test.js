@@ -17,10 +17,10 @@ describe('profileController', () => {
     expect(result.activity.action).toBe('Profile update')
   })
 
-  it('builds synced preference patch when fullName or department changes', () => {
+  it('builds synced preference patch when name or department changes', () => {
     const result = buildProfileUpdateState({
       currentPreferences: { displayName: 'Admin', department: 'Ops' },
-      updates: { fullName: 'New Name', department: 'Safety' },
+      updates: { fname: 'New', mname: '', lname: 'Name', department: 'Safety' },
     })
 
     expect(result.nextPreferencesPatch).toEqual({
@@ -45,7 +45,9 @@ describe('profileController', () => {
         department: 'Business Permits and Licensing Office (BPLO)',
       },
       draft: {
-        fullName: 'BPLO Admin',
+        fname: 'BPLO',
+        mname: '',
+        lname: 'Admin',
         department: 'City Treasury Office',
         phone: '0900',
         address: 'City Hall',
@@ -68,7 +70,9 @@ describe('profileController', () => {
         department: 'Business Permits and Licensing Office (BPLO)',
       },
       draft: {
-        fullName: 'BPLO Admin',
+        fname: 'BPLO',
+        mname: '',
+        lname: 'Admin',
         email: 'bplo.admin@citisent.gov',
         department: 'City Treasury Office',
         phone: '0900',
@@ -84,7 +88,9 @@ describe('profileController', () => {
 
     expect(result.ok).toBe(true)
     expect(result.profileUpdates).toEqual({
-      fullName: 'BPLO Admin',
+      fname: 'BPLO',
+      mname: null,
+      lname: 'Admin',
       email: 'bplo.admin@citisent.gov',
       phone: '0900',
       address: 'City Hall',
@@ -103,7 +109,9 @@ describe('profileController', () => {
         department: 'Business Permits and Licensing Office (BPLO)',
       },
       draft: {
-        fullName: 'BPLO Admin',
+        fname: 'BPLO',
+        mname: '',
+        lname: 'Admin',
         email: 'updated.bplo.admin@citisent.gov',
         department: 'Business Permits and Licensing Office (BPLO)',
         phone: '0900',
@@ -119,7 +127,9 @@ describe('profileController', () => {
 
     expect(result.ok).toBe(true)
     expect(result.profileUpdates).toEqual({
-      fullName: 'BPLO Admin',
+      fname: 'BPLO',
+      mname: null,
+      lname: 'Admin',
       email: 'updated.bplo.admin@citisent.gov',
       phone: '0900',
       address: 'City Hall',
@@ -135,7 +145,9 @@ describe('profileController', () => {
         department: 'All Departments',
       },
       draft: {
-        fullName: 'City Superadmin',
+        fname: 'City',
+        mname: '',
+        lname: 'Superadmin',
         username: 'city_superadmin',
         email: 'superadmin@citisent.gov',
         department: 'All Departments',
@@ -149,7 +161,9 @@ describe('profileController', () => {
 
     expect(result.ok).toBe(true)
     expect(result.profileUpdates).toEqual({
-      fullName: 'City Superadmin',
+      fname: 'City',
+      mname: null,
+      lname: 'Superadmin',
       username: 'city_superadmin',
       email: 'superadmin@citisent.gov',
       phone: '+639000000000',

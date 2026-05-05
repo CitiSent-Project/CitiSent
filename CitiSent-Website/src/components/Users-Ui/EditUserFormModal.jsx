@@ -1,13 +1,20 @@
 import { useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { splitFullName } from '../../models/nameModel'
 
 export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
   const dialogRef = useRef(null)
-  const [form, setForm] = useState(() => ({
-    name: user?.name ?? '',
-    email: user?.email ?? '',
-    address: user?.address ?? '',
-  }))
+  const [form, setForm] = useState(() => {
+    const nameParts = splitFullName(user?.name)
+
+    return {
+      fname: user?.fname ?? nameParts.fname,
+      mname: user?.mname ?? nameParts.mname,
+      lname: user?.lname ?? nameParts.lname,
+      email: user?.email ?? '',
+      address: user?.address ?? '',
+    }
+  })
 
   useModalAccessibility({
     isOpen,
@@ -27,7 +34,9 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
     event.preventDefault()
     onSubmit({
       ...form,
-      name: form.name.trim(),
+      fname: form.fname.trim(),
+      mname: form.mname.trim(),
+      lname: form.lname.trim(),
       email: form.email.trim().toLowerCase(),
       address: form.address.trim(),
     })
@@ -56,15 +65,36 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
-          <div>
-            <label className="mb-1 block text-sm text-slate-700">Full Name</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(event) => updateField('name', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-            />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">First Name</label>
+              <input
+                type="text"
+                required
+                value={form.fname}
+                onChange={(event) => updateField('fname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Middle Name</label>
+              <input
+                type="text"
+                value={form.mname}
+                onChange={(event) => updateField('mname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Last Name</label>
+              <input
+                type="text"
+                required
+                value={form.lname}
+                onChange={(event) => updateField('lname', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
           </div>
 
           <div>

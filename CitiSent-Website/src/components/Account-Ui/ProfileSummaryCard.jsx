@@ -6,6 +6,7 @@ import {
   FiPhone,
 } from "react-icons/fi";
 import { formatDateTime } from "../../models/data";
+import { composeFullName } from "../../models/nameModel";
 
 const fieldConfig = [
   { key: "email", label: "Email", icon: FiMail },
@@ -15,7 +16,14 @@ const fieldConfig = [
 ];
 
 export function ProfileSummaryCard({ profile }) {
-  const initials = profile.fullName
+  const displayName =
+    profile.fullName ||
+    composeFullName({
+      fname: profile.fname,
+      mname: profile.mname,
+      lname: profile.lname,
+    });
+  const initials = displayName
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
@@ -31,7 +39,7 @@ export function ProfileSummaryCard({ profile }) {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-slate-900">
-              {profile.fullName}
+              {displayName}
             </h2>
             <p className="text-sm text-slate-600">{profile.role}</p>
           </div>

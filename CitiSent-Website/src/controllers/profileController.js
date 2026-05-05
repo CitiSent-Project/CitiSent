@@ -1,7 +1,13 @@
 import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
+import { composeFullName } from '../models/nameModel'
 
 export function buildProfileUpdateState({ currentPreferences, updates }) {
-  const shouldSyncPreferences = Boolean(updates.fullName || updates.department)
+  const nextDisplayName = composeFullName({
+    fname: updates.fname,
+    mname: updates.mname,
+    lname: updates.lname,
+  })
+  const shouldSyncPreferences = Boolean(nextDisplayName || updates.department)
 
   if (!shouldSyncPreferences) {
     return {
@@ -15,7 +21,7 @@ export function buildProfileUpdateState({ currentPreferences, updates }) {
 
   return {
     nextPreferencesPatch: {
-      displayName: updates.fullName || currentPreferences.displayName,
+      displayName: nextDisplayName || currentPreferences.displayName,
       department: updates.department || currentPreferences.department,
     },
     activity: {
@@ -41,6 +47,9 @@ export function buildProfileSubmissionState({
   departmentCatalog = [],
   hasPendingTransferRequest = false,
 }) {
+  const normalizedFname = String(draft.fname || '').trim()
+  const normalizedMname = String(draft.mname || '').trim()
+  const normalizedLname = String(draft.lname || '').trim()
   const normalizedRole = normalizeUserRole(profile?.role)
   const didDepartmentChange = draft.department !== profile.department
 
@@ -49,7 +58,9 @@ export function buildProfileSubmissionState({
       ok: true,
       shouldUpdateProfile: true,
       profileUpdates: {
-        fullName: draft.fullName,
+        fname: normalizedFname,
+        mname: normalizedMname || null,
+        lname: normalizedLname,
         username: draft.username,
         email: draft.email,
         phone: draft.phone,
@@ -60,7 +71,9 @@ export function buildProfileSubmissionState({
   }
 
   const profileUpdates = {
-    fullName: draft.fullName,
+    fname: normalizedFname,
+    mname: normalizedMname || null,
+    lname: normalizedLname,
     email: draft.email,
     phone: draft.phone,
     address: draft.address,

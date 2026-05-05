@@ -67,7 +67,7 @@ const CONNECTION_STATUS_UI = {
 	},
 	offline: {
 		label: 'Offline',
-		containerClass: 'border-rose-200 bg-rose-50 text-rose-700',
+		containerClass: 'border-rose-200 bg-rose-50 text-red-900',
 		dotClass: 'bg-rose-500',
 	},
 }

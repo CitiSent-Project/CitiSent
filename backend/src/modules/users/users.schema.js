@@ -34,7 +34,9 @@ export const updateCurrentUserSchema = z.object({
       gender: z.string().trim().min(1).max(24).optional(),
       clientType: z.string().trim().min(1).max(32).optional(),
       avatarUrl: z.string().url().optional(),
-      fullName: z.string().trim().min(1).max(255).optional(),
+      fname: z.string().trim().min(1).max(120).optional(),
+      mname: z.string().trim().min(1).max(120).nullable().optional(),
+      lname: z.string().trim().min(1).max(120).optional(),
       email: z.string().trim().email().optional(),
       address: z.string().trim().optional(),
     })

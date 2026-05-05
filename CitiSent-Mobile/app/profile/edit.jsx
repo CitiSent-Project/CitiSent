@@ -21,18 +21,56 @@ function asDigits(value) {
   return asText(value).replace(/\D/g, "");
 }
 
+function splitFullName(fullName) {
+  const trimmed = asText(fullName).trim();
+  if (!trimmed) {
+    return { fname: "", mname: "", lname: "" };
+  }
+
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    return { fname: parts[0], mname: "", lname: "" };
+  }
+
+  if (parts.length === 2) {
+    return { fname: parts[0], mname: "", lname: parts[1] };
+  }
+
+  return {
+    fname: parts[0],
+    mname: parts.slice(1, -1).join(" "),
+    lname: parts[parts.length - 1],
+  };
+}
+
 function buildInitialProfile(sourceUser = getAuthUser()) {
   const authUser = sourceUser || {};
   const metadata = authUser.user_metadata || authUser.userMetadata || authUser.metadata || {};
   const profile = authUser.profile || {};
+  const fullNameCandidate =
+    asText(authUser.fullName) ||
+    asText(authUser.name) ||
+    asText(profile.fullName) ||
+    asText(metadata.fullName) ||
+    asText(metadata.name);
+  const fallbackParts = splitFullName(fullNameCandidate);
 
   return {
-    fullName:
-      asText(authUser.fullName) ||
-      asText(authUser.name) ||
-      asText(profile.fullName) ||
-      asText(metadata.fullName) ||
-      asText(metadata.name),
+    fname:
+      asText(authUser.fname) ||
+      asText(profile.fname) ||
+      asText(metadata.fname) ||
+      fallbackParts.fname,
+    mname:
+      asText(authUser.mname) ||
+      asText(profile.mname) ||
+      asText(metadata.mname) ||
+      fallbackParts.mname,
+    lname:
+      asText(authUser.lname) ||
+      asText(profile.lname) ||
+      asText(metadata.lname) ||
+      fallbackParts.lname,
     username: asText(authUser.username) || asText(profile.username) || asText(metadata.username),
     email: asText(authUser.email) || asText(profile.email) || asText(metadata.email),
     phoneNumber:
@@ -117,8 +155,8 @@ export default function EditProfilePage() {
   const hasChanges = JSON.stringify(profileDraft) !== JSON.stringify(savedProfile);
 
   const validateProfile = () => {
-    if (!profileDraft.fullName.trim()) {
-      return "Full name is required.";
+    if (!profileDraft.fname.trim() || !profileDraft.lname.trim()) {
+      return "First and last name are required.";
     }
 
     if (!profileDraft.username.trim()) {
@@ -157,7 +195,10 @@ export default function EditProfilePage() {
     setIsSaving(true);
 
     try {
-      const response = await api.patch("/users/me", profileDraft);
+      const response = await api.patch("/users/me", {
+        ...profileDraft,
+        mname: profileDraft.mname.trim() || undefined,
+      });
       const updatedUser = unwrapCurrentUserPayload(response);
       
       if (updatedUser) {
@@ -193,12 +234,30 @@ export default function EditProfilePage() {
         </Text>
 
         <EditProfileTextField
-          label="Full Name"
-          value={profileDraft.fullName}
-          onChangeText={setField("fullName")}
-          placeholder="e.g., Juan Dela Cruz"
-          autoComplete="name"
-          textContentType="name"
+          label="First Name"
+          value={profileDraft.fname}
+          onChangeText={setField("fname")}
+          placeholder="e.g., Juan"
+          autoComplete="name-given"
+          textContentType="givenName"
+        />
+
+        <EditProfileTextField
+          label="Middle Name"
+          value={profileDraft.mname}
+          onChangeText={setField("mname")}
+          placeholder="e.g., Santos"
+          autoComplete="name-middle"
+          textContentType="middleName"
+        />
+
+        <EditProfileTextField
+          label="Last Name"
+          value={profileDraft.lname}
+          onChangeText={setField("lname")}
+          placeholder="e.g., Dela Cruz"
+          autoComplete="name-family"
+          textContentType="familyName"
         />
 
         <EditProfileTextField

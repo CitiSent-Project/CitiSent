@@ -6,6 +6,7 @@ import {
   resolveDepartmentId,
   resolveDepartmentLabel,
 } from "../../shared/data/departments.js";
+import { composeFullName } from "../../shared/utils/name.js";
 
 const STATUS_LABELS = Object.freeze({
   pending: "Pending",
@@ -55,7 +56,11 @@ function resolveUrgency(value) {
 
 function resolveReporterName(profile) {
   return (
-    profile?.full_name ||
+    composeFullName({
+      fname: profile?.fname,
+      mname: profile?.mname,
+      lname: profile?.lname,
+    }) ||
     profile?.username ||
     profile?.email ||
     "Unknown Reporter"
@@ -74,7 +79,18 @@ export function toAdminUserResponse({ profile, activeBan }) {
     id: profile?.user_id || "",
     email: profile?.email || null,
     username: profile?.username || null,
-    fullName: profile?.full_name || profile?.username || profile?.email || "",
+    fname: profile?.fname ?? null,
+    mname: profile?.mname ?? null,
+    lname: profile?.lname ?? null,
+    fullName:
+      composeFullName({
+        fname: profile?.fname,
+        mname: profile?.mname,
+        lname: profile?.lname,
+      }) ||
+      profile?.username ||
+      profile?.email ||
+      "",
     phoneNumber: profile?.phone_number || null,
     address: profile?.address || null,
     role: role || null,
@@ -134,7 +150,17 @@ export function toOfficeAdminResponse(profile) {
   return {
     id: profile?.user_id || "",
     email: profile?.email || null,
-    fullName: profile?.full_name || profile?.username || "",
+    fname: profile?.fname ?? null,
+    mname: profile?.mname ?? null,
+    lname: profile?.lname ?? null,
+    fullName:
+      composeFullName({
+        fname: profile?.fname,
+        mname: profile?.mname,
+        lname: profile?.lname,
+      }) ||
+      profile?.username ||
+      "",
     role: role || USER_ROLES.OFFICE_ADMIN,
     departmentId:
       profile?.department_id || resolveDepartmentId(profile?.department_label),

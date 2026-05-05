@@ -30,6 +30,9 @@ const FIXED_PROVINCE = "Batangas";
 const FIXED_COUNTRY = "Philippines";
 
 const INITIAL_FIELD_ERRORS = {
+  fname: "",
+  mname: "",
+  lname: "",
   username: "",
   email: "",
   phoneNumber: "",
@@ -53,6 +56,21 @@ function mapRegisterErrorToFieldErrors(errorMessage) {
 
   if (message.includes("username")) {
     nextErrors.username = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("first name") || message.includes("fname")) {
+    nextErrors.fname = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("middle name") || message.includes("mname")) {
+    nextErrors.mname = rawMessage;
+    return nextErrors;
+  }
+
+  if (message.includes("last name") || message.includes("lname")) {
+    nextErrors.lname = rawMessage;
     return nextErrors;
   }
 
@@ -108,6 +126,9 @@ function StaticAddressField({ label, value }) {
 
 export default function CreateAccountScreen() {
   const router = useRouter();
+  const [fname, setFname] = useState("");
+  const [mname, setMname] = useState("");
+  const [lname, setLname] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -128,6 +149,9 @@ export default function CreateAccountScreen() {
   const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
 
   const fieldSetters = {
+    fname: setFname,
+    mname: setMname,
+    lname: setLname,
     username: setUsername,
     email: setEmail,
     phoneNumber: setPhoneNumber,
@@ -195,12 +219,23 @@ export default function CreateAccountScreen() {
   };
 
   const validateFields = () => {
+    const trimmedFname = fname.trim();
+    const trimmedMname = mname.trim();
+    const trimmedLname = lname.trim();
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
     const trimmedBarangay = barangay.trim();
     const parsedAge = Number.parseInt(age.trim(), 10);
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
+
+    if (!trimmedFname) {
+      nextErrors.fname = "First name is required.";
+    }
+
+    if (!trimmedLname) {
+      nextErrors.lname = "Last name is required.";
+    }
 
     if (!trimmedUsername) {
       nextErrors.username = "Username is required.";
@@ -260,6 +295,8 @@ export default function CreateAccountScreen() {
 
     return {
       isValid:
+        !nextErrors.fname &&
+        !nextErrors.lname &&
         !nextErrors.username &&
         !nextErrors.email &&
         !nextErrors.phoneNumber &&
@@ -269,6 +306,9 @@ export default function CreateAccountScreen() {
         !nextErrors.barangay &&
         !nextErrors.password &&
         !nextErrors.confirmPassword,
+      trimmedFname,
+      trimmedMname,
+      trimmedLname,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
@@ -284,6 +324,9 @@ export default function CreateAccountScreen() {
 
     const {
       isValid,
+      trimmedFname,
+      trimmedMname,
+      trimmedLname,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
@@ -301,6 +344,9 @@ export default function CreateAccountScreen() {
 
     try {
       await authApi.register({
+        fname: trimmedFname,
+        mname: trimmedMname || null,
+        lname: trimmedLname,
         username: trimmedUsername,
         email: trimmedEmail,
         phoneNumber: trimmedPhoneNumber,
@@ -372,6 +418,39 @@ export default function CreateAccountScreen() {
           </View>
 
           <View className="mt-10">
+            <AuthInputField
+              value={fname}
+              onChangeText={handleFieldChange("fname")}
+              placeholder="First Name"
+              icon="person-outline"
+              autoComplete="given-name"
+              textContentType="givenName"
+              returnKeyType="next"
+              error={fieldErrors.fname}
+            />
+
+            <AuthInputField
+              value={mname}
+              onChangeText={handleFieldChange("mname")}
+              placeholder="Middle Name (Optional)"
+              icon="person-outline"
+              autoComplete="additional-name"
+              textContentType="middleName"
+              returnKeyType="next"
+              error={fieldErrors.mname}
+            />
+
+            <AuthInputField
+              value={lname}
+              onChangeText={handleFieldChange("lname")}
+              placeholder="Last Name"
+              icon="person-outline"
+              autoComplete="family-name"
+              textContentType="familyName"
+              returnKeyType="next"
+              error={fieldErrors.lname}
+            />
+
             <AuthInputField
               value={username}
               onChangeText={handleFieldChange("username")}

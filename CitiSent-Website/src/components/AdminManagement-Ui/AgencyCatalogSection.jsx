@@ -391,7 +391,7 @@ export function AgencyCatalogSection({
                         </p>
                         <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-5 py-4">
                             {deleteError ? (
-                                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-red-900">
                                     {deleteError}
                                 </p>
                             ) : null}

@@ -1,3 +1,5 @@
+import { composeFullName } from '../../../models/nameModel'
+
 function formatDate(value) {
   if (!value) {
     return 'Not available'
@@ -73,7 +75,11 @@ export function mapDashboardRecentAdmins(payload = []) {
   const rows = Array.isArray(payload) ? payload : []
 
   return rows.map((row) => ({
-    name: row.fullName || row.email || 'Unknown Admin',
+    name:
+      composeFullName({ fname: row.fname, mname: row.mname, lname: row.lname }) ||
+      row.fullName ||
+      row.email ||
+      'Unknown Admin',
     email: row.email || 'Not available',
     department: row.departmentLabel || 'Unassigned',
     activity: formatDate(row.joinedAt),
@@ -84,7 +90,12 @@ export function mapDashboardRecentUsers(payload = []) {
   const rows = Array.isArray(payload) ? payload : []
 
   return rows.map((row) => ({
-    username: row.fullName || row.username || row.email || 'Unknown User',
+    username:
+      composeFullName({ fname: row.fname, mname: row.mname, lname: row.lname }) ||
+      row.fullName ||
+      row.username ||
+      row.email ||
+      'Unknown User',
     joined: formatDate(row.joinedAt),
   }))
 }

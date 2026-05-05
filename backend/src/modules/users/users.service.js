@@ -1,5 +1,6 @@
 import { usersRepository } from "./users.repository.js";
 import { buildActor } from "../../shared/auth/roleAccess.js";
+import { normalizeNamePart } from "../../shared/utils/name.js";
 
 function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
@@ -22,6 +23,13 @@ export const usersService = {
   },
 
   async updateCurrentUser(authUser, payload, accessToken) {
+    const normalizedFname =
+      payload.fname !== undefined ? normalizeNamePart(payload.fname) : undefined;
+    const normalizedMname =
+      payload.mname !== undefined ? normalizeNamePart(payload.mname) : undefined;
+    const normalizedLname =
+      payload.lname !== undefined ? normalizeNamePart(payload.lname) : undefined;
+
     const updatePayload = {
       ...(payload.username !== undefined ? { username: payload.username } : {}),
       ...(payload.phoneNumber !== undefined
@@ -39,9 +47,9 @@ export const usersService = {
       ...(payload.avatarUrl !== undefined
         ? { avatar_url: payload.avatarUrl }
         : {}),
-      ...(payload.fullName !== undefined
-        ? { full_name: payload.fullName }
-        : {}),
+      ...(normalizedFname !== undefined ? { fname: normalizedFname } : {}),
+      ...(normalizedMname !== undefined ? { mname: normalizedMname } : {}),
+      ...(normalizedLname !== undefined ? { lname: normalizedLname } : {}),
       ...(payload.email !== undefined ? { email: payload.email } : {}),
       ...(payload.address !== undefined ? { address: payload.address } : {}),
     };

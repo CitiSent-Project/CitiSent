@@ -32,6 +32,21 @@ function toComparableValue(value) {
 	return String(value ?? '')
 }
 
+function arePopoverStylesEqual(previousStyle, nextStyle) {
+	if (previousStyle === nextStyle) return true
+	if (!previousStyle || !nextStyle) return false
+
+	return (
+		previousStyle.position === nextStyle.position &&
+		previousStyle.top === nextStyle.top &&
+		previousStyle.left === nextStyle.left &&
+		previousStyle.width === nextStyle.width &&
+		previousStyle.maxWidth === nextStyle.maxWidth &&
+		previousStyle.boxSizing === nextStyle.boxSizing &&
+		previousStyle.zIndex === nextStyle.zIndex
+	)
+}
+
 export function DropdownButton({
 	label,
 	value,
@@ -90,7 +105,7 @@ export function DropdownButton({
 			Math.min(triggerRect.left, window.innerWidth - triggerRect.width - viewportPadding),
 		)
 
-		setPopoverStyle({
+		const nextPopoverStyle = {
 			position: 'fixed',
 			top: Math.round(top),
 			left: Math.round(left),
@@ -98,7 +113,11 @@ export function DropdownButton({
 			maxWidth: 'calc(100vw - 16px)',
 			boxSizing: 'border-box',
 			zIndex: 70,
-		})
+		}
+
+		setPopoverStyle((previousStyle) =>
+			arePopoverStylesEqual(previousStyle, nextPopoverStyle) ? previousStyle : nextPopoverStyle,
+		)
 	}, [normalizedOptions.length])
 
 	function closePopover({ restoreFocus = true } = {}) {

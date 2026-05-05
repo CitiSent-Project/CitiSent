@@ -1,4 +1,5 @@
 import { FiEye } from "react-icons/fi";
+import { TableLoader } from '../ui/TableLoader'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,
@@ -20,8 +21,10 @@ function ActionMenu({ report, onViewReport }) {
   );
 }
 
-export function UrgencyFeedTable({ rows = [], onViewReport }) {
-  if (rows.length === 0) {
+export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false }) {
+  const shouldShowLoader = isLoading && rows.length > 0
+
+  if (!shouldShowLoader && rows.length === 0) {
     return (
       <div className="px-4 py-10 text-center text-sm text-slate-400">
         No reports to display.
@@ -40,8 +43,19 @@ export function UrgencyFeedTable({ rows = [], onViewReport }) {
             <th className="px-4 py-3">Urgency</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3 hidden lg:table-cell">Date</th>
+            <th className="px-4 py-3 text-right">Action</th>
           </tr>
         </thead>
+        <TableLoader
+          isLoading={shouldShowLoader}
+          delayMs={0}
+          variant="refreshing"
+          label="Refreshing reports..."
+          refreshText="Refreshing reports..."
+          rows={1}
+          columns={7}
+          cellClassName="h-4 w-24"
+        />
         <tbody>
           {rows.map((row) => {
             const normalizedStatus = normalizeReportStatus(row.status);

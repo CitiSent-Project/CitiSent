@@ -37,6 +37,8 @@ export function Reports({
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
   })
+  const reportsError = reportsQuery.error
+  const refetchReports = reportsQuery.refetch
 
   const updateReportMutation = useMutation({
     mutationFn: async ({ reportId, newStatus }) => {
@@ -89,16 +91,16 @@ export function Reports({
   })
 
   useEffect(() => {
-    if (reportsQuery.error) {
+    if (reportsError) {
       notifyErrorWithRetry(
         'Reports unavailable.',
-        reportsQuery.error.message,
-        () => reportsQuery.refetch()
+        reportsError.message,
+        () => refetchReports()
       )
     }
-  }, [reportsQuery.error])
+  }, [refetchReports, reportsError])
 
-  const rows = reportsQuery.data || []
+  const rows = useMemo(() => reportsQuery.data || [], [reportsQuery.data])
   const loading = Boolean(accessToken) && (reportsQuery.isLoading || reportsQuery.isFetching)
 
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])

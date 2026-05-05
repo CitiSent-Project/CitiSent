@@ -26,14 +26,35 @@ export function ByUrgencyLevels({
   isLoading = false,
 }) {
   const [selectedUrgency, setSelectedUrgency] = useState(URGENCY_FILTER_CHIPS[0])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const filteredRows = useMemo(() => {
-    return filterUserReportsByUrgency({
+    // Start with urgency-filtered set then apply search + status filters
+    let result = filterUserReportsByUrgency({
       reports: rows,
       selectedUrgency,
       allUrgencyFilter: ALL_URGENCY_FILTER,
     })
-  }, [selectedUrgency, rows])
+
+    // Apply search filtering
+    if (searchTerm) {
+      const low = searchTerm.toLowerCase()
+      result = result.filter((r) =>
+        String(r.id || '')?.toLowerCase().includes(low) ||
+        String(r.title || '')?.toLowerCase().includes(low) ||
+        String(r.userName || '')?.toLowerCase().includes(low) ||
+        String(r.issueType || '')?.toLowerCase().includes(low),
+      )
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter((r) => r.status === statusFilter)
+    }
+
+    return result
+  }, [selectedUrgency, rows, searchTerm, statusFilter])
 
   const {
     totalPages,
@@ -48,6 +69,16 @@ export function ByUrgencyLevels({
 
   function handleSelectUrgency(chip) {
     setSelectedUrgency(chip)
+    resetToFirstPage()
+  }
+
+  function handleSearchChange(value) {
+    setSearchTerm(value)
+    resetToFirstPage()
+  }
+
+  function handleStatusChange(value) {
+    setStatusFilter(value)
     resetToFirstPage()
   }
 
@@ -151,19 +182,18 @@ export function ByUrgencyLevels({
           chips={URGENCY_FILTER_CHIPS}
           selectedChip={selectedUrgency}
           onSelectChip={handleSelectUrgency}
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          statusFilter={statusFilter}
+          onStatusChange={handleStatusChange}
         />
-        {isLoading ? (
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500 shadow-sm">
-            Loading reports...
-          </div>
-        ) : null}
-
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <UrgencyFeedTable
-            rows={isLoading ? [] : visibleRows}
+            rows={visibleRows}
             onViewReport={onViewReport}
             onUpdateStatus={onUpdateStatus}
             canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
+            isLoading={isLoading}
           />
         </div>
 

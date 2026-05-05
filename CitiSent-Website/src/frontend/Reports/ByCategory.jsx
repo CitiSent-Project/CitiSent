@@ -261,15 +261,12 @@ export function ByCategory({
             />
           </div>
 
-          {isLoading ? (
-            <div className="px-4 py-10 text-center text-sm text-slate-500">Loading reports...</div>
-          ) : null}
-
           <UrgencyFeedTable
-            rows={isLoading ? [] : visibleRows}
+            rows={visibleRows}
             onViewReport={onViewReport}
             onUpdateStatus={onUpdateStatus}
             canUpdateReport={(report) => canAdminUpdateReport({ profile, report })}
+            isLoading={isLoading}
           />
         </section>
 

@@ -92,10 +92,6 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
   }, [searchTerm])
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearchTerm, filterBy])
-
   const usersQuery = useQuery({
     queryKey: ['admin-users', debouncedSearchTerm, filterBy, currentPage, pageSize],
     enabled: hasAccessToken,
@@ -122,6 +118,8 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       }
     },
   })
+  const usersError = usersQuery.error
+  const refetchUsers = usersQuery.refetch
 
   const userStatsQuery = useQuery({
     queryKey: ['admin-users-stats'],
@@ -146,37 +144,33 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       }
     },
   })
+  const userStatsError = userStatsQuery.error
+  const refetchUserStats = userStatsQuery.refetch
 
   useEffect(() => {
-    if (usersQuery.error) {
+    if (usersError) {
       notifyErrorWithRetry(
         'Unable to load users.',
-        usersQuery.error.message,
-        () => usersQuery.refetch()
+        usersError.message,
+        () => refetchUsers()
       )
     }
-  }, [usersQuery.error])
+  }, [refetchUsers, usersError])
 
   useEffect(() => {
-    if (userStatsQuery.error) {
+    if (userStatsError) {
       notifyErrorWithRetry(
         'Unable to load user statistics.',
-        userStatsQuery.error.message,
-        () => userStatsQuery.refetch()
+        userStatsError.message,
+        () => refetchUserStats()
       )
     }
-  }, [userStatsQuery.error])
+  }, [refetchUserStats, userStatsError])
 
-  const users = usersQuery.data?.users || []
+  const users = useMemo(() => usersQuery.data?.users || [], [usersQuery.data])
   const totalUsers = usersQuery.data?.totalUsers || 0
   const isLoading = usersQuery.isLoading || usersQuery.isFetching
   const stats = userStatsQuery.data || { active: 0, banned: 0 }
-
-  useEffect(() => {
-    setSelectedUserIds((previousIds) =>
-      previousIds.filter((id) => users.some((user) => user.id === id))
-    )
-  }, [users])
 
   async function invalidateUsersData() {
     await Promise.all([
@@ -198,31 +192,29 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       return b.registeredAtValue - a.registeredAtValue
     })
   }, [users, sortBy])
+  const selectedVisibleUserIds = useMemo(
+    () => selectedUserIds.filter((id) => visibleUsers.some((user) => user.id === id)),
+    [selectedUserIds, visibleUsers]
+  )
 
   const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize))
-  const safeCurrentPage = Math.min(currentPage, totalPages)
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
+  const activePage = Math.min(currentPage, totalPages)
 
   const visiblePages = useMemo(() => {
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, index) => index + 1)
     }
 
-    if (safeCurrentPage <= 2) {
+    if (activePage <= 2) {
       return [1, 2, 3]
     }
 
-    if (safeCurrentPage >= totalPages - 1) {
+    if (activePage >= totalPages - 1) {
       return [totalPages - 2, totalPages - 1, totalPages]
     }
 
-    return [safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1]
-  }, [safeCurrentPage, totalPages])
+    return [activePage - 1, activePage, activePage + 1]
+  }, [activePage, totalPages])
 
   function handleSortChange(value) {
     setSortBy(value)
@@ -231,10 +223,14 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
   function handleFilterChange(value) {
     setFilterBy(value)
+    setCurrentPage(1)
+    setSelectedUserIds([])
   }
 
   function handleSearchChange(value) {
     setSearchTerm(value)
+    setCurrentPage(1)
+    setSelectedUserIds([])
   }
 
   async function handleAddUserSubmit(formData) {
@@ -301,6 +297,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
   function handlePageChange(page) {
     setCurrentPage(page)
+    setSelectedUserIds([])
   }
 
   function handleNextPage() {
@@ -431,7 +428,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
   function handleToggleSelectAllVisibleUsers() {
     const visibleIds = visibleUsers.map((user) => user.id)
-    const allVisibleSelected = visibleIds.every((id) => selectedUserIds.includes(id))
+    const allVisibleSelected = visibleIds.every((id) => selectedVisibleUserIds.includes(id))
 
     setSelectedUserIds((previous) => {
       if (allVisibleSelected) {
@@ -448,7 +445,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       return
     }
 
-    if (!selectedUserIds.length) {
+    if (!selectedVisibleUserIds.length) {
       notifyError('Bulk ban failed.', 'Select one or more users first.')
       return
     }
@@ -460,7 +457,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     const operations = await Promise.allSettled(
-      selectedUserIds.map((userId) =>
+      selectedVisibleUserIds.map((userId) =>
         usersApiService.banUser(token, userId, {
           reason: 'Bulk ban from Users page',
         })
@@ -490,7 +487,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
       return
     }
 
-    if (!selectedUserIds.length) {
+    if (!selectedVisibleUserIds.length) {
       notifyError('Bulk unban failed.', 'Select one or more users first.')
       return
     }
@@ -502,7 +499,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     }
 
     const operations = await Promise.allSettled(
-      selectedUserIds.map((userId) => usersApiService.unbanUser(token, userId))
+      selectedVisibleUserIds.map((userId) => usersApiService.unbanUser(token, userId))
     )
 
     const successfulCount = operations.filter((result) => result.status === 'fulfilled').length
@@ -554,13 +551,10 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
             onAddUserClick={() => setIsAddUserModalOpen(true)}
             disableAddUser={!canCreateUsers}
           />
-          {isLoading ? (
-            <div className="px-4 pt-3 text-sm text-slate-500">Loading users...</div>
-          ) : null}
-          {selectedUserIds.length > 0 && canToggleBan && (
+          {selectedVisibleUserIds.length > 0 && canToggleBan && (
             <div className="flex flex-wrap items-center gap-2 px-4 mt-3 pb-3">
               <span className="text-sm text-slate-600">
-                {selectedUserIds.length} selected
+                {selectedVisibleUserIds.length} selected
               </span>
               <button
                 type="button"
@@ -580,16 +574,17 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
           )}
           <UsersTable
             users={visibleUsers}
-            selectedUserIds={selectedUserIds}
+            selectedUserIds={selectedVisibleUserIds}
             onToggleSelectUser={handleToggleSelectUser}
             onToggleSelectAllUsers={handleToggleSelectAllVisibleUsers}
             onViewUser={handleViewUser}
             onEditUser={handleEditUser}
             onToggleBanUser={handleToggleBanUser}
             canToggleBan={canToggleBan}
+            isLoading={isLoading}
           />
           <UsersPagination
-            currentPage={safeCurrentPage}
+            currentPage={activePage}
             totalPages={totalPages}
             visiblePages={visiblePages}
             onPageChange={handlePageChange}

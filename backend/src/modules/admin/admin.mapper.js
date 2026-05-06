@@ -132,6 +132,7 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     statusLabel: STATUS_LABELS[normalizedStatus],
     urgency: resolveUrgency(reportRow?.urgency || reportRow?.sentiment_label),
     sentimentLabel: reportRow?.sentiment_label || null,
+    aiSummary: reportRow?.ai_summary || null,
     attachmentUrl: reportRow?.attachment_url || null,
     source: reportRow?.source || "Website",
     createdAt: reportRow?.created_at || null,

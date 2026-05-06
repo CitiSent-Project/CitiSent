@@ -21,6 +21,7 @@ function buildReportCreatePayload({
   location,
   attachmentUrl,
   urgency,
+  aiSummary,
 }) {
   return {
     user_id: userId,
@@ -29,6 +30,7 @@ function buildReportCreatePayload({
     location,
     ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
     sentiment_label: urgency,
+    ...(aiSummary != null ? { ai_summary: aiSummary } : {}),
     status: "pending",
   };
 }
@@ -61,7 +63,7 @@ function buildAnalysisInput(payload, existingReport = {}) {
   };
 }
 
-async function resolveUrgencyWithFallback({
+async function resolveAnalysisWithFallback({
   issueType,
   location,
   description,
@@ -74,7 +76,10 @@ async function resolveUrgencyWithFallback({
       description,
     });
 
-    return analysis.urgency;
+    return {
+      urgency: analysis.urgency,
+      aiSummary: analysis.summary ?? null,
+    };
   } catch (error) {
     logger.warn("Sentiment analysis failed. Using fallback urgency.", {
       reportId,
@@ -83,7 +88,7 @@ async function resolveUrgencyWithFallback({
       message: error?.message || String(error),
     });
 
-    return REPORT_URGENCY_FALLBACK;
+    return { urgency: REPORT_URGENCY_FALLBACK, aiSummary: null };
   }
 }
 
@@ -141,7 +146,7 @@ export const reportsService = {
       value: issueType,
     });
 
-    const urgency = await resolveUrgencyWithFallback({
+    const { urgency, aiSummary } = await resolveAnalysisWithFallback({
       issueType: department?.name || issueType,
       description,
       location,
@@ -155,6 +160,7 @@ export const reportsService = {
         location,
         attachmentUrl,
         urgency,
+        aiSummary,
       }),
       accessToken,
     );
@@ -208,10 +214,15 @@ export const reportsService = {
         },
         existingReport,
       );
-      updatePayload.sentiment_label = await resolveUrgencyWithFallback({
-        reportId,
-        ...nextAnalysisInput,
-      });
+      const { urgency: nextUrgency, aiSummary: nextSummary } =
+        await resolveAnalysisWithFallback({
+          reportId,
+          ...nextAnalysisInput,
+        });
+      updatePayload.sentiment_label = nextUrgency;
+      if (nextSummary != null) {
+        updatePayload.ai_summary = nextSummary;
+      }
     }
 
     const updated = await reportsRepository.updateById({

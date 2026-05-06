@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
@@ -168,6 +168,21 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           </div>
         </section>
 
+        {report.aiSummary ? (
+          <section className="rounded-2xl border border-blue-800 bg-blue-50 p-6 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-blue-600">
+                <FiCpu className="text-sm text-white" />
+              </span>
+              <h2 className="text-lg font-semibold text-blue-900">AI Summary</h2>
+              <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white">
+                Powered by Gemini
+              </span>
+            </div>
+            <p className="leading-relaxed text-sm text-slate-900">{report.aiSummary}</p>
+          </section>
+        ) : null}
+
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Process Report</h2>
           <p className="mb-3 text-sm text-slate-500">
@@ -199,13 +214,12 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               return (
                 <label
                   key={status}
-                  className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    !canProcessReport
+                  className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${!canProcessReport
                       ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                       : isSelected
                         ? 'border-blue-500 bg-blue-50 text-blue-900'
                         : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -229,11 +243,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               type="button"
               onClick={handleStatusSave}
               disabled={!canProcessReport || selectedStatus === currentStatus}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                !canProcessReport || selectedStatus === currentStatus
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${!canProcessReport || selectedStatus === currentStatus
                   ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                   : 'bg-blue-700 text-white hover:bg-blue-600'
-              }`}
+                }`}
             >
               Save Status
             </button>

@@ -30,7 +30,7 @@ export function buildSentimentAnalysisPayload({
   description,
 }) {
   return {
-    issueType: String(issueType || "").trim(),
+    office: String(issueType || "").trim(),
     location: String(location || "").trim(),
     description: String(description || "").trim(),
   };
@@ -142,6 +142,9 @@ export const reportsSentimentClient = {
         typeof responsePayload?.confidence === "number"
           ? responsePayload.confidence
           : null,
+      summary: typeof responsePayload?.summary === "string"
+        ? responsePayload.summary.trim()
+        : null,
     };
   },
 };

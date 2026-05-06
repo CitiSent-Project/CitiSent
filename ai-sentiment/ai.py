@@ -1,107 +1,64 @@
 import os
-from threading import Lock
+import json
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 
-from transformers import pipeline
+load_dotenv()
 
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+_client = None
+MODEL = "gemini-flash-lite-latest"  # most token-efficient available on free tier
 
-MODEL_NAME = os.getenv(
-    "SENTIMENT_MODEL_NAME",
-    "cross-encoder/nli-MiniLM2-L6-H768",
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    return _client
+
+
+# Compact prompt with LGU office context and admin summary
+PROMPT_TEMPLATE = (
+    'Classify this LGU citizen report. Return JSON only with these exact keys:\n'
+    '{{"urgency": "Emergency|Urgent|Moderate|Calm", "confidence": 0.0-1.0, "summary": "..."}}\n\n'
+    'Rules:\n'
+    '- Emergency=life threat; Urgent=serious infra; Moderate=maintenance; Calm=suggestion\n'
+    '- "summary" MUST be a 1-2 sentence explanation for the admin. You MUST put a HUGE EMPHASIS on the emotion and sentiment of the citizen (e.g., frustrated, panicked, calm) alongside why the urgency was chosen for the selected office.\n\n'
+    'Selected Office:{office} Location:{location} Report:{description}'
 )
 
-SUPPORTED_URGENCY_LEVELS = (
-    "Emergency",
-    "Urgent",
-    "Moderate",
-    "Calm",
-)
 
-_CANDIDATE_TO_URGENCY = {
-    "life-threatening emergency": "Emergency",
-    "urgent infrastructure repair": "Urgent",
-    "routine maintenance": "Moderate",
-    "community suggestion": "Calm",
-}
-_CANDIDATE_LABELS = tuple(_CANDIDATE_TO_URGENCY.keys())
+def analyze_report(office: str, location: str, description: str) -> dict:
+    client = _get_client()
 
-_classifier = None
-_classifier_lock = Lock()
-
-
-def build_analysis_text(issue_type: str, location: str, description: str) -> str:
-    return "\n".join(
-        [
-            f"Issue Type: {issue_type.strip()}",
-            f"Location: {location.strip()}",
-            f"Report: {description.strip()}",
-        ]
+    prompt = PROMPT_TEMPLATE.format(
+        office=office,
+        location=location,
+        description=description,
     )
 
-
-def normalize_urgency_label(value: str | None) -> str | None:
-    normalized_value = str(value or "").strip().lower()
-
-    for urgency in SUPPORTED_URGENCY_LEVELS:
-        if normalized_value == urgency.lower():
-            return urgency
-
-    return _CANDIDATE_TO_URGENCY.get(normalized_value)
-
-
-def _build_classifier():
-    print(f"Loading Smart LGU System model: {MODEL_NAME}")
-    return pipeline(
-        "zero-shot-classification",
-        model=MODEL_NAME,
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",  # forces clean JSON — no markdown fences
+            max_output_tokens=200,                  # increased to accommodate the summary
+            temperature=0.1,                        # low temp = consistent, deterministic output
+        ),
     )
 
+    result = json.loads(response.text.strip())
 
-def get_classifier():
-    global _classifier
+    urgency = result.get("urgency")
+    confidence = result.get("confidence")
+    summary = result.get("summary", "No summary provided.")
 
-    if _classifier is None:
-        with _classifier_lock:
-            if _classifier is None:
-                _classifier = _build_classifier()
-
-    return _classifier
-
-
-def analyze_report(
-    issue_type: str,
-    location: str,
-    description: str,
-    classifier=None,
-) -> dict:
-    analysis_text = build_analysis_text(issue_type, location, description)
-    active_classifier = classifier or get_classifier()
-    result = active_classifier(analysis_text, list(_CANDIDATE_LABELS))
-
-    labels = result.get("labels") or []
-    scores = result.get("scores") or []
-
-    if not labels or not scores:
-        raise ValueError("Model returned an empty response.")
-
-    urgency = normalize_urgency_label(labels[0])
-
-    if not urgency:
-        raise ValueError("Model returned an unsupported urgency label.")
+    valid_urgency = ["Emergency", "Urgent", "Moderate", "Calm"]
+    if urgency not in valid_urgency:
+        raise ValueError(f"Unsupported urgency label returned by model: '{urgency}'")
 
     return {
         "urgency": urgency,
-        "confidence": round(float(scores[0]), 4),
-    }
-
-
-def get_model_status() -> dict:
-    classifier = get_classifier()
-
-    return {
-        "status": "ready",
-        "model": MODEL_NAME,
-        "supportedUrgencyLevels": list(SUPPORTED_URGENCY_LEVELS),
-        "candidateLabels": list(_CANDIDATE_LABELS),
-        "classifierType": classifier.__class__.__name__,
+        "confidence": round(float(confidence), 4) if confidence else 0.0,
+        "summary": summary,
     }

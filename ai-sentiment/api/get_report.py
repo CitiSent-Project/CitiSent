@@ -1,16 +1,20 @@
 from fastapi import APIRouter, HTTPException
 
-from ai import get_model_status
-
 router = APIRouter()
 
+SUPPORTED_URGENCY_LEVELS = ["Emergency", "Urgent", "Moderate", "Calm"]
 
-@router.get("/status")
-def get_status():
+
+@router.get("/status", status_code=200)
+def status():
     try:
-        return get_model_status()
-    except Exception as error:
-        raise HTTPException(
-            status_code=503,
-            detail="Sentiment analysis model is unavailable.",
-        ) from error
+        from ai import _get_client, MODEL
+        _get_client()  # verify client initializes without error
+
+        return {
+            "status": "ready",
+            "model": MODEL,
+            "supportedUrgencyLevels": SUPPORTED_URGENCY_LEVELS,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Sentiment analysis model is unavailable.")

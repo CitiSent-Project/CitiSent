@@ -1,7 +1,10 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
+import { DEFAULT_ISSUE_LOGO_SOURCE } from "../../constants/createReportIssues";
 import { Colors } from "../../modules/shared";
 
 export default function IssueCard({ label, logoSource, onPress }) {
+  const resolvedLogoSource = logoSource || DEFAULT_ISSUE_LOGO_SOURCE;
+
   return (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -11,7 +14,7 @@ export default function IssueCard({ label, logoSource, onPress }) {
     >
       <View className="items-center justify-center">
         <Image
-          source={logoSource}
+          source={resolvedLogoSource}
           className="h-20 w-20 rounded-full"
           resizeMode="cover"
         />

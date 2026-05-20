@@ -91,7 +91,7 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
       <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const iconFileName = resolveIconFileName(item)
-          const iconSrc = iconFileName ? encodeURI(`/assets/icons/${iconFileName}`) : null
+          const iconSrc = item.logoUrl || (iconFileName ? encodeURI(`/assets/icons/${iconFileName}`) : null)
           const isSelected = selectedItemId === item.id
 
           return (

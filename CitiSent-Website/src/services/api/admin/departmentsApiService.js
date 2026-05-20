@@ -33,6 +33,18 @@ export const departmentsApiService = {
         token,
       }
     ),
+  updateDepartmentLogo: (token, departmentSlug, file) => {
+    const formData = new FormData()
+    formData.append('logo', file)
+
+    return apiClient.patch(`/departments/${departmentSlug}/logo`, formData, {
+      token,
+    })
+  },
+  deleteDepartmentLogo: (token, departmentSlug) =>
+    apiClient.delete(`/departments/${departmentSlug}/logo`, {
+      token,
+    }),
   deleteDepartment: (token, departmentSlug) =>
     apiClient.delete(`/departments/${departmentSlug}`, {
       token,

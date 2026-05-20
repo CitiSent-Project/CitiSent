@@ -43,9 +43,13 @@ function buildRequestUrl(endpoint) {
   return `${BASE_URL}${normalizedEndpoint}`
 }
 
-function buildHeaders(token, customHeaders) {
+function isFormDataBody(body) {
+  return typeof FormData !== 'undefined' && body instanceof FormData
+}
+
+function buildHeaders(token, customHeaders, body) {
   return {
-    'Content-Type': 'application/json',
+    ...(isFormDataBody(body) ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...customHeaders,
   }
@@ -243,7 +247,7 @@ async function request(endpoint, options = {}) {
 
     try {
       response = await fetch(requestUrl, {
-        headers: buildHeaders(token, headers),
+        headers: buildHeaders(token, headers, requestOptions.body),
         signal: timedSignal.signal,
         ...requestOptions,
       })
@@ -315,13 +319,13 @@ export const apiClient = {
   post: (endpoint, body, options = {}) =>
     request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: isFormDataBody(body) ? body : JSON.stringify(body),
       ...options,
     }),
   patch: (endpoint, body, options = {}) =>
     request(endpoint, {
       method: 'PATCH',
-      body: JSON.stringify(body),
+      body: isFormDataBody(body) ? body : JSON.stringify(body),
       ...options,
     }),
   delete: (endpoint, options = {}) =>

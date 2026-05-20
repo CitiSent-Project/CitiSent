@@ -56,6 +56,14 @@ export const setDepartmentActiveSchema = z.object({
   }),
 });
 
+export const departmentLogoSchema = z.object({
+  query: z.object({}).optional().default({}),
+  body: z.object({}).optional().default({}),
+  params: z.object({
+    departmentSlug: departmentSlugSchema,
+  }),
+});
+
 export const deleteDepartmentSchema = z.object({
   query: z.object({}).optional().default({}),
   body: z.object({}).optional().default({}),

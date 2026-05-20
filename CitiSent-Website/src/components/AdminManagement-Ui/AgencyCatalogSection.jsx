@@ -1,6 +1,17 @@
 import { useMemo, useRef, useState } from 'react'
-import { FiEdit2, FiToggleLeft, FiToggleRight, FiTrash2 } from 'react-icons/fi'
+import {
+    FiEdit2,
+    FiImage,
+    FiToggleLeft,
+    FiToggleRight,
+    FiTrash2,
+    FiUploadCloud,
+    FiXCircle,
+} from 'react-icons/fi'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+
+const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024
+const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
 function toSlug(value) {
     return String(value || '')
@@ -17,6 +28,8 @@ export function AgencyCatalogSection({
     onCreateDepartment,
     onUpdateDepartment,
     onSetDepartmentActive,
+    onUpdateDepartmentLogo,
+    onDeleteDepartmentLogo,
     onDeleteDepartment,
 }) {
     const [form, setForm] = useState({
@@ -30,6 +43,7 @@ export function AgencyCatalogSection({
     const [renameError, setRenameError] = useState('')
     const [deleteModal, setDeleteModal] = useState(null)
     const [deleteError, setDeleteError] = useState('')
+    const [logoErrorBySlug, setLogoErrorBySlug] = useState({})
     const renameModalRef = useRef(null)
     const deleteModalRef = useRef(null)
 
@@ -118,6 +132,41 @@ export function AgencyCatalogSection({
         setDeleteError('')
     }
 
+    function clearLogoError(departmentSlug) {
+        setLogoErrorBySlug((previous) => {
+            if (!previous[departmentSlug]) {
+                return previous
+            }
+
+            const next = { ...previous }
+            delete next[departmentSlug]
+            return next
+        })
+    }
+
+    function setLogoError(departmentSlug, message) {
+        setLogoErrorBySlug((previous) => ({
+            ...previous,
+            [departmentSlug]: message,
+        }))
+    }
+
+    function validateLogoFile(file) {
+        if (!file) {
+            return 'Please choose a logo image.'
+        }
+
+        if (!ALLOWED_LOGO_TYPES.has(file.type)) {
+            return 'Use a PNG, JPG, or WebP image.'
+        }
+
+        if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
+            return 'Logo image must be 2MB or smaller.'
+        }
+
+        return ''
+    }
+
     async function handleSubmitRenameDepartment(event) {
         event.preventDefault()
 
@@ -161,6 +210,48 @@ export function AgencyCatalogSection({
         setBusyDepartmentSlug('')
     }
 
+    async function handleLogoFileChange(department, event) {
+        const file = event.target.files?.[0] || null
+        event.target.value = ''
+
+        const validationError = validateLogoFile(file)
+        if (validationError) {
+            setLogoError(department.id, validationError)
+            return
+        }
+
+        clearLogoError(department.id)
+        setBusyDepartmentSlug(department.id)
+        const result = await onUpdateDepartmentLogo({
+            departmentSlug: department.id,
+            departmentLabel: department.label,
+            file,
+        })
+        setBusyDepartmentSlug('')
+
+        if (!result?.ok) {
+            setLogoError(department.id, result?.message || 'Unable to update agency logo.')
+        }
+    }
+
+    async function handleDeleteDepartmentLogo(department) {
+        if (!department.logoPath && !department.logoUrl) {
+            return
+        }
+
+        clearLogoError(department.id)
+        setBusyDepartmentSlug(department.id)
+        const result = await onDeleteDepartmentLogo({
+            departmentSlug: department.id,
+            departmentLabel: department.label,
+        })
+        setBusyDepartmentSlug('')
+
+        if (!result?.ok) {
+            setLogoError(department.id, result?.message || 'Unable to remove agency logo.')
+        }
+    }
+
     async function handleConfirmDeleteDepartment(event) {
         event.preventDefault()
 
@@ -185,12 +276,12 @@ export function AgencyCatalogSection({
     }
 
     return (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-900">Agency catalog</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                        Add new agencies and manage whether they are active for future assignments.
+                        Manage agency names, availability, and official logos shown across CitiSent.
                     </p>
                 </div>
             </div>
@@ -227,10 +318,12 @@ export function AgencyCatalogSection({
                 </div>
             </form>
 
-            <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-180 text-left text-sm">
+            <div className="mt-5 overflow-hidden rounded-xl border border-slate-200">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-230 text-left text-sm">
                     <thead>
-                        <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                            <th className="px-3 py-3">Logo</th>
                             <th className="px-3 py-2">Agency</th>
                             <th className="px-3 py-2">Slug</th>
                             <th className="px-3 py-2">Status</th>
@@ -240,9 +333,62 @@ export function AgencyCatalogSection({
                     <tbody>
                         {sortedCatalog.map((department) => {
                             const isBusy = busyDepartmentSlug === department.id
+                            const logoError = logoErrorBySlug[department.id]
+                            const fileInputId = `agency-logo-${department.id}`
 
                             return (
-                                <tr key={department.id} className="border-b border-slate-100">
+                                <tr key={department.id} className="border-b border-slate-100 align-top last:border-b-0">
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-400">
+                                                {department.logoUrl ? (
+                                                    <img
+                                                        src={department.logoUrl}
+                                                        alt={`${department.label} logo`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <FiImage className="text-lg" aria-hidden="true" />
+                                                )}
+                                            </div>
+                                            <div className="min-w-35">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <label
+                                                        htmlFor={fileInputId}
+                                                        className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 ${isBusy ? 'pointer-events-none opacity-60' : ''}`}
+                                                    >
+                                                        <FiUploadCloud aria-hidden="true" />
+                                                        {department.logoUrl ? 'Replace' : 'Upload'}
+                                                    </label>
+                                                    <input
+                                                        id={fileInputId}
+                                                        type="file"
+                                                        accept="image/png,image/jpeg,image/webp"
+                                                        disabled={isBusy}
+                                                        onChange={(event) => handleLogoFileChange(department, event)}
+                                                        className="sr-only"
+                                                    />
+                                                    {department.logoUrl || department.logoPath ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled={isBusy}
+                                                            onClick={() => handleDeleteDepartmentLogo(department)}
+                                                            title="Remove logo"
+                                                            aria-label={`Remove ${department.label} logo`}
+                                                            className="grid h-8 w-8 place-items-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            <FiXCircle className="text-sm" />
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                                {logoError ? (
+                                                    <p className="mt-1 max-w-50 text-xs text-rose-600">{logoError}</p>
+                                                ) : (
+                                                    <p className="mt-1 text-xs text-slate-500">PNG, JPG, or WebP up to 2MB</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td className="px-3 py-3 font-medium text-slate-800">{department.label}</td>
                                     <td className="px-3 py-3 text-slate-600">{department.id}</td>
                                     <td className="px-3 py-3">
@@ -299,13 +445,14 @@ export function AgencyCatalogSection({
 
                         {sortedCatalog.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-3 py-8 text-center text-sm text-slate-600">
+                                <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-600">
                                     No agencies found in catalog.
                                 </td>
                             </tr>
                         ) : null}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {renameModal ? (

@@ -1,6 +1,14 @@
 import { StatusCodes } from "http-status-codes";
+import { randomUUID } from "node:crypto";
 import { AppError } from "../../shared/errors/appError.js";
 import { departmentsRepository } from "./departments.repository.js";
+
+const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
+const ALLOWED_LOGO_MIME_TYPES = new Map([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+  ["image/webp", "webp"],
+]);
 
 function normalizeSlug(value) {
   return String(value || "")
@@ -27,6 +35,40 @@ function isUniqueConflict(error) {
 function assertDepartmentFound(department) {
   if (!department) {
     throw new AppError("Department not found", StatusCodes.NOT_FOUND);
+  }
+}
+
+function assertLogoFile(file) {
+  if (!file) {
+    throw new AppError("Please choose a logo image to upload.", StatusCodes.BAD_REQUEST);
+  }
+
+  if (!Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
+    throw new AppError("The uploaded logo file is empty.", StatusCodes.BAD_REQUEST);
+  }
+
+  if (file.size > MAX_LOGO_SIZE_BYTES) {
+    throw new AppError("Logo image must be 2MB or smaller.", StatusCodes.BAD_REQUEST);
+  }
+
+  if (!ALLOWED_LOGO_MIME_TYPES.has(file.mimetype)) {
+    throw new AppError(
+      "Logo must be a PNG, JPG, or WebP image.",
+      StatusCodes.BAD_REQUEST,
+    );
+  }
+}
+
+function buildLogoObjectPath({ agencyId, file }) {
+  const extension = ALLOWED_LOGO_MIME_TYPES.get(file.mimetype) || "png";
+  return `logos/${agencyId}/${Date.now()}-${randomUUID()}.${extension}`;
+}
+
+async function removeLogoObjectBestEffort({ accessToken, logoPath }) {
+  try {
+    await departmentsRepository.removeLogoObject({ accessToken, path: logoPath });
+  } catch {
+    // Logo cleanup should not hide the successful catalog change from the user.
   }
 }
 
@@ -136,6 +178,84 @@ export const departmentsService = {
     return updated;
   },
 
+  async updateDepartmentLogo({ accessToken, departmentSlug, file }) {
+    assertLogoFile(file);
+
+    const existing = await departmentsRepository.getDepartmentBySlug({
+      accessToken,
+      slug: departmentSlug,
+    });
+    assertDepartmentFound(existing);
+
+    if (!existing.agencyId) {
+      throw new AppError(
+        "Department is missing its agency identifier.",
+        StatusCodes.BAD_GATEWAY,
+      );
+    }
+
+    const nextLogoPath = buildLogoObjectPath({
+      agencyId: existing.agencyId,
+      file,
+    });
+
+    await departmentsRepository.uploadLogoObject({
+      accessToken,
+      path: nextLogoPath,
+      buffer: file.buffer,
+      contentType: file.mimetype,
+    });
+
+    try {
+      const updated = await departmentsRepository.updateDepartmentLogoPath({
+        accessToken,
+        slug: departmentSlug,
+        logoPath: nextLogoPath,
+      });
+
+      assertDepartmentFound(updated);
+
+      if (existing.logoPath && existing.logoPath !== nextLogoPath) {
+        await removeLogoObjectBestEffort({
+          accessToken,
+          logoPath: existing.logoPath,
+        });
+      }
+
+      return updated;
+    } catch (error) {
+      await removeLogoObjectBestEffort({
+        accessToken,
+        logoPath: nextLogoPath,
+      });
+      throw error;
+    }
+  },
+
+  async deleteDepartmentLogo({ accessToken, departmentSlug }) {
+    const existing = await departmentsRepository.getDepartmentBySlug({
+      accessToken,
+      slug: departmentSlug,
+    });
+    assertDepartmentFound(existing);
+
+    if (existing.logoPath) {
+      await removeLogoObjectBestEffort({
+        accessToken,
+        logoPath: existing.logoPath,
+      });
+    }
+
+    const updated = await departmentsRepository.updateDepartmentLogoPath({
+      accessToken,
+      slug: departmentSlug,
+      logoPath: null,
+    });
+
+    assertDepartmentFound(updated);
+    return updated;
+  },
+
   async deleteDepartment({ accessToken, departmentSlug }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
       accessToken,
@@ -162,6 +282,13 @@ export const departmentsService = {
       slug: departmentSlug,
     });
     assertDepartmentFound(deleted);
+
+    if (deleted.logoPath) {
+      await removeLogoObjectBestEffort({
+        accessToken,
+        logoPath: deleted.logoPath,
+      });
+    }
 
     return deleted;
   },

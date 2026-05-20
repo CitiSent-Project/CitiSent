@@ -108,6 +108,7 @@ export function buildIssueOptionsFromDepartments(departments = []) {
     .map((department) => {
       const slug = String(department?.slug || department?.id || "").trim();
       const name = String(department?.name || department?.label || "").trim();
+      const logoUrl = String(department?.logoUrl || "").trim();
 
       if (!slug || !name) {
         return null;
@@ -118,7 +119,7 @@ export function buildIssueOptionsFromDepartments(departments = []) {
         slug,
         name,
         label: name,
-        logoSource: resolveIssueLogoSource(slug),
+        logoSource: logoUrl ? { uri: logoUrl } : resolveIssueLogoSource(slug),
       };
     })
     .filter((issue) => issue !== null);

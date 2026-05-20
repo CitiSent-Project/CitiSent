@@ -52,6 +52,31 @@ export const departmentsController = {
 		});
 	},
 
+	async updateDepartmentLogo(req, res) {
+		const department = await departmentsService.updateDepartmentLogo({
+			accessToken: req.accessToken,
+			departmentSlug: req.params.departmentSlug,
+			file: req.file,
+		});
+
+		return res.status(StatusCodes.OK).json({
+			success: true,
+			data: department,
+		});
+	},
+
+	async deleteDepartmentLogo(req, res) {
+		const department = await departmentsService.deleteDepartmentLogo({
+			accessToken: req.accessToken,
+			departmentSlug: req.params.departmentSlug,
+		});
+
+		return res.status(StatusCodes.OK).json({
+			success: true,
+			data: department,
+		});
+	},
+
 	async deleteDepartment(req, res) {
 		const department = await departmentsService.deleteDepartment({
 			accessToken: req.accessToken,

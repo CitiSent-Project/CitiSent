@@ -33,6 +33,8 @@ function normalizeDepartment(row = {}) {
     name,
     description: String(row.description || "").trim(),
     isActive: row.isActive !== false,
+    logoPath: row.logoPath || row.logo_path || null,
+    logoUrl: row.logoUrl || row.logo_url || null,
     createdAt: row.createdAt || null,
     updatedAt: row.updatedAt || null,
   };

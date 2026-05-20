@@ -79,6 +79,8 @@ export function renderActivePage({
         onCreateDepartment,
         onUpdateDepartment,
         onSetDepartmentActive,
+        onUpdateDepartmentLogo,
+        onDeleteDepartmentLogo,
         onDeleteDepartment,
         onApproveTransfer,
         onRejectTransfer,
@@ -98,6 +100,8 @@ export function renderActivePage({
                     onCreateDepartment={onCreateDepartment}
                     onUpdateDepartment={onUpdateDepartment}
                     onSetDepartmentActive={onSetDepartmentActive}
+                    onUpdateDepartmentLogo={onUpdateDepartmentLogo}
+                    onDeleteDepartmentLogo={onDeleteDepartmentLogo}
                     onDeleteDepartment={onDeleteDepartment}
                     onApproveTransfer={onApproveTransfer}
                     onRejectTransfer={onRejectTransfer}

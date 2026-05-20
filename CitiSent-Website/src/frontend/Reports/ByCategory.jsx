@@ -16,6 +16,7 @@ function normalizeAgencyOptions(options = []) {
     .map((option) => ({
       id: String(option?.id || '').trim(),
       label: String(option?.label || '').trim(),
+      logoUrl: option?.logoUrl || null,
     }))
     .filter((option) => option.id && option.label)
 }

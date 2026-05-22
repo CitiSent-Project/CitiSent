@@ -256,12 +256,73 @@ export const departmentsService = {
     return updated;
   },
 
-  async deleteDepartment({ accessToken, departmentSlug }) {
+  async deleteDepartment({ accessToken, departmentSlug, cleanup = false, reassignTo }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
       accessToken,
       slug: departmentSlug,
     });
     assertDepartmentFound(existing);
+
+    const shouldCleanup = cleanup === true;
+    if (shouldCleanup && existing.isActive) {
+      throw new AppError(
+        "Deactivate the department before cleaning up and deleting.",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    const reassignTarget = String(reassignTo || "").trim();
+    if (reassignTarget) {
+      if (existing.isActive) {
+        throw new AppError(
+          "Deactivate the department before reassigning and deleting.",
+          StatusCodes.CONFLICT,
+        );
+      }
+
+      if (reassignTarget === existing.slug) {
+        throw new AppError(
+          "Reassign target must be different from the deleted department.",
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+
+      const fallback = await departmentsRepository.findBySlugOrName({
+        accessToken,
+        value: reassignTarget,
+        includeInactive: false,
+      });
+
+      if (!fallback) {
+        throw new AppError(
+          "Reassign target must be an active department.",
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+
+      if (fallback.slug === existing.slug) {
+        throw new AppError(
+          "Reassign target must be different from the deleted department.",
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+
+      await departmentsRepository.reassignDepartmentReferences({
+        accessToken,
+        fromSlug: existing.slug,
+        fromName: existing.name,
+        toSlug: fallback.slug,
+        toName: fallback.name,
+      });
+    }
+
+    if (shouldCleanup) {
+      await departmentsRepository.cleanupDepartmentReferences({
+        accessToken,
+        slug: existing.slug,
+        name: existing.name,
+      });
+    }
 
     const references = await departmentsRepository.countDepartmentReferences({
       accessToken,
@@ -270,6 +331,22 @@ export const departmentsService = {
     });
 
     if (references.total > 0) {
+      if (reassignTarget) {
+        throw new AppError(
+          "Department references remain after reassignment. Resolve manually before deleting.",
+          StatusCodes.CONFLICT,
+          references,
+        );
+      }
+
+      if (shouldCleanup) {
+        throw new AppError(
+          "Department references remain after cleanup. Resolve manually before deleting.",
+          StatusCodes.CONFLICT,
+          references,
+        );
+      }
+
       throw new AppError(
         "Department is currently in use. Deactivate it instead of deleting.",
         StatusCodes.CONFLICT,

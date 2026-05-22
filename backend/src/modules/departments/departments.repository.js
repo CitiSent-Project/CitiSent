@@ -19,6 +19,10 @@ function getDb(accessToken) {
   return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
 
+function getAdminDb(accessToken) {
+  return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
+}
+
 function getStorageDb(accessToken) {
   return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
@@ -31,6 +35,14 @@ function normalizeValue(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
+}
+
+function buildMatchValues({ slug, name }) {
+  const values = [slug, name]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  return [...new Set(values)];
 }
 
 function mapAgencyRow(row = {}) {
@@ -91,6 +103,36 @@ async function countByColumn({ db, table, column, value }) {
   }
 
   return Number(count || 0);
+}
+
+async function updateByColumn({ db, table, column, values, payload }) {
+  if (!values.length) {
+    return;
+  }
+
+  const { error } = await db
+    .from(table)
+    .update(payload)
+    .in(column, values);
+
+  if (error) {
+    throw toGatewayError("Failed to update department references", error);
+  }
+}
+
+async function deleteByColumn({ db, table, column, values }) {
+  if (!values.length) {
+    return;
+  }
+
+  const { error } = await db
+    .from(table)
+    .delete()
+    .in(column, values);
+
+  if (error) {
+    throw toGatewayError("Failed to delete department references", error);
+  }
 }
 
 export const departmentsRepository = {
@@ -367,6 +409,157 @@ export const departmentsRepository = {
       total: breakdown.profiles + breakdown.reports + breakdown.transferRequests,
       breakdown,
     };
+  },
+
+  async reassignDepartmentReferences({ accessToken, fromSlug, fromName, toSlug, toName }) {
+    const db = getAdminDb(accessToken);
+    const values = buildMatchValues({ slug: fromSlug, name: fromName });
+
+    await Promise.all([
+      updateByColumn({
+        db,
+        table: PROFILES_TABLE,
+        column: "department_id",
+        values,
+        payload: {
+          department_id: toSlug,
+          department_label: toName,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: PROFILES_TABLE,
+        column: "department_label",
+        values,
+        payload: {
+          department_id: toSlug,
+          department_label: toName,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: REPORTS_TABLE,
+        column: "issue_type",
+        values,
+        payload: {
+          issue_type: toSlug,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "current_department_id",
+        values,
+        payload: {
+          current_department_id: toSlug,
+          current_department_label: toName,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "current_department_label",
+        values,
+        payload: {
+          current_department_id: toSlug,
+          current_department_label: toName,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "requested_department_id",
+        values,
+        payload: {
+          requested_department_id: toSlug,
+          requested_department_label: toName,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "requested_department_label",
+        values,
+        payload: {
+          requested_department_id: toSlug,
+          requested_department_label: toName,
+        },
+      }),
+    ]);
+  },
+
+  async cleanupDepartmentReferences({ accessToken, slug, name }) {
+    const db = getAdminDb(accessToken);
+    const values = buildMatchValues({ slug, name });
+
+    await Promise.all([
+      deleteByColumn({
+        db,
+        table: REPORTS_TABLE,
+        column: "issue_type",
+        values,
+      }),
+      updateByColumn({
+        db,
+        table: PROFILES_TABLE,
+        column: "department_id",
+        values,
+        payload: {
+          department_id: null,
+          department_label: null,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: PROFILES_TABLE,
+        column: "department_label",
+        values,
+        payload: {
+          department_id: null,
+          department_label: null,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "current_department_id",
+        values,
+        payload: {
+          current_department_id: null,
+          current_department_label: null,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "current_department_label",
+        values,
+        payload: {
+          current_department_id: null,
+          current_department_label: null,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "requested_department_id",
+        values,
+        payload: {
+          requested_department_id: null,
+          requested_department_label: null,
+        },
+      }),
+      updateByColumn({
+        db,
+        table: TRANSFER_REQUESTS_TABLE,
+        column: "requested_department_label",
+        values,
+        payload: {
+          requested_department_id: null,
+          requested_department_label: null,
+        },
+      }),
+    ]);
   },
 
   async deleteDepartmentBySlug({ accessToken, slug }) {

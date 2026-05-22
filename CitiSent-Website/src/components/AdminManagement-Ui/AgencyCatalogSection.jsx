@@ -13,6 +13,32 @@ import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
+function pluralize(value, singular, plural = `${singular}s`) {
+    return `${value} ${value === 1 ? singular : plural}`
+}
+
+function formatReferenceBreakdownMessage(referenceBreakdown) {
+    if (!referenceBreakdown || typeof referenceBreakdown !== 'object') {
+        return ''
+    }
+
+    const profiles = Number(referenceBreakdown.profiles || 0)
+    const reports = Number(referenceBreakdown.reports || 0)
+    const transferRequests = Number(referenceBreakdown.transferRequests || 0)
+
+    const linkedItems = [
+        profiles > 0 ? pluralize(profiles, 'user profile') : '',
+        reports > 0 ? pluralize(reports, 'report') : '',
+        transferRequests > 0 ? pluralize(transferRequests, 'transfer request') : '',
+    ].filter(Boolean)
+
+    if (linkedItems.length === 0) {
+        return ''
+    }
+
+    return `This agency is still linked to ${linkedItems.join(', ')}.`
+}
+
 function toSlug(value) {
     return String(value || '')
         .trim()
@@ -43,6 +69,7 @@ export function AgencyCatalogSection({
     const [renameError, setRenameError] = useState('')
     const [deleteModal, setDeleteModal] = useState(null)
     const [deleteError, setDeleteError] = useState('')
+    const [deleteWithCleanup, setDeleteWithCleanup] = useState(false)
     const [logoErrorBySlug, setLogoErrorBySlug] = useState({})
     const renameModalRef = useRef(null)
     const deleteModalRef = useRef(null)
@@ -59,10 +86,7 @@ export function AgencyCatalogSection({
 
     useModalAccessibility({
         isOpen: Boolean(deleteModal),
-        onClose: () => {
-            setDeleteModal(null)
-            setDeleteError('')
-        },
+        onClose: handleCloseDeleteModal,
         containerRef: deleteModalRef,
     })
 
@@ -125,11 +149,13 @@ export function AgencyCatalogSection({
     function handleOpenDeleteModal(department) {
         setDeleteModal(department)
         setDeleteError('')
+        setDeleteWithCleanup(false)
     }
 
     function handleCloseDeleteModal() {
         setDeleteModal(null)
         setDeleteError('')
+        setDeleteWithCleanup(false)
     }
 
     function clearLogoError(departmentSlug) {
@@ -259,11 +285,13 @@ export function AgencyCatalogSection({
             return
         }
 
+        const shouldCleanup = deleteWithCleanup === true
         setDeleteError('')
         setBusyDepartmentSlug(deleteModal.id)
         const result = await onDeleteDepartment({
             departmentSlug: deleteModal.id,
             departmentLabel: deleteModal.label,
+            cleanup: shouldCleanup,
         })
         setBusyDepartmentSlug('')
 
@@ -272,7 +300,12 @@ export function AgencyCatalogSection({
             return
         }
 
-        setDeleteError(result?.message || 'Unable to delete agency.')
+        // Surface reference counts when backend reports exactly what still blocks deletion.
+        const referenceBreakdown = result?.details?.breakdown
+        const breakdownMessage = formatReferenceBreakdownMessage(referenceBreakdown)
+        const fallbackMessage = result?.message || 'Unable to delete agency.'
+
+        setDeleteError(breakdownMessage ? `${fallbackMessage} ${breakdownMessage}` : fallbackMessage)
     }
 
     return (
@@ -536,7 +569,23 @@ export function AgencyCatalogSection({
                         <p className="pt-3 m-5 text-sm text-slate-600">
                             This will permanently remove {deleteModal.label}. This action cannot be undone.
                         </p>
+                        <p className="mx-5 -mt-2 text-xs text-slate-500">
+                            Inactive agencies can still be blocked when they are referenced by existing records.
+                        </p>
                         <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-5 py-4">
+                            <label className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+                                <input
+                                    type="checkbox"
+                                    checked={deleteWithCleanup}
+                                    disabled={busyDepartmentSlug === deleteModal.id}
+                                    onChange={(event) => setDeleteWithCleanup(event.target.checked)}
+                                    className="mt-0.5 h-4 w-4 rounded border-rose-300 text-rose-700 focus:ring-rose-500"
+                                />
+                                <span>Also remove linked reports and clear department references.</span>
+                            </label>
+                            <p className="-mt-2 text-xs text-slate-500">
+                                Use cleanup only for inactive agencies when you intentionally want destructive removal.
+                            </p>
                             {deleteError ? (
                                 <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-red-900">
                                     {deleteError}

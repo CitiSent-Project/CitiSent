@@ -10,6 +10,20 @@ function buildDepartmentsQuery({ includeInactive = false } = {}) {
   return params.toString() ? `?${params.toString()}` : ''
 }
 
+function buildDeleteDepartmentQuery({ cleanup = false, reassignTo } = {}) {
+  const params = new URLSearchParams()
+
+  if (cleanup) {
+    params.set('cleanup', 'true')
+  }
+
+  if (reassignTo) {
+    params.set('reassignTo', reassignTo)
+  }
+
+  return params.toString() ? `?${params.toString()}` : ''
+}
+
 export const departmentsApiService = {
   getDepartments: (token, options = {}) =>
     apiClient.get(`/departments${buildDepartmentsQuery(options)}`, { token }),
@@ -45,8 +59,8 @@ export const departmentsApiService = {
     apiClient.delete(`/departments/${departmentSlug}/logo`, {
       token,
     }),
-  deleteDepartment: (token, departmentSlug) =>
-    apiClient.delete(`/departments/${departmentSlug}`, {
+  deleteDepartment: (token, departmentSlug, options = {}) =>
+    apiClient.delete(`/departments/${departmentSlug}${buildDeleteDepartmentQuery(options)}`, {
       token,
     }),
 }

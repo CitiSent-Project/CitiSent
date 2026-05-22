@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import {
@@ -90,13 +90,18 @@ export default function LoginFormScreen() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "android" ? "padding" : undefined}
-        keyboardVerticalOffset={24}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
       >
-        <View className="flex-1 px-8 pt-16">
-          <View className="items-center">
-            <AuthBrandMark />
-          </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="flex-1 px-8 pt-16">
+            <View className="items-center">
+              <AuthBrandMark />
+            </View>
 
           <View className="items-center">
             <Text className="mt-10 text-[36px] text-[#CFDAEA]">Welcome back!</Text>
@@ -162,6 +167,7 @@ export default function LoginFormScreen() {
             </Pressable>
           </View>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

@@ -172,14 +172,13 @@ export default function CreateReportIssueDetailScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <RefreshableScrollView
           ref={scrollViewRef}
           className="flex-1"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          automaticallyAdjustKeyboardInsets
           refreshing={refreshing}
           onRefresh={onRefresh}
           contentContainerStyle={{

@@ -11,6 +11,7 @@ import {
 import {
   reportsSentimentClient,
   REPORT_URGENCY_FALLBACK,
+  REPORT_EMOTION_FALLBACK,
 } from "./reports.sentiment.js";
 import { departmentsService } from "../departments/departments.service.js";
 
@@ -21,6 +22,7 @@ function buildReportCreatePayload({
   location,
   attachmentUrl,
   urgency,
+  emotionLevel,
   aiSummary,
 }) {
   return {
@@ -30,6 +32,7 @@ function buildReportCreatePayload({
     location,
     ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
     sentiment_label: urgency,
+    ...(emotionLevel != null ? { emotion_level: emotionLevel } : {}),
     ...(aiSummary != null ? { ai_summary: aiSummary } : {}),
     status: "pending",
   };
@@ -78,6 +81,7 @@ async function resolveAnalysisWithFallback({
 
     return {
       urgency: analysis.urgency,
+      emotionLevel: analysis.emotion ?? REPORT_EMOTION_FALLBACK,
       aiSummary: analysis.summary ?? null,
     };
   } catch (error) {
@@ -88,7 +92,7 @@ async function resolveAnalysisWithFallback({
       message: error?.message || String(error),
     });
 
-    return { urgency: REPORT_URGENCY_FALLBACK, aiSummary: null };
+    return { urgency: REPORT_URGENCY_FALLBACK, emotionLevel: REPORT_EMOTION_FALLBACK, aiSummary: null };
   }
 }
 
@@ -146,7 +150,7 @@ export const reportsService = {
       value: issueType,
     });
 
-    const { urgency, aiSummary } = await resolveAnalysisWithFallback({
+    const { urgency, emotionLevel, aiSummary } = await resolveAnalysisWithFallback({
       issueType: department?.name || issueType,
       description,
       location,
@@ -160,6 +164,7 @@ export const reportsService = {
         location,
         attachmentUrl,
         urgency,
+        emotionLevel,
         aiSummary,
       }),
       accessToken,
@@ -214,12 +219,13 @@ export const reportsService = {
         },
         existingReport,
       );
-      const { urgency: nextUrgency, aiSummary: nextSummary } =
+      const { urgency: nextUrgency, emotionLevel: nextEmotion, aiSummary: nextSummary } =
         await resolveAnalysisWithFallback({
           reportId,
           ...nextAnalysisInput,
         });
       updatePayload.sentiment_label = nextUrgency;
+      updatePayload.emotion_level = nextEmotion;
       if (nextSummary != null) {
         updatePayload.ai_summary = nextSummary;
       }

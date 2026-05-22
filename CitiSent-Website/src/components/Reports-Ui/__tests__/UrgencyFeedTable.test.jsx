@@ -12,7 +12,7 @@ describe('UrgencyFeedTable', () => {
             id: 'report-101',
             name: 'Citizen One',
             location: 'Riverside',
-            urgency: 'Emergency',
+            urgency: 'Critical',
             status: 'Pending',
             date: 'April 16, 2026',
           },
@@ -23,7 +23,7 @@ describe('UrgencyFeedTable', () => {
     expect(html).toContain('report-101')
     expect(html).toContain('Citizen One')
     expect(html).toContain('Riverside')
-    expect(html).toContain('Emergency')
+    expect(html).toContain('Critical')
     expect(html).toContain('Pending')
   })
 })

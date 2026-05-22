@@ -11,9 +11,9 @@ import {
 
 describe('userReportsController', () => {
   const rows = [
-    { id: 'R-1', categoryId: 'bplo', urgency: 'Urgent', dateValue: 1700000000000 },
-    { id: 'R-2', categoryId: 'cto', urgency: 'Emergency', dateValue: 1700000001000 },
-    { id: 'R-3', categoryId: 'bplo', urgency: 'Calm', dateValue: 1699999999000 },
+    { id: 'R-1', categoryId: 'bplo', urgency: 'High', dateValue: 1700000000000 },
+    { id: 'R-2', categoryId: 'cto', urgency: 'Critical', dateValue: 1700000001000 },
+    { id: 'R-3', categoryId: 'bplo', urgency: 'Low', dateValue: 1699999999000 },
   ]
 
   it('sorts reports by latest dateValue first', () => {
@@ -36,7 +36,7 @@ describe('userReportsController', () => {
           userId: 1001,
           reportDescription: 'Road issue',
           reportCategory: 'ctmd',
-          urgencyType: 'Urgent',
+          urgencyType: 'High',
           reportLocation: 'Poblacion East',
           source: 'Mobile App',
           createdAt: '2026-03-01T08:20:00.000Z',
@@ -54,7 +54,7 @@ describe('userReportsController', () => {
       categoryId: 'ctmd',
       category: 'City Traffic Management Division/Impounding Services',
       message: 'Road issue',
-      urgency: 'Urgent',
+      urgency: 'High',
       status: 'Pending',
     })
   })
@@ -93,7 +93,7 @@ describe('userReportsController', () => {
   it('returns only rows for selected urgency', () => {
     const result = filterUserReportsByUrgency({
       reports: rows,
-      selectedUrgency: 'Emergency',
+      selectedUrgency: 'Critical',
     })
 
     expect(result.map((row) => row.id)).toEqual(['R-2'])

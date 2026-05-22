@@ -5,6 +5,7 @@ import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
   REPORT_URGENCY_BADGE_CLASSES,
+  REPORT_EMOTION_BADGE_CLASSES,
   normalizeReportStatus,
 } from '../../models/reportStatusModel'
 import {
@@ -127,6 +128,11 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               {currentStatus}
             </span>
             <span
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}
+            >
+              {report.emotionLevel || 'Neutral'}
+            </span>
+            <span
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700'}`}
             >
               {report.urgency}
@@ -160,6 +166,22 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Source</p>
               <p className="mt-0.5 text-slate-900">{report.source}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Emotion Level</p>
+              <p className="mt-0.5">
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}>
+                  {report.emotionLevel || 'Neutral'}
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Urgency Level</p>
+              <p className="mt-0.5">
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || ''}`}>
+                  {report.urgency}
+                </span>
+              </p>
             </div>
             <div className="sm:col-span-2">
               <p className="text-xs uppercase tracking-wide text-slate-500">Message</p>

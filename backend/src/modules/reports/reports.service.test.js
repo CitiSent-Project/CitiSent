@@ -17,7 +17,7 @@ function createReportRow(overrides = {}) {
     description: "Water level is rising quickly near the bridge.",
     location: "Riverside",
     status: "pending",
-    sentiment_label: "Emergency",
+    sentiment_label: "Critical",
     attachment_url: null,
     created_at: "2026-04-16T00:00:00.000Z",
     updated_at: "2026-04-16T00:00:00.000Z",
@@ -58,7 +58,7 @@ test("createReport stores AI-generated urgency and ignores client sentimentLabel
     });
 
     return {
-      urgency: "Emergency",
+      urgency: "Critical",
       confidence: 0.97,
     };
   };
@@ -81,14 +81,14 @@ test("createReport stores AI-generated urgency and ignores client sentimentLabel
     location: "Riverside",
     description: "Water level is rising quickly near the bridge.",
     attachmentUrl: "https://example.com/report.jpg",
-    sentimentLabel: "Calm",
+    sentimentLabel: "Low",
     accessToken: "token-123",
   });
 
-  assert.equal(capturedCreatePayload.sentiment_label, "Emergency");
+  assert.equal(capturedCreatePayload.sentiment_label, "Critical");
   assert.equal(capturedCreatePayload.attachment_url, "https://example.com/report.jpg");
   assert.ok(!("sentimentLabel" in capturedCreatePayload));
-  assert.equal(result.sentimentLabel, "Emergency");
+  assert.equal(result.sentimentLabel, "Critical");
   assert.equal(deletedPrefix, "reports:list:user:user-1:");
 });
 
@@ -144,7 +144,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
     });
 
     return {
-      urgency: "Emergency",
+      urgency: "Critical",
       confidence: 0.99,
     };
   };
@@ -166,7 +166,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
     reportId: "report-1",
     payload: {
       description: "Flood water is already entering nearby homes.",
-      sentimentLabel: "Calm",
+      sentimentLabel: "Low",
     },
     accessToken: "token-123",
   });
@@ -175,9 +175,9 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
     capturedUpdatePayload.description,
     "Flood water is already entering nearby homes.",
   );
-  assert.equal(capturedUpdatePayload.sentiment_label, "Emergency");
+  assert.equal(capturedUpdatePayload.sentiment_label, "Critical");
   assert.ok(!("sentimentLabel" in capturedUpdatePayload));
-  assert.equal(result.sentimentLabel, "Emergency");
+  assert.equal(result.sentimentLabel, "Critical");
   assert.equal(deletedPrefix, "reports:list:user:user-1:");
 });
 
@@ -189,13 +189,13 @@ test("updateReport keeps the existing urgency when only non-text fields change",
 
   reportsRepository.getById = async () =>
     createReportRow({
-      sentiment_label: "Urgent",
+      sentiment_label: "High",
     });
 
   reportsSentimentClient.analyzeReport = async () => {
     analyzeCalls += 1;
     return {
-      urgency: "Emergency",
+      urgency: "Critical",
       confidence: 0.99,
     };
   };
@@ -204,7 +204,7 @@ test("updateReport keeps the existing urgency when only non-text fields change",
     capturedUpdatePayload = payload;
     return createReportRow({
       attachment_url: payload.attachment_url,
-      sentiment_label: "Urgent",
+      sentiment_label: "High",
     });
   };
 
@@ -222,5 +222,5 @@ test("updateReport keeps the existing urgency when only non-text fields change",
   assert.equal(analyzeCalls, 0);
   assert.equal(capturedUpdatePayload.attachment_url, "https://example.com/updated.jpg");
   assert.ok(!("sentiment_label" in capturedUpdatePayload));
-  assert.equal(result.sentimentLabel, "Urgent");
+  assert.equal(result.sentimentLabel, "High");
 });

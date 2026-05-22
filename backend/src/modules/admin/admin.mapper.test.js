@@ -39,7 +39,7 @@ test("toAdminReportResponse enriches report data for the admin website", () => {
   assert.equal(response.departmentLabel, "City Treasury Office");
   assert.equal(response.status, "in_review");
   assert.equal(response.statusLabel, "In Progress");
-  assert.equal(response.urgency, "Urgent");
+  assert.equal(response.urgency, "High");
   assert.equal(response.reporter.fullName, "Citizen One");
 });
 

@@ -135,6 +135,20 @@ function isBackendUnavailableError(error) {
   )
 }
 
+function buildDeleteDepartmentOptions({ cleanup, reassignTo } = {}) {
+  const options = {}
+
+  if (cleanup === true) {
+    options.cleanup = true
+  }
+
+  if (reassignTo) {
+    options.reassignTo = reassignTo
+  }
+
+  return Object.keys(options).length > 0 ? options : undefined
+}
+
 export function useAppStateOrchestrator() {
   // Department options state (dynamic from backend)
   const [departmentOptions, setDepartmentOptions] = useState([])
@@ -1190,7 +1204,12 @@ export function useAppStateOrchestrator() {
     }
   }
 
-  async function handleDeleteDepartment({ departmentSlug, departmentLabel }) {
+  async function handleDeleteDepartment({
+    departmentSlug,
+    departmentLabel,
+    cleanup,
+    reassignTo,
+  }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Delete denied.', 'Only superadmins can delete departments.')
       return { ok: false }
@@ -1202,7 +1221,16 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await departmentsApiService.deleteDepartment(accessToken, departmentSlug)
+      const deleteOptions = buildDeleteDepartmentOptions({
+        cleanup,
+        reassignTo,
+      })
+
+      const response = await departmentsApiService.deleteDepartment(
+        accessToken,
+        departmentSlug,
+        deleteOptions
+      )
       const deletedDepartment = normalizeDepartmentOption(response?.data)
 
       await refreshDepartmentsState()
@@ -1214,7 +1242,12 @@ export function useAppStateOrchestrator() {
       return { ok: true, department: deletedDepartment }
     } catch (error) {
       notifyError('Delete denied.', error.message)
-      return { ok: false, message: error.message }
+      return {
+        ok: false,
+        message: error.message,
+        details: error?.details || null,
+        status: error?.status || null,
+      }
     }
   }
 

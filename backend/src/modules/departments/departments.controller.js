@@ -81,6 +81,8 @@ export const departmentsController = {
 		const department = await departmentsService.deleteDepartment({
 			accessToken: req.accessToken,
 			departmentSlug: req.params.departmentSlug,
+			cleanup: req.query.cleanup,
+			reassignTo: req.query.reassignTo,
 		});
 
 		return res.status(StatusCodes.OK).json({

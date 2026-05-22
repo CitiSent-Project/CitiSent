@@ -7,6 +7,10 @@ const departmentSlugSchema = z
   .max(64)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
+const queryBooleanFlagSchema = z
+  .union([z.boolean(), z.string().trim().toLowerCase().pipe(z.enum(["true", "false"]))])
+  .transform((value) => value === true || value === "true");
+
 export const listDepartmentsSchema = z.object({
   params: z.object({}).optional().default({}),
   body: z.object({}).optional().default({}),
@@ -56,8 +60,22 @@ export const setDepartmentActiveSchema = z.object({
   }),
 });
 
-export const deleteDepartmentSchema = z.object({
+export const departmentLogoSchema = z.object({
   query: z.object({}).optional().default({}),
+  body: z.object({}).optional().default({}),
+  params: z.object({
+    departmentSlug: departmentSlugSchema,
+  }),
+});
+
+export const deleteDepartmentSchema = z.object({
+  query: z
+    .object({
+      reassignTo: departmentSlugSchema.optional(),
+      cleanup: queryBooleanFlagSchema.optional().default(false),
+    })
+    .optional()
+    .default({}),
   body: z.object({}).optional().default({}),
   params: z.object({
     departmentSlug: departmentSlugSchema,

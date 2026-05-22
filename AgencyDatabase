@@ -1,0 +1,59 @@
+Discussion / Update Note: Agency Logos Storage + logo_path
+
+✅ What we added:
+1. Database change (public.agencies)
+- We added a new column: logo_path (text) to store the storage object path (key) for each agency’s logo.
+- This enables us to reference the logo location from the agencies table without hardcoding URLs.
+
+2. Storage (Supabase Storage) security via RLS
+- We configured Row Level Security (RLS) policies on storage.objects to control who can manage agency logo files.
+- The policies apply to the Storage bucket: agency-logos
+- Logos must be stored under the prefix: logos/<agency_id>/<filename> (enforced by checking the object’s folder name prefix).
+
+🔐 Who can upload/update/delete?
+- Only users whose role matches our existing “superadmin” convention can modify logos:
+	- **current_user_role() = 'admin'**
+
+- This restriction is enforced for:
+	- INSERT (upload)
+	- UPDATE (replace/modify)
+	- DELETE (remove)
+
+👀 Who can read/list logos?
+- We also added a select/read policy for superadmins on the same bucket/prefix, so admins can list or fetch logo objects safely.
+
+Why this approach?
+⦁	Consistency: logo_path in the table cleanly maps to the Storage object key.
+⦁	Security: RLS ensures only admins can manage the logo files in Storage.
+⦁	Maintainability: Changing how we generate URLs (signed URLs, CDN, etc.) won’t require DB schema changes—only how logo_path is converted to a URL in the app.
+
+
+How colleagues should upload agency logos (expected format)
+1. Storage bucket
+⦁	Logos are stored in the agency-logos bucket.
+
+2. Required object key format (prefix rule)
+⦁	Uploaded files must use this key/prefix format:
+
+	- logos/<agency_id>/<filename>
+
+Example:
+⦁	logos/4f2d7c3a-.../logo.png
+This exact prefix is enforced by our Storage RLS policy via:
+
+⦁	(storage.foldername(name))[1] = 'logos'
+
+3. Who can upload/replace/delete
+Only users considered superadmin by our existing convention can upload/manage files in this bucket/prefix:
+    - current_user_role() = 'admin'
+
+This rule applies to:
+- INSERT (upload)
+- UPDATE (replace/modify)
+- DELETE (remove)
+
+4. Where logo_path is used
+After uploading, we store the uploaded object key/path into:
+    - **public.agencies.logo_path**
+
+So the app can build URLs later (public URL, signed URL, etc.) without changing the DB again.

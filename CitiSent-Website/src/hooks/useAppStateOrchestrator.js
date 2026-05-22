@@ -99,11 +99,14 @@ function normalizeDepartmentOption(department) {
 
   return {
     id,
+    agencyId: String(department.agencyId || department.agency_id || '').trim(),
     label,
     slug: String(department.slug || id).trim(),
     name: String(department.name || label).trim(),
     description: String(department.description || '').trim(),
     isActive: department.isActive !== false,
+    logoPath: department.logoPath || department.logo_path || null,
+    logoUrl: department.logoUrl || department.logo_url || null,
     createdAt: department.createdAt || null,
     updatedAt: department.updatedAt || null,
   }
@@ -130,6 +133,20 @@ function isBackendUnavailableError(error) {
     message.includes('failed to fetch') ||
     message.includes('service unavailable')
   )
+}
+
+function buildDeleteDepartmentOptions({ cleanup, reassignTo } = {}) {
+  const options = {}
+
+  if (cleanup === true) {
+    options.cleanup = true
+  }
+
+  if (reassignTo) {
+    options.reassignTo = reassignTo
+  }
+
+  return Object.keys(options).length > 0 ? options : undefined
 }
 
 export function useAppStateOrchestrator() {
@@ -1124,7 +1141,75 @@ export function useAppStateOrchestrator() {
     }
   }
 
-  async function handleDeleteDepartment({ departmentSlug, departmentLabel }) {
+  async function handleUpdateDepartmentLogo({ departmentSlug, departmentLabel, file }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Logo update denied.', 'Only superadmins can manage department logos.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Logo update denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.updateDepartmentLogo(
+        accessToken,
+        departmentSlug,
+        file
+      )
+      const updatedDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        'Department logo updated',
+        `${updatedDepartment?.label || departmentLabel || departmentSlug} logo updated`
+      )
+      notifySuccess('Department logo updated successfully.')
+      return { ok: true, department: updatedDepartment }
+    } catch (error) {
+      notifyError('Logo update denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
+  async function handleDeleteDepartmentLogo({ departmentSlug, departmentLabel }) {
+    if (!canReviewTransferRequest(profile.role)) {
+      notifyError('Logo delete denied.', 'Only superadmins can manage department logos.')
+      return { ok: false }
+    }
+
+    if (!accessToken) {
+      notifyError('Logo delete denied.', 'Your session has expired. Please sign in again.')
+      return { ok: false }
+    }
+
+    try {
+      const response = await departmentsApiService.deleteDepartmentLogo(
+        accessToken,
+        departmentSlug
+      )
+      const updatedDepartment = normalizeDepartmentOption(response?.data)
+
+      await refreshDepartmentsState()
+      addActivity(
+        'Department logo removed',
+        `${updatedDepartment?.label || departmentLabel || departmentSlug} logo removed`
+      )
+      notifySuccess('Department logo removed successfully.')
+      return { ok: true, department: updatedDepartment }
+    } catch (error) {
+      notifyError('Logo delete denied.', error.message)
+      return { ok: false, message: error.message }
+    }
+  }
+
+  async function handleDeleteDepartment({
+    departmentSlug,
+    departmentLabel,
+    cleanup,
+    reassignTo,
+  }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Delete denied.', 'Only superadmins can delete departments.')
       return { ok: false }
@@ -1136,7 +1221,16 @@ export function useAppStateOrchestrator() {
     }
 
     try {
-      const response = await departmentsApiService.deleteDepartment(accessToken, departmentSlug)
+      const deleteOptions = buildDeleteDepartmentOptions({
+        cleanup,
+        reassignTo,
+      })
+
+      const response = await departmentsApiService.deleteDepartment(
+        accessToken,
+        departmentSlug,
+        deleteOptions
+      )
       const deletedDepartment = normalizeDepartmentOption(response?.data)
 
       await refreshDepartmentsState()
@@ -1148,7 +1242,12 @@ export function useAppStateOrchestrator() {
       return { ok: true, department: deletedDepartment }
     } catch (error) {
       notifyError('Delete denied.', error.message)
-      return { ok: false, message: error.message }
+      return {
+        ok: false,
+        message: error.message,
+        details: error?.details || null,
+        status: error?.status || null,
+      }
     }
   }
 
@@ -1407,6 +1506,8 @@ export function useAppStateOrchestrator() {
     onCreateDepartment: handleCreateDepartment,
     onUpdateDepartment: handleUpdateDepartment,
     onSetDepartmentActive: handleSetDepartmentActive,
+    onUpdateDepartmentLogo: handleUpdateDepartmentLogo,
+    onDeleteDepartmentLogo: handleDeleteDepartmentLogo,
     onDeleteDepartment: handleDeleteDepartment,
     onApproveTransfer: handleApproveTransfer,
     onRejectTransfer: handleRejectTransfer,
@@ -1457,6 +1558,8 @@ export function useAppStateOrchestrator() {
     handleCreateDepartment,
     handleUpdateDepartment,
     handleSetDepartmentActive,
+    handleUpdateDepartmentLogo,
+    handleDeleteDepartmentLogo,
     handleDeleteDepartment,
     handleApproveTransfer,
     handleRejectTransfer,

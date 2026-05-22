@@ -21,6 +21,8 @@ export function AdminManagement({
   onCreateDepartment,
   onUpdateDepartment,
   onSetDepartmentActive,
+  onUpdateDepartmentLogo,
+  onDeleteDepartmentLogo,
   onDeleteDepartment,
   onApproveTransfer,
   onRejectTransfer,
@@ -118,6 +120,8 @@ export function AdminManagement({
           onCreateDepartment={onCreateDepartment}
           onUpdateDepartment={onUpdateDepartment}
           onSetDepartmentActive={onSetDepartmentActive}
+          onUpdateDepartmentLogo={onUpdateDepartmentLogo}
+          onDeleteDepartmentLogo={onDeleteDepartmentLogo}
           onDeleteDepartment={onDeleteDepartment}
         />
 

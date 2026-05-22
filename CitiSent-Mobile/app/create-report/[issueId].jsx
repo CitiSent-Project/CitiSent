@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,15 +13,18 @@ import {
   BreadcrumbsNav,
   IssueReportForm,
   SubmitReportButton,
+  CREATE_REPORT_ISSUES,
+  buildIssueOptionsFromDepartments,
   getCreateReportIssueById,
 } from "../../modules/createReport";
 import {
+  Button,
   PageTopBar,
   RefreshableScrollView,
   Colors,
   usePullToRefresh,
-  api,
 } from "../../modules/shared";
+import useDepartments from "../../hooks/useDepartments";
 import { reportsApi } from "../../services/reports";
 
 export default function CreateReportIssueDetailScreen() {
@@ -30,7 +33,26 @@ export default function CreateReportIssueDetailScreen() {
   const router = useRouter();
 
   const normalizedIssueId = Array.isArray(issueId) ? issueId[0] : issueId;
-  const issue = getCreateReportIssueById(normalizedIssueId);
+  const { departments, error, isInitialLoading, reloadDepartments } = useDepartments();
+
+  const { issues, isFallback } = useMemo(() => {
+    const fromApi = buildIssueOptionsFromDepartments(departments);
+
+    if (fromApi.length > 0) {
+      return { issues: fromApi, isFallback: false };
+    }
+
+    if (error) {
+      return { issues: CREATE_REPORT_ISSUES, isFallback: true };
+    }
+
+    return { issues: [], isFallback: false };
+  }, [departments, error]);
+
+  const issue = useMemo(
+    () => getCreateReportIssueById(normalizedIssueId, issues),
+    [issues, normalizedIssueId]
+  );
 
   const [issueLocation, setIssueLocation] = useState("");
   const [report, setReport] = useState("");
@@ -43,7 +65,7 @@ export default function CreateReportIssueDetailScreen() {
     message: "",
     onCloseAction: null,
   });
-  const { refreshing, onRefresh } = usePullToRefresh();
+  const { refreshing, onRefresh } = usePullToRefresh(reloadDepartments);
   const scrollViewRef = useRef(null);
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
   const reportContentHeightRef = useRef(0);
@@ -114,7 +136,7 @@ export default function CreateReportIssueDetailScreen() {
       }
 
       await reportsApi.createReport({
-        issueType: issue.label,
+        issueType: issue.name || issue.label,
         location: issueLocation,
         description: report,
         ...(attachmentUrl ? { attachmentUrl } : {}),
@@ -141,6 +163,22 @@ export default function CreateReportIssueDetailScreen() {
     }
   }
 
+  if (isInitialLoading && !issue) {
+    return (
+      <View
+        className="flex-1 items-center justify-center px-5"
+        style={{ backgroundColor: Colors.screen.tabs }}
+      >
+        <Text className="mb-2 text-lg font-semibold text-[#111827]">
+          Loading issue...
+        </Text>
+        <Text className="text-center text-sm text-[#6B7280]">
+          Please wait while we fetch the latest agencies.
+        </Text>
+      </View>
+    );
+  }
+
   if (!issue) {
     return (
       <View
@@ -153,6 +191,11 @@ export default function CreateReportIssueDetailScreen() {
         <Text className="text-center text-sm text-[#6B7280]">
           Please go back and select an issue again.
         </Text>
+        {isFallback ? (
+          <View className="mt-4 w-full">
+            <Button title="Retry" onPress={reloadDepartments} variant="outline" />
+          </View>
+        ) : null}
         <Text
           className="mt-4 text-sm font-semibold text-[#223D68]"
           onPress={() => router.back()}

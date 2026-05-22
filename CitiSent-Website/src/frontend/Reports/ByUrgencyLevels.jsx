@@ -16,7 +16,7 @@ import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
 const URGENCY_COLORS = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#93c5fd']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const URGENCY_FILTER_CHIPS = ['All Reports', 'Emergency', 'Urgent', 'Moderate', 'Calm']
+const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
 
 export function ByUrgencyLevels({
   rows,
@@ -112,7 +112,7 @@ export function ByUrgencyLevels({
   }, [rows])
 
   const urgencyLevelsData = useMemo(() => {
-    const labels = ['Emergency', 'Urgent', 'Moderate', 'Calm']
+    const labels = ['Critical', 'High', 'Medium', 'Low']
     const values = labels.map(
       (label) => rows.filter((row) => row.urgency === label).length
     )

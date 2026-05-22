@@ -109,7 +109,7 @@ export function ByCategory({
   const selectedAgencyLabel =
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
 
-  const urgencyChips = ['All Urgency', 'Emergency', 'Urgent', 'Moderate', 'Calm']
+  const urgencyChips = ['All Urgency', 'Critical', 'High', 'Medium', 'Low']
   const reportStats = useMemo(() => {
     const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
     const unresolvedCount = rows.length - resolvedCount

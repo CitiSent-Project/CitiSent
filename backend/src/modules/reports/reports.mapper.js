@@ -6,6 +6,8 @@ export function toReportResponse(reportRow) {
     location: reportRow.location,
     status: reportRow.status,
     sentimentLabel: reportRow.sentiment_label,
+    emotionLevel: reportRow.emotion_level ?? null,
+    aiSummary: reportRow.ai_summary ?? null,
     attachmentUrl: reportRow.attachment_url,
     createdAt: reportRow.created_at,
     updatedAt: reportRow.updated_at,

@@ -4,13 +4,25 @@ import { env } from "../../config/env.js";
 import { AppError } from "../../shared/errors/appError.js";
 
 export const SUPPORTED_REPORT_URGENCY_LEVELS = Object.freeze([
-  "Emergency",
-  "Urgent",
-  "Moderate",
-  "Calm",
+  "Critical",
+  "High",
+  "Medium",
+  "Low",
 ]);
 
-export const REPORT_URGENCY_FALLBACK = "Moderate";
+export const SUPPORTED_REPORT_EMOTION_LEVELS = Object.freeze([
+  "Sad",
+  "Happy",
+  "Frustrated",
+  "Angry",
+  "Disappointed",
+  "Excited",
+  "Delighted",
+  "Neutral",
+]);
+
+export const REPORT_URGENCY_FALLBACK = "Medium";
+export const REPORT_EMOTION_FALLBACK = "Neutral";
 
 export function normalizeReportUrgency(value) {
   const normalizedValue = String(value || "")
@@ -24,13 +36,25 @@ export function normalizeReportUrgency(value) {
   );
 }
 
+export function normalizeReportEmotion(value) {
+  const normalizedValue = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  return (
+    SUPPORTED_REPORT_EMOTION_LEVELS.find(
+      (emotion) => emotion.toLowerCase() === normalizedValue,
+    ) || null
+  );
+}
+
 export function buildSentimentAnalysisPayload({
   issueType,
   location,
   description,
 }) {
   return {
-    issueType: String(issueType || "").trim(),
+    office: String(issueType || "").trim(),
     location: String(location || "").trim(),
     description: String(description || "").trim(),
   };
@@ -136,12 +160,18 @@ export const reportsSentimentClient = {
       );
     }
 
+    const emotion = normalizeReportEmotion(responsePayload?.emotion) || REPORT_EMOTION_FALLBACK;
+
     return {
       urgency,
+      emotion,
       confidence:
         typeof responsePayload?.confidence === "number"
           ? responsePayload.confidence
           : null,
+      summary: typeof responsePayload?.summary === "string"
+        ? responsePayload.summary.trim()
+        : null,
     };
   },
 };

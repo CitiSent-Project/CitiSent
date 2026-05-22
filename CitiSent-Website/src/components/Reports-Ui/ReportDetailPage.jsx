@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
   REPORT_URGENCY_BADGE_CLASSES,
+  REPORT_EMOTION_BADGE_CLASSES,
   normalizeReportStatus,
 } from '../../models/reportStatusModel'
 import {
@@ -127,6 +128,11 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               {currentStatus}
             </span>
             <span
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}
+            >
+              {report.emotionLevel || 'Neutral'}
+            </span>
+            <span
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700'}`}
             >
               {report.urgency}
@@ -161,12 +167,43 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <p className="text-xs uppercase tracking-wide text-slate-500">Source</p>
               <p className="mt-0.5 text-slate-900">{report.source}</p>
             </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Emotion Level</p>
+              <p className="mt-0.5">
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}>
+                  {report.emotionLevel || 'Neutral'}
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Urgency Level</p>
+              <p className="mt-0.5">
+                <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || ''}`}>
+                  {report.urgency}
+                </span>
+              </p>
+            </div>
             <div className="sm:col-span-2">
               <p className="text-xs uppercase tracking-wide text-slate-500">Message</p>
               <p className="mt-0.5 leading-relaxed text-slate-900">{report.message}</p>
             </div>
           </div>
         </section>
+
+        {report.aiSummary ? (
+          <section className="rounded-2xl border border-blue-800 bg-blue-50 p-6 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-blue-600">
+                <FiCpu className="text-sm text-white" />
+              </span>
+              <h2 className="text-lg font-semibold text-blue-900">AI Summary</h2>
+              <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white">
+                Powered by Gemini
+              </span>
+            </div>
+            <p className="leading-relaxed text-sm text-slate-900">{report.aiSummary}</p>
+          </section>
+        ) : null}
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Process Report</h2>
@@ -199,13 +236,12 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               return (
                 <label
                   key={status}
-                  className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                    !canProcessReport
+                  className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${!canProcessReport
                       ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                       : isSelected
                         ? 'border-blue-500 bg-blue-50 text-blue-900'
                         : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -229,11 +265,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               type="button"
               onClick={handleStatusSave}
               disabled={!canProcessReport || selectedStatus === currentStatus}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                !canProcessReport || selectedStatus === currentStatus
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${!canProcessReport || selectedStatus === currentStatus
                   ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                   : 'bg-blue-700 text-white hover:bg-blue-600'
-              }`}
+                }`}
             >
               Save Status
             </button>

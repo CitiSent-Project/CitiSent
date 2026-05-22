@@ -1,53 +1,63 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, field_validator
 from ai import analyze_report
+try:
+    from google.genai import errors as genai_errors
+except ImportError:
+    genai_errors = None
 
 router = APIRouter()
 
 
-class AnalyzeReportRequest(BaseModel):
-    issueType: str = Field(..., min_length=1, max_length=120)
-    location: str = Field(..., min_length=1, max_length=240)
-    description: str = Field(..., min_length=10, max_length=3000)
+class ReportRequest(BaseModel):
+    office: str
+    location: str
+    description: str
+
+    @field_validator("description")
+    @classmethod
+    def description_min_length(cls, v):
+        if len(v.strip()) < 10:
+            raise ValueError("Description must be at least 10 characters.")
+        return v
 
 
-def _sanitize_request(body: AnalyzeReportRequest) -> tuple[str, str, str]:
-    issue_type = body.issueType.strip()
-    location = body.location.strip()
-    description = body.description.strip()
-
-    if not issue_type:
-        raise HTTPException(status_code=400, detail="Issue type cannot be empty.")
-
-    if not location:
+@router.post("/analyze", status_code=200)
+def analyze(body: ReportRequest):
+    if not body.office.strip():
+        raise HTTPException(status_code=400, detail="Office cannot be empty.")
+    if not body.location.strip():
         raise HTTPException(status_code=400, detail="Location cannot be empty.")
 
-    if not description:
-        raise HTTPException(status_code=400, detail="Description cannot be empty.")
-
-    return issue_type, location, description
-
-
-@router.post("/analyze")
-def analyze_report_endpoint(body: AnalyzeReportRequest):
-    issue_type, location, description = _sanitize_request(body)
-
     try:
-        analysis = analyze_report(
-            issue_type=issue_type,
-            location=location,
-            description=description,
+        result = analyze_report(
+            office=body.office.strip(),
+            location=body.location.strip(),
+            description=body.description.strip(),
         )
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-    except Exception as error:
+        return result
+    except Exception as exc:
+        err_str = str(exc)
+        # Handle Gemini API-specific errors
+        if genai_errors and isinstance(exc, genai_errors.ClientError):
+            status_code = getattr(exc, "code", None) or exc.status_code if hasattr(exc, "status_code") else 502
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Gemini API quota exceeded. Please try again later.",
+                )
+            if "UNAUTHENTICATED" in err_str or "401" in err_str or "API key" in err_str:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid or missing Gemini API key.",
+                )
+            raise HTTPException(
+                status_code=502,
+                detail=f"Gemini API error: {err_str}",
+            )
+        if isinstance(exc, ValueError):
+            raise HTTPException(status_code=422, detail=str(exc))
         raise HTTPException(
-            status_code=503,
-            detail="Sentiment analysis model is unavailable.",
-        ) from error
-
-    return {
-        "urgency": analysis["urgency"],
-        "confidence": analysis["confidence"],
-    }
+            status_code=500,
+            detail=f"Internal server error: {err_str}",
+        )

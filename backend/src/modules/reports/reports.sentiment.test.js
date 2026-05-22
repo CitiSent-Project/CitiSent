@@ -15,18 +15,18 @@ test("buildSentimentAnalysisPayload trims values before sending to the sidecar",
   });
 
   assert.deepEqual(payload, {
-    issueType: "Flooding",
+    office: "Flooding",
     location: "Riverside",
     description: "Water level is rising quickly.",
   });
 });
 
 test("normalizeReportUrgency accepts the supported urgency labels", () => {
-  assert.equal(normalizeReportUrgency("emergency"), "Emergency");
-  assert.equal(normalizeReportUrgency("Urgent"), "Urgent");
-  assert.equal(normalizeReportUrgency(" Moderate "), "Moderate");
-  assert.equal(normalizeReportUrgency("calm"), "Calm");
-  assert.equal(normalizeReportUrgency("critical"), null);
+  assert.equal(normalizeReportUrgency("critical"), "Critical");
+  assert.equal(normalizeReportUrgency("High"), "High");
+  assert.equal(normalizeReportUrgency(" Medium "), "Medium");
+  assert.equal(normalizeReportUrgency("low"), "Low");
+  assert.equal(normalizeReportUrgency("emergency"), null);
 });
 
 test("reportsSentimentClient.analyzeReport posts report data to the sidecar", async () => {
@@ -50,7 +50,7 @@ test("reportsSentimentClient.analyzeReport posts report data to the sidecar", as
         return {
           ok: true,
           json: async () => ({
-            urgency: "Emergency",
+            urgency: "Critical",
             confidence: 0.9731,
           }),
         };
@@ -62,13 +62,15 @@ test("reportsSentimentClient.analyzeReport posts report data to the sidecar", as
   assert.equal(requests[0].url, "http://127.0.0.1:8000/analyze");
   assert.equal(requests[0].options.method, "POST");
   assert.deepEqual(requests[0].payload, {
-    issueType: "Flooding",
+    office: "Flooding",
     location: "Riverside",
     description: "Water level is rising quickly.",
   });
   assert.deepEqual(result, {
-    urgency: "Emergency",
+    urgency: "Critical",
+    emotion: "Neutral",
     confidence: 0.9731,
+    summary: null,
   });
 });
 
@@ -137,7 +139,7 @@ test("reportsSentimentClient.analyzeReport rejects unsupported urgency labels", 
         fetchImpl: async () => ({
           ok: true,
           json: async () => ({
-            urgency: "Critical",
+            urgency: "Emergency",
             confidence: 0.92,
           }),
         }),

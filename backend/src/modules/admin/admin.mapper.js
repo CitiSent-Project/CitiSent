@@ -29,29 +29,29 @@ function resolveUrgency(value) {
     .toLowerCase();
 
   if (
-    normalizedValue.includes("emergency") ||
-    normalizedValue.includes("critical")
+    normalizedValue.includes("critical") ||
+    normalizedValue.includes("emergency")
   ) {
-    return "Emergency";
+    return "Critical";
   }
 
   if (
-    normalizedValue.includes("urgent") ||
     normalizedValue.includes("high") ||
+    normalizedValue.includes("urgent") ||
     normalizedValue.includes("negative")
   ) {
-    return "Urgent";
+    return "High";
   }
 
   if (
-    normalizedValue.includes("moderate") ||
     normalizedValue.includes("medium") ||
+    normalizedValue.includes("moderate") ||
     normalizedValue.includes("neutral")
   ) {
-    return "Moderate";
+    return "Medium";
   }
 
-  return "Calm";
+  return "Low";
 }
 
 function resolveReporterName(profile) {
@@ -132,6 +132,8 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     statusLabel: STATUS_LABELS[normalizedStatus],
     urgency: resolveUrgency(reportRow?.urgency || reportRow?.sentiment_label),
     sentimentLabel: reportRow?.sentiment_label || null,
+    emotionLevel: reportRow?.emotion_level || null,
+    aiSummary: reportRow?.ai_summary || null,
     attachmentUrl: reportRow?.attachment_url || null,
     source: reportRow?.source || "Website",
     createdAt: reportRow?.created_at || null,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, Platform, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -85,13 +85,18 @@ export default function ForgotPasswordScreen() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={24}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
       >
-        <View className="flex-1 px-8 pt-16">
-          <View className="items-center">
-            <AuthBrandMark />
-          </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="flex-1 px-8 pt-16">
+            <View className="items-center">
+              <AuthBrandMark />
+            </View>
 
           <View className="mt-10">
             <Text className="text-center text-[34px] text-[#CFDAEA]">Forgot Password?</Text>
@@ -143,6 +148,7 @@ export default function ForgotPasswordScreen() {
             </Pressable>
           </View>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

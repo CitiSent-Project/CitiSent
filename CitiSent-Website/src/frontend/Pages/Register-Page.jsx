@@ -14,7 +14,9 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 		email: '',
 		departmentId: availableDepartments[0]?.id || '',
 		phone: '',
-		address: '',
+		barangay: '',
+		city: 'Sto. Tomas',
+		province: 'Batangas',
 		password: '',
 		confirmPassword: '',
 	}
@@ -39,6 +41,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			!form.lname.trim() ||
 			!form.email.trim() ||
 			!resolvedDepartmentId.trim() ||
+			!form.barangay.trim() ||
 			!form.password
 		) {
 			return 'Please complete all required fields.'
@@ -76,7 +79,9 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 			departmentId: resolvedDepartmentId,
 			departmentLabel: selectedDepartment?.label || '',
 			phone: form.phone.trim(),
-			address: form.address.trim(),
+			barangay: form.barangay.trim(),
+			city: form.city.trim(),
+			province: form.province.trim(),
 			password: form.password,
 		})
 		setSubmitting(false)
@@ -178,11 +183,29 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 				/>
 
 				<AuthInputField
-					id="register-address"
-					label="Address"
-					value={form.address}
-					onChange={(value) => updateField('address', value)}
-					placeholder="City Hall, Main District"
+					id="register-barangay"
+					label="Barangay"
+					value={form.barangay}
+					onChange={(value) => updateField('barangay', value)}
+					placeholder="San Isidro Norte"
+					variant="admin-login"
+				/>
+
+				<AuthInputField
+					id="register-city"
+					label="City"
+					value={form.city}
+					onChange={(value) => updateField('city', value)}
+					placeholder="Sto. Tomas"
+					variant="admin-login"
+				/>
+
+				<AuthInputField
+					id="register-province"
+					label="Province"
+					value={form.province}
+					onChange={(value) => updateField('province', value)}
+					placeholder="Batangas"
 					variant="admin-login"
 				/>
 

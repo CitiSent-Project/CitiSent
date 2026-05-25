@@ -10,7 +10,9 @@
  * @property {string} department
  * @property {string} role
  * @property {string} phone
- * @property {string} address
+ * @property {string} barangay
+ * @property {string} city
+ * @property {string} province
  * @property {string} password
  * @property {string} joinedAt
  * @property {string} lastLoginAt

@@ -4,7 +4,9 @@ import { createElement } from 'react'
 const DEFAULT_ERROR_GUIDANCE = 'Please verify your input, check your connection, and try again.'
 
 const FRIENDLY_FIELD_LABELS = {
-  address: 'address',
+  barangay: 'barangay',
+  city: 'city',
+  province: 'province',
   departmentId: 'department',
   email: 'email address',
   fname: 'first name',

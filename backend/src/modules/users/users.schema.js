@@ -10,6 +10,17 @@ const phoneSchema = z
   .string()
   .trim()
   .regex(/^\+?[0-9]{10,15}$/);
+const citySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine(
+    (value) => {
+      const normalized = String(value || '').toLowerCase().replace(/[\s.]/g, '');
+      return normalized === 'stotomas' || normalized === 'santotomas';
+    },
+    { message: 'City must be Sto. Tomas.' },
+  );
 
 export const getCurrentUserSchema = z.object({
   body: z.object({}).optional().default({}),
@@ -38,7 +49,9 @@ export const updateCurrentUserSchema = z.object({
       mname: z.string().trim().min(1).max(120).nullable().optional(),
       lname: z.string().trim().min(1).max(120).optional(),
       email: z.string().trim().email().optional(),
-      address: z.string().trim().optional(),
+      barangay: z.string().trim().min(1).optional(),
+      city: citySchema.optional(),
+      province: z.string().trim().min(1).optional(),
     })
     .superRefine((payload, ctx) => {
       if (Object.keys(payload).length === 0) {

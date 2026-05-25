@@ -23,6 +23,18 @@ const phoneNumberSchema = z
   .string()
   .trim()
   .regex(/^\+?[0-9]{10,15}$/);
+const citySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(160)
+  .refine(
+    (value) => {
+      const normalized = String(value || '').toLowerCase().replace(/[\s.]/g, '');
+      return normalized === 'stotomas' || normalized === 'santotomas';
+    },
+    { message: 'City must be Sto. Tomas.' },
+  );
 const dashboardLimitSchema = z.coerce.number().int().min(1).max(20).default(5);
 
 export const listAdminUsersSchema = z.object({
@@ -54,7 +66,9 @@ export const createAdminUserSchema = z.object({
     lname: z.string().trim().min(1).max(120),
     username: usernameSchema.optional(),
     phoneNumber: phoneNumberSchema.optional(),
-    address: z.string().trim().min(3).max(240).optional(),
+    barangay: z.string().trim().min(1).max(160),
+    city: citySchema.optional(),
+    province: z.string().trim().min(1).max(160).optional(),
     accountType: accountTypeSchema.optional().default("citizen"),
     role: adminRoleSchema.optional(),
     departmentId: z.string().trim().min(1).max(64).optional(),
@@ -75,7 +89,9 @@ export const updateAdminUserSchema = z.object({
       lname: z.string().trim().min(1).max(120).optional(),
       username: usernameSchema.optional(),
       phoneNumber: phoneNumberSchema.optional(),
-      address: z.string().trim().min(3).max(240).optional(),
+      barangay: z.string().trim().min(1).max(160).optional(),
+      city: citySchema.optional(),
+      province: z.string().trim().min(1).max(160).optional(),
       role: adminRoleSchema.optional(),
       departmentId: z.string().trim().min(1).max(64).optional(),
       departmentLabel: z.string().trim().min(1).max(160).optional(),

@@ -12,7 +12,9 @@ const fieldConfig = [
   { key: "email", label: "Email", icon: FiMail },
   { key: "department", label: "Department", icon: FiBriefcase },
   { key: "phone", label: "Phone", icon: FiPhone },
-  { key: "address", label: "Address", icon: FiMapPin },
+  { key: "barangay", label: "Barangay", icon: FiMapPin },
+  { key: "city", label: "City", icon: FiMapPin },
+  { key: "province", label: "Province", icon: FiMapPin },
 ];
 
 export function ProfileSummaryCard({ profile }) {

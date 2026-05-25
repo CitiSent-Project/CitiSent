@@ -12,7 +12,9 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
       mname: user?.mname ?? nameParts.mname,
       lname: user?.lname ?? nameParts.lname,
       email: user?.email ?? '',
-      address: user?.address ?? '',
+      barangay: user?.barangay ?? '',
+      city: user?.city ?? '',
+      province: user?.province ?? '',
     }
   })
 
@@ -38,7 +40,9 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
       mname: form.mname.trim(),
       lname: form.lname.trim(),
       email: form.email.trim().toLowerCase(),
-      address: form.address.trim(),
+      barangay: form.barangay.trim(),
+      city: form.city.trim(),
+      province: form.province.trim(),
     })
   }
 
@@ -107,15 +111,35 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm text-slate-700">Address</label>
-            <input
-              type="text"
-              required
-              value={form.address}
-              onChange={(event) => updateField('address', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-            />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Barangay</label>
+              <input
+                type="text"
+                required
+                value={form.barangay}
+                onChange={(event) => updateField('barangay', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">City</label>
+              <input
+                type="text"
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Province</label>
+              <input
+                type="text"
+                value={form.province}
+                onChange={(event) => updateField('province', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">

@@ -64,7 +64,9 @@ describe('useAuthSession', () => {
       departmentLabel: 'City Treasury Office',
       role: 'Superadmin',
       phone: '+63 900 000 0000',
-      address: 'City Hall',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
       password: 'supersecret',
     })
 
@@ -100,7 +102,9 @@ describe('useAuthSession', () => {
       departmentId: 'cto',
       departmentLabel: 'City Treasury Office',
       phone: '',
-      address: 'City Hall',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
       password: 'supersecret',
     })
 

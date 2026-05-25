@@ -35,7 +35,9 @@ export function ProfileInformation({
     email: profile.email,
     department: profile.department,
     phone: profile.phone,
-    address: profile.address,
+    barangay: profile.barangay,
+    city: profile.city,
+    province: profile.province,
   })
 
   function updateDraft(field, value) {
@@ -51,7 +53,9 @@ export function ProfileInformation({
       email: profile.email,
       department: profile.department,
       phone: profile.phone,
-      address: profile.address,
+      barangay: profile.barangay,
+      city: profile.city,
+      province: profile.province,
     })
     setTransferReason('')
     setSubmissionFeedback(null)
@@ -242,10 +246,26 @@ export function ProfileInformation({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Address</label>
+                <label className="mb-1 block text-sm text-slate-700">Barangay</label>
                 <input
-                  value={draft.address}
-                  onChange={(event) => updateDraft('address', event.target.value)}
+                  value={draft.barangay}
+                  onChange={(event) => updateDraft('barangay', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-700">City</label>
+                <input
+                  value={draft.city}
+                  onChange={(event) => updateDraft('city', event.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-slate-700">Province</label>
+                <input
+                  value={draft.province}
+                  onChange={(event) => updateDraft('province', event.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 />
               </div>

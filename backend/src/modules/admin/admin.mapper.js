@@ -92,7 +92,9 @@ export function toAdminUserResponse({ profile, activeBan }) {
       profile?.email ||
       "",
     phoneNumber: profile?.phone_number || null,
-    address: profile?.address || null,
+    barangay: profile?.barangay || null,
+    city: profile?.city || null,
+    province: profile?.province || null,
     role: role || null,
     accountType: profile?.account_type || "citizen",
     departmentId:
@@ -169,7 +171,9 @@ export function toOfficeAdminResponse(profile) {
     departmentLabel:
       profile?.department_label || resolveDepartmentLabel(profile?.department_id),
     phoneNumber: profile?.phone_number || null,
-    address: profile?.address || null,
+    barangay: profile?.barangay || null,
+    city: profile?.city || null,
+    province: profile?.province || null,
     joinedAt: profile?.created_at || null,
   };
 }

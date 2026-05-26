@@ -245,12 +245,14 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const lname = formData.lname?.trim()
     const name = composeFullName({ fname, mname, lname })
     const email = formData.email?.trim().toLowerCase()
-    const address = formData.address?.trim()
+    const barangay = formData.barangay?.trim()
+    const city = formData.city?.trim()
+    const province = formData.province?.trim()
 
-    if (!fname || !lname || !email || !address) {
+    if (!fname || !lname || !email || !barangay) {
       notifyError(
         'Add user failed.',
-        'Complete all required fields (first name, last name, email, address) before submitting.'
+        'Complete all required fields (first name, last name, email, barangay) before submitting.'
       )
       return false
     }
@@ -267,7 +269,9 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
         mname: mname || null,
         lname,
         email,
-        address,
+        barangay,
+        city: city || null,
+        province: province || null,
         accountType: 'citizen',
         status: mapUiStatusToBackendUserStatus(formData.status),
       })
@@ -352,12 +356,14 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const mname = formData.mname?.trim()
     const lname = formData.lname?.trim()
     const name = composeFullName({ fname, mname, lname })
-    const address = formData.address?.trim()
+    const barangay = formData.barangay?.trim()
+    const city = formData.city?.trim()
+    const province = formData.province?.trim()
 
-    if (!fname || !lname || !address) {
+    if (!fname || !lname || !barangay) {
       notifyError(
         'Edit user failed.',
-        'Complete all required fields (first name, last name, and address) before saving.'
+        'Complete all required fields (first name, last name, and barangay) before saving.'
       )
       return false
     }
@@ -373,7 +379,9 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
         fname,
         mname: mname || null,
         lname,
-        address,
+        barangay,
+        city: city || null,
+        province: province || null,
       })
 
       const updatedUser = mapBackendUserToUiRow(response?.data || {})

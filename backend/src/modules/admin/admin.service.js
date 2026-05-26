@@ -134,6 +134,30 @@ function normalizeOptionalString(value) {
   return normalizedValue || null;
 }
 
+function normalizeCityInput(value) {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+
+  const compact = normalized.toLowerCase().replace(/[\s.]/g, "");
+  if (compact === "stotomas" || compact === "santotomas") {
+    return "Sto. Tomas";
+  }
+
+  return normalized;
+}
+
+function assertValidCity(value) {
+  if (!value) {
+    return;
+  }
+
+  if (value !== "Sto. Tomas") {
+    throw new AppError("City must be Sto. Tomas.", StatusCodes.BAD_REQUEST);
+  }
+}
+
 function buildDepartmentLookup(departments = []) {
   const lookup = new Map();
 
@@ -322,6 +346,9 @@ export const adminService = {
     const requestedDepartmentValue =
       payload.departmentId || payload.departmentLabel;
     const normalizedDepartmentValue = String(requestedDepartmentValue || "").trim();
+    const normalizedBarangay = normalizeOptionalString(payload.barangay);
+    const normalizedCity = normalizeCityInput(payload.city);
+    const normalizedProvince = normalizeOptionalString(payload.province);
 
     const matchedDepartment = normalizedDepartmentValue
       ? await resolveActiveDepartmentOrThrow({
@@ -337,6 +364,12 @@ export const adminService = {
         StatusCodes.BAD_REQUEST,
       );
     }
+
+    if (!normalizedBarangay) {
+      throw new AppError("Barangay is required.", StatusCodes.BAD_REQUEST);
+    }
+
+    assertValidCity(normalizedCity);
 
     const username = buildUsername({
       username: payload.username,
@@ -379,7 +412,9 @@ export const adminService = {
           mname: normalizedMname,
           lname: normalizedLname,
           phone_number: normalizedPhoneNumber,
-          address: normalizeOptionalString(payload.address),
+          barangay: normalizedBarangay,
+          city: normalizedCity,
+          province: normalizedProvince,
           account_type: normalizedAccountType,
           role: normalizedRole || null,
           department_id:
@@ -476,8 +511,18 @@ export const adminService = {
       ...(normalizedPhoneNumber !== undefined
         ? { phone_number: normalizedPhoneNumber }
         : {}),
-      ...(payload.address !== undefined
-        ? { address: normalizeOptionalString(payload.address) }
+      ...(payload.barangay !== undefined
+        ? { barangay: normalizeOptionalString(payload.barangay) }
+        : {}),
+      ...(payload.city !== undefined
+        ? (() => {
+            const normalized = normalizeCityInput(payload.city);
+            assertValidCity(normalized);
+            return { city: normalized };
+          })()
+        : {}),
+      ...(payload.province !== undefined
+        ? { province: normalizeOptionalString(payload.province) }
         : {}),
       ...(normalizedRole !== undefined ? { role: normalizedRole } : {}),
       ...(matchedDepartment

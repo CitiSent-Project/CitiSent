@@ -19,8 +19,11 @@ export function errorHandler(err, req, res, _next) {
       requestId: req.requestId,
       method: req.method,
       path: req.originalUrl,
+      statusCode,
       errorName: err.name,
+      errorCode: err.code,
       message: err.message,
+      details: err.details,
       stack: err.stack,
     });
   }

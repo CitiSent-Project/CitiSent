@@ -22,7 +22,9 @@ const TECHNICAL_MESSAGE_PATTERNS = [
 ]
 
 const FRIENDLY_FIELD_LABELS = {
-  address: 'address',
+  barangay: 'barangay',
+  city: 'city',
+  province: 'province',
   departmentId: 'department',
   email: 'email address',
   fname: 'first name',

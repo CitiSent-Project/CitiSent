@@ -64,7 +64,9 @@ export function buildProfileSubmissionState({
         username: draft.username,
         email: draft.email,
         phone: draft.phone,
-        address: draft.address,
+        barangay: draft.barangay,
+        city: draft.city,
+        province: draft.province,
       },
       transferRequestPayload: null,
     }
@@ -76,7 +78,9 @@ export function buildProfileSubmissionState({
     lname: normalizedLname,
     email: draft.email,
     phone: draft.phone,
-    address: draft.address,
+    barangay: draft.barangay,
+    city: draft.city,
+    province: draft.province,
   }
 
   if (!didDepartmentChange) {

@@ -50,7 +50,9 @@ describe('profileController', () => {
         lname: 'Admin',
         department: 'City Treasury Office',
         phone: '0900',
-        address: 'City Hall',
+        barangay: 'San Isidro Norte',
+        city: 'Sto. Tomas',
+        province: 'Batangas',
       },
       transferReason: '',
       departmentCatalog: [
@@ -76,7 +78,9 @@ describe('profileController', () => {
         email: 'bplo.admin@citisent.gov',
         department: 'City Treasury Office',
         phone: '0900',
-        address: 'City Hall',
+        barangay: 'San Isidro Norte',
+        city: 'Sto. Tomas',
+        province: 'Batangas',
       },
       transferReason: 'Departmental workload balancing.',
       departmentCatalog: [
@@ -93,7 +97,9 @@ describe('profileController', () => {
       lname: 'Admin',
       email: 'bplo.admin@citisent.gov',
       phone: '0900',
-      address: 'City Hall',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
     })
     expect(result.transferRequestPayload).toEqual({
       requestedDepartmentId: 'cto',
@@ -115,7 +121,9 @@ describe('profileController', () => {
         email: 'updated.bplo.admin@citisent.gov',
         department: 'Business Permits and Licensing Office (BPLO)',
         phone: '0900',
-        address: 'City Hall',
+        barangay: 'San Isidro Norte',
+        city: 'Sto. Tomas',
+        province: 'Batangas',
       },
       transferReason: '',
       departmentCatalog: [
@@ -132,7 +140,9 @@ describe('profileController', () => {
       lname: 'Admin',
       email: 'updated.bplo.admin@citisent.gov',
       phone: '0900',
-      address: 'City Hall',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
       department: 'Business Permits and Licensing Office (BPLO)',
     })
     expect(result.transferRequestPayload).toBeNull()
@@ -152,7 +162,9 @@ describe('profileController', () => {
         email: 'superadmin@citisent.gov',
         department: 'All Departments',
         phone: '+639000000000',
-        address: 'City Hall',
+        barangay: 'San Isidro Norte',
+        city: 'Sto. Tomas',
+        province: 'Batangas',
       },
       transferReason: '',
       departmentCatalog: [],
@@ -167,7 +179,9 @@ describe('profileController', () => {
       username: 'city_superadmin',
       email: 'superadmin@citisent.gov',
       phone: '+639000000000',
-      address: 'City Hall',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
     })
     expect(result.transferRequestPayload).toBeNull()
   })

@@ -643,7 +643,9 @@ export function useAppStateOrchestrator() {
         ...(updates.username !== undefined ? { username: updates.username } : {}),
         ...(updates.email !== undefined ? { email: updates.email } : {}),
         ...(updates.phone !== undefined ? { phoneNumber: updates.phone } : {}),
-        ...(updates.address !== undefined ? { address: updates.address } : {}),
+        ...(updates.barangay !== undefined ? { barangay: updates.barangay } : {}),
+        ...(updates.city !== undefined ? { city: updates.city } : {}),
+        ...(updates.province !== undefined ? { province: updates.province } : {}),
         ...(selectedDepartment
           ? {
               departmentId: selectedDepartment.id,

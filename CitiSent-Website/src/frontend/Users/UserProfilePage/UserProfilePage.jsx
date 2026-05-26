@@ -37,9 +37,17 @@ export function UserProfilePage({ user, onBackToUsers }) {
             <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
             <p className="text-slate-900">{user.status}</p>
           </div>
-          <div className="md:col-span-2">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Address</p>
-            <p className="text-slate-900">{user.address}</p>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Barangay</p>
+            <p className="text-slate-900">{user.barangay || 'Not available'}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">City</p>
+            <p className="text-slate-900">{user.city || 'Not available'}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Province</p>
+            <p className="text-slate-900">{user.province || 'Not available'}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Registered At</p>

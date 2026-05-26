@@ -7,7 +7,9 @@ const initialForm = {
   mname: '',
   lname: '',
   email: '',
-  address: '',
+  barangay: '',
+  city: 'Sto. Tomas',
+  province: 'Batangas',
   status: 'Active',
 }
 
@@ -113,27 +115,38 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm text-slate-700">Address</label>
-            <input
-              type="text"
-              required
-              value={form.address}
-              onChange={(event) => updateField('address', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-              placeholder="San Isidro Norte"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm text-slate-700">Account Status</label>
-            <DropdownButton
-              className="w-full"
-              ariaLabel="Account status"
-              value={form.status}
-              onChange={(nextStatus) => updateField('status', nextStatus)}
-              options={['Active', 'Banned']}
-            />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Barangay</label>
+              <input
+                type="text"
+                required
+                value={form.barangay}
+                onChange={(event) => updateField('barangay', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="San Isidro Norte"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">City</label>
+              <input
+                type="text"
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="Sto. Tomas"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-700">Province</label>
+              <input
+                type="text"
+                value={form.province}
+                onChange={(event) => updateField('province', event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                placeholder="Batangas"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">

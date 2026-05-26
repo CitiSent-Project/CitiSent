@@ -47,7 +47,13 @@ export function UserProfileModal({ user, isOpen, onClose }) {
             <span className="font-medium text-slate-900">Email:</span> {user.email}
           </p>
           <p>
-            <span className="font-medium text-slate-900">Address:</span> {user.address}
+            <span className="font-medium text-slate-900">Barangay:</span> {user.barangay || 'Not available'}
+          </p>
+          <p>
+            <span className="font-medium text-slate-900">City:</span> {user.city || 'Not available'}
+          </p>
+          <p>
+            <span className="font-medium text-slate-900">Province:</span> {user.province || 'Not available'}
           </p>
           <p>
             <span className="font-medium text-slate-900">Status:</span> {user.status}

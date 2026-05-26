@@ -14,6 +14,11 @@ function UserInitialsAvatar({ name }) {
   )
 }
 
+function formatLocation({ barangay, city, province }) {
+  const parts = [barangay, city, province].filter((value) => Boolean(value))
+  return parts.length ? parts.join(', ') : 'Not available'
+}
+
 function UsersTableHeader({ allSelected, onToggleAll }) {
   return (
     <div className="grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -25,7 +30,7 @@ function UsersTableHeader({ allSelected, onToggleAll }) {
         aria-label="Select all users on page"
       />
       <span>User Details</span>
-      <span>Address</span>
+      <span>Location</span>
       <span>Account Status</span>
       <span>Registered Date</span>
       <span>Action</span>
@@ -67,7 +72,7 @@ function UsersTableRow({
           <p className="text-xs text-slate-500">{user.email}</p>
         </div>
       </div>
-      <p className="text-sm text-slate-700">{user.address}</p>
+      <p className="text-sm text-slate-700">{formatLocation(user)}</p>
       <UserStatusPill status={user.status} />
       <p className="text-sm text-slate-700 font-numeric">{user.registeredAt}</p>
       <div className="relative">

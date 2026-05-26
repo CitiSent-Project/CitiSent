@@ -34,7 +34,9 @@ vi.mock('react', async () => {
             email: 'bplo.admin@citisent.gov',
             department: 'Business Permits and Licensing Office (BPLO)',
             phone: '0900',
-            address: 'City Hall',
+            barangay: 'San Isidro Norte',
+            city: 'Sto. Tomas',
+            province: 'Batangas',
           },
           vi.fn(),
         ]
@@ -54,7 +56,7 @@ vi.mock('../../models/data', () => ({
 }))
 
 describe('ProfileInformation', () => {
-  it('renders a single editable email field and no duplicated phone or address inputs', () => {
+  it('renders a single editable email field and no duplicated phone or location inputs', () => {
     const html = renderToStaticMarkup(
       <ProfileInformation
         profile={{
@@ -68,7 +70,9 @@ describe('ProfileInformation', () => {
           email: 'bplo.admin@citisent.gov',
           department: 'Business Permits and Licensing Office (BPLO)',
           phone: '0900',
-          address: 'City Hall',
+          barangay: 'San Isidro Norte',
+          city: 'Sto. Tomas',
+          province: 'Batangas',
         }}
         activityLog={[]}
         transferRequests={[]}
@@ -84,7 +88,9 @@ describe('ProfileInformation', () => {
     expect(html).toContain('bplo.admin@citisent.gov')
     expect((html.match(/>Email</g) || []).length).toBe(1)
     expect((html.match(/>Phone</g) || []).length).toBe(1)
-    expect((html.match(/>Address</g) || []).length).toBe(1)
+    expect((html.match(/>Barangay</g) || []).length).toBe(1)
+    expect((html.match(/>City</g) || []).length).toBe(1)
+    expect((html.match(/>Province</g) || []).length).toBe(1)
     expect((html.match(/>Username</g) || []).length).toBe(0)
   })
 })

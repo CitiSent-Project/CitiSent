@@ -136,7 +136,9 @@ export function buildActor({ authUser, profile }) {
       authUser?.phone ||
       authUser?.user_metadata?.phoneNumber ||
       null,
-    address: profile?.address || null,
+    barangay: profile?.barangay || null,
+    city: profile?.city || null,
+    province: profile?.province || null,
     age: profile?.age ?? null,
     gender: profile?.gender ?? null,
     clientType: profile?.client_type ?? null,

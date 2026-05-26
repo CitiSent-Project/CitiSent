@@ -10,7 +10,7 @@ const persistedStatusSchema = z.enum([
   "resolved",
   "rejected",
 ]);
-const profileStatusSchema = z.enum(["active", "banned"]);
+const profileStatusSchema = z.enum(["active", "pending", "banned"]);
 const accountTypeSchema = z.enum(["admin", "citizen"]);
 const adminRoleSchema = z.enum([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]);
 const usernameSchema = z

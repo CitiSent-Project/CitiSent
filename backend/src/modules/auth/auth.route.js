@@ -3,6 +3,7 @@ import { asyncHandler } from "../../shared/utils/asyncHandler.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import {
+  activateAccountSchema,
   forgotPasswordSchema,
   loginSchema,
   meSchema,
@@ -28,6 +29,12 @@ authRouter.post(
   "/forgot-password",
   validateRequest(forgotPasswordSchema),
   asyncHandler(authController.forgotPassword),
+);
+
+authRouter.post(
+  "/activate-account",
+  validateRequest(activateAccountSchema),
+  asyncHandler(authController.activateAccount),
 );
 
 authRouter.get(

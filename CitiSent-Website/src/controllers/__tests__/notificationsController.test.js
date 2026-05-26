@@ -45,25 +45,21 @@ describe('notificationsController', () => {
     })
   })
 
-  it('preserves secure metadata when building notifications', () => {
+  it('preserves invitation metadata when building notifications', () => {
     const notification = buildNotification({
-      title: 'Temporary password generated',
-      message: 'Authenticate to reveal the credential.',
-      meta: {
-        securePayload: {
-          kind: 'temporaryPassword',
-          forEmail: 'citizen@example.com',
-          secret: 'abc123',
-        },
+      title: 'Invitation email sent',
+      message: 'A setup link was sent to citizen@example.com.',
+      metadata: {
+        kind: 'accountInvitation',
+        email: 'citizen@example.com',
+        status: 'pending',
       },
     })
 
-    expect(notification.meta).toEqual({
-      securePayload: {
-        kind: 'temporaryPassword',
-        forEmail: 'citizen@example.com',
-        secret: 'abc123',
-      },
+    expect(notification.metadata).toEqual({
+      kind: 'accountInvitation',
+      email: 'citizen@example.com',
+      status: 'pending',
     })
   })
 

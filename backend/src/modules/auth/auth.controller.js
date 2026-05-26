@@ -29,6 +29,15 @@ export const authController = {
     });
   },
 
+  async activateAccount(req, res) {
+    const result = await authService.activateAccount(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async me(req, res) {
     const result = await authService.me(req.user, req.accessToken);
 

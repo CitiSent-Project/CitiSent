@@ -180,6 +180,19 @@ function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
 
+function getAdminDbOrThrow() {
+  const adminDb = createAdminSupabaseClient();
+
+  if (!adminDb) {
+    throw new AppError(
+      "Account activation requires SUPABASE_SERVICE_ROLE_KEY",
+      StatusCodes.SERVICE_UNAVAILABLE,
+    );
+  }
+
+  return adminDb;
+}
+
 function shouldAttemptAdminRegistrationFallback(error) {
   const message = toErrorText(error);
   const status = Number(error?.status || error?.statusCode || 0);
@@ -538,6 +551,85 @@ export const authRepository = {
     if (error) {
       throw toGatewayError("Failed to process password reset request", error);
     }
+  },
+
+  async getProfileForActivation({ userId, email }) {
+    const adminDb = getAdminDbOrThrow();
+    const { data, error } = await adminDb
+      .from(PROFILES_TABLE)
+      .select("*")
+      .eq("user_id", userId)
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to verify setup link", error);
+    }
+
+    return data;
+  },
+
+  async updateAuthUserPassword({ userId, password }) {
+    const adminDb = getAdminDbOrThrow();
+    const { error } = await adminDb.auth.admin.updateUserById(userId, {
+      password,
+    });
+
+    if (error) {
+      throw toGatewayError("Failed to activate account password", error);
+    }
+  },
+
+  async markProfileActivated({ userId }) {
+    const adminDb = getAdminDbOrThrow();
+    const { data, error } = await adminDb
+      .from(PROFILES_TABLE)
+      .update({
+        activation_status: "active",
+        invitation_token_hash: null,
+        invitation_activated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to update account activation status", error);
+    }
+
+    return data;
+  },
+
+  async createAccountInvitationNotification({ adminUserId, email, status }) {
+    if (!adminUserId) {
+      return null;
+    }
+
+    const adminDb = getAdminDbOrThrow();
+    const { data, error } = await adminDb
+      .from("notifications")
+      .insert({
+        user_id: adminUserId,
+        type: "account",
+        title: status === "active" ? "Invitation accepted" : "Invitation email sent",
+        message:
+          status === "active"
+            ? `${email} completed account setup.`
+            : `A setup link was sent to ${email}.`,
+        metadata: {
+          kind: "accountInvitation",
+          email,
+          status,
+        },
+      })
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to create account invitation notification", error);
+    }
+
+    return data;
   },
 
   async getProfileByUserId(userId, accessToken) {

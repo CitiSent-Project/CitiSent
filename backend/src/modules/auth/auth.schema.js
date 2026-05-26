@@ -82,6 +82,15 @@ export const forgotPasswordSchema = z.object({
   }),
 });
 
+export const activateAccountSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    token: z.string().trim().min(1),
+    password: z.string().min(8).max(128),
+  }),
+});
+
 export const meSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),

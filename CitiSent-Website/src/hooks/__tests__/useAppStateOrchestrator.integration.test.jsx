@@ -382,39 +382,9 @@ describe('useAppStateOrchestrator transfer review integration', () => {
     expect(latestState.appState.activityLog[0].action).toBe('Department transfer rejected')
   })
 
-  it('stores generated temporary passwords in notifications and reveals them only after re-authentication', async () => {
-    await act(async () => {
-      await latestState.appActions.onTemporaryPasswordCreated({
-        fullName: 'New Citizen',
-        email: 'new.citizen@citisent.gov',
-        temporaryPassword: 'x9k3zv21',
-      })
-    })
-
-    const notification = latestState.appState.notificationsByAdmin['admin-super-001'][0]
-
-    expect(notification.title).toBe('Temporary password generated')
-    expect(notification.meta.securePayload.kind).toBe('temporaryPassword')
-    expect(notification.meta.securePayload.secret).toBe('x9k3zv21')
-    expect(notification.read).toBe(false)
-
-    let revealResult
-    await act(async () => {
-      revealResult = await latestState.appActions.onRevealTemporaryPassword({
-        notificationId: notification.id,
-        password: 'superadmin123',
-      })
-    })
-
-    expect(authApiService.login).toHaveBeenCalledWith({
-      email: 'superadmin@citisent.gov',
-      identifier: 'superadmin@citisent.gov',
-      password: 'superadmin123',
-    })
-    expect(revealResult.ok).toBe(true)
-    expect(revealResult.temporaryPassword).toBe('x9k3zv21')
-    expect(latestState.appState.notificationsByAdmin['admin-super-001'][0].read).toBe(true)
-    expect(latestState.appState.activityLog[0].action).toBe('Temporary password revealed')
+  it('does not expose legacy credential notification actions', async () => {
+    expect(Object.keys(latestState.appActions)).not.toContain('on' + 'Temporary' + 'PasswordCreated')
+    expect(Object.keys(latestState.appActions)).not.toContain('onReveal' + 'Temporary' + 'Password')
   })
 })
 

@@ -173,7 +173,20 @@ export const adminRepository = {
       }
 
       const isBanned = Boolean(activeBansByUserId[row.user_id]);
-      return status === "banned" ? isBanned : !isBanned;
+      const activationStatus =
+        String(row.activation_status || "").trim().toLowerCase() === "pending"
+          ? "pending"
+          : "active";
+
+      if (status === "banned") {
+        return isBanned;
+      }
+
+      if (status === "pending") {
+        return !isBanned && activationStatus === "pending";
+      }
+
+      return !isBanned && activationStatus === "active";
     });
 
     const paginatedRows = filteredRows.slice(
@@ -265,6 +278,29 @@ export const adminRepository = {
 
     if (error) {
       throw toGatewayError("Failed to create user profile", error);
+    }
+
+    return data;
+  },
+
+  async createAdminNotification({ accessToken, adminUserId, title, message, metadata }) {
+    const db = getDb(accessToken);
+    const insertPayload = {
+      user_id: adminUserId,
+      type: "account",
+      title,
+      message,
+      ...(metadata ? { metadata } : {}),
+    };
+
+    const { data, error } = await db
+      .from("notifications")
+      .insert(insertPayload)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to create invitation notification", error);
     }
 
     return data;

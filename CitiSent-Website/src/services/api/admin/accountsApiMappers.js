@@ -14,11 +14,13 @@ import { composeFullName, splitFullName } from '../../../models/nameModel'
 
 const BACKEND_TO_UI_USER_STATUS = {
   active: 'Active',
+  pending: 'Pending',
   banned: 'Banned',
 }
 
 const UI_TO_BACKEND_USER_STATUS = {
   Active: 'active',
+  Pending: 'pending',
   Banned: 'banned',
 }
 

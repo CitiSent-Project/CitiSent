@@ -8,6 +8,10 @@ import {
 } from "../../shared/auth/roleAccess.js";
 import { departmentsService } from "../departments/departments.service.js";
 import { normalizeNamePart } from "../../shared/utils/name.js";
+import {
+  hashInvitationTokenId,
+  verifyAccountActivationToken,
+} from "../../shared/security/invitationTokens.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -43,6 +47,15 @@ function normalizeUsername(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
+}
+
+function assertAccountIsActive(profile) {
+  if (String(profile?.activation_status || "").trim().toLowerCase() === "pending") {
+    throw new AppError(
+      "Please set up your password using the invitation link before logging in.",
+      StatusCodes.FORBIDDEN,
+    );
+  }
 }
 
 async function assertRegistrationIdentifiersAreUnique({
@@ -249,6 +262,8 @@ export const authService = {
         )
       : null;
 
+    assertAccountIsActive(profile);
+
     return toUserResponse({
       user: signInData?.user,
       session: signInData?.session,
@@ -268,6 +283,54 @@ export const authService = {
     return {
       sent: true,
       message: "If this email is registered, a reset link has been sent.",
+    };
+  },
+
+  async activateAccount({ token, password }) {
+    const verifiedToken = verifyAccountActivationToken(token);
+    const expectedTokenHash = hashInvitationTokenId(verifiedToken.tokenId);
+
+    if (!verifiedToken.userId || !verifiedToken.email || !verifiedToken.tokenId) {
+      throw new AppError("This setup link is not valid.", StatusCodes.BAD_REQUEST);
+    }
+
+    const profile = await authRepository.getProfileForActivation({
+      userId: verifiedToken.userId,
+      email: verifiedToken.email,
+    });
+
+    if (!profile) {
+      throw new AppError("This setup link is not valid.", StatusCodes.NOT_FOUND);
+    }
+
+    if (String(profile.activation_status || "active").toLowerCase() === "active") {
+      throw new AppError("This account has already been activated.", StatusCodes.CONFLICT);
+    }
+
+    if (profile.invitation_token_hash !== expectedTokenHash) {
+      throw new AppError("This setup link is no longer valid.", StatusCodes.BAD_REQUEST);
+    }
+
+    await authRepository.updateAuthUserPassword({
+      userId: verifiedToken.userId,
+      password,
+    });
+    const activatedProfile = await authRepository.markProfileActivated({
+      userId: verifiedToken.userId,
+    });
+
+    authRepository
+      .createAccountInvitationNotification({
+        adminUserId: profile.invitation_created_by_user_id,
+        email: activatedProfile?.email || verifiedToken.email,
+        status: "active",
+      })
+      .catch(() => {});
+
+    return {
+      activated: true,
+      email: activatedProfile?.email || verifiedToken.email,
+      message: "Your CitiSent account is active. You can now sign in.",
     };
   },
 

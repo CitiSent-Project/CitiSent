@@ -1,4 +1,5 @@
 import { StatusCodes } from "http-status-codes";
+import crypto from "crypto";
 import { adminRepository } from "./admin.repository.js";
 import {
   canSubmitTransferRequest,
@@ -23,6 +24,13 @@ import { logger } from "../../config/logger.js";
 import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
 import { departmentsService } from "../departments/departments.service.js";
 import { composeFullName, normalizeNamePart } from "../../shared/utils/name.js";
+import {
+  createAccountActivationToken,
+} from "../../shared/security/invitationTokens.js";
+import {
+  buildSetupPasswordUrl,
+  sendAccountInvitationEmail,
+} from "../../shared/email/mailer.js";
 
 const MANILA_TIME_ZONE = "Asia/Manila";
 const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
@@ -240,8 +248,10 @@ function buildUsername({ username, fname, mname, lname, email }) {
   return (normalizedFullName || emailCandidate || "user").slice(0, 40);
 }
 
-function buildTemporaryPassword() {
-  return `Temp#${Math.random().toString(36).slice(2, 10)}A1`;
+function buildInternalInitialPassword() {
+  // This password only lets Supabase create the auth user. It is never shown,
+  // emailed, or stored by the app; the invited user chooses their own password.
+  return `CitiSent#${crypto.randomBytes(24).toString("base64url")}A1`;
 }
 
 function assertSuperadmin(actor) {
@@ -378,11 +388,11 @@ export const adminService = {
       lname: normalizedLname,
       email: normalizedEmail,
     });
-    const temporaryPassword = buildTemporaryPassword();
+    const internalInitialPassword = buildInternalInitialPassword();
 
     const createdAuthUser = await adminRepository.createAuthUser({
       email: normalizedEmail,
-      password: temporaryPassword,
+      password: internalInitialPassword,
       userMetadata: {
         username,
         fname: normalizedFname,
@@ -402,6 +412,12 @@ export const adminService = {
     let createdProfile = null;
 
     try {
+      const invitation = createAccountActivationToken({
+        userId: createdAuthUser.id,
+        email: normalizedEmail,
+      });
+      const setupUrl = buildSetupPasswordUrl(invitation.token);
+
       createdProfile = await adminRepository.createUserProfile({
         accessToken,
         userId: createdAuthUser.id,
@@ -421,8 +437,25 @@ export const adminService = {
             matchedDepartment?.slug || normalizeOptionalString(payload.departmentId),
           department_label:
             matchedDepartment?.name || normalizeOptionalString(payload.departmentLabel),
+          activation_status: "pending",
+          invitation_token_hash: invitation.tokenHash,
+          invitation_sent_at: new Date().toISOString(),
+          invitation_activated_at: null,
+          invitation_created_by_user_id: actor.id,
         },
       });
+
+      await sendAccountInvitationEmail({
+        toEmail: normalizedEmail,
+        recipientName:
+          composeFullName({
+            fname: normalizedFname,
+            mname: normalizedMname,
+            lname: normalizedLname,
+          }) || username,
+        setupUrl,
+      });
+
     } catch (error) {
       await adminRepository.deleteAuthUserById({ userId: createdAuthUser.id });
       throw error;
@@ -432,6 +465,25 @@ export const adminService = {
       await adminRepository.deleteAuthUserById({ userId: createdAuthUser.id });
       throw new AppError("Failed to create user profile", StatusCodes.BAD_GATEWAY);
     }
+
+    adminRepository
+      .createAdminNotification({
+        accessToken,
+        adminUserId: actor.id,
+        title: "Invitation email sent",
+        message: `A setup link was sent to ${normalizedEmail}.`,
+        metadata: {
+          kind: "accountInvitation",
+          email: normalizedEmail,
+          status: "pending",
+        },
+      })
+      .catch((error) => {
+        logger.warn("Failed to create invitation notification", {
+          userId: createdProfile.user_id,
+          error: error?.message,
+        });
+      });
 
     if (payload.status === "banned") {
       await adminRepository.banUser({
@@ -453,7 +505,7 @@ export const adminService = {
         profile: result?.profile || createdProfile,
         activeBan: result?.activeBan || null,
       }),
-      temporaryPassword,
+      invitationStatus: "pending",
     };
   },
 

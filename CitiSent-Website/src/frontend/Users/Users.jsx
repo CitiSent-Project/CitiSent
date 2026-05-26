@@ -19,7 +19,6 @@ import {
   UsersTable,
   UsersToolbar,
 } from '../../components/Users-Ui'
-import { composeFullName } from '../../models/nameModel'
 
 const USERS_STATS = [
   {
@@ -27,6 +26,12 @@ const USERS_STATS = [
     label: 'Active Users',
     icon: 'user',
     accent: 'indigo',
+  },
+  {
+    id: 'pending-users',
+    label: 'Pending Users',
+    icon: 'user',
+    accent: 'cyan',
   },
   {
     id: 'banned-users',
@@ -39,7 +44,7 @@ const USERS_STATS = [
 const USERS_FILTERS = {
   searchPlaceholder: 'Search',
   sortOptions: ['Newest', 'Oldest', 'Name'],
-  filterOptions: ['All', 'Active', 'Banned'],
+  filterOptions: ['All', 'Active', 'Pending', 'Banned'],
   primaryAction: 'Add User',
 }
 
@@ -62,10 +67,14 @@ function mapFilterToBackendStatus(filterValue) {
     return 'banned'
   }
 
+  if (filterValue === 'Pending') {
+    return 'pending'
+  }
+
   return undefined
 }
 
-export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }) {
+export function Users({ onViewUserProfile, profile }) {
   const queryClient = useQueryClient()
   const pageSize = 8
   const [searchTerm, setSearchTerm] = useState('')
@@ -131,16 +140,19 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
         throw new Error('Your session has expired. Please sign in again.')
       }
 
-      const [activeResponse, bannedResponse] = await Promise.all([
+      const [activeResponse, pendingResponse, bannedResponse] = await Promise.all([
         usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'active' }),
+        usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'pending' }),
         usersApiService.listUsers(token, { limit: 1, offset: 0, status: 'banned' }),
       ])
 
       const activeTotal = Number(activeResponse?.pagination?.total)
+      const pendingTotal = Number(pendingResponse?.pagination?.total)
       const bannedTotal = Number(bannedResponse?.pagination?.total)
 
       return {
         active: Number.isFinite(activeTotal) ? activeTotal : 0,
+        pending: Number.isFinite(pendingTotal) ? pendingTotal : 0,
         banned: Number.isFinite(bannedTotal) ? bannedTotal : 0,
       }
     },
@@ -171,7 +183,7 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
   const users = useMemo(() => usersQuery.data?.users || [], [usersQuery.data])
   const totalUsers = usersQuery.data?.totalUsers || 0
   const isLoading = usersQuery.isLoading || usersQuery.isFetching
-  const stats = userStatsQuery.data || { active: 0, banned: 0 }
+  const stats = userStatsQuery.data || { active: 0, pending: 0, banned: 0 }
 
   async function invalidateUsersData() {
     await Promise.all([
@@ -243,7 +255,6 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const fname = formData.fname?.trim()
     const mname = formData.mname?.trim()
     const lname = formData.lname?.trim()
-    const name = composeFullName({ fname, mname, lname })
     const email = formData.email?.trim().toLowerCase()
     const barangay = formData.barangay?.trim()
     const city = formData.city?.trim()
@@ -276,26 +287,12 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
         status: mapUiStatusToBackendUserStatus(formData.status),
       })
 
-      const temporaryPassword = response?.data?.temporaryPassword
-      let wasStoredInNotifications = false
-
-      if (temporaryPassword && onTemporaryPasswordCreated) {
-        const notificationResult = await onTemporaryPasswordCreated({
-          fullName: name,
-          email,
-          temporaryPassword,
-        })
-        wasStoredInNotifications = Boolean(notificationResult?.ok)
-      }
-
       setIsAddUserModalOpen(false)
       setCurrentPage(1)
       await invalidateUsersData()
       notifySuccess(
-        temporaryPassword
-          ? wasStoredInNotifications
-            ? `User added successfully (${email}). Temporary password saved in Notifications.`
-            : `User added successfully (${email}). Temporary password: ${temporaryPassword}`
+        response?.data?.invitationStatus === 'pending'
+          ? `User added successfully (${email}). Invitation email sent.`
           : `User added successfully (${email}).`
       )
       return true
@@ -355,7 +352,6 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
     const fname = formData.fname?.trim()
     const mname = formData.mname?.trim()
     const lname = formData.lname?.trim()
-    const name = composeFullName({ fname, mname, lname })
     const barangay = formData.barangay?.trim()
     const city = formData.city?.trim()
     const province = formData.province?.trim()
@@ -550,7 +546,12 @@ export function Users({ onViewUserProfile, profile, onTemporaryPasswordCreated }
 
         <div className="grid gap-4 md:grid-cols-2">
           {USERS_STATS.map((stat) => {
-            const value = stat.id === 'active-users' ? String(stats.active) : String(stats.banned)
+            const value =
+              stat.id === 'active-users'
+                ? String(stats.active)
+                : stat.id === 'pending-users'
+                  ? String(stats.pending)
+                  : String(stats.banned)
             return <UserStatCard key={stat.id} {...stat} value={value} />
           })}
         </div>

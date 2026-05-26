@@ -154,7 +154,15 @@ export const notificationsRepository = {
     return data || [];
   },
 
-  async createNotification({ accessToken, userId, type, title, message, reportId }) {
+  async createNotification({
+    accessToken,
+    userId,
+    type,
+    title,
+    message,
+    reportId,
+    metadata,
+  }) {
     const db = getDb(accessToken);
     const targetUserId = resolveTargetUserId({ userId });
 
@@ -166,6 +174,7 @@ export const notificationsRepository = {
         title,
         message,
         report_id: reportId || null,
+        ...(metadata ? { metadata } : {}),
       })
       .select("*")
       .maybeSingle();

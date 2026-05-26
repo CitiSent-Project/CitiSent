@@ -8,5 +8,6 @@ export function mapBackendNotification(payload = {}) {
     createdAt: payload.createdAt || '',
     reportId: payload.reportId || null,
     readAt: payload.readAt || null,
+    metadata: payload.metadata || null,
   }
 }

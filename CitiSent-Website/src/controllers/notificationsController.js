@@ -17,20 +17,16 @@ function normalizeNotificationMeta(meta) {
 
   const normalized = {}
 
-  if (
-    meta.securePayload &&
-    typeof meta.securePayload === 'object' &&
-    !Array.isArray(meta.securePayload)
-  ) {
-    normalized.securePayload = {
-      ...meta.securePayload,
+  if (meta.invitation && typeof meta.invitation === 'object' && !Array.isArray(meta.invitation)) {
+    normalized.invitation = {
+      ...meta.invitation,
     }
   }
 
   return Object.keys(normalized).length > 0 ? normalized : undefined
 }
 
-export function buildNotification({ title, message, type = 'Account', meta }) {
+export function buildNotification({ title, message, type = 'Account', meta, metadata }) {
   const normalizedMeta = normalizeNotificationMeta(meta)
 
   return {
@@ -41,6 +37,7 @@ export function buildNotification({ title, message, type = 'Account', meta }) {
     createdAt: new Date().toISOString(),
     read: false,
     ...(normalizedMeta ? { meta: normalizedMeta } : {}),
+    ...(metadata ? { metadata } : {}),
   }
 }
 

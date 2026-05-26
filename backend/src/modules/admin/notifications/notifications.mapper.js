@@ -20,5 +20,6 @@ export function toAdminNotificationResponse(row) {
     reportId: row?.report_id || null,
     readAt: row?.read_at || null,
     createdAt: row?.created_at || null,
+    metadata: row?.metadata || null,
   };
 }

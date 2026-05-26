@@ -241,10 +241,7 @@ export function useAppStateOrchestrator() {
   const [notificationsByAdmin, setNotificationsByAdmin] = useState(() => {
     const storedNotificationsByAdmin = loadSchemaBackedValue(
       ADMIN_STORAGE_KEYS.notificationsByAdmin,
-      null,
-      {
-        validate: (value) => value,
-      }
+      null
     )
 
     if (
@@ -738,140 +735,6 @@ export function useAppStateOrchestrator() {
         .filter((adminId) => adminId !== profile.id),
     [adminAccounts, profile.id]
   )
-
-  async function handleTemporaryPasswordCreated({ fullName, email, temporaryPassword }) {
-    if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN) {
-      return {
-        ok: false,
-        message: 'Only superadmins can store temporary passwords for secure reveal.',
-      }
-    }
-
-    if (!profile.id) {
-      return {
-        ok: false,
-        message: 'Unable to store temporary password notification without an active profile.',
-      }
-    }
-
-    if (!temporaryPassword) {
-      return {
-        ok: false,
-        message: 'Temporary password is missing.',
-      }
-    }
-
-    const recipientName = fullName || email || 'the new user'
-    const recipientEmail = email || ''
-
-    setNotificationsByAdmin((previous) =>
-      appendNotificationForAdmin({
-        notificationsByAdmin: previous,
-        adminId: profile.id,
-        notification: buildNotification({
-          title: 'Temporary password generated',
-          message: `A temporary password is available for ${recipientName}. Verify your password to reveal it.`,
-          type: 'Account',
-          meta: {
-            securePayload: {
-              kind: 'temporaryPassword',
-              forName: recipientName,
-              forEmail: recipientEmail,
-              secret: temporaryPassword,
-            },
-          },
-        }),
-      })
-    )
-
-    addActivity('Temporary password generated', `Generated temporary password for ${recipientName}`)
-
-    return { ok: true }
-  }
-
-  async function handleRevealTemporaryPassword({ notificationId, password }) {
-    if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN) {
-      return {
-        ok: false,
-        message: 'Only superadmins can reveal temporary passwords.',
-      }
-    }
-
-    const trimmedPassword = String(password || '').trim()
-    if (!trimmedPassword) {
-      return {
-        ok: false,
-        message: 'Enter your admin password to continue.',
-      }
-    }
-
-    const currentNotifications = notificationsByAdmin[profile.id] || []
-    const targetNotification = currentNotifications.find(
-      (notification) => notification.id === notificationId
-    )
-    const securePayload = targetNotification?.meta?.securePayload
-
-    if (!securePayload || securePayload.kind !== 'temporaryPassword') {
-      return {
-        ok: false,
-        message: 'Temporary password details were not found for this notification.',
-      }
-    }
-
-    const loginIdentifier = String(profile.email || '').trim().toLowerCase()
-    if (!loginIdentifier) {
-      return {
-        ok: false,
-        message: 'Unable to verify credentials for this admin account.',
-      }
-    }
-
-    try {
-      const response = await authApiService.login({
-        ...(loginIdentifier.includes('@') ? { email: loginIdentifier } : {}),
-        identifier: loginIdentifier,
-        password: trimmedPassword,
-      })
-
-      const authenticatedProfile = mapBackendProfileToAdminProfile(response?.data?.user)
-      if (authenticatedProfile.id && authenticatedProfile.id !== profile.id) {
-        throw new Error('Authenticator mismatch. Please use your own superadmin account password.')
-      }
-
-      if (normalizeUserRole(authenticatedProfile.role) !== USER_ROLES.SUPERADMIN) {
-        throw new Error('Re-authentication failed. Superadmin access is required.')
-      }
-
-      setNotificationsByAdmin((previous) => ({
-        ...previous,
-        [profile.id]: (previous[profile.id] || []).map((notification) =>
-          notification.id === notificationId
-            ? {
-                ...notification,
-                read: true,
-              }
-            : notification
-        ),
-      }))
-
-      addActivity(
-        'Temporary password revealed',
-        `Revealed temporary password for ${securePayload.forName || securePayload.forEmail || 'a new user'}`
-      )
-
-      return {
-        ok: true,
-        temporaryPassword: securePayload.secret,
-        recipientName: securePayload.forName,
-        recipientEmail: securePayload.forEmail,
-      }
-    } catch (error) {
-      return {
-        ok: false,
-        message: error.message || 'Unable to verify credentials. Please try again.',
-      }
-    }
-  }
 
   async function handleNavigate(nextPage) {
     let accessDecision = buildPageAccessDecision({
@@ -1513,8 +1376,6 @@ export function useAppStateOrchestrator() {
     onDeleteDepartment: handleDeleteDepartment,
     onApproveTransfer: handleApproveTransfer,
     onRejectTransfer: handleRejectTransfer,
-    onTemporaryPasswordCreated: handleTemporaryPasswordCreated,
-    onRevealTemporaryPassword: handleRevealTemporaryPassword,
     setAuthPage,
   }
 
@@ -1565,8 +1426,6 @@ export function useAppStateOrchestrator() {
     handleDeleteDepartment,
     handleApproveTransfer,
     handleRejectTransfer,
-    handleTemporaryPasswordCreated,
-    handleRevealTemporaryPassword,
     setAuthPage,
     departmentOptions,
   }

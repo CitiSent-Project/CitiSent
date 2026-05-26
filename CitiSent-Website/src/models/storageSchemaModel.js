@@ -89,6 +89,7 @@ function normalizePreferences(preferences) {
 function normalizeNotification(notification, fallbackIdPrefix = 'notif') {
   const source = isObject(notification) ? notification : {}
   const normalizedMeta = normalizeNotificationMeta(source.meta)
+  const metadata = normalizeNotificationMetadata(source.metadata)
 
   return {
     id: asString(source.id, `${fallbackIdPrefix}-${Date.now()}`),
@@ -98,6 +99,7 @@ function normalizeNotification(notification, fallbackIdPrefix = 'notif') {
     createdAt: asString(source.createdAt, new Date().toISOString()),
     read: asBoolean(source.read, false),
     ...(normalizedMeta ? { meta: normalizedMeta } : {}),
+    ...(metadata ? { metadata } : {}),
   }
 }
 
@@ -108,17 +110,11 @@ function normalizeNotificationMeta(meta) {
     return undefined
   }
 
-  const securePayload = normalizeNotificationSecurePayload(source.securePayload)
-  if (!securePayload) {
-    return undefined
-  }
-
-  return {
-    securePayload,
-  }
+  const invitation = normalizeNotificationMetadata(source.invitation)
+  return invitation ? { invitation } : undefined
 }
 
-function normalizeNotificationSecurePayload(payload) {
+function normalizeNotificationMetadata(payload) {
   const source = asObject(payload, null)
 
   if (!source) {
@@ -126,20 +122,19 @@ function normalizeNotificationSecurePayload(payload) {
   }
 
   const kind = asString(source.kind)
-  if (kind !== 'temporaryPassword') {
+  if (kind !== 'accountInvitation') {
     return undefined
   }
 
-  const secret = asString(source.secret)
-  if (!secret) {
+  const status = asString(source.status, 'pending')
+  if (status !== 'pending' && status !== 'active') {
     return undefined
   }
 
   return {
     kind,
-    forEmail: asString(source.forEmail),
-    forName: asString(source.forName),
-    secret,
+    email: asString(source.email),
+    status,
   }
 }
 

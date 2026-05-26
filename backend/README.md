@@ -133,7 +133,8 @@ Use this as your baseline whenever you add new domains like `notifications`, `us
 - Auth:
   - `POST /api/v1/auth/register`
   - `POST /api/v1/auth/login`
-  - `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/forgot-password`
+  - `POST /api/v1/auth/activate-account`
   - `GET /api/v1/auth/me` (authenticated)
   - `POST /api/v1/auth/logout`
 - Users:
@@ -158,6 +159,17 @@ To add a new feature (example: notifications), create a new folder under `src/mo
 - `notifications.schema.js`
 
 Then register it in `src/routes/index.js`.
+
+## Account Invitations
+
+Admin-created citizen accounts use secure setup links instead of temporary
+passwords. Before using `POST /api/v1/admin/users`, run the migration in
+`backend/database/migrations/20260526_secure_user_invitations.sql` and set:
+
+- `GMAIL_USER`
+- `GMAIL_APP_PASSWORD`
+- `INVITATION_JWT_SECRET` (32+ characters)
+- `WEB_APP_BASE_URL` (for example `http://localhost:5173`)
 
 ## Database SQL code
 

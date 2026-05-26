@@ -8,6 +8,7 @@ import Toasters from './components/ui/Toasters'
 import { renderActivePage, renderAuthPage } from './controllers/pageRouterController'
 import { getLoginAuthPage, getRegisterAuthPage } from './controllers/navigationController'
 import { useAppStateOrchestrator } from './hooks/useAppStateOrchestrator'
+import { SetupPasswordPage } from './frontend/Pages/SetupPassword'
 
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
@@ -42,7 +43,7 @@ function resolveConnectionStatus({ sessionBootstrapError, hasBackendQueryError, 
   return 'connected'
 }
 
-function App() {
+function AuthenticatedApp() {
   const queryClient = useQueryClient()
   const activeFetchCount = useIsFetching()
   const [hasBackendQueryError, setHasBackendQueryError] = useState(false)
@@ -147,6 +148,19 @@ function App() {
       </ErrorBoundary>
     </>
   )
+}
+
+function App() {
+  if (window.location.pathname === '/setup-password') {
+    return (
+      <>
+        <Toasters />
+        <SetupPasswordPage />
+      </>
+    )
+  }
+
+  return <AuthenticatedApp />
 }
 
 export default App

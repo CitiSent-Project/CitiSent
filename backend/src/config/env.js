@@ -141,6 +141,10 @@ const envSchema = z.object({
     .url()
     .default("http://127.0.0.1:8000/analyze"),
   SENTIMENT_API_TIMEOUT_MS: z.coerce.number().int().positive().default(5_000),
+  GMAIL_USER: optionalString(z.string().email()),
+  GMAIL_APP_PASSWORD: optionalString(z.string().min(1)),
+  INVITATION_JWT_SECRET: optionalString(z.string().min(32)),
+  WEB_APP_BASE_URL: optionalString(z.string().url()),
   ENABLE_RUNTIME_METRICS: envBoolean.default(false),
   RUNTIME_METRICS_INTERVAL_MS: z.coerce
     .number()

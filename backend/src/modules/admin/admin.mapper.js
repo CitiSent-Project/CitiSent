@@ -71,9 +71,18 @@ function resolveManagedUserStatus(activeBan) {
   return activeBan ? "banned" : "active";
 }
 
+function resolveActivationStatus(profile) {
+  const normalizedStatus = String(profile?.activation_status || "")
+    .trim()
+    .toLowerCase();
+
+  return normalizedStatus === "pending" ? "pending" : "active";
+}
+
 export function toAdminUserResponse({ profile, activeBan }) {
   const role = normalizeUserRole(profile?.role);
-  const status = resolveManagedUserStatus(activeBan);
+  const activationStatus = resolveActivationStatus(profile);
+  const status = activeBan ? resolveManagedUserStatus(activeBan) : activationStatus;
 
   return {
     id: profile?.user_id || "",
@@ -102,6 +111,7 @@ export function toAdminUserResponse({ profile, activeBan }) {
     departmentLabel:
       profile?.department_label || resolveDepartmentLabel(profile?.department_id),
     status,
+    activationStatus,
     joinedAt: profile?.created_at || null,
     updatedAt: profile?.updated_at || null,
     ban: activeBan

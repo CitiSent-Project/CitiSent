@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { FiMoreHorizontal } from 'react-icons/fi'
 import { TableLoader } from '../ui/TableLoader'
 import { UserStatusPill } from './UserStatusPill'
+import { Spinner } from '../ui/Spinner'
 
 function UserInitialsAvatar({ name }) {
   return (
@@ -46,6 +47,7 @@ function UsersTableRow({
   onEditUser,
   onToggleBanUser,
   canToggleBan,
+  isProcessing = false,
 }) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
 
@@ -78,10 +80,11 @@ function UsersTableRow({
       <div className="relative">
         <button
           type="button"
+          disabled={isProcessing}
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-          className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors"
+          className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <FiMoreHorizontal />
+          {isProcessing ? <Spinner size="sm" /> : <FiMoreHorizontal />}
         </button>
 
         {isActionMenuOpen ? (
@@ -128,6 +131,7 @@ export function UsersTable({
   onToggleBanUser,
   canToggleBan = false,
   isLoading = false,
+  processingUserIds = new Set(),
 }) {
   const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
   const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
@@ -162,6 +166,7 @@ export function UsersTable({
                 onEditUser={onEditUser}
                 onToggleBanUser={onToggleBanUser}
                 canToggleBan={canToggleBan}
+                isProcessing={processingUserIds.has(user.id)}
               />
             ))
           ) : (

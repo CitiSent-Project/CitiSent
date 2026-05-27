@@ -1,5 +1,6 @@
 import { FiEye } from "react-icons/fi";
 import { TableLoader } from '../ui/TableLoader'
+import { Spinner } from '../ui/Spinner'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,

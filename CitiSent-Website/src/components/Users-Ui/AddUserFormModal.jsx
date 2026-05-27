@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
+import { Spinner } from '../ui/Spinner'
 
 const initialForm = {
   fname: '',
@@ -15,12 +16,14 @@ const initialForm = {
 
 export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   const [form, setForm] = useState(initialForm)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const dialogRef = useRef(null)
 
   const handleClose = useCallback(() => {
+    if (isSubmitting) return
     onClose()
     setForm(initialForm)
-  }, [onClose])
+  }, [onClose, isSubmitting])
 
   useModalAccessibility({
     isOpen,
@@ -38,10 +41,16 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    const submitted = await onSubmit(form)
+    if (isSubmitting) return
 
-    if (submitted) {
-      setForm(initialForm)
+    setIsSubmitting(true)
+    try {
+      const submitted = await onSubmit(form)
+      if (submitted) {
+        setForm(initialForm)
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -78,6 +87,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('fname', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="Jane"
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -88,6 +98,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('mname', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="Santos"
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -99,6 +110,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('lname', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="Doe"
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -112,6 +124,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
               onChange={(event) => updateField('email', event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
               placeholder="janedoe@gmail.com"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -125,6 +138,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('barangay', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="San Isidro Norte"
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -135,6 +149,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('city', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="Sto. Tomas"
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -145,6 +160,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 onChange={(event) => updateField('province', event.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                 placeholder="Batangas"
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -153,15 +169,24 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-lg border border-slate-300 hover:bg-blue-100 transition duration-300 px-4 py-2 text-sm text-slate-700"
+              disabled={isSubmitting}
+              className="rounded-lg border border-slate-300 hover:bg-blue-100 transition duration-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Save User
+              {isSubmitting ? (
+                <>
+                  <Spinner size="sm" className="text-white" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Save User'
+              )}
             </button>
           </div>
         </form>

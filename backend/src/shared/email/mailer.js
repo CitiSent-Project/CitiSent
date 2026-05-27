@@ -55,20 +55,50 @@ export async function sendAccountInvitationEmail({ toEmail, recipientName, setup
     text: [
       `Hello ${recipientName || "there"},`,
       "",
-      "An administrator created a CitiSent account for you.",
+      "An administrator created a CitiSent account for you. Welcome to the platform!",
+      "",
       "Use this secure link within 24 hours to choose your password:",
       setupUrl,
       "",
-      "If you did not expect this invitation, you can ignore this email.",
+      "If you did not expect this invitation, you can safely ignore this email.",
     ].join("\n"),
     html: `
-      <p>Hello ${safeName},</p>
-      <p>An administrator created a CitiSent account for you.</p>
-      <p>
-        <a href="${escapeHtml(setupUrl)}">Set up your password</a>
-      </p>
-      <p>This secure link expires in 24 hours.</p>
-      <p>If you did not expect this invitation, you can ignore this email.</p>
+      <div style="font-family: 'Poppins', Helvetica, Arial, sans-serif; background-color: #eef2f8; padding: 40px 20px; color: #1f2937; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+          
+          <div style="background-color: #1d4ed8; padding: 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">CitiSent</h1>
+          </div>
+          
+          <div style="padding: 40px 30px;">
+            <h2 style="margin-top: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Hello ${safeName},</h2>
+            <p style="color: #4b5563; font-size: 16px; margin-bottom: 24px;">
+              An administrator has created a new CitiSent account for you. Welcome to the platform!
+            </p>
+            <p style="color: #4b5563; font-size: 16px; margin-bottom: 32px;">
+              To get started, please choose a secure password by clicking the button below:
+            </p>
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <a href="${escapeHtml(setupUrl)}" style="display: inline-block; background-color: #1d4ed8; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Set Up Your Password</a>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
+              <strong>Note:</strong> This secure link will expire in 24 hours.
+            </p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+              If you did not expect this invitation, you can safely ignore this email.
+            </p>
+            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
+              &copy; ${new Date().getFullYear()} CitiSent. All rights reserved.
+            </p>
+          </div>
+          
+        </div>
+      </div>
     `,
   });
 }

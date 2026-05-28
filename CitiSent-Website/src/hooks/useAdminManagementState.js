@@ -23,6 +23,8 @@ export function useAdminManagementState({
   const [searchTerm, setSearchTerm] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('all')
   const [unreadFilter, setUnreadFilter] = useState('all')
+  const [processingAdminIds, setProcessingAdminIds] = useState(new Set())
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
 
   const unreadByAdminId = useMemo(
     () => buildUnreadByAdminId({ officeAdmins, notificationsByAdmin }),
@@ -68,6 +70,10 @@ export function useAdminManagementState({
   }
 
   async function handleSaveAssignment(admin) {
+    if (processingAdminIds.has(admin.id)) {
+      return
+    }
+
     const selectedDepartmentId = getSelectedDepartmentId(admin)
     const selectedDepartment = departmentOptions.find(
       (department) => department.id === selectedDepartmentId
@@ -83,11 +89,21 @@ export function useAdminManagementState({
       return
     }
 
-    await onAssignOfficeDepartment({
-      adminId: admin.id,
-      departmentId: selectedDepartment.id,
-      departmentLabel: selectedDepartment.label,
-    })
+    setProcessingAdminIds((prev) => new Set(prev).add(admin.id))
+
+    try {
+      await onAssignOfficeDepartment({
+        adminId: admin.id,
+        departmentId: selectedDepartment.id,
+        departmentLabel: selectedDepartment.label,
+      })
+    } finally {
+      setProcessingAdminIds((prev) => {
+        const next = new Set(prev)
+        next.delete(admin.id)
+        return next
+      })
+    }
   }
 
   function openApprovalModal(request) {
@@ -130,7 +146,7 @@ export function useAdminManagementState({
   async function submitReviewModal(event) {
     event.preventDefault()
 
-    if (!reviewModal) {
+    if (!reviewModal || isSubmittingReview) {
       return
     }
 
@@ -140,25 +156,31 @@ export function useAdminManagementState({
       return
     }
 
-    if (reviewModal.mode === 'approve') {
-      const result = await onApproveTransfer({
-        requestId: reviewModal.request.id,
-        reviewNotes,
-      })
-      if (result && result.ok === false) {
-        return
-      }
-    } else {
-      const result = await onRejectTransfer({
-        requestId: reviewModal.request.id,
-        reviewNotes,
-      })
-      if (result && result.ok === false) {
-        return
-      }
-    }
+    setIsSubmittingReview(true)
 
-    closeReviewModal()
+    try {
+      if (reviewModal.mode === 'approve') {
+        const result = await onApproveTransfer({
+          requestId: reviewModal.request.id,
+          reviewNotes,
+        })
+        if (result && result.ok === false) {
+          return
+        }
+      } else {
+        const result = await onRejectTransfer({
+          requestId: reviewModal.request.id,
+          reviewNotes,
+        })
+        if (result && result.ok === false) {
+          return
+        }
+      }
+
+      closeReviewModal()
+    } finally {
+      setIsSubmittingReview(false)
+    }
   }
 
   return {
@@ -172,6 +194,8 @@ export function useAdminManagementState({
     totalOfficeUnread,
     filteredOfficeAdmins,
     filteredPendingRequests,
+    processingAdminIds,
+    isSubmittingReview,
     setSearchTerm,
     setDepartmentFilter,
     setUnreadFilter,

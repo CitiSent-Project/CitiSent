@@ -46,6 +46,8 @@ export function AdminManagement({
     totalOfficeUnread,
     filteredOfficeAdmins,
     filteredPendingRequests,
+    processingAdminIds,
+    isSubmittingReview,
     setSearchTerm,
     setDepartmentFilter,
     setUnreadFilter,
@@ -113,6 +115,7 @@ export function AdminManagement({
           getSelectedDepartmentId={getSelectedDepartmentId}
           onDraftDepartmentChange={handleDraftDepartmentChange}
           onSaveAssignment={handleSaveAssignment}
+          processingAdminIds={processingAdminIds}
         />
 
         <AgencyCatalogSection
@@ -141,6 +144,7 @@ export function AdminManagement({
         onClose={closeReviewModal}
         onSubmit={submitReviewModal}
         onReviewNotesChange={handleReviewNotesChange}
+        isSubmittingReview={isSubmittingReview}
       />
     </main>
   )

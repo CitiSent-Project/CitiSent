@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips } from '../../components/Reports-Ui'
@@ -50,7 +50,18 @@ export function ByCategory({
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('All Urgency')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const hasAllAccess = isSuperadmin(profile?.role)
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 250)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchTerm])
 
   const categoryAgencyCards = useMemo(() => {
     const normalized = normalizeAgencyOptions(departmentOptions)
@@ -83,8 +94,8 @@ export function ByCategory({
     })
 
     // Apply Search Filter
-    if (searchTerm) {
-      const lowSearch = searchTerm.toLowerCase()
+    if (debouncedSearchTerm) {
+      const lowSearch = debouncedSearchTerm.toLowerCase()
       result = result.filter(r => 
         r.id?.toString().toLowerCase().includes(lowSearch) ||
         r.title?.toLowerCase().includes(lowSearch) ||
@@ -104,7 +115,7 @@ export function ByCategory({
     }
 
     return result
-  }, [effectiveSelectedAgencyId, hasAllAccess, rows, searchTerm, statusFilter, urgencyFilter])
+  }, [effectiveSelectedAgencyId, hasAllAccess, rows, debouncedSearchTerm, statusFilter, urgencyFilter])
 
   const selectedAgencyLabel =
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'

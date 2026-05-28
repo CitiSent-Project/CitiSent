@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { notifyError, notifyErrorWithRetry, notifySuccess } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
@@ -150,9 +150,9 @@ function buildDeleteDepartmentOptions({ cleanup, reassignTo } = {}) {
 }
 
 export function useAppStateOrchestrator() {
-  // Department options state (dynamic from backend)
   const [departmentOptions, setDepartmentOptions] = useState([])
   const [departmentCatalog, setDepartmentCatalog] = useState([])
+  const navigateThrottleRef = useRef(0)
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
   const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
   const storedAuthSession = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
@@ -737,6 +737,12 @@ export function useAppStateOrchestrator() {
   )
 
   async function handleNavigate(nextPage) {
+    const now = Date.now()
+    if (now - navigateThrottleRef.current < 300) {
+      return
+    }
+    navigateThrottleRef.current = now
+
     let accessDecision = buildPageAccessDecision({
       role: profile.role,
       requestedPage: nextPage,

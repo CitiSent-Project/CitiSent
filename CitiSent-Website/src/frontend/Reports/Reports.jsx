@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
@@ -104,6 +104,7 @@ export function Reports({
   const loading = Boolean(accessToken) && (reportsQuery.isLoading || reportsQuery.isFetching)
 
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])
+  const [processingReportIds, setProcessingReportIds] = useState(new Set())
 
   async function handleUpdateStatus(reportId, newStatus) {
     try {

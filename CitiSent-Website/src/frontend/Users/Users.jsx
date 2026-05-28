@@ -19,6 +19,7 @@ import {
   UsersTable,
   UsersToolbar,
 } from '../../components/Users-Ui'
+import { Spinner } from '../../components/ui/Spinner'
 
 const USERS_STATS = [
   {
@@ -91,6 +92,10 @@ export function Users({ onViewUserProfile, profile }) {
   const canCreateUsers = isSuperadmin(resolvedRole)
   const canToggleBan = isSuperadmin(resolvedRole)
   const hasAccessToken = Boolean(getStoredAccessToken())
+
+  const [processingUserIds, setProcessingUserIds] = useState(new Set())
+  const [isBulkBanning, setIsBulkBanning] = useState(false)
+  const [isBulkUnbanning, setIsBulkUnbanning] = useState(false)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -274,6 +279,8 @@ export function Users({ onViewUserProfile, profile }) {
       return false
     }
 
+    setProcessingUserIds((prev) => new Set(prev).add(targetUser.id))
+
     try {
       const response = await usersApiService.createUser(token, {
         fname,
@@ -409,6 +416,8 @@ export function Users({ onViewUserProfile, profile }) {
       return
     }
 
+    setProcessingUserIds((prev) => new Set(prev).add(targetUser.id))
+
     try {
       const response =
         targetUser.status === 'Banned'
@@ -430,6 +439,12 @@ export function Users({ onViewUserProfile, profile }) {
       )
     } catch (error) {
       notifyError('User update failed.', error.message)
+    } finally {
+      setProcessingUserIds((prev) => {
+        const next = new Set(prev)
+        next.delete(targetUser.id)
+        return next
+      })
     }
   }
 
@@ -471,9 +486,12 @@ export function Users({ onViewUserProfile, profile }) {
       return
     }
 
-    const operations = await Promise.allSettled(
-      selectedVisibleUserIds.map((userId) =>
-        usersApiService.banUser(token, userId, {
+    setIsBulkBanning(true)
+
+    try {
+      const operations = await Promise.allSettled(
+        selectedVisibleUserIds.map((userId) =>
+          usersApiService.banUser(token, userId, {
           reason: 'Bulk ban from Users page',
         })
       )
@@ -485,15 +503,18 @@ export function Users({ onViewUserProfile, profile }) {
     setSelectedUserIds([])
     await invalidateUsersData()
 
-    if (failedCount > 0) {
-      notifyError(
-        'Bulk ban partially failed.',
-        `${successfulCount} user(s) banned, ${failedCount} user(s) failed.`
-      )
-      return
-    }
+      if (failedCount > 0) {
+        notifyError(
+          'Bulk ban partially failed.',
+          `${successfulCount} user(s) banned, ${failedCount} user(s) failed.`
+        )
+        return
+      }
 
-    notifySuccess(`Banned ${successfulCount} user(s) successfully.`)
+      notifySuccess(`Banned ${successfulCount} user(s) successfully.`)
+    } finally {
+      setIsBulkBanning(false)
+    }
   }
 
   async function handleBulkUnbanUsers() {
@@ -513,9 +534,12 @@ export function Users({ onViewUserProfile, profile }) {
       return
     }
 
-    const operations = await Promise.allSettled(
-      selectedVisibleUserIds.map((userId) => usersApiService.unbanUser(token, userId))
-    )
+    setIsBulkUnbanning(true)
+
+    try {
+      const operations = await Promise.allSettled(
+        selectedVisibleUserIds.map((userId) => usersApiService.unbanUser(token, userId))
+      )
 
     const successfulCount = operations.filter((result) => result.status === 'fulfilled').length
     const failedCount = operations.length - successfulCount
@@ -523,15 +547,18 @@ export function Users({ onViewUserProfile, profile }) {
     setSelectedUserIds([])
     await invalidateUsersData()
 
-    if (failedCount > 0) {
-      notifyError(
-        'Bulk unban partially failed.',
-        `${successfulCount} user(s) unbanned, ${failedCount} user(s) failed.`
-      )
-      return
-    }
+      if (failedCount > 0) {
+        notifyError(
+          'Bulk unban partially failed.',
+          `${successfulCount} user(s) unbanned, ${failedCount} user(s) failed.`
+        )
+        return
+      }
 
-    notifySuccess(`Unbanned ${successfulCount} user(s) successfully.`)
+      notifySuccess(`Unbanned ${successfulCount} user(s) successfully.`)
+    } finally {
+      setIsBulkUnbanning(false)
+    }
   }
 
   return (
@@ -579,16 +606,20 @@ export function Users({ onViewUserProfile, profile }) {
               <button
                 type="button"
                 onClick={handleBulkUnbanUsers}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                disabled={isBulkUnbanning || isBulkBanning}
+                className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Activate Selected
+                {isBulkUnbanning ? <Spinner size="sm" /> : null}
+                <span>Activate Selected</span>
               </button>
               <button
                 type="button"
                 onClick={handleBulkBanUsers}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+                disabled={isBulkBanning || isBulkUnbanning}
+                className="flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Ban Selected
+                {isBulkBanning ? <Spinner size="sm" className="text-white" /> : null}
+                <span>Ban Selected</span>
               </button>
             </div>
           )}
@@ -602,6 +633,7 @@ export function Users({ onViewUserProfile, profile }) {
             onToggleBanUser={handleToggleBanUser}
             canToggleBan={canToggleBan}
             isLoading={isLoading}
+            processingUserIds={processingUserIds}
           />
           <UsersPagination
             currentPage={activePage}

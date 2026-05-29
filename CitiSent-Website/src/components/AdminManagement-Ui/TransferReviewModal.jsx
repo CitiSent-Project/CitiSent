@@ -6,6 +6,7 @@ export function TransferReviewModal({
   onClose,
   onSubmit,
   onReviewNotesChange,
+  isSubmittingReview,
 }) {
   if (!reviewModal) {
     return null
@@ -59,13 +60,14 @@ export function TransferReviewModal({
             </button>
             <button
               type="submit"
-              className={`rounded-lg px-4 py-2 text-sm font-semibold text-blue-700 transition ${
+              disabled={isSubmittingReview}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold text-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed ${
                 reviewModal.mode === 'approve'
                   ? 'bg-blue-700 hover:bg-blue-600 text-white theme-dark-btn-primary'
                   : 'border border-blue-700 hover:bg-blue-500 hover:text-white hover:border-white theme-dark-btn-outline'
               }`}
             >
-              {reviewModal.cta}
+              {isSubmittingReview ? 'Submitting...' : reviewModal.cta}
             </button>
           </div>
         </form>

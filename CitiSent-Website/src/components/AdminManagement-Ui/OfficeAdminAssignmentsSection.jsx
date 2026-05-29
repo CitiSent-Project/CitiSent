@@ -12,6 +12,7 @@ export function OfficeAdminAssignmentsSection({
   getSelectedDepartmentId,
   onDraftDepartmentChange,
   onSaveAssignment,
+  processingAdminIds = new Set(),
 }) {
   const departmentFilterOptions = [
     { value: 'all', label: 'All Departments' },
@@ -103,10 +104,11 @@ export function OfficeAdminAssignmentsSection({
                 <td className="px-3 py-3 text-center">
                   <button
                     type="button"
+                    disabled={processingAdminIds.has(admin.id)}
                     onClick={() => onSaveAssignment(admin)}
-                    className="rounded-lg bg-blue-700 px-5 py-2 text-md font-semibold text-white hover:bg-blue-600"
+                    className="rounded-lg bg-blue-700 px-5 py-2 text-md font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
-                    Save
+                    {processingAdminIds.has(admin.id) ? 'Saving...' : 'Save'}
                   </button>
                 </td>
               </tr>

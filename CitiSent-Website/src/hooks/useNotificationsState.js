@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import {
   buildClearAdminNotificationsTransition,
   countUnreadNotifications,
@@ -16,12 +17,20 @@ export function useNotificationsState({
   persistClearAll,
 }) {
   const notifications = getAdminNotifications({ notificationsByAdmin, adminId: activeAdminId })
+  const processingToggleIds = useRef(new Set())
+  const isClearingRef = useRef(false)
 
   async function handleToggleNotification(notificationId) {
+    if (processingToggleIds.current.has(notificationId)) {
+      return
+    }
+
     const targetNotification = notifications.find((notification) => notification.id === notificationId)
     if (!targetNotification) {
       return
     }
+
+    processingToggleIds.current.add(notificationId)
 
     const nextReadState = !targetNotification.read
 
@@ -34,6 +43,7 @@ export function useNotificationsState({
     )
 
     if (!persistToggleRead) {
+      processingToggleIds.current.delete(notificationId)
       return
     }
 
@@ -72,29 +82,37 @@ export function useNotificationsState({
       if (notifyError) {
         notifyError('Notification update failed.', error?.message || 'Unable to update notification state.')
       }
+    } finally {
+      processingToggleIds.current.delete(notificationId)
     }
   }
 
   async function handleClearNotifications() {
-    if (persistClearAll) {
-      try {
-        await persistClearAll()
-      } catch (error) {
-        if (notifyError) {
-          notifyError('Notification cleanup failed.', error?.message || 'Unable to clear notifications.')
-        }
-        return
-      }
+    if (isClearingRef.current) {
+      return
     }
+    isClearingRef.current = true
 
-    const transition = buildClearAdminNotificationsTransition({
-      notificationsByAdmin,
-      adminId: activeAdminId,
-    })
+    try {
+      if (persistClearAll) {
+        await persistClearAll()
+      }
 
-    setNotificationsByAdmin(transition.nextNotificationsByAdmin)
-    addActivity(transition.activity.action, transition.activity.detail)
-    notifySuccess(transition.successMessage)
+      const transition = buildClearAdminNotificationsTransition({
+        notificationsByAdmin,
+        adminId: activeAdminId,
+      })
+
+      setNotificationsByAdmin(transition.nextNotificationsByAdmin)
+      addActivity(transition.activity.action, transition.activity.detail)
+      notifySuccess(transition.successMessage)
+    } catch (error) {
+      if (notifyError) {
+        notifyError('Notification cleanup failed.', error?.message || 'Unable to clear notifications.')
+      }
+    } finally {
+      isClearingRef.current = false
+    }
   }
 
   const unreadNotifications = countUnreadNotifications(notifications)

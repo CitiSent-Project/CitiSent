@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
@@ -24,6 +24,9 @@ const STATUS_ICONS = {
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
   const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
+  const [isSaving, setIsSaving] = useState(false)
+  const [isCooldown, setIsCooldown] = useState(false)
+  const cooldownTimerRef = useRef(null)
   const [timeline, setTimeline] = useState(() => [
     {
       id: 1,
@@ -55,8 +58,35 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
   const canProcessReport = canAdminUpdateReport({ profile, report })
+  const isSaveDisabled =
+    !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) {
+        window.clearTimeout(cooldownTimerRef.current)
+        cooldownTimerRef.current = null
+      }
+    }
+  }, [])
+
+  function startCooldown() {
+    if (cooldownTimerRef.current) {
+      window.clearTimeout(cooldownTimerRef.current)
+    }
+
+    setIsCooldown(true)
+    cooldownTimerRef.current = window.setTimeout(() => {
+      setIsCooldown(false)
+      cooldownTimerRef.current = null
+    }, 1000)
+  }
 
   async function handleStatusSave() {
+    if (isSaving || isCooldown) {
+      return
+    }
+
     if (!canProcessReport) {
       notifyError('Status update denied.', 'You can only process reports assigned to your department.')
       return
@@ -77,25 +107,32 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       return
     }
 
-    const result = await onUpdateStatus(report.id, validation.nextStatus)
-    if (!result?.ok) {
-      return
+    startCooldown()
+    setIsSaving(true)
+
+    try {
+      const result = await onUpdateStatus(report.id, validation.nextStatus)
+      if (!result?.ok) {
+        return
+      }
+
+      setTimeline((previous) => [
+        ...previous,
+        {
+          id: previous.length + 1,
+          ...createReportTimelineEntry({
+            nextStatus: validation.nextStatus,
+            adminNotes,
+          }),
+        },
+      ])
+
+      notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
+      setAdminNotes('')
+      setSelectedStatus(validation.nextStatus)
+    } finally {
+      setIsSaving(false)
     }
-
-    setTimeline((previous) => [
-      ...previous,
-      {
-        id: previous.length + 1,
-        ...createReportTimelineEntry({
-          nextStatus: validation.nextStatus,
-          adminNotes,
-        }),
-      },
-    ])
-
-    notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
-    setAdminNotes('')
-    setSelectedStatus(validation.nextStatus)
   }
 
   return (
@@ -264,13 +301,13 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <button
               type="button"
               onClick={handleStatusSave}
-              disabled={!canProcessReport || selectedStatus === currentStatus}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${!canProcessReport || selectedStatus === currentStatus
+              disabled={isSaveDisabled}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isSaveDisabled
                   ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                   : 'bg-blue-700 text-white hover:bg-blue-600'
                 }`}
             >
-              Save Status
+              {isSaving ? 'Saving...' : 'Save Status'}
             </button>
           </div>
         </section>

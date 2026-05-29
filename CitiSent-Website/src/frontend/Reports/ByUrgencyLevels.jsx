@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import {
   Pagination,
@@ -28,6 +28,17 @@ export function ByUrgencyLevels({
   const [selectedUrgency, setSelectedUrgency] = useState(URGENCY_FILTER_CHIPS[0])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 250)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchTerm])
 
   const filteredRows = useMemo(() => {
     // Start with urgency-filtered set then apply search + status filters
@@ -38,8 +49,8 @@ export function ByUrgencyLevels({
     })
 
     // Apply search filtering
-    if (searchTerm) {
-      const low = searchTerm.toLowerCase()
+    if (debouncedSearchTerm) {
+      const low = debouncedSearchTerm.toLowerCase()
       result = result.filter((r) =>
         String(r.id || '')?.toLowerCase().includes(low) ||
         String(r.title || '')?.toLowerCase().includes(low) ||
@@ -54,7 +65,7 @@ export function ByUrgencyLevels({
     }
 
     return result
-  }, [selectedUrgency, rows, searchTerm, statusFilter])
+  }, [selectedUrgency, rows, debouncedSearchTerm, statusFilter])
 
   const {
     totalPages,

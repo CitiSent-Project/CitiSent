@@ -1,13 +1,18 @@
 import os
 import json
+import asyncio
+import logging
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger("citisent.ai")
+
 _client = None
 MODEL = "gemini-flash-lite-latest"  # most token-efficient available on free tier
+GEMINI_TIMEOUT_SECONDS = 12  # prevent hanging if Gemini is slow or rate-limited
 
 
 def _get_client():
@@ -32,7 +37,7 @@ VALID_URGENCY = ["Critical", "High", "Medium", "Low"]
 VALID_EMOTION = ["Sad", "Happy", "Frustrated", "Angry", "Disappointed", "Excited", "Delighted", "Neutral"]
 
 
-def analyze_report(office: str, location: str, description: str) -> dict:
+async def analyze_report(office: str, location: str, description: str) -> dict:
     client = _get_client()
 
     prompt = PROMPT_TEMPLATE.format(
@@ -41,17 +46,34 @@ def analyze_report(office: str, location: str, description: str) -> dict:
         description=description,
     )
 
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",  # forces clean JSON — no markdown fences
-            max_output_tokens=250,                  # increased to accommodate emotion + summary
-            temperature=0.1,                        # low temp = consistent, deterministic output
-        ),
-    )
+    try:
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",  # forces clean JSON — no markdown fences
+                    max_output_tokens=250,                  # increased to accommodate emotion + summary
+                    temperature=0.1,                        # low temp = consistent, deterministic output
+                ),
+            ),
+            timeout=GEMINI_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Gemini API call timed out after %ds", GEMINI_TIMEOUT_SECONDS)
+        raise TimeoutError(f"Gemini API did not respond within {GEMINI_TIMEOUT_SECONDS}s")
 
-    result = json.loads(response.text.strip())
+    # Guard: Gemini may return an empty or blocked response
+    raw_text = getattr(response, "text", None)
+    if not raw_text or not raw_text.strip():
+        logger.warning("Gemini returned empty response text")
+        raise ValueError("Gemini returned an empty response")
+
+    try:
+        result = json.loads(raw_text.strip())
+    except json.JSONDecodeError as exc:
+        logger.warning("Gemini returned invalid JSON: %s", raw_text[:200])
+        raise ValueError(f"Gemini returned malformed JSON: {exc}")
 
     urgency = result.get("urgency")
     emotion = result.get("emotion", "Neutral")
@@ -64,9 +86,15 @@ def analyze_report(office: str, location: str, description: str) -> dict:
     if emotion not in VALID_EMOTION:
         emotion = "Neutral"  # fallback for unexpected emotion values
 
+    # Guard: confidence might be a non-numeric value
+    try:
+        confidence_val = round(float(confidence), 4) if confidence is not None else 0.0
+    except (TypeError, ValueError):
+        confidence_val = 0.0
+
     return {
         "urgency": urgency,
         "emotion": emotion,
-        "confidence": round(float(confidence), 4) if confidence else 0.0,
+        "confidence": confidence_val,
         "summary": summary,
     }

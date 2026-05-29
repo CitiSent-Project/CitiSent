@@ -43,18 +43,18 @@ const EMOTION_LEGEND = [
 
 function TableLegend() {
   return (
-    <div className="mb-4 rounded-xl border border-slate-700/50 bg-slate-800/50 px-4 py-3">
+    <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex flex-wrap items-start gap-6">
         {/* Urgency Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Urgency Level
           </p>
           <div className="flex flex-wrap gap-2">
             {URGENCY_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
-                <span className="text-xs text-slate-300">
+                <span className="text-xs text-slate-700">
                   {item.label}
                   <span className="ml-0.5 text-slate-500">— {item.description}</span>
                 </span>
@@ -65,14 +65,14 @@ function TableLegend() {
 
         {/* Emotion Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Emotion Level
           </p>
           <div className="flex flex-wrap gap-2">
             {EMOTION_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
-                <span className="text-xs text-slate-300">{item.label}</span>
+                <span className="text-xs text-slate-700">{item.label}</span>
               </div>
             ))}
           </div>

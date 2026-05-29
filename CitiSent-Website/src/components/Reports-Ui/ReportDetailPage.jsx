@@ -234,9 +234,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                 <FiCpu className="text-sm text-white" />
               </span>
               <h2 className="text-lg font-semibold text-blue-900">AI Summary</h2>
-              <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white">
-                Powered by Gemini
-              </span>
             </div>
             <p className="leading-relaxed text-sm text-slate-900">{report.aiSummary}</p>
           </section>

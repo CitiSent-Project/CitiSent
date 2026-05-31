@@ -1294,7 +1294,7 @@ export function useAppStateOrchestrator() {
     setActivePage(getDashboardPage())
   }
 
-  async function handleReportStatusUpdate(reportId, newStatus) {
+  async function handleReportStatusUpdate(reportId, newStatus, adminMessage) {
     if (!accessToken) {
       const message = 'Your session has expired. Please sign in again.'
       notifyError('Status update failed.', message)
@@ -1304,6 +1304,7 @@ export function useAppStateOrchestrator() {
     try {
       const response = await reportsApiService.updateReport(accessToken, reportId, {
         status: mapUiStatusToBackendStatus(newStatus),
+        adminMessage,
       })
       const updatedReport = mapBackendReportToUiRow(response?.data)
 

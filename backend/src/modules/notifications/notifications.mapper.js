@@ -5,11 +5,15 @@ export function toNotificationResponse(row) {
     .trim()
     .toLowerCase();
 
-  const meta = inferStatusNotificationMeta({
+  let meta = inferStatusNotificationMeta({
     type: normalizedType,
     title: row?.title,
     reportId: row?.report_id,
   });
+
+  if (row?.metadata && typeof row.metadata === "object") {
+    meta = { ...meta, ...row.metadata };
+  }
 
   return {
     id: row?.id || "",

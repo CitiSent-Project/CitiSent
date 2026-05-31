@@ -4,10 +4,13 @@ import {
   NotificationItemCard,
   ProfileSubpageLayout,
 } from "../../modules/profile";
+import NotificationDetailsModal from "../../components/profile/notifications/NotificationDetailsModal";
 import { usePullToRefresh, useNotifications, Colors } from "../../modules/shared";
 
 export default function NotificationsPage() {
   const [filterMode, setFilterMode] = useState("all");
+  const [selectedNotification, setSelectedNotification] = useState(null);
+
   const {
     notifications,
     unreadCount,
@@ -37,11 +40,14 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleMarkSingleAsRead = async (notificationId) => {
-    try {
-      await markNotificationAsRead(notificationId);
-    } catch (error) {
-      console.warn("Failed to mark notification as read:", error?.message || error);
+  const handleNotificationPress = async (item) => {
+    setSelectedNotification(item);
+    if (!item.read) {
+      try {
+        await markNotificationAsRead(item.id);
+      } catch (error) {
+        console.warn("Failed to mark notification as read:", error?.message || error);
+      }
     }
   };
 
@@ -89,9 +95,7 @@ export default function NotificationsPage() {
           <NotificationItemCard
             key={item.id}
             item={item}
-            onPress={() => {
-              void handleMarkSingleAsRead(item.id);
-            }}
+            onPress={() => handleNotificationPress(item)}
           />
         ))
       ) : (
@@ -99,6 +103,12 @@ export default function NotificationsPage() {
           <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No notifications to show.</Text>
         </View>
       )}
+
+      <NotificationDetailsModal
+        visible={!!selectedNotification}
+        notification={selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+      />
     </ProfileSubpageLayout>
   );
 }

@@ -264,6 +264,7 @@ async function createCitizenStatusNotification({
   accessToken,
   reportRow,
   nextStatus,
+  adminMessage,
 }) {
   const notificationContent = getStatusNotificationContent(nextStatus);
 
@@ -271,13 +272,32 @@ async function createCitizenStatusNotification({
     return;
   }
 
+  const now = new Date();
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(now);
+
+  const statusLabel = REPORT_STATUS_LABELS[nextStatus] || "Pending";
+  const finalMessage = `Your report has been ${statusLabel.toLowerCase()}. Open this to see the full details.`;
+
   await notificationsRepository.createNotification({
     accessToken,
     userId: reportRow.user_id,
     type: "status",
     title: notificationContent.title,
-    message: notificationContent.message,
+    message: finalMessage,
     reportId: reportRow.id,
+    metadata: {
+      status: statusLabel,
+      adminMessage: adminMessage || null,
+      processedOn: formattedDate,
+    },
   });
 
   // Push integration will use this deterministic event marker.
@@ -753,7 +773,7 @@ export const adminService = {
     });
   },
 
-  async updateReportStatus({ actor, accessToken, reportId, status }) {
+  async updateReportStatus({ actor, accessToken, reportId, status, adminMessage }) {
     const nextStatus = mapReportStatusInputToPersisted(status);
     const existingReport = await adminRepository.getReportById({
       actor,
@@ -801,6 +821,7 @@ export const adminService = {
         accessToken,
         reportRow: result.row,
         nextStatus,
+        adminMessage,
       });
     } catch (error) {
       logger.warn("Failed to create citizen report-status notification", {

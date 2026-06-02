@@ -119,6 +119,7 @@ export const adminController = {
       accessToken: req.accessToken,
       reportId: req.params.reportId,
       status: req.body.status,
+      adminMessage: req.body.adminMessage,
     });
 
     return res.status(StatusCodes.OK).json({

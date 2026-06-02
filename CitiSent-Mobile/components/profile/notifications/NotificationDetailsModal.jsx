@@ -1,0 +1,127 @@
+import React from "react";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../../modules/shared";
+
+export default function NotificationDetailsModal({ visible, notification, onClose }) {
+  if (!notification) return null;
+
+  const iconByType = {
+    report: "document-text-outline",
+    status: "checkmark-done-circle-outline",
+    account: "person-circle-outline",
+    alert: "warning-outline",
+  };
+
+  const iconName = iconByType[notification.type] || "notifications-outline";
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View className="flex-1 items-center justify-center bg-black/40 px-6">
+        <View className="max-h-[80%] w-full max-w-md rounded-2xl bg-white shadow-lg overflow-hidden">
+          
+          <View className="flex-row items-center justify-between border-b border-slate-100 px-6 py-4">
+            <View className="flex-row items-center gap-2">
+              <View
+                className="h-8 w-8 items-center justify-center rounded-full"
+                style={{ backgroundColor: Colors.ui.infoSurfaceBorder }}
+              >
+                <Ionicons name={iconName} size={16} color={Colors.primaryStrong} />
+              </View>
+              <Text className="text-lg font-bold" style={{ color: Colors.text.heading }}>
+                Notification
+              </Text>
+            </View>
+            <Pressable onPress={onClose} className="rounded-full p-1" style={{ backgroundColor: Colors.ui.neutralSoft }}>
+              <Ionicons name="close" size={20} color={Colors.text.secondary} />
+            </Pressable>
+          </View>
+          
+          <ScrollView className="px-6 py-4">
+            <Text className="mb-2 text-xl font-extrabold" style={{ color: Colors.text.heading }}>
+              {notification.title}
+            </Text>
+            
+            <Text className="mb-4 text-xs font-semibold" style={{ color: Colors.text.secondary }}>
+              {notification.timeLabel}
+            </Text>
+
+            {notification.meta && notification.meta.status ? (
+              <View className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm mb-4">
+                <View className="flex-row items-center justify-between mb-3 border-b border-slate-100 pb-3">
+                  <Text className="text-sm font-bold" style={{ color: Colors.text.heading }}>
+                    Status
+                  </Text>
+                  <View 
+                    className="rounded-full px-3 py-1" 
+                    style={{ 
+                      backgroundColor: notification.meta.status.toLowerCase() === "resolved" 
+                        ? Colors.ui.successSurface 
+                        : notification.meta.status.toLowerCase() === "unresolved"
+                        ? Colors.ui.dangerSurface
+                        : Colors.ui.infoSurface 
+                    }}
+                  >
+                    <Text 
+                      className="text-xs font-bold"
+                      style={{ 
+                        color: notification.meta.status.toLowerCase() === "resolved" 
+                          ? Colors.ui.successText 
+                          : notification.meta.status.toLowerCase() === "unresolved"
+                          ? Colors.ui.dangerText
+                          : Colors.primaryStrong 
+                      }}
+                    >
+                      {notification.meta.status}
+                    </Text>
+                  </View>
+                </View>
+
+                {notification.meta.adminMessage ? (
+                  <View className="mb-3">
+                    <Text className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: Colors.text.secondary }}>
+                      Admin Message
+                    </Text>
+                    <Text className="text-sm leading-6" style={{ color: Colors.text.body }}>
+                      {notification.meta.adminMessage}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {notification.meta.processedOn ? (
+                  <View>
+                    <Text className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: Colors.text.secondary }}>
+                      Processed On
+                    </Text>
+                    <Text className="text-sm" style={{ color: Colors.text.body }}>
+                      {notification.meta.processedOn}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : (
+              <View className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <Text className="text-sm leading-6" style={{ color: Colors.text.body }}>
+                  {notification.message}
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          <View className="border-t border-slate-100 px-6 py-4">
+            <Pressable
+              onPress={onClose}
+              className="w-full rounded-xl py-3"
+              style={{ backgroundColor: Colors.primaryStrong }}
+            >
+              <Text className="text-center text-sm font-bold text-white">
+                Close
+              </Text>
+            </Pressable>
+          </View>
+
+        </View>
+      </View>
+    </Modal>
+  );
+}

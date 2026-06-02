@@ -111,7 +111,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
     setIsSaving(true)
 
     try {
-      const result = await onUpdateStatus(report.id, validation.nextStatus)
+      const result = await onUpdateStatus(report.id, validation.nextStatus, adminNotes)
       if (!result?.ok) {
         return
       }

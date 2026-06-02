@@ -151,6 +151,7 @@ export const updateAdminReportSchema = z.object({
   }),
   body: z.object({
     status: persistedStatusSchema,
+    adminMessage: z.string().trim().min(1).max(1000).optional(),
   }),
 });
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
@@ -24,6 +24,8 @@ const STATUS_ICONS = {
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [isUnresolvedModalOpen, setIsUnresolvedModalOpen] = useState(false)
+  const [pendingValidation, setPendingValidation] = useState(null)
   const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
   const [isSaving, setIsSaving] = useState(false)
   const [isCooldown, setIsCooldown] = useState(false)
@@ -58,9 +60,12 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
 
   const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
-  const canProcessReport = canAdminUpdateReport({ profile, report })
+  
+  // A report marked as Unresolved is permanently locked.
+  const isPermanentlyLocked = currentStatus === 'Unresolved'
+  const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
   const isSaveDisabled =
-    !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown
+    !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
 
   useEffect(() => {
     return () => {
@@ -84,7 +89,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   }
 
   async function handleStatusSave() {
-    if (isSaving || isCooldown) {
+    if (isSaving || isCooldown || isPermanentlyLocked) {
       return
     }
 
@@ -108,6 +113,18 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       return
     }
 
+    // Intercept if marking as Unresolved to show verification modal
+    if (validation.nextStatus === 'Unresolved') {
+      setPendingValidation(validation)
+      setIsUnresolvedModalOpen(true)
+      return
+    }
+
+    // Otherwise, proceed to save immediately
+    await executeStatusSave(validation)
+  }
+
+  async function executeStatusSave(validation) {
     startCooldown()
     setIsSaving(true)
 
@@ -131,6 +148,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
       setAdminNotes('')
       setSelectedStatus(validation.nextStatus)
+      
+      // Clear modal state on success
+      setIsUnresolvedModalOpen(false)
+      setPendingValidation(null)
     } finally {
       setIsSaving(false)
     }
@@ -261,9 +282,16 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <p className="mb-3 text-sm text-slate-500">
             Update the status of this report. Adding notes is required when resolving or marking as unresolved.
           </p>
-          {!canProcessReport ? (
+          
+          {!canProcessReport && !isPermanentlyLocked ? (
             <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               You can view this report, but only admins assigned to this department can change its status.
+            </p>
+          ) : null}
+
+          {isPermanentlyLocked ? (
+            <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              This report is permanently locked because it was marked as Unresolved. No further changes can be made.
             </p>
           ) : null}
 
@@ -383,6 +411,49 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               alt="Attached report evidence" 
               className="max-h-[85vh] w-auto object-contain" 
             />
+          </div>
+        </div>
+      ) : null}
+
+      {/* 
+        Unresolved Warning Modal Overlay
+        Renders when the admin attempts to save the Unresolved status.
+      */}
+      {isUnresolvedModalOpen && pendingValidation ? (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-2xl text-center">
+             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+               <FiAlertTriangle className="text-2xl text-red-600" />
+             </div>
+             <h3 className="mb-2 text-lg font-bold text-slate-900">Mark as Unresolved?</h3>
+             <p className="mb-6 text-sm text-slate-500">
+               Are you sure you want to mark this report as Unresolved? This action is irreversible and will permanently lock the report from further updates.
+             </p>
+             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+               <button
+                 type="button"
+                 onClick={() => {
+                   setIsUnresolvedModalOpen(false)
+                   setPendingValidation(null)
+                 }}
+                 disabled={isSaving}
+                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 Cancel
+               </button>
+               <button
+                 type="button"
+                 onClick={() => executeStatusSave(pendingValidation)}
+                 disabled={isSaving}
+                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {isSaving ? 'Processing...' : 'Confirm & Lock Report'}
+               </button>
+             </div>
           </div>
         </div>
       ) : null}

@@ -23,14 +23,14 @@ class ReportRequest(BaseModel):
 
 
 @router.post("/analyze", status_code=200)
-def analyze(body: ReportRequest):
+async def analyze(body: ReportRequest):
     if not body.office.strip():
         raise HTTPException(status_code=400, detail="Office cannot be empty.")
     if not body.location.strip():
         raise HTTPException(status_code=400, detail="Location cannot be empty.")
 
     try:
-        result = analyze_report(
+        result = await analyze_report(
             office=body.office.strip(),
             location=body.location.strip(),
             description=body.description.strip(),

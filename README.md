@@ -26,6 +26,16 @@ Follow these steps to start the Python AI (ai-sentiment):
    ```
 
 4. **Start the Server:**
+
+   **Option A: Stable Mode (Recommended)**
+   Use this if you want the server to be stable. 
+   *Downside: You have to manually stop and restart the server if you edit the Python code.*
+   ```bash
+   python -m uvicorn main:app --port 8000 --workers 2
+   ```
+
+   **Option B: Development Mode**
+   Use this if you want the server to automatically restart when you edit the Python code.
    ```bash
    python -m uvicorn main:app --port 8000 --reload
    ```

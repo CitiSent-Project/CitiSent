@@ -36,6 +36,7 @@ export function Reports({
       const response = await reportsApiService.listReports(accessToken, { limit: 100, offset: 0 })
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
+    refetchInterval: 10000,
   })
   const reportsError = reportsQuery.error
   const refetchReports = reportsQuery.refetch

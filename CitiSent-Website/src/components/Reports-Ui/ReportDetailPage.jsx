@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
@@ -23,6 +23,7 @@ const STATUS_ICONS = {
 
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
   const [isSaving, setIsSaving] = useState(false)
   const [isCooldown, setIsCooldown] = useState(false)
@@ -220,10 +221,26 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                 </span>
               </p>
             </div>
-            <div className="sm:col-span-2">
+            <div className={report.attachmentUrl ? "" : "sm:col-span-2"}>
               <p className="text-xs uppercase tracking-wide text-slate-500">Message</p>
               <p className="mt-0.5 leading-relaxed text-slate-900">{report.message}</p>
             </div>
+            
+            {/* Display the attachment button only if an image is provided */}
+            {report.attachmentUrl ? (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">Attachment</p>
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(true)}
+                  className="mt-1.5 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                  aria-label="View attached image"
+                >
+                  <FiImage className="text-slate-500" />
+                  View Attached Image
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -338,6 +355,37 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           </ol>
         </section>
       </div>
+
+      {/* 
+        Image Modal Overlay
+        Only renders when the state is true AND an attachment URL exists.
+      */}
+      {isImageModalOpen && report.attachmentUrl ? (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsImageModalOpen(false)} // Clicking backdrop closes modal
+          aria-modal="true"
+          role="dialog"
+        >
+          <div 
+            className="relative max-h-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicks on the image from closing the modal
+          >
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Close image modal"
+            >
+              <FiX className="text-xl" />
+            </button>
+            <img 
+              src={report.attachmentUrl} 
+              alt="Attached report evidence" 
+              className="max-h-[85vh] w-auto object-contain" 
+            />
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

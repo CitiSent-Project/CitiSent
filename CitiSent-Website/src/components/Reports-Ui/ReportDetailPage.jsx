@@ -24,7 +24,7 @@ const STATUS_ICONS = {
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
   const [adminNotes, setAdminNotes] = useState('')
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [isUnresolvedModalOpen, setIsUnresolvedModalOpen] = useState(false)
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
   const [pendingValidation, setPendingValidation] = useState(null)
   const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
   const [isSaving, setIsSaving] = useState(false)
@@ -61,8 +61,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
   
-  // A report marked as Unresolved is permanently locked.
-  const isPermanentlyLocked = currentStatus === 'Unresolved'
+  // A report marked as Unresolved or Resolved is permanently locked.
+  const isPermanentlyLocked = currentStatus === 'Unresolved' || currentStatus === 'Resolved'
   const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
   const isSaveDisabled =
     !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
@@ -113,10 +113,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       return
     }
 
-    // Intercept if marking as Unresolved to show verification modal
-    if (validation.nextStatus === 'Unresolved') {
+    // Intercept if marking as Unresolved or Resolved to show verification modal
+    if (validation.nextStatus === 'Unresolved' || validation.nextStatus === 'Resolved') {
       setPendingValidation(validation)
-      setIsUnresolvedModalOpen(true)
+      setIsVerificationModalOpen(true)
       return
     }
 
@@ -150,7 +150,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       setSelectedStatus(validation.nextStatus)
       
       // Clear modal state on success
-      setIsUnresolvedModalOpen(false)
+      setIsVerificationModalOpen(false)
       setPendingValidation(null)
     } finally {
       setIsSaving(false)
@@ -290,8 +290,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           ) : null}
 
           {isPermanentlyLocked ? (
-            <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              This report is permanently locked because it was marked as Unresolved. No further changes can be made.
+            <p className={`mb-3 rounded-lg border px-3 py-2 text-sm ${currentStatus === 'Resolved' ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800'}`}>
+              This report is permanently locked because it was marked as {currentStatus}. No further changes can be made.
             </p>
           ) : null}
 
@@ -416,28 +416,32 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       ) : null}
 
       {/* 
-        Unresolved Warning Modal Overlay
-        Renders when the admin attempts to save the Unresolved status.
+        Status Verification Modal Overlay
+        Renders when the admin attempts to save the Unresolved or Resolved status.
       */}
-      {isUnresolvedModalOpen && pendingValidation ? (
+      {isVerificationModalOpen && pendingValidation ? (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity"
           aria-modal="true"
           role="dialog"
         >
           <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-2xl text-center">
-             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-               <FiAlertTriangle className="text-2xl text-red-600" />
+             <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${pendingValidation.nextStatus === 'Resolved' ? 'bg-green-100' : 'bg-red-100'}`}>
+               {pendingValidation.nextStatus === 'Resolved' ? (
+                 <FiCheckCircle className="text-2xl text-green-600" />
+               ) : (
+                 <FiAlertTriangle className="text-2xl text-red-600" />
+               )}
              </div>
-             <h3 className="mb-2 text-lg font-bold text-slate-900">Mark as Unresolved?</h3>
+             <h3 className="mb-2 text-lg font-bold text-slate-900">Mark as {pendingValidation.nextStatus}?</h3>
              <p className="mb-6 text-sm text-slate-500">
-               Are you sure you want to mark this report as Unresolved? This action is irreversible and will permanently lock the report from further updates.
+               Are you sure you want to mark this report as {pendingValidation.nextStatus}? This action is irreversible and will permanently lock the report from further updates.
              </p>
              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
                <button
                  type="button"
                  onClick={() => {
-                   setIsUnresolvedModalOpen(false)
+                   setIsVerificationModalOpen(false)
                    setPendingValidation(null)
                  }}
                  disabled={isSaving}
@@ -449,7 +453,11 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                  type="button"
                  onClick={() => executeStatusSave(pendingValidation)}
                  disabled={isSaving}
-                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                 className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                   pendingValidation.nextStatus === 'Resolved' 
+                     ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' 
+                     : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                 }`}
                >
                  {isSaving ? 'Processing...' : 'Confirm & Lock Report'}
                </button>

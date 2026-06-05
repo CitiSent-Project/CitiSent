@@ -11,6 +11,7 @@ import {
   parseLoginIdentifier,
 } from "../../modules/auth";
 import { validateLoginFields, getLoginErrorMessage } from "../../utils/authValidation";
+import { AppKeyboardAvoidingView } from "../../modules/shared";
 
 export default function LoginFormScreen() {
   const router = useRouter();
@@ -88,11 +89,7 @@ export default function LoginFormScreen() {
 
       <AuthCityFooter />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
-      >
+      <AppKeyboardAvoidingView className="flex-1">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
@@ -168,7 +165,7 @@ export default function LoginFormScreen() {
           </View>
         </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </View>
   );
 }

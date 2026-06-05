@@ -11,7 +11,7 @@ import {
   AuthSelectField,
   authApi,
 } from "../../modules/auth";
-import { RefreshableScrollView, usePullToRefresh } from "../../modules/shared";
+import { RefreshableScrollView, usePullToRefresh, AppKeyboardAvoidingView } from "../../modules/shared";
 import { fetchStoTomasBatangasBarangays } from "../../services/locationData";
 
 const GENDER_OPTIONS = [
@@ -399,11 +399,7 @@ export default function CreateAccountScreen() {
 
       <AuthCityFooter />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
-      >
+      <AppKeyboardAvoidingView className="flex-1">
         <RefreshableScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
@@ -585,7 +581,7 @@ export default function CreateAccountScreen() {
             </Pressable>
           </View>
         </RefreshableScrollView>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </View>
   );
 }

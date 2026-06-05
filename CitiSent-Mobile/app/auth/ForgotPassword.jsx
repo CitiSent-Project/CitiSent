@@ -9,6 +9,7 @@ import {
   AuthCityFooter,
   AuthInputField,
 } from "../../modules/auth";
+import { AppKeyboardAvoidingView } from "../../modules/shared";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -83,11 +84,7 @@ export default function ForgotPasswordScreen() {
 
       <AuthCityFooter />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
-      >
+      <AppKeyboardAvoidingView className="flex-1">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
@@ -149,7 +146,7 @@ export default function ForgotPasswordScreen() {
           </View>
         </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </AppKeyboardAvoidingView>
     </View>
   );
 }

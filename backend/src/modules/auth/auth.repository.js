@@ -847,4 +847,44 @@ export const authRepository = {
 
     return data;
   },
+
+  async changeUserPassword({ email, currentPassword, newPassword, userId }) {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      if (isInvalidCredentialsAuthError(signInError)) {
+        throw new AppError(
+          "Current password is incorrect.",
+          StatusCodes.UNAUTHORIZED,
+          signInError,
+        );
+      }
+
+      throw toGatewayError(
+        "Unable to verify your current password. Please try again.",
+        signInError,
+      );
+    }
+
+    const adminDb = createAdminSupabaseClient();
+
+    if (!adminDb) {
+      throw new AppError(
+        "Password change is currently unavailable.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const { error: updateError } = await adminDb.auth.admin.updateUserById(
+      userId,
+      { password: newPassword },
+    );
+
+    if (updateError) {
+      throw toGatewayError("Failed to update password.", updateError);
+    }
+  },
 };

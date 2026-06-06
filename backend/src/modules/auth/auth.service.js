@@ -345,4 +345,29 @@ export const authService = {
       profile,
     });
   },
+
+  async changePassword(authUser, { currentPassword, newPassword }) {
+    if (!authUser?.email) {
+      throw new AppError(
+        "Unable to resolve your account email.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    if (currentPassword === newPassword) {
+      throw new AppError(
+        "New password must be different from your current password.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    await authRepository.changeUserPassword({
+      email: authUser.email,
+      currentPassword,
+      newPassword,
+      userId: authUser.id,
+    });
+
+    return { changed: true };
+  },
 };

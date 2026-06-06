@@ -4,6 +4,7 @@ import { validateRequest } from "../../middlewares/validateRequest.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import {
   activateAccountSchema,
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   meSchema,
@@ -45,5 +46,12 @@ authRouter.get(
 );
 
 authRouter.post("/logout", asyncHandler(authController.logout));
+
+authRouter.post(
+  "/change-password",
+  requireAuth,
+  validateRequest(changePasswordSchema),
+  asyncHandler(authController.changePassword),
+);
 
 export { authRouter };

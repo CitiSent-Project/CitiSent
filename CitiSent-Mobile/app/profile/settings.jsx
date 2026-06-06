@@ -1,25 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
-import { useState } from "react";
-import { ProfileSubpageLayout, SettingsToggleRow } from "../../modules/profile";
-import { usePullToRefresh, Colors } from "../../modules/shared";
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  ProfileSubpageLayout,
+  ChangePasswordSheet,
+  DeleteAccountSheet,
+} from "../../modules/profile";
+import { Colors } from "../../modules/shared";
+import { usersApi } from "../../services/users";
+import { clearAuthToken } from "../../services/authSession";
 
-const DEFAULT_SETTINGS = {
-  pushNotifications: true,
-  emailUpdates: false,
-  darkMapStyle: false,
-  locationAccess: true,
-};
-
-function SettingsActionRow({ icon, label, onPress, danger = false }) {
+function SettingsActionRow({ icon, label, onPress, danger = false, disabled = false }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       className="mb-3 flex-row items-center rounded-2xl border px-4 py-4"
       style={{
         borderColor: danger ? Colors.borderDanger : Colors.borderSoft,
         backgroundColor: danger ? Colors.ui.dangerSoft : Colors.background,
+        opacity: disabled ? 0.5 : 1,
       }}
+      disabled={disabled}
     >
       <View
         className="mr-3 h-9 w-9 items-center justify-center rounded-full"
@@ -35,46 +38,77 @@ function SettingsActionRow({ icon, label, onPress, danger = false }) {
 }
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const { refreshing, onRefresh } = usePullToRefresh(async () => {
-    setSettings(DEFAULT_SETTINGS);
-  });
+  const [isPasswordSheetVisible, setIsPasswordSheetVisible] = useState(false);
+  const [isDeleteSheetVisible, setIsDeleteSheetVisible] = useState(false);
 
-  const setSetting = (key) => (nextValue) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: nextValue,
-    }));
-  };
+  // Guard against double-tap opening multiple sheets
+  const isNavigatingRef = useRef(false);
 
-  const showComingSoon = () => {
-    Alert.alert("Coming soon", "This setting action will be available in a future update.");
-  };
+  const handleChangePassword = useCallback(async ({ currentPassword, newPassword }) => {
+    await usersApi.changePassword({ currentPassword, newPassword });
+  }, []);
+
+  const handleDeleteAccount = useCallback(async () => {
+    try {
+      await usersApi.deleteCurrentUser();
+      clearAuthToken();
+      setIsDeleteSheetVisible(false);
+      router.replace("/auth/Login");
+    } catch (error) {
+      const message = error?.message || "Failed to delete account. Please try again.";
+      Alert.alert("Error", message);
+      throw error;
+    }
+  }, [router]);
+
+  const openPasswordSheet = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    setIsPasswordSheetVisible(true);
+    // Reset guard after animation completes
+    setTimeout(() => { isNavigatingRef.current = false; }, 300);
+  }, []);
+
+  const openDeleteSheet = useCallback(() => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    setIsDeleteSheetVisible(true);
+    setTimeout(() => { isNavigatingRef.current = false; }, 300);
+  }, []);
 
   return (
-    <ProfileSubpageLayout title="Settings" refreshing={refreshing} onRefresh={onRefresh}>
-      <Text className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Preferences</Text>
-
-      <SettingsToggleRow
-        title="Push notifications"
-        description="Receive report updates and city alerts in real time."
-        value={settings.pushNotifications}
-        onValueChange={setSetting("pushNotifications")}
+    <ProfileSubpageLayout title="Settings">
+      <Text className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Account &amp; Security</Text>
+      <SettingsActionRow
+        icon="lock-closed-outline"
+        label="Change password"
+        onPress={openPasswordSheet}
       />
-      <SettingsToggleRow
-        title="Email updates"
-        description="Send major report status changes to your email."
-        value={settings.emailUpdates}
-        onValueChange={setSetting("emailUpdates")}
-      />
-
-      <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Account & Security</Text>
-      <SettingsActionRow icon="lock-closed-outline" label="Change password" onPress={showComingSoon} />
-      <SettingsActionRow icon="shield-checkmark-outline" label="Privacy controls" onPress={showComingSoon} />
 
       <Text className="mb-2 mt-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.dangerLabel }}>Danger Zone</Text>
-      <SettingsActionRow icon="trash-outline" label="Delete account" onPress={showComingSoon} danger />
+      <SettingsActionRow
+        icon="trash-outline"
+        label="Delete account"
+        onPress={openDeleteSheet}
+        danger
+      />
+
+      <ChangePasswordSheet
+        visible={isPasswordSheetVisible}
+        onCancel={() => setIsPasswordSheetVisible(false)}
+        onSubmit={handleChangePassword}
+        bottomInset={insets.bottom}
+      />
+
+      <DeleteAccountSheet
+        visible={isDeleteSheetVisible}
+        onCancel={() => setIsDeleteSheetVisible(false)}
+        onConfirm={handleDeleteAccount}
+        bottomInset={insets.bottom}
+      />
     </ProfileSubpageLayout>
   );
 }

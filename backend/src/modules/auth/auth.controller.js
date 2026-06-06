@@ -53,4 +53,13 @@ export const authController = {
       message: "Logged out successfully",
     });
   },
+
+  async changePassword(req, res) {
+    const result = await authService.changePassword(req.user, req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
 };

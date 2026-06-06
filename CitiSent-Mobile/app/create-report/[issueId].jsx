@@ -5,6 +5,7 @@ import {
   Platform,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FeedbackModal from "../../components/ui/FeedbackModal";
@@ -72,7 +73,7 @@ export default function CreateReportIssueDetailScreen() {
 
   // Enforce backend validation: location min 1, description min 10, issueType min 1
   const canSubmit =
-    issueLocation.trim().length > 0 && report.trim().length >= 10;
+    issue ? (issueLocation.trim().length > 0 && report.trim().length >= 10) : false;
 
   function showModal(type, title, message, onCloseAction = null) {
     setModalConfig({ visible: true, type, title, message, onCloseAction });
@@ -114,6 +115,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   async function handleSubmitReport() {
+    if (!issue) return;
     if (issueLocation.trim().length === 0) {
       showModal("error", "Missing details", "Please provide the issue location.");
       return;
@@ -163,54 +165,11 @@ export default function CreateReportIssueDetailScreen() {
     }
   }
 
-  if (isInitialLoading && !issue) {
-    return (
-      <View
-        className="flex-1 items-center justify-center px-5"
-        style={{ backgroundColor: Colors.screen.tabs }}
-      >
-        <Text className="mb-2 text-lg font-semibold text-[#111827]">
-          Loading issue...
-        </Text>
-        <Text className="text-center text-sm text-[#6B7280]">
-          Please wait while we fetch the latest agencies.
-        </Text>
-      </View>
-    );
-  }
-
-  if (!issue) {
-    return (
-      <View
-        className="flex-1 items-center justify-center px-5"
-        style={{ backgroundColor: Colors.screen.tabs }}
-      >
-        <Text className="mb-2 text-lg font-semibold text-[#111827]">
-          Issue not found
-        </Text>
-        <Text className="text-center text-sm text-[#6B7280]">
-          Please go back and select an issue again.
-        </Text>
-        {isFallback ? (
-          <View className="mt-4 w-full">
-            <Button title="Retry" onPress={reloadDepartments} variant="outline" />
-          </View>
-        ) : null}
-        <Text
-          className="mt-4 text-sm font-semibold text-[#223D68]"
-          onPress={() => router.back()}
-        >
-          Go Back
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
       <PageTopBar title="Create Report" />
 
-      <BreadcrumbsNav items={["Create Report", issue.label]} />
+      <BreadcrumbsNav items={["Create Report", issue?.label || "Loading..."]} />
 
       <KeyboardAvoidingView
         className="flex-1"
@@ -231,24 +190,58 @@ export default function CreateReportIssueDetailScreen() {
             flexGrow: 1,
           }}
         >
-          <AttachmentSection imageUri={imageUri} onImageSelect={setImageUri} />
+          {isInitialLoading ? (
+            <View className="flex-1 items-center justify-center py-20">
+              <ActivityIndicator size="large" color={Colors.primary} />
+              <Text className="mt-4 text-base font-semibold" style={{ color: Colors.text.primary }}>
+                Loading issue details...
+              </Text>
+              <Text className="mt-1 text-sm text-center" style={{ color: Colors.text.slate }}>
+                Please wait while we fetch the latest agency configuration.
+              </Text>
+            </View>
+          ) : !issue ? (
+            <View className="flex-1 items-center justify-center py-20 px-4">
+              <Text className="mb-2 text-lg font-semibold" style={{ color: Colors.text.primary }}>
+                Issue not found
+              </Text>
+              <Text className="text-center text-sm" style={{ color: Colors.text.slate }}>
+                Please go back and select an issue again.
+              </Text>
+              {isFallback ? (
+                <View className="mt-4 w-full">
+                  <Button title="Retry" onPress={reloadDepartments} variant="outline" />
+                </View>
+              ) : null}
+              <Text
+                className="mt-6 text-sm font-semibold text-[#223D68]"
+                onPress={() => router.back()}
+              >
+                Go Back
+              </Text>
+            </View>
+          ) : (
+            <>
+              <AttachmentSection imageUri={imageUri} onImageSelect={setImageUri} />
 
-          <IssueReportForm
-            requestType={issue.label}
-            issueLocation={issueLocation}
-            report={report}
-            onChangeIssueLocation={setIssueLocation}
-            onChangeReport={setReport}
-            onInputLayout={handleInputLayout}
-            onInputFocus={handleInputFocus}
-            onReportSizeChange={handleReportSizeChange}
-          />
+              <IssueReportForm
+                requestType={issue.label}
+                issueLocation={issueLocation}
+                report={report}
+                onChangeIssueLocation={setIssueLocation}
+                onChangeReport={setReport}
+                onInputLayout={handleInputLayout}
+                onInputFocus={handleInputFocus}
+                onReportSizeChange={handleReportSizeChange}
+              />
 
-          <SubmitReportButton
-            onPress={handleSubmitReport}
-            disabled={!canSubmit}
-            loading={isSubmitting}
-          />
+              <SubmitReportButton
+                onPress={handleSubmitReport}
+                disabled={!canSubmit}
+                loading={isSubmitting}
+              />
+            </>
+          )}
         </RefreshableScrollView>
       </KeyboardAvoidingView>
 

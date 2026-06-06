@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Colors } from "../../../modules/shared";
+import { Colors, FeedbackModal } from "../../../modules/shared";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -96,10 +96,24 @@ export default function ChangePasswordSheet({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [shouldRender, setShouldRender] = useState(visible);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const hideFeedback = () => {
+    const wasSuccess = feedback.type === "success";
+    setFeedback((prev) => ({ ...prev, visible: false }));
+    if (wasSuccess) {
+      onCancel();
+    }
+  };
 
   useEffect(() => {
     if (visible) {
@@ -166,7 +180,12 @@ export default function ChangePasswordSheet({
     );
 
     if (validationError) {
-      Alert.alert("Validation Error", validationError);
+      setFeedback({
+        visible: true,
+        title: "Validation Error",
+        message: validationError,
+        type: "error",
+      });
       return;
     }
 
@@ -175,16 +194,21 @@ export default function ChangePasswordSheet({
     try {
       await onSubmit({ currentPassword, newPassword });
 
-      Alert.alert(
-        "Password Changed",
-        "Your password has been updated successfully.",
-      );
-
-      onCancel();
+      setFeedback({
+        visible: true,
+        title: "Password Changed",
+        message: "Your password has been updated successfully.",
+        type: "success",
+      });
     } catch (error) {
       const message =
         error?.message || "Failed to change password. Please try again.";
-      Alert.alert("Error", message);
+      setFeedback({
+        visible: true,
+        title: "Error",
+        message,
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -315,6 +339,14 @@ export default function ChangePasswordSheet({
           </View>
         </Animated.View>
       </View>
+
+      <FeedbackModal
+        visible={feedback.visible}
+        title={feedback.title}
+        message={feedback.message}
+        type={feedback.type}
+        onClose={hideFeedback}
+      />
     </Modal>
   );
 }

@@ -7,8 +7,28 @@ import {
   IssueGrid,
   buildIssueOptionsFromDepartments,
 } from "../../modules/createReport";
-import { Button, Colors } from "../../modules/shared";
+import { Button, Colors, SkeletonBlock } from "../../modules/shared";
 import useDepartments from "../../hooks/useDepartments";
+
+function IssueGridSkeleton() {
+  return (
+    <View className="flex-row flex-wrap justify-between">
+      {Array.from({ length: 9 }).map((_, index) => (
+        <View
+          key={index}
+          className="mb-3 basis-[31.5%] rounded-2xl px-2 py-3 items-center justify-center"
+          style={{ backgroundColor: Colors.ui.issueCardSoft }}
+        >
+          <SkeletonBlock className="h-20 w-20 rounded-full" />
+          <View className="mt-3 w-full items-center">
+            <SkeletonBlock className="h-3 w-4/5 rounded" />
+            <SkeletonBlock className="mt-1 h-3 w-1/2 rounded" />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function CreateReportScreen() {
   const { departments, error, isInitialLoading, reloadDepartments } = useDepartments();
@@ -39,11 +59,7 @@ export default function CreateReportScreen() {
         <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select an Issue</Text>
         <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>Click the selected issue to continue</Text>
 
-        {isInitialLoading ? (
-          <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>
-            Loading agencies...
-          </Text>
-        ) : null}
+        {isInitialLoading ? <IssueGridSkeleton /> : null}
 
         {isFallback ? (
           <View className="mb-4 rounded-2xl bg-white px-4 py-3 shadow-sm">

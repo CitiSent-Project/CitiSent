@@ -7,6 +7,8 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		password: '',
 		rememberMe: Boolean(rememberedEmail),
 	})
+	const [isForgotMode, setIsForgotMode] = useState(false)
+	const [forgotEmail, setForgotEmail] = useState('')
 	const [feedback, setFeedback] = useState({ type: '', message: '' })
 	const [submitting, setSubmitting] = useState(false)
 
@@ -14,7 +16,7 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		setForm((previous) => ({ ...previous, [field]: value }))
 	}
 
-	function validateForm() {
+	function validateLoginForm() {
 		if (!form.identifier.trim() || !form.password.trim()) {
 			return 'Username or email and password are required.'
 		}
@@ -22,9 +24,39 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		return ''
 	}
 
+	function validateForgotForm() {
+		if (!forgotEmail.trim()) {
+			return 'Please enter your email address.'
+		}
+		// Basic email validation regex
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail.trim())) {
+			return 'Please enter a valid email address.'
+		}
+		return ''
+	}
+
 	async function handleSubmit(event) {
 		event.preventDefault()
-		const validationMessage = validateForm()
+
+		if (isForgotMode) {
+			const validationMessage = validateForgotForm()
+			if (validationMessage) {
+				setFeedback({ type: 'error', message: validationMessage })
+				return
+			}
+			setSubmitting(true)
+			// Placeholder for future functionality
+			setTimeout(() => {
+				setSubmitting(false)
+				setFeedback({
+					type: 'success',
+					message: 'Reset instructions will be sent if an account matches this email.',
+				})
+			}, 1000)
+			return
+		}
+
+		const validationMessage = validateLoginForm()
 		if (validationMessage) {
 			setFeedback({ type: 'error', message: validationMessage })
 			return
@@ -40,54 +72,106 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 		setFeedback({ type: result.ok ? 'success' : 'error', message: result.message })
 	}
 
+	const title = isForgotMode ? 'Forgot Password?' : 'Login'
+	const subtitle = isForgotMode
+		? 'Enter your email address to receive a password reset link.'
+		: 'Sign in to access the CitiSent admin workspace.'
+
+	const footer = isForgotMode ? (
+		<p>
+			Remember your password?{' '}
+			<button
+				type="button"
+				onClick={() => {
+					setIsForgotMode(false)
+					setFeedback({ type: '', message: '' })
+				}}
+				className="font-semibold text-white underline decoration-cyan-200 underline-offset-4"
+			>
+				Back to login
+			</button>
+			.
+		</p>
+	) : (
+		<p>
+			Need an account?{' '}
+			<button
+				type="button"
+				onClick={onSwitchToRegister}
+				className="font-semibold text-white underline decoration-cyan-200 underline-offset-4"
+			>
+				Register here
+			</button>
+			.
+		</p>
+	)
+
 	return (
 		<AuthPageShell
 			variant="admin-login"
-			title="Login"
-			subtitle="Sign in to access the CitiSent admin workspace."
-			footer={
-				<p>
-					Need an account?{' '}
-					<button
-						type="button"
-						onClick={onSwitchToRegister}
-						className="font-semibold text-white underline decoration-cyan-200 underline-offset-4"
-					>
-						Register here
-					</button>
-					.
-				</p>
-			}
+			title={title}
+			subtitle={subtitle}
+			footer={footer}
 		>
 			<form className="space-y-5" onSubmit={handleSubmit}>
-				<AuthInputField
-					id="login-identifier"
-					label="Username or Email"
-					type="text"
-					value={form.identifier}
-					onChange={(value) => updateField('identifier', value)}
-					placeholder="Enter your username or email"
-					variant="admin-login"
-				/>
-
-				<AuthPasswordField
-					id="login-password"
-					label="Password"
-					value={form.password}
-					onChange={(value) => updateField('password', value)}
-					placeholder="Password"
-					variant="admin-login"
-				/>
-
-				<label className="flex items-center gap-2 text-sm text-white/95">
-					<input
-						type="checkbox"
-						checked={form.rememberMe}
-						onChange={(event) => updateField('rememberMe', event.target.checked)}
-						className="h-4 w-4 rounded border-white/60 bg-white"
+				{isForgotMode ? (
+					<AuthInputField
+						id="forgot-email"
+						label="Email Address"
+						type="email"
+						value={forgotEmail}
+						onChange={(value) => {
+							setForgotEmail(value)
+							setFeedback({ type: '', message: '' })
+						}}
+						placeholder="Enter your registered email"
+						variant="admin-login"
 					/>
-					Remember this sign-in
-				</label>
+				) : (
+					<>
+						<AuthInputField
+							id="login-identifier"
+							label="Username or Email"
+							type="text"
+							value={form.identifier}
+							onChange={(value) => updateField('identifier', value)}
+							placeholder="Enter your username or email"
+							variant="admin-login"
+						/>
+
+						<AuthPasswordField
+							id="login-password"
+							label="Password"
+							value={form.password}
+							onChange={(value) => updateField('password', value)}
+							placeholder="Password"
+							variant="admin-login"
+						/>
+
+						<div className="flex items-center justify-between">
+							<label className="flex items-center gap-2 text-sm text-white/95 cursor-pointer">
+								<input
+									type="checkbox"
+									checked={form.rememberMe}
+									onChange={(event) => updateField('rememberMe', event.target.checked)}
+									className="h-4 w-4 rounded border-white/60 bg-white"
+								/>
+								Remember this sign-in
+							</label>
+
+							<button
+								type="button"
+								onClick={() => {
+									setIsForgotMode(true)
+									setFeedback({ type: '', message: '' })
+								}}
+								className="text-sm font-medium text-white/90 hover:text-white underline decoration-white/30 underline-offset-4"
+							>
+								Forgot password?
+							</button>
+						</div>
+					</>
+				)}
 
 				{feedback.message ? (
 					<p
@@ -106,7 +190,13 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 					disabled={submitting}
 					className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-[26px] font-semibold text-white transition hover:bg-[#123666] focus:outline-none focus:ring-2 focus:ring-cyan-200/70"
 				>
-					{submitting ? 'Signing in...' : 'Sign-in'}
+					{isForgotMode
+						? submitting
+							? 'Sending...'
+							: 'Send link'
+						: submitting
+							? 'Signing in...'
+							: 'Sign-in'}
 				</button>
 			</form>
 		</AuthPageShell>

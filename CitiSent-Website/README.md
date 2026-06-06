@@ -56,7 +56,7 @@ npm run dev
 Run only the website:
 
 ```powershell
-npm run dev:web
+ npm run dev:web
 ```
 
 Run only the backend from this folder:

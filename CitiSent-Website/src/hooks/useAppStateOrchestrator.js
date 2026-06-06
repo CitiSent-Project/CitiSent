@@ -428,7 +428,12 @@ export function useAppStateOrchestrator() {
     }
   }
 
-  const { handleRegister, handleLogin, handleLogout } = useAuthSession({
+  const {
+    handleRegister,
+    handleLogin,
+    handleLogout,
+    handleForgotPassword,
+  } = useAuthSession({
     setAccessToken,
     setProfile,
     setAdminAccounts,
@@ -1359,6 +1364,7 @@ export function useAppStateOrchestrator() {
   const appActions = {
     onRegister: handleRegister,
     onLogin: handleLogin,
+    onForgotPassword: handleForgotPassword,
     onLogout: handleLogout,
     onRetrySessionBootstrap: handleRetrySessionBootstrap,
     onNavigate: handleNavigate,

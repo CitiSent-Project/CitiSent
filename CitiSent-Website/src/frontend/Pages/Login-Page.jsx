@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AuthInputField, AuthPageShell, AuthPasswordField } from '../../components/Auth-Ui'
 
-export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
+export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, rememberedEmail }) {
 	const [form, setForm] = useState({
 		identifier: rememberedEmail,
 		password: '',
@@ -45,14 +45,24 @@ export function LoginPage({ onLogin, onSwitchToRegister, rememberedEmail }) {
 				return
 			}
 			setSubmitting(true)
-			// Placeholder for future functionality
-			setTimeout(() => {
-				setSubmitting(false)
+			setFeedback({ type: '', message: '' })
+
+			// Call the actual forgot password service
+			const response = await onForgotPassword({ email: forgotEmail.trim() })
+
+			setSubmitting(false)
+			if (response.ok) {
 				setFeedback({
 					type: 'success',
 					message: 'Reset instructions will be sent if an account matches this email.',
 				})
-			}, 1000)
+				setForgotEmail('')
+			} else {
+				setFeedback({
+					type: 'error',
+					message: response.message || 'Unable to process your request. Please try again later.',
+				})
+			}
 			return
 		}
 

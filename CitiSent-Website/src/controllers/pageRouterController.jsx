@@ -17,6 +17,7 @@ export function renderAuthPage({
     onRegister,
     onSwitchToLogin,
     onLogin,
+    onForgotPassword,
     onSwitchToRegister,
     rememberedEmail,
     departmentOptions,
@@ -34,6 +35,7 @@ export function renderAuthPage({
     return (
         <LoginPage
             onLogin={onLogin}
+            onForgotPassword={onForgotPassword}
             onSwitchToRegister={onSwitchToRegister}
             rememberedEmail={rememberedEmail}
         />

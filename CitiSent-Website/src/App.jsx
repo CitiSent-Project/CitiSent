@@ -113,6 +113,7 @@ function AuthenticatedApp() {
             onRegister: appActions.onRegister,
             onSwitchToLogin: () => appActions.setAuthPage(getLoginAuthPage()),
             onLogin: appActions.onLogin,
+            onForgotPassword: appActions.onForgotPassword,
             onSwitchToRegister: () => appActions.setAuthPage(getRegisterAuthPage()),
             rememberedEmail: appState.rememberedEmail,
             departmentOptions: appState.departmentOptions,
@@ -151,7 +152,9 @@ function AuthenticatedApp() {
 }
 
 function App() {
-  if (window.location.pathname === '/setup-password') {
+  const isAuthView = ['/setup-password', '/reset-password'].includes(window.location.pathname)
+
+  if (isAuthView) {
     return (
       <>
         <Toasters />

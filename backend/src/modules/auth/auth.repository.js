@@ -311,7 +311,7 @@ async function queryProfileByIdentifier(db, identifier) {
 async function queryProfileByEmail(db, email) {
   const { data, error } = await db
     .from(PROFILES_TABLE)
-    .select("user_id")
+    .select("user_id, email, fname, lname")
     .eq("email", email)
     .limit(1)
     .maybeSingle();
@@ -454,6 +454,83 @@ async function tryReconcileOrphanedAuthEmail(email) {
 }
 
 export const authRepository = {
+  async getProfileByEmail(email) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      return null;
+    }
+
+    const { data, error } = await queryProfileByEmail(
+      getDbClient(),
+      normalizedEmail,
+    );
+
+    const adminDb = createAdminSupabaseClient();
+
+    if (!error) {
+      if (data || !adminDb) {
+        return data;
+      }
+
+      const { data: adminData, error: adminError } = await queryProfileByEmail(
+        adminDb,
+        normalizedEmail,
+      );
+
+      if (adminError) {
+        if (isMissingProfilesTable(adminError)) {
+          return null;
+        }
+        throw toGatewayError("Failed to fetch profile by email", adminError);
+      }
+
+      return adminData;
+    }
+
+    if (isMissingProfilesTable(error)) {
+      return null;
+    }
+
+    if (!isAccessDenied(error)) {
+      throw toGatewayError("Failed to fetch profile by email", error);
+    }
+
+    if (!adminDb) {
+      return null;
+    }
+
+    const { data: adminData, error: adminError } = await queryProfileByEmail(
+      adminDb,
+      normalizedEmail,
+    );
+
+    if (adminError) {
+      if (isMissingProfilesTable(adminError)) {
+        return null;
+      }
+      throw toGatewayError("Failed to fetch profile by email", adminError);
+    }
+
+    return adminData;
+  },
+
+  async updateAuthUserPassword(userId, newPassword) {
+    const adminDb = createAdminSupabaseClient();
+    if (!adminDb) {
+      throw new Error("Admin client is required to update passwords");
+    }
+
+    const { error } = await adminDb.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+
+    if (error) {
+      throw toGatewayError("Failed to update user password", error);
+    }
+
+    return true;
+  },
+
   async registerWithEmailPassword({ email, password, userMetadata }) {
     const signUp = () =>
       supabase.auth.signUp({
@@ -569,7 +646,19 @@ export const authRepository = {
     return data;
   },
 
-  async updateAuthUserPassword({ userId, password }) {
+  async updateAuthUserPassword(input, maybePassword) {
+    const userId =
+      input && typeof input === "object" ? input.userId : input;
+    const password =
+      input && typeof input === "object" ? input.password : maybePassword;
+
+    if (!userId || !password) {
+      throw new AppError(
+        "User ID and password are required to update the account password",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
     const adminDb = getAdminDbOrThrow();
     const { error } = await adminDb.auth.admin.updateUserById(userId, {
       password,

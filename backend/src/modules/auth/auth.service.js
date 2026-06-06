@@ -12,6 +12,14 @@ import {
   hashInvitationTokenId,
   verifyAccountActivationToken,
 } from "../../shared/security/invitationTokens.js";
+import {
+  createPasswordResetToken,
+  verifyPasswordResetToken,
+} from "../../shared/security/passwordResetTokens.js";
+import {
+  sendPasswordResetEmail,
+  buildResetPasswordUrl,
+} from "../../shared/email/mailer.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -137,6 +145,54 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
 }
 
 export const authService = {
+  async forgotPassword(email) {
+    const profile = await authRepository.getProfileByEmail(email);
+    if (!profile) {
+      // Don't leak user existence status to potential attackers
+      return { sent: true };
+    }
+
+    const resetToken = createPasswordResetToken({
+      userId: profile.user_id,
+      email: profile.email,
+    });
+    const resetUrl = buildResetPasswordUrl(resetToken.token);
+
+    await sendPasswordResetEmail({
+      toEmail: profile.email,
+      recipientName: profile.fname,
+      resetUrl,
+    });
+
+    return {
+      sent: true,
+      message: "If this email is registered, a reset link has been sent.",
+    };
+  },
+
+  async resetPassword(token, newPassword) {
+    const decoded = verifyPasswordResetToken(token);
+    if (!decoded) {
+      throw new AppError(
+        "Invalid or expired reset token",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    // Double check the email/userId still maps to a valid profile
+    const profile = await authRepository.getProfileByEmail(decoded.email);
+    if (!profile || profile.user_id !== decoded.userId) {
+      throw new AppError(
+        "Reset token no longer valid for this user",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    await authRepository.updateAuthUserPassword(profile.user_id, newPassword);
+
+    return { success: true };
+  },
+
   async register(payload) {
     const normalizedEmail = normalizeEmail(payload.email);
     const normalizedPhoneNumber = payload.phoneNumber
@@ -269,21 +325,6 @@ export const authService = {
       session: signInData?.session,
       profile,
     });
-  },
-
-  async forgotPassword({ email }) {
-    const normalizedEmail = normalizeEmail(email);
-
-    if (!normalizedEmail) {
-      throw new AppError("Email is required", StatusCodes.BAD_REQUEST);
-    }
-
-    await authRepository.requestPasswordReset({ email: normalizedEmail });
-
-    return {
-      sent: true,
-      message: "If this email is registered, a reset link has been sent.",
-    };
   },
 
   async activateAccount({ token, password }) {

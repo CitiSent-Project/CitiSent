@@ -28,6 +28,7 @@ function validateForm({ token, password, confirmPassword }) {
 }
 
 export function SetupPasswordPage() {
+  const isResetMode = window.location.pathname === '/reset-password'
   const token = useMemo(() => getSetupToken(), [])
   const [form, setForm] = useState(initialForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,20 +57,35 @@ export function SetupPasswordPage() {
     setErrorMessage('')
 
     try {
-      const response = await authApiService.activateAccount({
+      const apiCall = isResetMode
+        ? authApiService.resetPassword
+        : authApiService.activateAccount
+
+      const response = await apiCall({
         token,
         password: form.password,
       })
       setSuccessMessage(
-        response?.data?.message || 'Your CitiSent account is active. You can now sign in.'
+        response?.data?.message ||
+          (isResetMode
+            ? 'Your password has been reset successfully. You can now sign in.'
+            : 'Your CitiSent account is active. You can now sign in.')
       )
       setForm(initialForm)
     } catch (error) {
-      setErrorMessage(error.message || 'Unable to activate this account. Please try again.')
+      setErrorMessage(
+        error.message ||
+          `Unable to ${isResetMode ? 'reset password' : 'activate this account'}. Please try again.`
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  const title = isResetMode ? 'Reset your password' : 'Set up your password'
+  const subtitle = isResetMode
+    ? 'Choose a new password for your CitiSent account.'
+    : 'Choose a password for your CitiSent account.'
 
   return (
     <main className="min-h-screen bg-[#eef2f8] px-4 py-8">
@@ -80,8 +96,8 @@ export function SetupPasswordPage() {
               <FiLock className="text-xl" />
             </span>
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">Set up your password</h1>
-              <p className="text-sm text-slate-600">Choose a password for your CitiSent account.</p>
+              <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+              <p className="text-sm text-slate-600">{subtitle}</p>
             </div>
           </div>
 
@@ -89,9 +105,17 @@ export function SetupPasswordPage() {
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <FiCheckCircle />
-                Account activated
+                {isResetMode ? 'Password reset' : 'Account activated'}
               </div>
               <p className="mt-2 text-sm">{successMessage}</p>
+              <div className="mt-4">
+                <a
+                  href="/"
+                  className="text-sm font-semibold text-blue-700 hover:text-blue-900 underline underline-offset-4"
+                >
+                  Go to login
+                </a>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -134,7 +158,13 @@ export function SetupPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                {isSubmitting ? 'Activating...' : 'Activate Account'}
+                {isSubmitting
+                  ? isResetMode
+                    ? 'Updating...'
+                    : 'Activating...'
+                  : isResetMode
+                    ? 'Reset Password'
+                    : 'Activate Account'}
               </button>
             </form>
           )}

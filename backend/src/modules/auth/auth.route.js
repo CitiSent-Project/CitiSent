@@ -8,6 +8,7 @@ import {
   loginSchema,
   meSchema,
   registerSchema,
+  resetPasswordSchema,
 } from "./auth.schema.js";
 import { authController } from "./auth.controller.js";
 
@@ -26,9 +27,15 @@ authRouter.post(
 );
 
 authRouter.post(
-  "/forgot-password",
+  "/request-password-reset",
   validateRequest(forgotPasswordSchema),
   asyncHandler(authController.forgotPassword),
+);
+
+authRouter.post(
+  "/reset-password",
+  validateRequest(resetPasswordSchema),
+  asyncHandler(authController.resetPassword),
 );
 
 authRouter.post(

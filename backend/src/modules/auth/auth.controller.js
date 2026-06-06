@@ -21,7 +21,17 @@ export const authController = {
   },
 
   async forgotPassword(req, res) {
-    const result = await authService.forgotPassword(req.body);
+    const result = await authService.forgotPassword(req.body.email);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async resetPassword(req, res) {
+    const { token, password } = req.body;
+    const result = await authService.resetPassword(token, password);
 
     return res.status(StatusCodes.OK).json({
       success: true,

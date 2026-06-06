@@ -7,12 +7,13 @@ import { notifyError, notifyErrorWithRetry } from '../../components/ui/toastHelp
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
-import { ADMIN_STORAGE_KEYS } from '../../models/data'
+import { ADMIN_STORAGE_KEYS, DEFAULT_PREFERENCES } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
 export function Reports({
   section = 'category',
   profile,
+  preferences,
   departmentOptions = [],
   onViewReport,
   onUpdateStatus,
@@ -103,6 +104,8 @@ export function Reports({
 
   const rows = useMemo(() => reportsQuery.data || [], [reportsQuery.data])
   const loading = Boolean(accessToken) && (reportsQuery.isLoading || reportsQuery.isFetching)
+  const reportsPerPage = preferences?.reportsPerPage ?? DEFAULT_PREFERENCES.reportsPerPage
+  const defaultSorting = preferences?.defaultSorting ?? DEFAULT_PREFERENCES.defaultSorting
 
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])
 
@@ -123,6 +126,8 @@ export function Reports({
       <ByUrgencyLevels
         rows={scopedRows}
         profile={profile}
+        reportsPerPage={reportsPerPage}
+        defaultSorting={defaultSorting}
         onViewReport={onViewReport}
         onUpdateStatus={handleUpdateStatus}
         isLoading={loading}
@@ -134,6 +139,8 @@ export function Reports({
     <ByCategory
       rows={scopedRows}
       profile={profile}
+      reportsPerPage={reportsPerPage}
+      defaultSorting={defaultSorting}
       departmentOptions={departmentOptions}
       onViewReport={onViewReport}
       onUpdateStatus={handleUpdateStatus}

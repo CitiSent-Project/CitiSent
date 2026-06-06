@@ -41,6 +41,15 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
     },
   ])
 
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) {
+        window.clearTimeout(cooldownTimerRef.current)
+        cooldownTimerRef.current = null
+      }
+    }
+  }, [])
+
   if (!report) {
     return (
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -66,15 +75,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
   const isSaveDisabled =
     !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
-
-  useEffect(() => {
-    return () => {
-      if (cooldownTimerRef.current) {
-        window.clearTimeout(cooldownTimerRef.current)
-        cooldownTimerRef.current = null
-      }
-    }
-  }, [])
 
   function startCooldown() {
     if (cooldownTimerRef.current) {

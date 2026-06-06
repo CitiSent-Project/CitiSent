@@ -29,16 +29,17 @@ export function AccountSettingsTab({
     >
       <div className="grid gap-4 md:grid-cols-2">
         <FormInputField
-          label="Display name"
+          label="Display name (read-only)"
           value={displayName}
           onChange={handleDisplayNameChange}
+          disabled
         />
 
         <FormInputField
-          label="Department"
+          label="Department (read-only)"
           value={department}
           onChange={handleDepartmentChange}
-          disabled={isOfficeAdmin}
+          disabled
         />
 
         {isOfficeAdmin ? (

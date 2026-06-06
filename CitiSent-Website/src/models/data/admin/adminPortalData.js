@@ -41,10 +41,19 @@ export const DEFAULT_PREFERENCES = {
   digestFrequency: 'Weekly',
   reportStatusUpdates: true,
   adminInvitations: true,
+  newReports: true,
+  escalatedReports: true,
+  summaryEmails: false,
   theme: 'System',
   fontSize: 'Medium',
   animationsEnabled: true,
   sessionTimeout: 30,
+  reportsPerPage: 6,
+  defaultSorting: 'Latest first',
+  anonymousReports: true,
+  autoCloseReports: false,
+  auditTrackingEnabled: true,
+  timezone: 'Asia/Manila',
 }
 
 export const DEFAULT_TRANSFER_REQUESTS = []

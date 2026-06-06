@@ -21,6 +21,8 @@ const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low'
 export function ByUrgencyLevels({
   rows,
   profile,
+  reportsPerPage = 6,
+  defaultSorting = 'Latest first',
   onViewReport,
   onUpdateStatus,
   isLoading = false,
@@ -46,6 +48,7 @@ export function ByUrgencyLevels({
       reports: rows,
       selectedUrgency,
       allUrgencyFilter: ALL_URGENCY_FILTER,
+      sorting: defaultSorting,
     })
 
     // Apply search filtering
@@ -65,7 +68,7 @@ export function ByUrgencyLevels({
     }
 
     return result
-  }, [selectedUrgency, rows, debouncedSearchTerm, statusFilter])
+  }, [defaultSorting, selectedUrgency, rows, debouncedSearchTerm, statusFilter])
 
   const {
     totalPages,
@@ -76,7 +79,7 @@ export function ByUrgencyLevels({
     handleNextPage,
     handlePreviousPage,
     resetToFirstPage,
-  } = useReportPaginationState({ rows: filteredRows, pageSize: 6 })
+  } = useReportPaginationState({ rows: filteredRows, pageSize: reportsPerPage })
 
   function handleSelectUrgency(chip) {
     setSelectedUrgency(chip)

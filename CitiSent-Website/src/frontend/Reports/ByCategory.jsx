@@ -41,6 +41,8 @@ function buildAgencyOptionsFromRows(rows = []) {
 export function ByCategory({
   rows,
   profile,
+  reportsPerPage = 6,
+  defaultSorting = 'Latest first',
   departmentOptions = [],
   onViewReport,
   onUpdateStatus,
@@ -91,6 +93,7 @@ export function ByCategory({
       selectedCategoryId: effectiveSelectedAgencyId,
       hasAllAccess,
       allCategoryFilterId: ALL_CATEGORY_FILTER_ID,
+      sorting: defaultSorting,
     })
 
     // Apply Search Filter
@@ -115,7 +118,15 @@ export function ByCategory({
     }
 
     return result
-  }, [effectiveSelectedAgencyId, hasAllAccess, rows, debouncedSearchTerm, statusFilter, urgencyFilter])
+  }, [
+    defaultSorting,
+    effectiveSelectedAgencyId,
+    hasAllAccess,
+    rows,
+    debouncedSearchTerm,
+    statusFilter,
+    urgencyFilter,
+  ])
 
   const selectedAgencyLabel =
     cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
@@ -193,7 +204,7 @@ export function ByCategory({
     handleNextPage,
     handlePreviousPage,
     resetToFirstPage,
-  } = useReportPaginationState({ rows: filteredRows, pageSize: 6 })
+  } = useReportPaginationState({ rows: filteredRows, pageSize: reportsPerPage })
 
   function handleSelectAgency(agencyId) {
     setSelectedAgencyId(agencyId)

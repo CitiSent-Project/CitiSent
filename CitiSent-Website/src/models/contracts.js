@@ -30,10 +30,19 @@
  * @property {string} digestFrequency
  * @property {boolean} reportStatusUpdates
  * @property {boolean} adminInvitations
+ * @property {boolean} newReports
+ * @property {boolean} escalatedReports
+ * @property {boolean} summaryEmails
  * @property {string} theme
  * @property {string} fontSize
  * @property {boolean} animationsEnabled
  * @property {number} sessionTimeout
+ * @property {number} reportsPerPage
+ * @property {string} defaultSorting
+ * @property {boolean} anonymousReports
+ * @property {boolean} autoCloseReports
+ * @property {boolean} auditTrackingEnabled
+ * @property {string} timezone
  */
 
 /**

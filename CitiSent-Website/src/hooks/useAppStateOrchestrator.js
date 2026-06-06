@@ -359,6 +359,10 @@ export function useAppStateOrchestrator() {
   })
 
   function addActivity(action, detail) {
+    if (preferences.auditTrackingEnabled === false) {
+      return
+    }
+
     setActivityLog((previous) =>
       buildNextActivityLog({ previousActivityLog: previous, action, detail })
     )

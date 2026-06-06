@@ -1,4 +1,4 @@
-import { SettingToggleRow, SettingsSectionCard } from "../Account-Ui";
+import { SettingsSectionCard } from "../Account-Ui";
 import { SettingsSelect } from "./SettingsSelect";
 
 const themeOptions = [
@@ -16,7 +16,6 @@ const fontSizeOptions = [
 export function AppearanceSettingsTab({ preferences, onUpdatePreference }) {
   const theme = preferences?.theme ?? "System";
   const fontSize = preferences?.fontSize ?? "Medium";
-  const animationsEnabled = preferences?.animationsEnabled ?? true;
 
   function handleThemeChange(event) {
     onUpdatePreference("theme", event.target.value);
@@ -24,10 +23,6 @@ export function AppearanceSettingsTab({ preferences, onUpdatePreference }) {
 
   function handleFontSizeChange(event) {
     onUpdatePreference("fontSize", event.target.value);
-  }
-
-  function handleAnimationsToggle(value) {
-    onUpdatePreference("animationsEnabled", value);
   }
 
   return (
@@ -50,13 +45,6 @@ export function AppearanceSettingsTab({ preferences, onUpdatePreference }) {
           options={fontSizeOptions}
         />
       </div>
-
-      <SettingToggleRow
-        title="Enable animations"
-        description="Keep page transitions and feedback animations active."
-        checked={animationsEnabled}
-        onChange={handleAnimationsToggle}
-      />
     </SettingsSectionCard>
   );
 }

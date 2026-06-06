@@ -121,6 +121,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.CATEGORY}
                     profile={profile}
+                    preferences={preferences}
                     departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
@@ -131,6 +132,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.CATEGORY}
                     profile={profile}
+                    preferences={preferences}
                     departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
@@ -141,6 +143,7 @@ export function renderActivePage({
                 <Reports
                     section={REPORT_SECTIONS.URGENCY}
                     profile={profile}
+                    preferences={preferences}
                     departmentOptions={departmentOptions}
                     onViewReport={onViewReport}
                     onUpdateStatus={onUpdateReportStatus}
@@ -168,14 +171,10 @@ export function renderActivePage({
         case APP_PAGES.SETTINGS:
             return (
                 <Settings
-                    profile={profile}
                     preferences={preferences}
-                    transferRequests={transferRequests}
-                    departmentOptions={departmentOptions}
-                    onUpdateProfile={onUpdateProfile}
+                    activityLog={activityLog}
                     onUpdatePreferences={onUpdatePreferences}
                     onRequestLogout={onRequestLogout}
-                    onSubmitTransferRequest={onSubmitTransferRequest}
                 />
             )
         case APP_PAGES.LOGOUT:

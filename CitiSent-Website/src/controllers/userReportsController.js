@@ -1,4 +1,17 @@
 export const ALL_URGENCY_FILTER = 'All Reports'
+export const REPORT_SORTING_OPTIONS = {
+  LATEST_FIRST: 'Latest first',
+  OLDEST_FIRST: 'Oldest first',
+  HIGHEST_URGENCY: 'Highest urgency',
+}
+
+const URGENCY_RANKS = {
+  Critical: 4,
+  High: 3,
+  Medium: 2,
+  Moderate: 2,
+  Low: 1,
+}
 
 function formatReportDate(value) {
   return new Date(value).toLocaleDateString('en-US', {
@@ -50,20 +63,39 @@ export function sortReportsByLatest(rows = []) {
   return [...rows].sort((a, b) => Number(b?.dateValue || 0) - Number(a?.dateValue || 0))
 }
 
+export function sortReports(rows = [], sorting = REPORT_SORTING_OPTIONS.LATEST_FIRST) {
+  if (sorting === REPORT_SORTING_OPTIONS.OLDEST_FIRST) {
+    return [...rows].sort((a, b) => Number(a?.dateValue || 0) - Number(b?.dateValue || 0))
+  }
+
+  if (sorting === REPORT_SORTING_OPTIONS.HIGHEST_URGENCY) {
+    return [...rows].sort((a, b) => {
+      const urgencyDifference =
+        Number(URGENCY_RANKS[b?.urgency] || 0) - Number(URGENCY_RANKS[a?.urgency] || 0)
+
+      return urgencyDifference || Number(b?.dateValue || 0) - Number(a?.dateValue || 0)
+    })
+  }
+
+  return sortReportsByLatest(rows)
+}
+
 export function filterUserReportsByCategory({
   reports = [],
   selectedCategoryId,
   hasAllAccess = false,
   allCategoryFilterId,
+  sorting = REPORT_SORTING_OPTIONS.LATEST_FIRST,
 }) {
   const effectiveCategoryId = String(selectedCategoryId || '')
 
   if (hasAllAccess && effectiveCategoryId === allCategoryFilterId) {
-    return sortReportsByLatest(reports)
+    return sortReports(reports, sorting)
   }
 
-  return sortReportsByLatest(
-    reports.filter((row) => String(row?.categoryId || '') === effectiveCategoryId)
+  return sortReports(
+    reports.filter((row) => String(row?.categoryId || '') === effectiveCategoryId),
+    sorting
   )
 }
 
@@ -71,13 +103,15 @@ export function filterUserReportsByUrgency({
   reports = [],
   selectedUrgency = ALL_URGENCY_FILTER,
   allUrgencyFilter = ALL_URGENCY_FILTER,
+  sorting = REPORT_SORTING_OPTIONS.LATEST_FIRST,
 }) {
   if (selectedUrgency === allUrgencyFilter) {
-    return sortReportsByLatest(reports)
+    return sortReports(reports, sorting)
   }
 
-  return sortReportsByLatest(
-    reports.filter((row) => String(row?.urgency || '') === String(selectedUrgency || ''))
+  return sortReports(
+    reports.filter((row) => String(row?.urgency || '') === String(selectedUrgency || '')),
+    sorting
   )
 }
 

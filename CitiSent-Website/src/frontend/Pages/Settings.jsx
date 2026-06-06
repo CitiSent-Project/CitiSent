@@ -6,28 +6,30 @@ import {
 import { usePersistToStorage } from '../../hooks/usePersistToStorage'
 import { loadFromStorage } from '../../services/storageService'
 import {
-  AccountSettingsTab,
   AppearanceSettingsTab,
-  DepartmentTransferTab,
+  AuditLogsSettingsTab,
   NotificationSettingsTab,
+  ReportManagementSettingsTab,
   SecuritySettingsTab,
   SettingsTabNav,
+  SystemSettingsTab,
 } from '../../components/Settings-Ui'
 
-const tabs = ['Account', 'Notifications', 'Appearance', 'Security', 'Transfers']
+const tabs = [
+  'Appearance',
+  'Security',
+  'Notifications',
+  'Report Management',
+  'Audit & Logs',
+  'System',
+]
 
 export function Settings({
-  profile,
   preferences,
-  transferRequests,
-  departmentOptions = [],
-  onUpdateProfile,
+  activityLog = [],
   onUpdatePreferences,
   onRequestLogout,
-  onSubmitTransferRequest,
 }) {
-  const availableDepartments = Array.isArray(departmentOptions) ? departmentOptions : []
-
   const [activeTab, setActiveTab] = useState(() => {
     const storedTab = loadFromStorage(ADMIN_STORAGE_KEYS.settingsActiveTab, tabs[0])
     return tabs.includes(storedTab) ? storedTab : tabs[0]
@@ -35,7 +37,8 @@ export function Settings({
 
   const selectedTheme = preferences?.theme ?? DEFAULT_PREFERENCES.theme
   const selectedFontSize = preferences?.fontSize ?? DEFAULT_PREFERENCES.fontSize
-  const motionMode = preferences?.animationsEnabled === false ? 'Reduced' : 'Enabled'
+  const reportsPerPage = preferences?.reportsPerPage ?? DEFAULT_PREFERENCES.reportsPerPage
+  const timezone = preferences?.timezone ?? DEFAULT_PREFERENCES.timezone
 
   usePersistToStorage(ADMIN_STORAGE_KEYS.settingsActiveTab, activeTab)
 
@@ -44,17 +47,6 @@ export function Settings({
   }
 
   const tabContent = {
-    Account: (
-      <AccountSettingsTab
-        profile={profile}
-        preferences={preferences}
-        onUpdatePreference={updatePreference}
-        onUpdateProfile={onUpdateProfile}
-      />
-    ),
-    Notifications: (
-      <NotificationSettingsTab preferences={preferences} onUpdatePreference={updatePreference} />
-    ),
     Appearance: <AppearanceSettingsTab preferences={preferences} onUpdatePreference={updatePreference} />,
     Security: (
       <SecuritySettingsTab
@@ -63,12 +55,28 @@ export function Settings({
         onRequestLogout={onRequestLogout}
       />
     ),
-    Transfers: (
-      <DepartmentTransferTab
-        profile={profile}
-        transferRequests={transferRequests}
-        departmentOptions={availableDepartments}
-        onSubmitTransferRequest={onSubmitTransferRequest}
+    Notifications: (
+      <NotificationSettingsTab preferences={preferences} onUpdatePreference={updatePreference} />
+    ),
+    'Report Management': (
+      <ReportManagementSettingsTab
+        preferences={preferences}
+        onUpdatePreference={updatePreference}
+      />
+    ),
+    'Audit & Logs': (
+      <AuditLogsSettingsTab
+        activityLog={activityLog}
+        preferences={preferences}
+        onUpdatePreference={updatePreference}
+      />
+    ),
+    System: (
+      <SystemSettingsTab
+        activityLog={activityLog}
+        preferences={preferences}
+        onUpdatePreference={updatePreference}
+        onOpenActivityLogs={() => setActiveTab('Audit & Logs')}
       />
     ),
   }
@@ -89,7 +97,10 @@ export function Settings({
               Font size: {selectedFontSize}
             </span>
             <span className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700">
-              Motion: {motionMode}
+              Reports/page: {reportsPerPage}
+            </span>
+            <span className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+              Timezone: {timezone}
             </span>
           </div>
         </header>

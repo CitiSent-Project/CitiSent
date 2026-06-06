@@ -279,8 +279,6 @@ export function Users({ onViewUserProfile, profile }) {
       return false
     }
 
-    setProcessingUserIds((prev) => new Set(prev).add(targetUser.id))
-
     try {
       const response = await usersApiService.createUser(token, {
         fname,

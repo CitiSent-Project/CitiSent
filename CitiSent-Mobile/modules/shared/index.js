@@ -9,6 +9,8 @@ export { default as Card } from "../../components/ui/Card";
 export { default as RefreshableScrollView } from "../../components/ui/RefreshableScrollView";
 export { default as SkeletonBlock } from "../../components/ui/SkeletonBlock";
 export { default as AppKeyboardAvoidingView } from "../../components/ui/AppKeyboardAvoidingView";
+export { default as FeedbackModal } from "../../components/ui/FeedbackModal";
+export { default as ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 export { useFetch } from "../../hooks/useFetch";
 export { default as usePullToRefresh } from "../../hooks/usePullToRefresh";

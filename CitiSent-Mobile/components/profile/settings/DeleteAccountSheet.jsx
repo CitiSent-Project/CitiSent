@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Colors } from "../../../modules/shared";
+import { Colors, ConfirmationModal } from "../../../modules/shared";
 
 export default function DeleteAccountSheet({
   visible,
@@ -21,6 +21,7 @@ export default function DeleteAccountSheet({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [shouldRender, setShouldRender] = useState(visible);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -84,6 +85,15 @@ export default function DeleteAccountSheet({
     } catch {
       setIsDeleting(false);
     }
+  };
+
+  const handleConfirmClick = () => {
+    setIsConfirmationVisible(true);
+  };
+
+  const handleActualConfirm = () => {
+    setIsConfirmationVisible(false);
+    handleConfirm();
   };
 
   return (
@@ -150,7 +160,7 @@ export default function DeleteAccountSheet({
             style={{ backgroundColor: Colors.border }}
           />
 
-          <View className="py-6">
+          <View className="p-6 mt-3">
             <Text
               className="text-center text-[20px] font-semibold"
               style={{ color: Colors.text.primary }}
@@ -158,25 +168,22 @@ export default function DeleteAccountSheet({
               Are you sure you want to delete your account?
             </Text>
             <Text
-              className="mt-3 text-center text-[14px]"
+              className="text-center text-[14px]"
               style={{ color: Colors.text.secondary }}
             >
-              This action is permanent and cannot be undone. All your data,
-              reports, and settings will be removed.
             </Text>
           </View>
 
-          <View className="flex-row items-center gap-3 pb-2">
+          <View className="flex-row items-center gap-3 pb-3">
             <Pressable
               className="flex-1 items-center rounded-full py-3"
-              style={{ backgroundColor: Colors.ui.progressSoft }}
+              style={{ backgroundColor: Colors.primary }}
               onPress={isDeleting ? undefined : onCancel}
               accessibilityRole="button"
               disabled={isDeleting}
             >
               <Text
-                className="text-[16px] font-semibold"
-                style={{ color: Colors.primary }}
+                className="text-[16px] font-semibold text-white"
               >
                 Cancel
               </Text>
@@ -185,17 +192,17 @@ export default function DeleteAccountSheet({
             <Pressable
               className="flex-1 items-center rounded-full py-3"
               style={{
-                backgroundColor: Colors.error,
+                backgroundColor: Colors.ui.dangerSoft,
                 opacity: isDeleting ? 0.7 : 1,
               }}
-              onPress={handleConfirm}
+              onPress={handleConfirmClick}
               accessibilityRole="button"
               disabled={isDeleting}
             >
               {isDeleting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={Colors.error} />
               ) : (
-                <Text className="text-[16px] font-semibold text-white">
+                <Text className="text-[16px] font-semibold" style={{ color: Colors.error }}>
                   Yes, Delete
                 </Text>
               )}
@@ -203,6 +210,17 @@ export default function DeleteAccountSheet({
           </View>
         </Animated.View>
       </View>
+
+      <ConfirmationModal
+        visible={isConfirmationVisible}
+        title="Final Confirmation"
+        message="This action is permanent and cannot be undone. Are you absolutely sure you want to delete your account?"
+        type="danger"
+        confirmText="Confirm Delete"
+        cancelText="Cancel"
+        onConfirm={handleActualConfirm}
+        onCancel={() => setIsConfirmationVisible(false)}
+      />
     </Modal>
   );
 }

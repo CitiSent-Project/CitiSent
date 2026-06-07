@@ -89,13 +89,36 @@ export default function NotificationDetailsModal({ visible, notification, onClos
                 ) : null}
 
                 {notification.meta.processedOn ? (
-                  <View>
+                  <View className="mb-3">
                     <Text className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: Colors.text.secondary }}>
                       Processed On
                     </Text>
                     <Text className="text-sm" style={{ color: Colors.text.body }}>
                       {notification.meta.processedOn}
                     </Text>
+                  </View>
+                ) : null}
+
+                {notification.meta.issueType || notification.meta.reportId ? (
+                  <View className="border-t border-slate-100 pt-3">
+                    <Text className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: Colors.text.secondary }}>
+                      Report Details
+                    </Text>
+                    {notification.meta.reportId ? (
+                      <Text className="text-xs mb-1" style={{ color: Colors.text.body }}>
+                        <Text className="font-semibold">Reference ID:</Text> {notification.meta.reportId}
+                      </Text>
+                    ) : null}
+                    {notification.meta.issueType ? (
+                      <Text className="text-xs mb-1" style={{ color: Colors.text.body }}>
+                        <Text className="font-semibold">Category/Subject:</Text> {notification.meta.issueType}
+                      </Text>
+                    ) : null}
+                    {notification.meta.reportDescription ? (
+                      <Text className="text-xs leading-5" style={{ color: Colors.text.body }}>
+                        <Text className="font-semibold">Description:</Text> {notification.meta.reportDescription}
+                      </Text>
+                    ) : null}
                   </View>
                 ) : null}
               </View>

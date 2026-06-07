@@ -136,13 +136,19 @@ export default function ReportsMadePage() {
           <View key={report.id}>
             <MyReportCard report={report} containerClassName="mb-2" />
             <View className="mb-4 flex-row justify-end">
-              <Pressable
-                onPress={() => setEditingReportId(report.id)}
-                className="rounded-lg border px-3 py-2"
-                style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
-              >
-                <Text className="text-xs font-bold" style={{ color: Colors.primaryStrong }}>Edit Report</Text>
-              </Pressable>
+              {normalizeStatus(report.status) === "pending" ? (
+                <Pressable
+                  onPress={() => setEditingReportId(report.id)}
+                  className="rounded-lg border px-3 py-2"
+                  style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
+                >
+                  <Text className="text-xs font-bold" style={{ color: Colors.primaryStrong }}>Edit Report</Text>
+                </Pressable>
+              ) : (
+                <Text className="text-xs italic" style={{ color: Colors.text.secondary }}>
+                  This report can no longer be edited because it has already been reviewed by an administrator.
+                </Text>
+              )}
             </View>
           </View>
         ))

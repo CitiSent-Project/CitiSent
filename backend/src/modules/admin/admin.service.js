@@ -284,6 +284,9 @@ async function createCitizenStatusNotification({
   }).format(now);
 
   const statusLabel = REPORT_STATUS_LABELS[nextStatus] || "Pending";
+  const truncatedDesc = reportRow.description && reportRow.description.length > 60
+    ? reportRow.description.slice(0, 60) + "..."
+    : reportRow.description || "No description provided";
   const finalMessage = `Your report has been ${statusLabel.toLowerCase()}. Open this to see the full details.`;
 
   await notificationsRepository.createNotification({
@@ -297,6 +300,9 @@ async function createCitizenStatusNotification({
       status: statusLabel,
       adminMessage: adminMessage || null,
       processedOn: formattedDate,
+      reportId: reportRow.id,
+      issueType: reportRow.issue_type,
+      reportDescription: reportRow.description || null,
     },
   });
 

@@ -3,9 +3,13 @@ import { notificationsApi } from "./notifications";
 const listeners = new Set();
 
 let notifications = [];
+let totalCount = 0;
 let isHydrated = false;
 let isLoading = false;
+let isLoadingMore = false;
 let lastError = null;
+let offset = 0;
+const LIMIT = 10;
 
 function getUnreadCount(items = []) {
   return items.filter((item) => !item.read).length;
@@ -17,6 +21,9 @@ function buildSnapshot() {
     unreadCount: getUnreadCount(notifications),
     isHydrated,
     isLoading,
+    isLoadingMore,
+    totalCount,
+    hasMore: notifications.length < totalCount,
     error: lastError,
   };
 }
@@ -79,10 +86,12 @@ export async function ensureNotificationsLoaded({ force = false } = {}) {
   setLoadingState(true);
 
   try {
-    const nextNotifications = await notificationsApi.listNotifications();
-    notifications = Array.isArray(nextNotifications)
-      ? nextNotifications.map((item) => ({ ...item }))
+    const res = await notificationsApi.listNotifications(LIMIT, 0);
+    notifications = Array.isArray(res?.data)
+      ? res.data.map((item) => ({ ...item }))
       : [];
+    totalCount = res?.total ?? notifications.length;
+    offset = 0;
     isHydrated = true;
     lastError = null;
     emitChange();
@@ -91,6 +100,34 @@ export async function ensureNotificationsLoaded({ force = false } = {}) {
     throw error;
   } finally {
     setLoadingState(false);
+  }
+}
+
+export async function loadMoreNotifications() {
+  if (isLoadingMore || notifications.length >= totalCount) {
+    return;
+  }
+
+  isLoadingMore = true;
+  emitChange();
+
+  try {
+    const nextOffset = offset + LIMIT;
+    const res = await notificationsApi.listNotifications(LIMIT, nextOffset);
+    const nextNotifications = Array.isArray(res?.data)
+      ? res.data.map((item) => ({ ...item }))
+      : [];
+
+    notifications = [...notifications, ...nextNotifications];
+    totalCount = res?.total ?? notifications.length;
+    offset = nextOffset;
+    lastError = null;
+  } catch (error) {
+    setLastError(error);
+    throw error;
+  } finally {
+    isLoadingMore = false;
+    emitChange();
   }
 }
 

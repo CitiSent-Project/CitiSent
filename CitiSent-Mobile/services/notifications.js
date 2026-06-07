@@ -103,18 +103,27 @@ function cloneLocalNotifications() {
 }
 
 export const notificationsApi = {
-  async listNotifications() {
+  async listNotifications(limit = 10, offset = 0) {
     if (shouldUseLocalFallback()) {
-      return cloneLocalNotifications();
+      const all = cloneLocalNotifications();
+      return {
+        data: all.slice(offset, offset + limit),
+        total: all.length,
+      };
     }
 
     try {
-      const response = await api.get("/notifications?limit=100&offset=0");
+      const response = await api.get(`/notifications?limit=${limit}&offset=${offset}`);
       const rows = readNotificationsPayload(response)
         .map(mapBackendNotificationToUi)
         .filter((item) => item !== null);
 
-      return rows;
+      const total = response?.pagination?.total ?? response?.total ?? rows.length;
+
+      return {
+        data: rows,
+        total,
+      };
     } catch (error) {
       warnFallbackOnce("Falling back to local notifications data:", error);
 
@@ -122,7 +131,11 @@ export const notificationsApi = {
         throw error;
       }
 
-      return cloneLocalNotifications();
+      const all = cloneLocalNotifications();
+      return {
+        data: all.slice(offset, offset + limit),
+        total: all.length,
+      };
     }
   },
 

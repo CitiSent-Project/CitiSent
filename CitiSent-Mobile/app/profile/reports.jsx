@@ -12,6 +12,7 @@ const STATUS_FILTERS = [
   { key: "pending", label: "Pending" },
   { key: "in progress", label: "In Progress" },
   { key: "completed", label: "Completed" },
+  { key: "unresolved", label: "Unresolved" },
 ];
 
 function normalizeStatus(value) {
@@ -51,6 +52,7 @@ export default function ReportsMadePage() {
   const pendingCount = reports.filter((report) => normalizeStatus(report.status) === "pending").length;
   const inProgressCount = reports.filter((report) => normalizeStatus(report.status) === "in progress").length;
   const completedCount = reports.filter((report) => normalizeStatus(report.status) === "completed").length;
+  const unresolvedCount = reports.filter((report) => normalizeStatus(report.status) === "unresolved").length;
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
@@ -101,6 +103,10 @@ export default function ReportsMadePage() {
           <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
             <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{completedCount}</Text>
             <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Completed</Text>
+          </View>
+          <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
+            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{unresolvedCount}</Text>
+            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Unresolved</Text>
           </View>
         </View>
       </View>

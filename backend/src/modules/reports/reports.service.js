@@ -200,6 +200,10 @@ export const reportsService = {
       throw new AppError("Report not found", StatusCodes.NOT_FOUND);
     }
 
+    if (existingReport.status && existingReport.status.toLowerCase() !== "pending") {
+      throw new AppError("This report can no longer be edited because it has already been reviewed by an administrator.", StatusCodes.FORBIDDEN);
+    }
+
     const updatePayload = buildReportUpdatePayload(payload);
     let resolvedDepartment = null;
 

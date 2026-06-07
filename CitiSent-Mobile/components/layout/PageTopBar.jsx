@@ -9,8 +9,8 @@ export default function PageTopBar({ title }) {
 
   return (
     <View 
-      className="flex-row items-center bg-[#223D68] px-3 pb-5"
-      style={{ paddingTop: Math.max(insets.top, 10) + 10 }}
+      className="flex-row items-center bg-[#223D68] px-5 pb-5"
+      style={{ paddingTop: Math.max(insets.top, 40) }}
     >
       <View className="flex-row items-center">
         <TouchableOpacity activeOpacity={0.7} className="p-1" onPress={() => router.back()}>

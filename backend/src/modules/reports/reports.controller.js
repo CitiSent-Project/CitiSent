@@ -19,6 +19,18 @@ export const reportsController = {
     });
   },
 
+  async getCounts(req, res) {
+    const counts = await reportsService.getReportCounts({
+      userId: req.user.id,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: counts,
+    });
+  },
+
   async create(req, res) {
     const created = await reportsService.createReport({
       userId: req.user.id,

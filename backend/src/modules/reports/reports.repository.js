@@ -43,6 +43,28 @@ export const reportsRepository = {
     };
   },
 
+  async getCountsByStatus({ userId, accessToken }) {
+    const db = getDbClient(accessToken);
+    const statuses = ["pending", "in_review", "resolved", "rejected"];
+    
+    const countPromises = statuses.map(status => 
+      db
+        .from(TABLE_NAME)
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", status)
+    );
+
+    const results = await Promise.all(countPromises);
+    
+    return {
+      pending: results[0].count || 0,
+      in_review: results[1].count || 0,
+      resolved: results[2].count || 0,
+      rejected: results[3].count || 0,
+    };
+  },
+
   async create(payload, accessToken) {
     const db = getDbClient(accessToken);
 

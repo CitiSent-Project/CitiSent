@@ -137,6 +137,13 @@ export const reportsService = {
     return response;
   },
 
+  async getReportCounts({ userId, accessToken }) {
+    // For now, bypassing cache for accurate realtime counts
+    // Future improvement: cache the counts and invalidate on report create/update/delete
+    const counts = await reportsRepository.getCountsByStatus({ userId, accessToken });
+    return counts;
+  },
+
   async createReport({
     userId,
     issueType,

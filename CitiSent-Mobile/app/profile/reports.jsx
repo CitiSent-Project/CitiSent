@@ -49,14 +49,8 @@ export default function ReportsMadePage() {
   useEffect(() => {
     async function fetchCounts() {
       try {
-        const res = await reportsApi.getMyReports(1000, 0, "all");
-        const allReports = res.data || [];
-        setCounts({
-          pending: allReports.filter((report) => normalizeStatus(report.status) === "pending").length,
-          inProgress: allReports.filter((report) => normalizeStatus(report.status) === "in progress").length,
-          completed: allReports.filter((report) => normalizeStatus(report.status) === "completed").length,
-          unresolved: allReports.filter((report) => normalizeStatus(report.status) === "unresolved").length,
-        });
+        const result = await reportsApi.getMyReportCounts();
+        setCounts(result);
       } catch (err) {
         console.warn("Failed to fetch counts:", err);
       }

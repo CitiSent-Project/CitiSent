@@ -251,6 +251,31 @@ export const reportsApi = {
     }
   },
 
+  getMyReportCounts: async () => {
+    if (shouldUseLocalReportsData()) {
+      return {
+        pending: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Pending").length,
+        inProgress: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "In Progress").length,
+        completed: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Completed").length,
+        unresolved: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Unresolved").length,
+      };
+    }
+
+    try {
+      const response = await api.get("/reports/counts");
+      const counts = response.data || {};
+      return {
+        pending: counts.pending || 0,
+        inProgress: counts.in_review || 0,
+        completed: counts.resolved || 0,
+        unresolved: counts.rejected || 0,
+      };
+    } catch (error) {
+      warnFallbackOnce("Falling back to local counts data:", error);
+      return { pending: 0, inProgress: 0, completed: 0, unresolved: 0 };
+    }
+  },
+
   getLatestHomeReport: async () => {
     if (shouldUseLocalReportsData()) {
       return LATEST_HOME_REPORT;

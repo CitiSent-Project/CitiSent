@@ -28,6 +28,12 @@ reportsRouter.post(
 );
 
 reportsRouter.get(
+  "/counts",
+  requireAuth,
+  asyncHandler(reportsController.getCounts),
+);
+
+reportsRouter.get(
   "/:reportId",
   requireAuth,
   validateRequest(getReportByIdSchema),

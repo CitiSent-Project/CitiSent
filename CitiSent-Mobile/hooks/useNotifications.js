@@ -7,6 +7,7 @@ import {
   refreshNotifications,
   resetNotifications,
   subscribeToNotifications,
+  loadMoreNotifications,
 } from "../services/notificationState";
 
 export default function useNotifications() {
@@ -24,10 +25,14 @@ export default function useNotifications() {
     notifications: snapshot.notifications,
     unreadCount: snapshot.unreadCount,
     isLoading: snapshot.isLoading,
+    isLoadingMore: snapshot.isLoadingMore,
+    totalCount: snapshot.totalCount,
+    hasMore: snapshot.hasMore,
     error: snapshot.error,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     resetNotifications,
     refreshNotifications,
+    loadMoreNotifications,
   };
 }

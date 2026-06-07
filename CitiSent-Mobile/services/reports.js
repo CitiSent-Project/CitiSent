@@ -217,22 +217,37 @@ export const reportsApi = {
     };
     return api.post("/reports", payload);
   },
-  getMyReports: async () => {
+  getMyReports: async (limit = 10, offset = 0, statusFilter = "all") => {
     if (shouldUseLocalReportsData()) {
-      return MY_REPORTS;
+      return { data: MY_REPORTS, total: MY_REPORTS.length };
     }
 
     try {
-      const response = await api.get("/reports?limit=50&offset=0");
-      const mappedReports = toMyReportsPayload(response);
+      let query = `/reports?limit=${limit}&offset=${offset}`;
+      if (statusFilter && statusFilter !== "all") {
+        const backendStatus = {
+          "pending": "pending",
+          "in progress": "in_review",
+          "completed": "resolved",
+          "unresolved": "rejected",
+        }[statusFilter.toLowerCase()] || statusFilter;
+        query += `&status=${backendStatus}`;
+      }
 
-      return mappedReports.length ? mappedReports : MY_REPORTS;
+      const response = await api.get(query);
+      const mappedReports = toMyReportsPayload(response);
+      const total = response?.pagination?.total ?? response?.total ?? mappedReports.length;
+
+      return {
+        data: mappedReports,
+        total,
+      };
     } catch (error) {
       warnFallbackOnce("Falling back to local my reports data:", error);
       if (!runtimeFlags.allowLocalReportsFallback) {
         throw error;
       }
-      return MY_REPORTS;
+      return { data: MY_REPORTS, total: MY_REPORTS.length };
     }
   },
 

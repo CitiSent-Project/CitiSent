@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, ActivityIndicator } from "react-native";
 import {
   NotificationItemCard,
   ProfileSubpageLayout,
@@ -17,6 +17,10 @@ export default function NotificationsPage() {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     resetNotifications,
+    isLoadingMore,
+    totalCount,
+    hasMore,
+    loadMoreNotifications,
   } = useNotifications();
 
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
@@ -91,13 +95,43 @@ export default function NotificationsPage() {
       </View>
 
       {visibleNotifications.length > 0 ? (
-        visibleNotifications.map((item) => (
-          <NotificationItemCard
-            key={item.id}
-            item={item}
-            onPress={() => handleNotificationPress(item)}
-          />
-        ))
+        <>
+          {visibleNotifications.map((item) => (
+            <NotificationItemCard
+              key={item.id}
+              item={item}
+              onPress={() => handleNotificationPress(item)}
+            />
+          ))}
+
+          {hasMore && filterMode === "all" && (
+            <View className="my-5 pb-10 items-center">
+              <Pressable
+                onPress={loadMoreNotifications}
+                disabled={isLoadingMore}
+                className="w-full rounded-xl border py-3 items-center justify-center flex-row gap-2"
+                style={{
+                  borderColor: Colors.borderMuted || Colors.border,
+                  backgroundColor: Colors.background || "#ffffff",
+                }}
+              >
+                {isLoadingMore ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Text className="text-sm font-bold" style={{ color: Colors.primary }}>
+                    Load More Notifications ({notifications.length} of {totalCount})
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          )}
+
+          {!hasMore && filterMode === "all" && notifications.length > 0 && (
+            <Text className="my-5 pb-10 text-center text-sm font-bold" style={{ color: Colors.text.slate || Colors.text.secondary }}>
+              Showing all {totalCount} notifications
+            </Text>
+          )}
+        </>
       ) : (
         <View className="rounded-2xl border px-4 py-8" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
           <Text className="text-center text-sm font-semibold" style={{ color: Colors.text.bodySoft }}>No notifications to show.</Text>

@@ -14,7 +14,7 @@ const STATUS_LABEL_MAP = {
   pending: "Pending",
   in_review: "In Progress",
   resolved: "Completed",
-  rejected: "Completed",
+  rejected: "Unresolved",
 };
 
 function readArray(payload, key, fallback) {

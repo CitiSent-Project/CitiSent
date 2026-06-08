@@ -19,7 +19,11 @@ import {
 import {
   sendPasswordResetEmail,
   buildResetPasswordUrl,
+  sendOtpEmail,
 } from "../../shared/email/mailer.js";
+import { otpStore_ } from "../../shared/security/otp.store.js";
+import jwt from "jsonwebtoken";
+import { env } from "../../config/env.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -145,6 +149,106 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
 }
 
 export const authService = {
+  /**
+   * OTP-based forgot password: Step 1 — request OTP.
+   * Always responds with { sent: true } to prevent email enumeration.
+   */
+  async requestOtp(email) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    // Rate-limit check (throws if exceeded)
+    try {
+      otpStore_.checkSendRateLimit(normalizedEmail);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
+    }
+
+    const profile = await authRepository.getProfileByEmail(normalizedEmail);
+
+    if (!profile) {
+      // Silent success — do not reveal whether email exists
+      return { sent: true };
+    }
+
+    const plainOtp = otpStore_.createOtp(normalizedEmail);
+
+    await sendOtpEmail({
+      toEmail: profile.email,
+      recipientName: profile.fname,
+      otp: plainOtp,
+    });
+
+    return { sent: true };
+  },
+
+  /**
+   * OTP-based forgot password: Step 2 — verify OTP.
+   * On success returns a short-lived reset session JWT.
+   */
+  async verifyOtp(email, otp) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    try {
+      otpStore_.verifyOtp(normalizedEmail, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    if (!env.INVITATION_JWT_SECRET) {
+      throw new AppError(
+        "Password reset is not configured.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    // Issue a short-lived reset session token (5 min)
+    const resetToken = jwt.sign(
+      { email: normalizedEmail, purpose: "otp_reset" },
+      env.INVITATION_JWT_SECRET,
+      { expiresIn: "5m" },
+    );
+
+    return { resetToken };
+  },
+
+  /**
+   * OTP-based forgot password: Step 3 — reset password with OTP-issued token.
+   */
+  async resetPasswordWithOtp(resetToken, newPassword) {
+    if (!env.INVITATION_JWT_SECRET) {
+      throw new AppError(
+        "Password reset is not configured.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, env.INVITATION_JWT_SECRET);
+    } catch (err) {
+      const isExpired = err?.name === "TokenExpiredError";
+      throw new AppError(
+        isExpired
+          ? "Your reset session has expired. Please start over."
+          : "Invalid reset session. Please start over.",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    if (decoded?.purpose !== "otp_reset" || !decoded?.email) {
+      throw new AppError("Invalid reset session.", StatusCodes.UNAUTHORIZED);
+    }
+
+    const profile = await authRepository.getProfileByEmail(decoded.email);
+    if (!profile) {
+      throw new AppError("Account not found.", StatusCodes.NOT_FOUND);
+    }
+
+    await authRepository.updateAuthUserPassword(profile.user_id, newPassword);
+
+    return { success: true };
+  },
+
   async forgotPassword(email) {
     const profile = await authRepository.getProfileByEmail(email);
     if (!profile) {

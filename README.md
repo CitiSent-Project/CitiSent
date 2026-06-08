@@ -104,3 +104,8 @@ Follow these steps to start the Python AI (ai-sentiment):
    ```bash
    python -m uvicorn main:app --port 8000 --reload
    ```
+
+   **Option C: Run Python**
+   ```powershell
+   .\.venv\Scripts\python.exe -m uvicorn main:app --port 8000
+   ```

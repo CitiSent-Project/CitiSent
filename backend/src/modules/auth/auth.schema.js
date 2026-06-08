@@ -117,3 +117,36 @@ export const changePasswordSchema = z.object({
       .max(128),
   }),
 });
+
+export const requestOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    email: z.string().trim().email("A valid email address is required."),
+  }),
+});
+
+export const verifyOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    email: z.string().trim().email("A valid email address is required."),
+    otp: z
+      .string()
+      .trim()
+      .length(6, "OTP must be exactly 6 digits.")
+      .regex(/^\d{6}$/, "OTP must contain digits only."),
+  }),
+});
+
+export const resetPasswordWithOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    resetToken: z.string().trim().min(1, "Reset token is required."),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters.")
+      .max(128),
+  }),
+});

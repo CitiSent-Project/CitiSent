@@ -121,4 +121,22 @@ export const authApi = {
   logout: () => {
     clearAuthToken();
   },
+
+  requestOtp: async (email) => {
+    const response = await api.post("/auth/request-otp", { email });
+    return response?.data ?? response;
+  },
+
+  verifyOtp: async (email, otp) => {
+    const response = await api.post("/auth/verify-otp", { email, otp });
+    return response?.data ?? response;
+  },
+
+  resetPasswordWithOtp: async (resetToken, password) => {
+    const response = await api.post("/auth/reset-password-otp", {
+      resetToken,
+      password,
+    });
+    return response?.data ?? response;
+  },
 };

@@ -39,6 +39,23 @@ export const authController = {
     });
   },
 
+  async requestOtp(req, res) {
+    const result = await authService.requestOtp(req.body.email);
+    return res.status(StatusCodes.OK).json({ success: true, data: result });
+  },
+
+  async verifyOtp(req, res) {
+    const { email, otp } = req.body;
+    const result = await authService.verifyOtp(email, otp);
+    return res.status(StatusCodes.OK).json({ success: true, data: result });
+  },
+
+  async resetPasswordWithOtp(req, res) {
+    const { resetToken, password } = req.body;
+    const result = await authService.resetPasswordWithOtp(resetToken, password);
+    return res.status(StatusCodes.OK).json({ success: true, data: result });
+  },
+
   async activateAccount(req, res) {
     const result = await authService.activateAccount(req.body);
 

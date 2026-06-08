@@ -62,6 +62,13 @@ function normalizeUsername(value) {
 }
 
 function assertAccountIsActive(profile) {
+  if (String(profile?.account_status || "").trim().toLowerCase() === "banned") {
+    throw new AppError(
+      "Your account has been banned. Please contact support.",
+      StatusCodes.FORBIDDEN,
+    );
+  }
+
   if (String(profile?.activation_status || "").trim().toLowerCase() === "pending") {
     throw new AppError(
       "Please set up your password using the invitation link before logging in.",
@@ -408,6 +415,21 @@ export const authService = {
 
   async login(payload) {
     const resolvedEmail = await resolveLoginEmail(payload);
+
+    // Check for an active ban BEFORE attempting Supabase authentication.
+    // When account_status is 'banned', Supabase may reject the credentials
+    // with a generic 'Invalid credentials' error. We intercept early
+    // so the user gets the correct 'banned' message.
+    const preProfile = await authRepository.getProfileByIdentifier(resolvedEmail);
+    if (preProfile?.user_id) {
+      const isBanned = await authRepository.checkActiveBanByUserId(preProfile.user_id);
+      if (isBanned) {
+        throw new AppError(
+          "Your account has been banned. Please contact support.",
+          StatusCodes.FORBIDDEN,
+        );
+      }
+    }
 
     const signInData = await authRepository.loginWithEmailPassword({
       email: resolvedEmail,

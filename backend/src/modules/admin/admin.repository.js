@@ -342,6 +342,16 @@ export const adminRepository = {
     if (error) {
       throw toGatewayError("Failed to ban user", error);
     }
+
+    // Sync the profiles table so login checks and admin filtering work
+    const { error: profileError } = await db
+      .from(PROFILES_TABLE)
+      .update({ account_status: "banned" })
+      .eq("user_id", userId);
+
+    if (profileError) {
+      throw toGatewayError("Failed to update user account status", profileError);
+    }
   },
 
   async unbanUser({ accessToken, actorId, userId }) {
@@ -358,6 +368,16 @@ export const adminRepository = {
 
     if (error) {
       throw toGatewayError("Failed to unban user", error);
+    }
+
+    // Sync the profiles table back to active
+    const { error: profileError } = await db
+      .from(PROFILES_TABLE)
+      .update({ account_status: "active" })
+      .eq("user_id", userId);
+
+    if (profileError) {
+      throw toGatewayError("Failed to update user account status", profileError);
     }
   },
 

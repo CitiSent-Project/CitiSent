@@ -18,6 +18,7 @@ export default function NotificationsPage() {
     markAllNotificationsAsRead,
     resetNotifications,
     isLoadingMore,
+    focusRefreshing,
     totalCount,
     hasMore,
     loadMoreNotifications,
@@ -27,6 +28,7 @@ export default function NotificationsPage() {
     setFilterMode("all");
     await resetNotifications();
   });
+
 
   const visibleNotifications = useMemo(() => {
     if (filterMode === "unread") {
@@ -57,7 +59,20 @@ export default function NotificationsPage() {
 
   return (
     <ProfileSubpageLayout title="Notifications" refreshing={refreshing} onRefresh={onRefresh}>
+      {focusRefreshing && (
+        <View
+          className="mb-3 flex-row items-center gap-2 rounded-xl px-4 py-3"
+          style={{ backgroundColor: Colors.ui?.neutralSoft ?? "#f3f4f6" }}
+        >
+          <ActivityIndicator size="small" color={Colors.primary} />
+          <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>
+            Refreshing notifications…
+          </Text>
+        </View>
+      )}
+
       <View className="mb-4 rounded-2xl border px-4 py-4" style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.background }}>
+
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-base font-extrabold" style={{ color: Colors.text.heading }}>Inbox</Text>

@@ -16,6 +16,8 @@ export default function AuthInputField({
   showPasswordToggle = false,
   passwordVisible = false,
   onTogglePassword,
+  prefix,
+  maxLength,
 }) {
   return (
     <View className="mb-4 w-full">
@@ -26,12 +28,16 @@ export default function AuthInputField({
       >
         <Ionicons name={icon} size={18} color={error ? "#FCA5A5" : "#B7CCE6"} />
 
+        {prefix ? (
+          <Text className="ml-3 text-[15px] font-semibold text-[#DDEBFF]">{prefix}</Text>
+        ) : null}
+
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#8CA8C9"
-          className="ml-3 flex-1 text-[15px] text-[#DDEBFF]"
+          className={`${prefix ? "ml-1" : "ml-3"} flex-1 text-[15px] text-[#DDEBFF]`}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType={keyboardType}
@@ -40,6 +46,7 @@ export default function AuthInputField({
           returnKeyType={returnKeyType}
           onSubmitEditing={onSubmitEditing}
           secureTextEntry={secureTextEntry}
+          maxLength={maxLength}
         />
 
         {showPasswordToggle ? (

@@ -22,7 +22,9 @@ const usernameSchema = z
 const phoneNumberSchema = z
   .string()
   .trim()
-  .regex(/^\+?[0-9]{10,15}$/);
+  .regex(/^\+639\d{9}$/, {
+    message: "Phone number must be a valid Philippine mobile number starting with +639.",
+  });
 const citySchema = z
   .string()
   .trim()

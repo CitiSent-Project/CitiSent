@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, ScrollView, Platform, Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,78 +8,76 @@ import {
   AuthBrandMark,
   AuthCityFooter,
   AuthInputField,
+  authApi,
 } from "../../modules/auth";
-import { AppKeyboardAvoidingView } from "../../modules/shared";
+import { AppKeyboardAvoidingView, FeedbackModal } from "../../modules/shared";
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [modal, setModal] = useState({
+    visible: false,
+    type: "error",
+    title: "",
+    message: "",
+  });
+
+  const showModal = (type, title, message) =>
+    setModal({ visible: true, type, title, message });
+  const closeModal = () => setModal((prev) => ({ ...prev, visible: false }));
 
   const handleEmailChange = (value) => {
     setEmail(value);
-
-    if (fieldError) {
-      setFieldError("");
-    }
-
-    if (errorMessage) {
-      setErrorMessage("");
-    }
-
-    if (successMessage) {
-      setSuccessMessage("");
-    }
+    if (fieldError) setFieldError("");
   };
 
-  const validateEmail = () => {
-    const trimmedEmail = email.trim().toLowerCase();
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
 
-    if (!trimmedEmail) {
-      return "Gmail address is required.";
-    }
+    const trimmed = email.trim().toLowerCase();
 
-    if (!/^[^\s@]+@gmail\.com$/.test(trimmedEmail)) {
-      return "Please enter a valid Gmail address.";
-    }
-
-    return "";
-  };
-
-  const handleSendResetLink = async () => {
-    if (isSubmitting) {
+    if (!trimmed) {
+      setFieldError("Email address is required.");
       return;
     }
 
-    const validationError = validateEmail();
-
-    if (validationError) {
-      setFieldError(validationError);
-      setSuccessMessage("");
-      setErrorMessage("Please enter the Gmail used when creating your account.");
+    if (!isValidEmail(trimmed)) {
+      setFieldError("Please enter a valid email address.");
       return;
     }
 
     setFieldError("");
-    setErrorMessage("");
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      setSuccessMessage("If this Gmail is registered, a password reset link has been sent.");
-    } catch {
-      setErrorMessage("Unable to process your request right now. Please try again.");
+      await authApi.requestOtp(trimmed);
+      // Always navigate — do not reveal whether email exists
+      router.push({ pathname: "/auth/OtpVerification", params: { email: trimmed } });
+    } catch (error) {
+      const msg = error?.message || "";
+      if (msg.toLowerCase().includes("too many")) {
+        showModal("error", "Too Many Requests", msg);
+      } else {
+        // Even on unexpected errors show a generic message (no enumeration)
+        router.push({ pathname: "/auth/OtpVerification", params: { email: trimmed } });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <View className="flex-1 bg-[#1B2D4F]" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <View
+      className="flex-1 bg-[#1B2D4F]"
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
       <StatusBar style="light" />
 
       <AuthCityFooter />
@@ -95,58 +93,59 @@ export default function ForgotPasswordScreen() {
               <AuthBrandMark />
             </View>
 
-          <View className="mt-10">
-            <Text className="text-center text-[34px] text-[#CFDAEA]">Forgot Password?</Text>
-            <Text className="mt-3 text-center text-[14px] leading-5 text-[#AFC5E2]">
-              Enter the Gmail address used to create your account and we&apos;ll send a reset link.
-            </Text>
-          </View>
-
-          <View className="mt-10">
-            <AuthInputField
-              value={email}
-              onChangeText={handleEmailChange}
-              placeholder="Gmail Address"
-              icon="mail-outline"
-              keyboardType="email-address"
-              autoComplete="email"
-              textContentType="emailAddress"
-              returnKeyType="send"
-              onSubmitEditing={handleSendResetLink}
-              error={fieldError}
-            />
-
-            <AuthActionButton
-              label={isSubmitting ? "Sending reset link..." : "Send Reset Link"}
-              variant="primary"
-              onPress={handleSendResetLink}
-              disabled={isSubmitting}
-            />
-
-            {errorMessage ? (
-              <Text className="mt-1 text-center text-[13px] text-[#FCA5A5]" accessibilityLiveRegion="polite">
-                {errorMessage}
+            <View className="mt-10">
+              <Text className="text-center text-[32px] text-[#CFDAEA]">
+                Forgot Password?
               </Text>
-            ) : null}
-
-            {successMessage ? (
-              <Text className="mt-1 text-center text-[13px] text-[#86EFAC]" accessibilityLiveRegion="polite">
-                {successMessage}
+              <Text className="mt-3 text-center text-[14px] leading-5 text-[#AFC5E2]">
+                Enter the email address linked to your account. We&apos;ll send
+                you a 6-digit verification code.
               </Text>
-            ) : null}
+            </View>
 
-            <Pressable
-              className="mt-6 items-center"
-              onPress={() => router.push("/auth/LoginForm")}
-              accessibilityRole="button"
-              accessibilityLabel="Back to login"
-            >
-              <Text className="text-[13px] text-[#8CA8C9]">Back to Login</Text>
-            </Pressable>
+            <View className="mt-10">
+              <AuthInputField
+                value={email}
+                onChangeText={handleEmailChange}
+                placeholder="Email Address"
+                icon="mail-outline"
+                keyboardType="email-address"
+                autoComplete="email"
+                textContentType="emailAddress"
+                returnKeyType="send"
+                onSubmitEditing={handleSubmit}
+                error={fieldError}
+              />
+
+              <AuthActionButton
+                label={isSubmitting ? "Sending code…" : "Send Verification Code"}
+                variant="primary"
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              />
+
+              <Pressable
+                className="mt-6 items-center"
+                onPress={() => router.push("/auth/LoginForm")}
+                accessibilityRole="button"
+                accessibilityLabel="Back to login"
+              >
+                <Text className="text-[13px] text-[#8CA8C9]">
+                  Back to Login
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
         </ScrollView>
       </AppKeyboardAvoidingView>
+
+      <FeedbackModal
+        visible={modal.visible}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onClose={closeModal}
+      />
     </View>
   );
 }

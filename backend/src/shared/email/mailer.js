@@ -110,6 +110,69 @@ export async function sendPasswordResetEmail({ toEmail, recipientName, resetUrl 
   });
 }
 
+export async function sendOtpEmail({ toEmail, recipientName, otp }) {
+  const safeName = escapeHtml(recipientName || "CitiSent user");
+  const safeOtp = escapeHtml(String(otp));
+
+  await getTransporter().sendMail({
+    from: `"CitiSent" <${env.GMAIL_USER}>`,
+    to: toEmail,
+    subject: "Your CitiSent password reset code",
+    text: [
+      `Hello ${recipientName || "there"},`,
+      "",
+      "Your one-time password reset code is:",
+      "",
+      `  ${otp}`,
+      "",
+      "This code expires in 5 minutes. Do not share it with anyone.",
+      "",
+      "If you did not request this, you can safely ignore this email.",
+    ].join("\n"),
+    html: `
+      <div style="font-family: 'Poppins', Helvetica, Arial, sans-serif; background-color: #eef2f8; padding: 40px 20px; color: #1f2937; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+          
+          <div style="background-color: #1d4ed8; padding: 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">CitiSent</h1>
+          </div>
+          
+          <div style="padding: 40px 30px;">
+            <h2 style="margin-top: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Hello ${safeName},</h2>
+            <p style="color: #4b5563; font-size: 16px; margin-bottom: 24px;">
+              We received a request to reset your CitiSent account password.
+            </p>
+            <p style="color: #4b5563; font-size: 15px; margin-bottom: 20px;">
+              Use the verification code below to continue:
+            </p>
+            
+            <div style="text-align: center; margin: 32px 0;">
+              <div style="display: inline-block; background-color: #f0f4ff; border: 2px dashed #a5b4fc; border-radius: 12px; padding: 20px 40px;">
+                <span style="font-size: 40px; font-weight: 800; letter-spacing: 10px; color: #1d4ed8; font-family: monospace;">${safeOtp}</span>
+              </div>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px; text-align: center; margin-bottom: 0;">
+              <strong>This code expires in 5 minutes.</strong><br/>
+              Do not share this code with anyone.
+            </p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+              If you did not request this reset, you can safely ignore this email.
+            </p>
+            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
+              &copy; ${new Date().getFullYear()} CitiSent. All rights reserved.
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendAccountInvitationEmail({ toEmail, recipientName, setupUrl }) {
   const safeName = escapeHtml(recipientName || "CitiSent user");
 

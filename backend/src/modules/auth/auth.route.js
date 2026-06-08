@@ -9,7 +9,10 @@ import {
   loginSchema,
   meSchema,
   registerSchema,
+  requestOtpSchema,
   resetPasswordSchema,
+  resetPasswordWithOtpSchema,
+  verifyOtpSchema,
 } from "./auth.schema.js";
 import { authController } from "./auth.controller.js";
 
@@ -59,6 +62,25 @@ authRouter.post(
   requireAuth,
   validateRequest(changePasswordSchema),
   asyncHandler(authController.changePassword),
+);
+
+// OTP-based forgot-password routes (mobile)
+authRouter.post(
+  "/request-otp",
+  validateRequest(requestOtpSchema),
+  asyncHandler(authController.requestOtp),
+);
+
+authRouter.post(
+  "/verify-otp",
+  validateRequest(verifyOtpSchema),
+  asyncHandler(authController.verifyOtp),
+);
+
+authRouter.post(
+  "/reset-password-otp",
+  validateRequest(resetPasswordWithOtpSchema),
+  asyncHandler(authController.resetPasswordWithOtp),
 );
 
 export { authRouter };

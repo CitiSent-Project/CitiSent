@@ -163,6 +163,12 @@ export function useAppStateOrchestrator() {
       return APP_PAGES.DASHBOARD
     }
 
+    // USER_PROFILE depends on transient in-memory state that is not persisted,
+    // so redirect to the parent list page on reload.
+    if (storedPage === APP_PAGES.USER_PROFILE) {
+      return APP_PAGES.USERS
+    }
+
     const accessDecision = buildPageAccessDecision({
       role: storedProfile.role,
       requestedPage: storedPage,
@@ -265,6 +271,9 @@ export function useAppStateOrchestrator() {
   )
   const [selectedUserProfile, setSelectedUserProfile] = useState(null)
   const [selectedReport, setSelectedReport] = useState(null)
+  const [selectedReportId, setSelectedReportId] = useState(() =>
+    loadSchemaBackedValue(ADMIN_STORAGE_KEYS.selectedReportId, '')
+  )
   const [reportStatusMap, setReportStatusMap] = useState({})
 
   usePersistToStorage(
@@ -317,6 +326,11 @@ export function useAppStateOrchestrator() {
     activePage,
     getSchemaPersistenceOptions(ADMIN_STORAGE_KEYS.activePage)
   )
+  usePersistToStorage(
+    ADMIN_STORAGE_KEYS.selectedReportId,
+    selectedReportId,
+    getSchemaPersistenceOptions(ADMIN_STORAGE_KEYS.selectedReportId)
+  )
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -357,6 +371,49 @@ export function useAppStateOrchestrator() {
     isPageLoading,
     setIsPageLoading,
   })
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function hydrateSelectedReport() {
+      if (
+        activePage === APP_PAGES.REPORT_DETAIL &&
+        !selectedReport &&
+        selectedReportId &&
+        accessToken
+      ) {
+        setIsPageLoading(true)
+        try {
+          const response = await reportsApiService.getReportById(accessToken, selectedReportId)
+          if (isMounted && response?.data) {
+            const mappedReport = mapBackendReportToUiRow(response.data)
+            // Apply the viewed status adjustment if needed, similar to handleViewReport
+            const mappedStatus = reportStatusMap[mappedReport.id] || mappedReport.status
+            setSelectedReport({
+              ...mappedReport,
+              status: mappedStatus,
+            })
+          }
+        } catch (error) {
+          if (isMounted) {
+            notifyError('Failed to load report.', error.message)
+            setActivePage(APP_PAGES.REPORTS_BY_CATEGORY)
+            setSelectedReportId('')
+          }
+        } finally {
+          if (isMounted) {
+            setIsPageLoading(false)
+          }
+        }
+      }
+    }
+
+    hydrateSelectedReport()
+
+    return () => {
+      isMounted = false
+    }
+  }, [activePage, selectedReportId, accessToken, selectedReport, reportStatusMap])
 
   function addActivity(action, detail) {
     if (preferences.auditTrackingEnabled === false) {
@@ -791,6 +848,7 @@ export function useAppStateOrchestrator() {
 
   function handleViewReport(report) {
     const transition = buildReportDetailTransition({ report, reportStatusMap })
+    setSelectedReportId(report.id)
     setSelectedReport(transition.selectedReport)
     setIsPageLoading(transition.shouldShowLoading)
     setActivePage(transition.nextActivePage)
@@ -1292,6 +1350,7 @@ export function useAppStateOrchestrator() {
   }
 
   function handleBackToReports() {
+    setSelectedReportId('')
     setActivePage(getReportsCategoryPage())
   }
 

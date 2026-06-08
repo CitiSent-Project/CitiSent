@@ -263,6 +263,11 @@ export const STORAGE_SCHEMA_RULES = {
     migrate: migratePassThrough,
     validate: (value) => (Object.values(APP_PAGES).includes(value) ? value : APP_PAGES.DASHBOARD),
   },
+  [ADMIN_STORAGE_KEYS.selectedReportId]: {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    migrate: migratePassThrough,
+    validate: (value) => asString(value, ''),
+  },
 }
 
 export function getStorageSchemaRule(storageKey) {

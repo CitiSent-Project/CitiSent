@@ -122,14 +122,16 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 						onChange={(value) => updateField('fname', value)}
 						placeholder="Juan"
 						variant="admin-login"
+						className="flex flex-col justify-end h-full"
 					/>
 					<AuthInputField
 						id="register-mname"
-						label="Middle Name (Optional)"
+						label="Middle Name"
 						value={form.mname}
 						onChange={(value) => updateField('mname', value)}
-						placeholder="Santos"
+						placeholder="(Optional)"
 						variant="admin-login"
+						className="flex flex-col justify-end h-full"
 					/>
 					<AuthInputField
 						id="register-lname"
@@ -138,6 +140,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 						onChange={(value) => updateField('lname', value)}
 						placeholder="Dela Cruz"
 						variant="admin-login"
+						className="flex flex-col justify-end h-full"
 					/>
 				</div>
 
@@ -230,11 +233,10 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 				<div className="md:col-span-2">
 					{feedback.message ? (
 						<p
-							className={`mb-3 rounded-lg px-3 py-2 text-sm ${
-								feedback.type === 'success'
-									? 'bg-green-100 text-green-700'
-									: 'bg-rose-100/95 text-red-900'
-							}`}
+							className={`mb-3 rounded-lg px-3 py-2 text-sm ${feedback.type === 'success'
+								? 'bg-green-100 text-green-700'
+								: 'bg-rose-100/95 text-red-900'
+								}`}
 						>
 							{feedback.message}
 						</p>

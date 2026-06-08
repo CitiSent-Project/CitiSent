@@ -11,6 +11,7 @@ export const ADMIN_STORAGE_KEYS = {
   authSession: 'citisent.admin.authSession',
   activePage: 'citisent.admin.activePage',
   settingsActiveTab: 'citisent.admin.settingsActiveTab',
+  selectedReportId: 'citisent.admin.selectedReportId',
 }
 
 export const DEFAULT_ADMIN_PROFILE = {

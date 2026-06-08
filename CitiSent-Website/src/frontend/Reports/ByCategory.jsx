@@ -99,7 +99,7 @@ export function ByCategory({
     // Apply Search Filter
     if (debouncedSearchTerm) {
       const lowSearch = debouncedSearchTerm.toLowerCase()
-      result = result.filter(r => 
+      result = result.filter(r =>
         r.id?.toString().toLowerCase().includes(lowSearch) ||
         r.title?.toLowerCase().includes(lowSearch) ||
         r.userName?.toLowerCase().includes(lowSearch) ||
@@ -267,7 +267,7 @@ export function ByCategory({
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <h2 className="text-base font-semibold text-slate-900">Report Feed by Agency</h2>
-            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-900">
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-cyan-900">
               {selectedAgencyLabel}
             </span>
           </div>

@@ -22,6 +22,21 @@ function asDigits(value) {
   return asText(value).replace(/\D/g, "");
 }
 
+function parsePhoneNumberToLocal(phone) {
+  if (!phone) return "";
+  const digits = String(phone).replace(/\D/g, "");
+  if (digits.startsWith("639") && digits.length === 12) {
+    return digits.slice(2);
+  }
+  if (digits.startsWith("09") && digits.length === 11) {
+    return digits.slice(1);
+  }
+  if (digits.startsWith("9") && digits.length === 10) {
+    return digits;
+  }
+  return digits.slice(-10);
+}
+
 function splitFullName(fullName) {
   const trimmed = asText(fullName).trim();
   if (!trimmed) return { fname: "", mname: "", lname: "" };
@@ -52,10 +67,11 @@ function buildInitialProfile(sourceUser = getAuthUser()) {
     lname: asText(authUser.lname) || asText(profile.lname) || asText(metadata.lname) || fallbackParts.lname,
     username: asText(authUser.username) || asText(profile.username) || asText(metadata.username),
     email: asText(authUser.email) || asText(profile.email) || asText(metadata.email),
-    phoneNumber:
-      asDigits(authUser.phoneNumber || authUser.phone_number || authUser.phone) ||
-      asDigits(profile.phoneNumber || profile.phone_number || profile.phone) ||
-      asDigits(metadata.phoneNumber || metadata.phone_number || metadata.phone),
+    phoneNumber: parsePhoneNumberToLocal(
+      authUser.phoneNumber || authUser.phone_number || authUser.phone ||
+      profile.phoneNumber || profile.phone_number || profile.phone ||
+      metadata.phoneNumber || metadata.phone_number || metadata.phone
+    ),
     age: asDigits(authUser.age || profile.age || metadata.age),
     barangay: asText(authUser.barangay) || asText(profile.barangay) || asText(metadata.barangay),
     city: asText(authUser.city) || asText(profile.city) || asText(metadata.city) || "Sto. Tomas",
@@ -257,8 +273,10 @@ export default function EditProfilePage() {
     const normalizedPhone = profileDraft.phoneNumber.replace(/\D/g, "");
     if (!normalizedPhone) {
       nextErrors.phoneNumber = "Phone number is required.";
-    } else if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
-      nextErrors.phoneNumber = "Please enter a valid phone number (10–15 digits).";
+    } else if (!normalizedPhone.startsWith("9")) {
+      nextErrors.phoneNumber = "Phone number must start with 9 after the +63 prefix.";
+    } else if (normalizedPhone.length !== 10) {
+      nextErrors.phoneNumber = "Phone number must be exactly 10 digits after +63.";
     }
 
     if (profileDraft.age) {
@@ -305,7 +323,7 @@ export default function EditProfilePage() {
         lname: profileDraft.lname.trim(),
         username: profileDraft.username.trim(),
         email: profileDraft.email.trim(),
-        phoneNumber: profileDraft.phoneNumber,
+        phoneNumber: `+63${profileDraft.phoneNumber}`,
         age: profileDraft.age ? profileDraft.age : undefined,
         barangay: profileDraft.barangay.trim() || undefined,
         city: FIXED_CITY,
@@ -464,12 +482,13 @@ export default function EditProfilePage() {
         <EditProfileTextField
           label="Phone Number"
           value={profileDraft.phoneNumber}
-          onChangeText={(value) => setField("phoneNumber")(value.replace(/\D/g, ""))}
-          placeholder="e.g., 09123456789"
+          onChangeText={(value) => setField("phoneNumber")(value.replace(/\D/g, "").slice(0, 10))}
+          placeholder="912 345 6789"
+          prefix="+63"
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
-          maxLength={15}
+          maxLength={10}
           error={fieldErrors.phoneNumber}
         />
 

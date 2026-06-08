@@ -253,8 +253,10 @@ export default function CreateAccountScreen() {
 
     if (!trimmedPhoneNumber) {
       nextErrors.phoneNumber = "Phone number is required.";
-    } else if (trimmedPhoneNumber.length < 10 || trimmedPhoneNumber.length > 15) {
-      nextErrors.phoneNumber = "Please enter a valid phone number.";
+    } else if (!trimmedPhoneNumber.startsWith("9")) {
+      nextErrors.phoneNumber = "Phone number must start with 9 after the +63 prefix.";
+    } else if (trimmedPhoneNumber.length !== 10) {
+      nextErrors.phoneNumber = "Phone number must be exactly 10 digits after +63.";
     }
 
     if (!age.trim()) {
@@ -349,7 +351,7 @@ export default function CreateAccountScreen() {
         lname: trimmedLname,
         username: trimmedUsername,
         email: trimmedEmail,
-        phoneNumber: trimmedPhoneNumber,
+        phoneNumber: `+63${trimmedPhoneNumber}`,
         age: parsedAge,
         gender,
         clientType,
@@ -472,13 +474,15 @@ export default function CreateAccountScreen() {
 
             <AuthInputField
               value={phoneNumber}
-              onChangeText={(value) => handleFieldChange("phoneNumber")(value.replace(/\D/g, ""))}
-              placeholder="Phone Number"
+              onChangeText={(value) => handleFieldChange("phoneNumber")(value.replace(/\D/g, "").slice(0, 10))}
+              placeholder="912 345 6789"
+              prefix="+63"
               icon="call-outline"
               keyboardType="phone-pad"
               autoComplete="tel"
               textContentType="telephoneNumber"
               returnKeyType="next"
+              maxLength={10}
               error={fieldErrors.phoneNumber}
             />
 

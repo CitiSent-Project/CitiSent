@@ -20,6 +20,12 @@ const usernameSchema = z
 const phoneSchema = z
   .string()
   .trim()
+  .regex(/^\+639\d{9}$/, {
+    message: "Phone number must be a valid Philippine mobile number starting with +639.",
+  });
+const loginPhoneSchema = z
+  .string()
+  .trim()
   .regex(/^\+?[0-9]{10,15}$/);
 
 export const registerSchema = z.object({
@@ -53,7 +59,7 @@ export const loginSchema = z.object({
       identifier: optionalTrimmedString(z.string().min(1)),
       email: optionalTrimmedString(z.string().email()),
       username: optionalTrimmedString(usernameSchema),
-      phoneNumber: optionalTrimmedString(phoneSchema),
+      phoneNumber: optionalTrimmedString(loginPhoneSchema),
       password: z.string().min(1).max(128),
     })
     .superRefine((payload, ctx) => {

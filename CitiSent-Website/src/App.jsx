@@ -154,6 +154,12 @@ function AuthenticatedApp() {
 function App() {
   const isAuthView = ['/setup-password', '/reset-password'].includes(window.location.pathname)
 
+  useEffect(() => {
+    if (isAuthView) {
+      document.documentElement.dataset.theme = 'light'
+    }
+  }, [isAuthView])
+
   if (isAuthView) {
     return (
       <>

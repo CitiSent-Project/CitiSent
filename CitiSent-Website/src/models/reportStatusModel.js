@@ -1,10 +1,10 @@
 export const REPORT_STATUS_OPTIONS = ['Pending', 'In Progress', 'Resolved', 'Unresolved']
 
 export const REPORT_STATUS_BADGE_CLASSES = {
-  Pending: 'bg-cyan-100 text-blue-500 border-blue-200 theme-dark-status-pending',
-  'In Progress': 'bg-cyan-200 text-blue-500 border-blue-300 theme-dark-status-in-progress',
-  Resolved: 'bg-cyan-500 text-blue-500 border-blue-400 theme-dark-status-resolved',
-  Unresolved: 'bg-cyan-600 text-blue-500 border-blue-500 theme-dark-status-unresolved',
+  Pending: 'bg-slate-100 text-slate-700 border border-slate-200 theme-dark-status-pending',
+  'In Progress': 'bg-sky-100 text-sky-700 border border-sky-200 theme-dark-status-in-progress',
+  Resolved: 'bg-emerald-100 text-emerald-700 border border-emerald-200 theme-dark-status-resolved',
+  Unresolved: 'bg-red-100 text-red-700 border border-red-200 theme-dark-status-unresolved',
 }
 
 export const REPORT_URGENCY_BADGE_CLASSES = {

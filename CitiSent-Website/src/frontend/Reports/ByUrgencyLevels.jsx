@@ -14,7 +14,7 @@ import {
 } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
-const URGENCY_COLORS = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#93c5fd']
+const URGENCY_COLORS = ['#ef4444', '#f97316', '#eab308', '#10b981']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
 

@@ -323,7 +323,7 @@ export function useAppStateOrchestrator() {
 
     function applyAppearance(systemPrefersDark) {
       const appearanceState = buildAppearanceState({
-        themePreference: preferences.theme,
+        themePreference: isAuthenticated ? preferences.theme : 'Light',
         fontSizePreference: preferences.fontSize,
         animationsEnabled: preferences.animationsEnabled,
         systemPrefersDark,
@@ -337,7 +337,7 @@ export function useAppStateOrchestrator() {
 
     applyAppearance(mediaQuery.matches)
 
-    if (preferences.theme !== 'System') {
+    if (preferences.theme !== 'System' || !isAuthenticated) {
       return undefined
     }
 
@@ -349,7 +349,7 @@ export function useAppStateOrchestrator() {
     return () => {
       mediaQuery.removeEventListener('change', handleSystemThemeChange)
     }
-  }, [preferences.theme, preferences.fontSize, preferences.animationsEnabled])
+  }, [isAuthenticated, preferences.theme, preferences.fontSize, preferences.animationsEnabled])
 
   usePageLoadingState({
     activePage,

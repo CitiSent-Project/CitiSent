@@ -8,11 +8,12 @@ export function AuthInputField({
   error,
   disabled = false,
   variant = "default",
+  className = "",
 }) {
   const isAdminLogin = variant === "admin-login";
 
   return (
-    <div>
+    <div className={className}>
       <label
         htmlFor={id}
         className={`mb-1 block text-sm font-medium ${isAdminLogin ? "text-white/95" : "text-slate-700"}`}

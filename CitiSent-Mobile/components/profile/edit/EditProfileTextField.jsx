@@ -14,7 +14,11 @@ export default function EditProfileTextField({
   numberOfLines,
   helperText,
   maxLength,
+  editable = true,
+  error,
 }) {
+  const hasError = Boolean(error);
+
   return (
     <View className="mb-4">
       <Text className="mb-2 text-sm font-semibold" style={{ color: Colors.text.fieldLabel }}>
@@ -33,18 +37,27 @@ export default function EditProfileTextField({
         multiline={multiline}
         numberOfLines={numberOfLines}
         maxLength={maxLength}
+        editable={editable}
         accessibilityLabel={label}
         className="rounded-2xl border px-4 py-3 text-base"
         style={{
-          borderColor: Colors.borderSoft,
-          backgroundColor: Colors.background,
-          color: Colors.text.bodyStrong,
+          borderColor: hasError
+            ? Colors.error
+            : editable
+              ? Colors.borderSoft
+              : Colors.borderLight,
+          backgroundColor: editable ? Colors.background : Colors.ui.neutralMuted,
+          color: editable ? Colors.text.bodyStrong : Colors.text.secondary,
           minHeight: multiline ? 96 : 52,
           textAlignVertical: multiline ? "top" : "center",
         }}
       />
 
-      {helperText ? (
+      {hasError ? (
+        <Text className="mt-1 text-xs" style={{ color: Colors.error }}>
+          {error}
+        </Text>
+      ) : helperText ? (
         <Text className="mt-1 text-xs" style={{ color: Colors.text.secondary }}>
           {helperText}
         </Text>

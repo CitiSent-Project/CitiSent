@@ -11,5 +11,6 @@ export { default as SettingsToggleRow } from "../../components/profile/settings/
 export { default as ChangePasswordSheet } from "../../components/profile/settings/ChangePasswordSheet";
 export { default as DeleteAccountSheet } from "../../components/profile/settings/DeleteAccountSheet";
 export { default as EditProfileTextField } from "../../components/profile/edit/EditProfileTextField";
+export { default as BarangaySelectField } from "../../components/profile/edit/BarangaySelectField";
 
 export { PROFILE_NOTIFICATIONS } from "../../constants/profileNotificationsData";

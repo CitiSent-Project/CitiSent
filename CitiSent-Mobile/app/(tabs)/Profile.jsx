@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ProfileHeader,
@@ -15,12 +16,32 @@ export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
-  const displayUsername = getAuthUsername("");
-  const displayPhoneNumber = getAuthPhoneNumber("");
-  const displayGender = getAuthGender();
-  const displayProfileImage = getAuthProfileImage();
+
+  // Fix 2: store session-derived values in state so they update when the
+  // screen regains focus (e.g. after returning from Edit Profile).
+  const [displayUsername, setDisplayUsername] = useState(() => getAuthUsername(""));
+  const [displayPhoneNumber, setDisplayPhoneNumber] = useState(() => getAuthPhoneNumber(""));
+  const [displayGender, setDisplayGender] = useState(() => getAuthGender());
+  const [displayProfileImage, setDisplayProfileImage] = useState(() => getAuthProfileImage());
+
+  // Re-read auth session every time this screen is focused so that profile
+  // edits are immediately reflected in the header.
+  useFocusEffect(
+    useCallback(() => {
+      setDisplayUsername(getAuthUsername(""));
+      setDisplayPhoneNumber(getAuthPhoneNumber(""));
+      setDisplayGender(getAuthGender());
+      setDisplayProfileImage(getAuthProfileImage());
+    }, [])
+  );
+
   const { refreshing, onRefresh } = usePullToRefresh(() => {
     setIsLogoutVisible(false);
+    // Refresh session-derived display values on pull-to-refresh too
+    setDisplayUsername(getAuthUsername(""));
+    setDisplayPhoneNumber(getAuthPhoneNumber(""));
+    setDisplayGender(getAuthGender());
+    setDisplayProfileImage(getAuthProfileImage());
   });
 
   const profileActions = [

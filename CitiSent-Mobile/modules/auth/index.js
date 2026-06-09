@@ -1,3 +1,4 @@
+export { default as AuthAlertCard } from "../../components/auth/AuthAlertCard";
 export { default as AuthActionButton } from "../../components/auth/AuthActionButton";
 export { default as AuthBrandMark } from "../../components/auth/AuthBrandMark";
 export { default as AuthChoiceField } from "../../components/auth/AuthChoiceField";

@@ -309,7 +309,7 @@ export default function EditProfilePage() {
         visible: true,
         title: "No Changes",
         message: "Your profile details are already up to date.",
-        type: "info",
+        type: "error",
       });
       return;
     }

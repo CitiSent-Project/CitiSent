@@ -130,7 +130,7 @@ export default function ForgotPasswordScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Back to login"
               >
-                <Text className="text-[13px] text-[#8CA8C9]">
+                <Text className="text-[13px] text-[#8CA8C9] font-semibold">
                   Back to Login
                 </Text>
               </Pressable>

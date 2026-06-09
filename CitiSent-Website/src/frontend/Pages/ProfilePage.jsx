@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ProfileSummaryCard } from '../../components/Account-Ui'
 import { formatDateTime } from '../../models/data'
 import { buildProfileSubmissionState } from '../../controllers/profileController'
@@ -25,6 +25,14 @@ export function ProfileInformation({
       request.adminId === profile.id && request.status === TRANSFER_REQUEST_STATUS.PENDING
   )
   const [editing, setEditing] = useState(false)
+  const editFormRef = useRef(null)
+
+  useEffect(() => {
+    if (editing && editFormRef.current) {
+      editFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [editing])
+
   const [transferReason, setTransferReason] = useState('')
   const [submissionFeedback, setSubmissionFeedback] = useState(null)
   const [draft, setDraft] = useState({
@@ -152,7 +160,7 @@ export function ProfileInformation({
         <ProfileSummaryCard profile={profile} />
 
         {editing ? (
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section ref={editFormRef} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Editable details</h2>
             {submissionFeedback ? (
               <p

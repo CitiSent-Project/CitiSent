@@ -32,7 +32,7 @@ export function AuthPageShell({
       />
       <div
         className={`pointer-events-none absolute -top-44 right-0 h-96 w-96 rounded-full blur-3xl ${
-          isAdminLogin ? "bg-cyan-100/24" : "bg-cyan-100/35"
+          isAdminLogin ? "bg-blue-100/24" : "bg-blue-100/35"
         }`}
       />
       <div

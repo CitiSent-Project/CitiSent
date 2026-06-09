@@ -37,7 +37,7 @@ function toErrorText(error) {
 
   try {
     parts.push(JSON.stringify(error));
-  } catch {}
+  } catch { }
 
   return parts.join(" ").toLowerCase();
 }

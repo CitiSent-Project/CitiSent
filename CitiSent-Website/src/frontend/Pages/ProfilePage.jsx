@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ProfileSummaryCard } from '../../components/Account-Ui'
+import { ReloginModal } from '../../components/Account-Ui/ReloginModal'
 import { formatDateTime } from '../../models/data'
 import { buildProfileSubmissionState } from '../../controllers/profileController'
 import { TRANSFER_REQUEST_STATUS } from '../../controllers/departmentTransferController'
@@ -11,6 +12,7 @@ export function ProfileInformation({
   transferRequests,
   onUpdateProfile,
   onSubmitTransferRequest,
+  onLogout,
   departmentOptions,
 }) {
   const departmentCatalog = departmentOptions.map((agency) => ({
@@ -35,6 +37,8 @@ export function ProfileInformation({
 
   const [transferReason, setTransferReason] = useState('')
   const [submissionFeedback, setSubmissionFeedback] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showRelogin, setShowRelogin] = useState(false)
   const [draft, setDraft] = useState({
     fname: profile.fname || '',
     mname: profile.mname || '',
@@ -50,6 +54,21 @@ export function ProfileInformation({
 
   function updateDraft(field, value) {
     setDraft((previous) => ({ ...previous, [field]: value }))
+  }
+
+  const displayPhone = draft.phone?.startsWith('+63')
+    ? draft.phone.slice(3)
+    : draft.phone?.startsWith('0')
+      ? draft.phone.slice(1)
+      : draft.phone || ''
+
+  function handlePhoneChange(event) {
+    let cleanValue = event.target.value.replace(/\D/g, '')
+    if (cleanValue.startsWith('0')) {
+      cleanValue = cleanValue.slice(1)
+    }
+    const truncated = cleanValue.slice(0, 10)
+    updateDraft('phone', truncated ? `+63${truncated}` : '')
   }
 
   function startEditing() {
@@ -71,54 +90,70 @@ export function ProfileInformation({
   }
 
   async function saveProfile() {
-    const submissionState = buildProfileSubmissionState({
-      profile,
-      draft,
-      transferReason,
-      departmentCatalog,
-      hasPendingTransferRequest,
-    })
-
-    if (!submissionState.ok) {
-      setSubmissionFeedback({
-        type: 'error',
-        message: submissionState.message,
+    if (isSaving) return;
+    setIsSaving(true);
+    
+    try {
+      const submissionState = buildProfileSubmissionState({
+        profile,
+        draft,
+        transferReason,
+        departmentCatalog,
+        hasPendingTransferRequest,
       })
-      return
-    }
 
-    if (submissionState.shouldUpdateProfile) {
-      const profileUpdateResult = await onUpdateProfile(submissionState.profileUpdates)
-      if (profileUpdateResult && profileUpdateResult.ok === false) {
+      if (!submissionState.ok) {
         setSubmissionFeedback({
           type: 'error',
-          message: profileUpdateResult.message,
-        })
-        return
-      }
-    }
-
-    if (submissionState.transferRequestPayload) {
-      const requestResult = await onSubmitTransferRequest(submissionState.transferRequestPayload)
-      if (requestResult && requestResult.ok === false) {
-        setSubmissionFeedback({
-          type: 'error',
-          message: requestResult.message,
+          message: submissionState.message,
         })
         return
       }
 
-      setSubmissionFeedback({
-        type: 'success',
-        message:
-          'Department change request submitted. Your current department remains active until superadmin approval.',
-      })
-    }
+      // Track whether the email was changed before saving
+      const emailWasChanged = draft.email !== profile.email
 
-    setEditing(false)
+      if (submissionState.shouldUpdateProfile) {
+        const profileUpdateResult = await onUpdateProfile(submissionState.profileUpdates)
+        if (profileUpdateResult && profileUpdateResult.ok === false) {
+          setSubmissionFeedback({
+            type: 'error',
+            message: profileUpdateResult.message,
+          })
+          return
+        }
+      }
+
+      if (submissionState.transferRequestPayload) {
+        const requestResult = await onSubmitTransferRequest(submissionState.transferRequestPayload)
+        if (requestResult && requestResult.ok === false) {
+          setSubmissionFeedback({
+            type: 'error',
+            message: requestResult.message,
+          })
+          return
+        }
+
+        setSubmissionFeedback({
+          type: 'success',
+          message:
+            'Department change request submitted. Your current department remains active until superadmin approval.',
+        })
+      }
+
+      setEditing(false)
+
+      // If email was changed, show re-login modal for security
+      if (emailWasChanged) {
+        setShowRelogin(true)
+      }
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
+    <>
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
@@ -247,11 +282,17 @@ export function ProfileInformation({
               )}
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Phone</label>
-                <input
-                  value={draft.phone}
-                  onChange={(event) => updateDraft('phone', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                />
+                <div className="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-slate-400">
+                  <span className="bg-slate-100 px-3 py-2 text-sm text-slate-500 border-r border-slate-200 select-none flex items-center">
+                    +63
+                  </span>
+                  <input
+                    type="text"
+                    value={displayPhone}
+                    onChange={handlePhoneChange}
+                    className="w-full bg-transparent px-3 py-2 text-sm text-slate-700 focus:outline-none"
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Barangay</label>
@@ -265,16 +306,16 @@ export function ProfileInformation({
                 <label className="mb-1 block text-sm text-slate-700">City</label>
                 <input
                   value={draft.city}
-                  onChange={(event) => updateDraft('city', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  disabled
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 cursor-not-allowed focus:outline-none"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-sm text-slate-700">Province</label>
                 <input
                   value={draft.province}
-                  onChange={(event) => updateDraft('province', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  disabled
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 cursor-not-allowed focus:outline-none"
                 />
               </div>
               {isOfficeAdmin && draft.department !== profile.department ? (
@@ -306,9 +347,10 @@ export function ProfileInformation({
               <button
                 type="button"
                 onClick={saveProfile}
-                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                disabled={isSaving}
+                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                Save
+                {isSaving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </section>
@@ -339,5 +381,7 @@ export function ProfileInformation({
         </section>
       </div>
     </main>
+    <ReloginModal isOpen={showRelogin} onConfirmLogout={onLogout} />
+    </>
   )
 }

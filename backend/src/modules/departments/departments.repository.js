@@ -192,7 +192,7 @@ export const departmentsRepository = {
     const { data, error } = await db
       .from(AGENCIES_TABLE)
       .select(AGENCY_SELECT_COLUMNS)
-      .or(`slug.eq.${normalizedValue},name.eq.${normalizedValue}`)
+      .or(`slug.eq."${normalizedValue.replace(/"/g, '""')}",name.eq."${normalizedValue.replace(/"/g, '""')}"`)
       .order("created_at", { ascending: true });
 
     if (error) {

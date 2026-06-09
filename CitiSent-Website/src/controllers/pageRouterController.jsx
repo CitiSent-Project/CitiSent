@@ -159,6 +159,7 @@ export function renderActivePage({
                     transferRequests={transferRequests}
                     onUpdateProfile={onUpdateProfile}
                     onSubmitTransferRequest={onSubmitTransferRequest}
+                    onLogout={onConfirmLogout}
                     departmentOptions={departmentOptions}
                 />
             )

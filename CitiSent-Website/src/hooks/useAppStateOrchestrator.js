@@ -463,6 +463,20 @@ export function useAppStateOrchestrator() {
     setDepartmentCatalog(normalizeDepartmentOptions(catalogResponse?.departments))
   }
 
+  async function handleRefreshAdminAccounts() {
+    if (!accessToken || normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN) {
+      return
+    }
+
+    try {
+      const response = await officeAdminsApiService.listOfficeAdmins(accessToken)
+      const mappedOfficeAdmins = (response?.data || []).map(mapBackendOfficeAdmin)
+      setAdminAccounts(mappedOfficeAdmins)
+    } catch (error) {
+      notifyError('Failed to refresh admin accounts.', error.message)
+    }
+  }
+
   async function refreshProfileForAccessCheck() {
     if (!accessToken) {
       return null
@@ -1452,6 +1466,7 @@ export function useAppStateOrchestrator() {
     onDeleteDepartment: handleDeleteDepartment,
     onApproveTransfer: handleApproveTransfer,
     onRejectTransfer: handleRejectTransfer,
+    onRefreshAdminAccounts: handleRefreshAdminAccounts,
     setAuthPage,
   }
 
@@ -1502,6 +1517,7 @@ export function useAppStateOrchestrator() {
     handleDeleteDepartment,
     handleApproveTransfer,
     handleRejectTransfer,
+    handleRefreshAdminAccounts,
     setAuthPage,
     departmentOptions,
   }

@@ -84,6 +84,7 @@ export function renderActivePage({
         onDeleteDepartment,
         onApproveTransfer,
         onRejectTransfer,
+        onRefreshAdminAccounts,
     } = appActions
 
     switch (activePage) {
@@ -105,6 +106,7 @@ export function renderActivePage({
                     onDeleteDepartment={onDeleteDepartment}
                     onApproveTransfer={onApproveTransfer}
                     onRejectTransfer={onRejectTransfer}
+                    onRefreshAdminAccounts={onRefreshAdminAccounts}
                     departmentOptions={departmentOptions}
                     departmentCatalog={departmentCatalog}
                 />

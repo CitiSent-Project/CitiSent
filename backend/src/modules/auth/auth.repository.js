@@ -741,6 +741,30 @@ export const authRepository = {
     return data;
   },
 
+  /**
+   * Checks the banned_users table directly for an active ban.
+   * Uses the admin Supabase client because the user's client may lack
+   * permission to read banned_users.
+   */
+  async checkActiveBanByUserId(userId) {
+    const adminDb = createAdminSupabaseClient();
+    if (!adminDb) return false;
+
+    const { data, error } = await adminDb
+      .from("banned_users")
+      .select("is_active")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Failed to check banned status:", error);
+      return false;
+    }
+
+    return !!data;
+  },
+
   async getProfileByIdentifier(identifier) {
     const db = getDbClient();
     const { data, error } = await queryProfileByIdentifier(db, identifier);

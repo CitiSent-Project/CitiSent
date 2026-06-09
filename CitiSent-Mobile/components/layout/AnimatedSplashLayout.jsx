@@ -107,7 +107,7 @@ export default function AnimatedSplashLayout({ children }) {
               ]}
             >
               <AuthBrandMark size={130} />
-              <Text style={styles.brandText}>CitiSent</Text>
+              
             </Animated.View>
           </Animated.View>
         ) : null}

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import {
   AuthActionButton,
+  AuthAlertCard,
   AuthBrandMark,
   AuthChoiceField,
   AuthCityFooter,
@@ -576,12 +577,10 @@ export default function CreateAccountScreen() {
               disabled={isSubmitting}
             />
 
-            {successMessage ? (
-              <Text className="mt-1 text-center text-[13px] text-[#86EFAC]">{successMessage}</Text>
-            ) : null}
+            <AuthAlertCard variant="success" message={successMessage} />
 
             <Pressable className="mt-6 items-center" onPress={() => router.push("/auth/LoginForm")} accessibilityRole="button">
-              <Text className="text-[13px] text-[#8CA8C9]">Already have an account? Login</Text>
+              <Text className="text-[13px] text-[#8CA8C9] font-semibold">Already have an account? Login</Text>
             </Pressable>
           </View>
         </RefreshableScrollView>

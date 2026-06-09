@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, ScrollView, Platform, Pressable, Text, View } from "react-native";
+import { ScrollView, Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import {
   AuthActionButton,
+  AuthAlertCard,
   AuthBrandMark,
   AuthCityFooter,
   AuthInputField,
@@ -59,7 +60,7 @@ export default function LoginFormScreen() {
     const { isValid } = validateFields();
 
     if (!isValid) {
-      setErrorMessage("Please check your inputs and resolve the errors.");
+      setErrorMessage("Please check your inputs and resolve the errors. Please try again.");
       return;
     }
 
@@ -77,7 +78,10 @@ export default function LoginFormScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
-      setErrorMessage(getLoginErrorMessage(error));
+      const raw = getLoginErrorMessage(error);
+      setErrorMessage(
+        raw.toLowerCase().includes("please try again") ? raw : `${raw} Please try again.`,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +142,7 @@ export default function LoginFormScreen() {
                 accessibilityLabel="Forgot password"
                 onPress={() => router.push("/auth/ForgotPassword")}
               >
-                <Text className="text-[14px] text-[#8CA8C9]">Forgot your Password?</Text>
+                <Text className="text-[14px] text-[#8CA8C9] font-semibold">Forgot your Password?</Text>
               </Pressable>
             </View>
 
@@ -151,16 +155,14 @@ export default function LoginFormScreen() {
               />
             </View>
 
-            {errorMessage ? (
-              <Text className="mt-1 text-center text-[13px] text-[#FCA5A5]">{errorMessage}</Text>
-            ) : null}
+            <AuthAlertCard variant="error" message={errorMessage} />
 
             <Pressable
               className="mt-4 items-center"
               onPress={() => router.push("/auth/CreateAccount")}
               accessibilityRole="button"
             >
-              <Text className="text-[13px] text-[#8CA8C9]">Don&apos;t have an account? Sign up</Text>
+              <Text className="text-[13px] text-[#8CA8C9] font-semibold">Don&apos;t have an account? Sign up</Text>
             </Pressable>
           </View>
         </View>

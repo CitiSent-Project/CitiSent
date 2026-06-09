@@ -13,11 +13,10 @@ export default function HomeHero() {
 
         <View className="items-center px-5 py-6">
           <Image
-            source={require("../../assets/logo/logo-citisent.png")}
+            source={require("../../assets/logo/logo-left.png")}
             resizeMode="contain"
-            className="h-32 w-32"
+            className="h-[300px] w-[300px]"
           />
-          <Text className="mt-1 text-4xl font-extrabold" style={{ color: Colors.text.headingBrand }}>CitiSent</Text>
         </View>
 
       </ImageBackground>

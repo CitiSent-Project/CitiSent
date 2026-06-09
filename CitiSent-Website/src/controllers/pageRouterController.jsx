@@ -182,7 +182,7 @@ export function renderActivePage({
         case APP_PAGES.LOGOUT:
             return <Logout onConfirmLogout={onConfirmLogout} onCancel={onCancelLogout} />
         case APP_PAGES.USER_PROFILE:
-            return <UserProfilePage user={selectedUserProfile} onBackToUsers={onBackToUsers} />
+            return <UserProfilePage user={selectedUserProfile} onBackToUsers={onBackToUsers} onViewReport={onViewReport} />
         case APP_PAGES.REPORT_DETAIL:
             return (
                 <ReportDetailPage

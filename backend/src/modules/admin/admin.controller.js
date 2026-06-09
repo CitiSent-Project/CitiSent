@@ -92,6 +92,7 @@ export const adminController = {
       limit: req.query.limit,
       offset: req.query.offset,
       status: req.query.status,
+      userId: req.query.userId,
     });
 
     return res.status(StatusCodes.OK).json({

@@ -1,7 +1,7 @@
 import { apiClient } from '../core/apiClient'
 
 export const reportsApiService = {
-  listReports: (token, { limit = 100, offset = 0, status } = {}) => {
+  listReports: (token, { limit = 100, offset = 0, status, userId } = {}) => {
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
@@ -9,6 +9,10 @@ export const reportsApiService = {
 
     if (status) {
       params.set('status', status)
+    }
+
+    if (userId) {
+      params.set('userId', userId)
     }
 
     return apiClient.get(`/admin/reports?${params.toString()}`, {

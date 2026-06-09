@@ -14,7 +14,6 @@ import {
   AddUserFormModal,
   EditUserFormModal,
   UserStatCard,
-  UserProfileModal,
   UsersPagination,
   UsersTable,
   UsersToolbar,
@@ -647,15 +646,6 @@ export function Users({ onViewUserProfile, profile }) {
           isOpen={isAddUserModalOpen}
           onClose={() => setIsAddUserModalOpen(false)}
           onSubmit={handleAddUserSubmit}
-        />
-
-        <UserProfileModal
-          user={selectedUser}
-          isOpen={isViewProfileOpen}
-          onClose={() => {
-            setIsViewProfileOpen(false)
-            setSelectedUser(null)
-          }}
         />
 
         <EditUserFormModal

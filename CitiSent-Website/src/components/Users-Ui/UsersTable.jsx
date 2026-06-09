@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { FiMoreHorizontal } from 'react-icons/fi'
 import { TableLoader } from '../ui/TableLoader'
 import { UserStatusPill } from './UserStatusPill'
@@ -50,6 +51,67 @@ function UsersTableRow({
   isProcessing = false,
 }) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
+  const [popoverStyle, setPopoverStyle] = useState(null)
+  const triggerRef = useRef(null)
+  const popoverRef = useRef(null)
+
+  const updatePopoverPosition = useCallback(() => {
+    const triggerElement = triggerRef.current
+    if (!triggerElement || typeof window === 'undefined') return
+
+    const triggerRect = triggerElement.getBoundingClientRect()
+    const viewportPadding = 8
+    const estimatedMenuHeight = 130 // height of 3 menu items + padding
+
+    const spaceBelow = window.innerHeight - triggerRect.bottom - viewportPadding
+    const spaceAbove = triggerRect.top - viewportPadding
+    const openAbove = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow
+
+    const top = openAbove
+      ? Math.max(viewportPadding, triggerRect.top - estimatedMenuHeight - 8)
+      : triggerRect.bottom + 8
+
+    const left = Math.max(
+      viewportPadding,
+      Math.min(triggerRect.right - 144, window.innerWidth - 144 - viewportPadding)
+    )
+
+    setPopoverStyle({
+      position: 'fixed',
+      top: `${Math.round(top)}px`,
+      left: `${Math.round(left)}px`,
+      width: '144px',
+      zIndex: 50,
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isActionMenuOpen) return
+
+    updatePopoverPosition()
+
+    function handleReposition() {
+      updatePopoverPosition()
+    }
+
+    function onPointerDown(event) {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      if (triggerRef.current?.contains(target)) return
+      if (popoverRef.current?.contains(target)) return
+      setIsActionMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('resize', handleReposition)
+    document.addEventListener('scroll', handleReposition, true)
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('resize', handleReposition)
+      document.removeEventListener('scroll', handleReposition, true)
+    }
+  }, [isActionMenuOpen, updatePopoverPosition])
 
   function handleAction(action) {
     if (action === 'view') onViewUser(user)
@@ -80,6 +142,7 @@ function UsersTableRow({
       <div className="relative">
         <button
           type="button"
+          ref={triggerRef}
           disabled={isProcessing}
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
           className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -87,35 +150,42 @@ function UsersTableRow({
           {isProcessing ? <Spinner size="sm" /> : <FiMoreHorizontal />}
         </button>
 
-        {isActionMenuOpen ? (
-          <div className="absolute right-0 z-10 mt-2 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-            <button
-              type="button"
-              onClick={() => handleAction('view')}
-              className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-            >
-              View Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAction('edit')}
-              className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-            >
-              Edit User
-            </button>
-            {canToggleBan ? (
-              <button
-                type="button"
-                onClick={() => handleAction('ban-toggle')}
-                className={`block w-full px-3 py-2 text-left text-sm hover:bg-slate-100 ${
-                  user.status === 'Banned' ? 'text-emerald-700' : 'text-rose-600'
-                }`}
+        {isActionMenuOpen && popoverStyle && typeof document !== 'undefined'
+          ? createPortal(
+              <div
+                ref={popoverRef}
+                style={popoverStyle}
+                className="rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
               >
-                {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+                <button
+                  type="button"
+                  onClick={() => handleAction('view')}
+                  className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  View Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAction('edit')}
+                  className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  Edit User
+                </button>
+                {canToggleBan ? (
+                  <button
+                    type="button"
+                    onClick={() => handleAction('ban-toggle')}
+                    className={`block w-full px-3 py-2 text-left text-sm hover:bg-slate-100 ${
+                      user.status === 'Banned' ? 'text-emerald-700' : 'text-rose-600'
+                    }`}
+                  >
+                    {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
+                  </button>
+                ) : null}
+              </div>,
+              document.body
+            )
+          : null}
       </div>
     </div>
   )

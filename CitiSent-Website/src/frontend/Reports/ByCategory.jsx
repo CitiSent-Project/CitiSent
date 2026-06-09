@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
-import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips } from '../../components/Reports-Ui'
+import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips, EmotionFilterChips } from '../../components/Reports-Ui'
+import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
 import { filterUserReportsByCategory } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
@@ -10,6 +11,7 @@ import { isSuperadmin } from '../../models/roleAccessModel'
 const CATEGORY_COLORS = ['#1650e8', '#65c98d', '#8d66d6', '#ff9082', '#39bee0', '#ffb44d', '#2f89e5', '#7a6ce5', '#4f46e5']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const ALL_CATEGORY_FILTER_ID = 'all-categories'
+const EMOTION_FILTER_CHIPS = ['All Emotions', ...REPORT_EMOTION_OPTIONS]
 
 function normalizeAgencyOptions(options = []) {
   return options
@@ -52,6 +54,7 @@ export function ByCategory({
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [urgencyFilter, setUrgencyFilter] = useState('All Urgency')
+  const [emotionFilter, setEmotionFilter] = useState('All Emotions')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const hasAllAccess = isSuperadmin(profile?.role)
 
@@ -117,6 +120,11 @@ export function ByCategory({
       result = result.filter(r => r.urgency === urgencyFilter)
     }
 
+    // Apply Emotion Filter
+    if (emotionFilter !== 'All Emotions') {
+      result = result.filter(r => (r.emotionLevel || 'Neutral') === emotionFilter)
+    }
+
     return result
   }, [
     defaultSorting,
@@ -126,6 +134,7 @@ export function ByCategory({
     debouncedSearchTerm,
     statusFilter,
     urgencyFilter,
+    emotionFilter,
   ])
 
   const selectedAgencyLabel =
@@ -226,6 +235,11 @@ export function ByCategory({
     resetToFirstPage()
   }
 
+  function handleEmotionChange(value) {
+    setEmotionFilter(value)
+    resetToFirstPage()
+  }
+
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
@@ -272,7 +286,7 @@ export function ByCategory({
             </span>
           </div>
 
-          <div className="mb-4 px-1">
+          <div className="mb-4 px-1 flex flex-col gap-4">
             <UrgencyFilterChips
               chips={urgencyChips}
               selectedChip={urgencyFilter}
@@ -281,6 +295,11 @@ export function ByCategory({
               onSearchChange={handleSearchChange}
               statusFilter={statusFilter}
               onStatusChange={handleStatusChange}
+            />
+            <EmotionFilterChips
+              chips={EMOTION_FILTER_CHIPS}
+              selectedChip={emotionFilter}
+              onSelectChip={handleEmotionChange}
             />
           </div>
 

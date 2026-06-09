@@ -322,8 +322,8 @@ export const authService = {
 
     const matchedDepartment = normalizedDepartmentValue
       ? await departmentsService.getActiveDepartmentByValue({
-          value: normalizedDepartmentValue,
-        })
+        value: normalizedDepartmentValue,
+      })
       : null;
 
     if (normalizedDepartmentValue && !matchedDepartment) {
@@ -439,9 +439,9 @@ export const authService = {
     const userId = signInData?.user?.id;
     const profile = userId
       ? await authRepository.getProfileByUserId(
-          userId,
-          signInData?.session?.access_token,
-        )
+        userId,
+        signInData?.session?.access_token,
+      )
       : null;
 
     assertAccountIsActive(profile);
@@ -492,7 +492,7 @@ export const authService = {
         email: activatedProfile?.email || verifiedToken.email,
         status: "active",
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return {
       activated: true,

@@ -1,4 +1,120 @@
-export function UserProfilePage({ user, onBackToUsers }) {
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { reportsApiService } from '../../../services/api/admin/reportsApiService'
+import { mapBackendReportToUiRow } from '../../../services/api/admin/reportsApiMappers'
+import { loadFromStorageWithSchema } from '../../../services/storageService'
+import { ADMIN_STORAGE_KEYS } from '../../../models/data'
+import { getStorageSchemaRule } from '../../../models/storageSchemaModel'
+import { UrgencyFeedTable, UrgencyFilterChips, Pagination } from '../../../components/Reports-Ui'
+import { useReportPaginationState } from '../../../hooks/useReportPaginationState'
+import { filterUserReportsByUrgency, ALL_URGENCY_FILTER } from '../../../controllers/userReportsController'
+
+const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
+
+/**
+ * Helper function to retrieve the stored admin session token.
+ */
+function getStoredAccessToken() {
+  const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+
+  return loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', {
+    schemaVersion: schemaRule.schemaVersion,
+    migrate: schemaRule.migrate,
+    validate: schemaRule.validate,
+  })
+}
+
+export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
+  const accessToken = getStoredAccessToken()
+
+  // Filter States
+  const [selectedUrgency, setSelectedUrgency] = useState(ALL_URGENCY_FILTER)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+
+  // Debounce search term changes to prevent layout flickering while typing
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 250)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchTerm])
+
+  // Fetch reports submitted by this specific user
+  const { data: reports = [], isLoading, isFetching, error: reportsError } = useQuery({
+    queryKey: ['admin-user-reports', user?.id, accessToken],
+    enabled: Boolean(accessToken) && Boolean(user?.id),
+    queryFn: async () => {
+      const response = await reportsApiService.listReports(accessToken, {
+        limit: 100,
+        offset: 0,
+        userId: user.id,
+      })
+      return (response?.data || []).map(mapBackendReportToUiRow)
+    },
+    refetchInterval: 10000, // keep list updated automatically every 10s
+  })
+
+  // Filter fetched reports in memory
+  const filteredReports = useMemo(() => {
+    // 1. Filter by urgency level
+    let result = filterUserReportsByUrgency({
+      reports,
+      selectedUrgency,
+      allUrgencyFilter: ALL_URGENCY_FILTER,
+      sorting: 'Latest first',
+    })
+
+    // 2. Filter by search term
+    if (debouncedSearchTerm) {
+      const low = debouncedSearchTerm.toLowerCase()
+      result = result.filter((r) =>
+        String(r.id || '').toLowerCase().includes(low) ||
+        String(r.message || '').toLowerCase().includes(low) ||
+        String(r.location || '').toLowerCase().includes(low) ||
+        String(r.category || '').toLowerCase().includes(low)
+      )
+    }
+
+    // 3. Filter by status
+    if (statusFilter) {
+      result = result.filter((r) => r.status === statusFilter)
+    }
+
+    return result
+  }, [reports, selectedUrgency, debouncedSearchTerm, statusFilter])
+
+  // Pagination hook
+  const {
+    totalPages,
+    safeCurrentPage,
+    visibleRows,
+    visiblePages,
+    handlePageChange,
+    handleNextPage,
+    handlePreviousPage,
+    resetToFirstPage,
+  } = useReportPaginationState({ rows: filteredReports, pageSize: 6 })
+
+  function handleSelectUrgency(chip) {
+    setSelectedUrgency(chip)
+    resetToFirstPage()
+  }
+
+  function handleSearchChange(value) {
+    setSearchTerm(value)
+    resetToFirstPage()
+  }
+
+  function handleStatusChange(value) {
+    setStatusFilter(value)
+    resetToFirstPage()
+  }
+
   if (!user) {
     return (
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -18,6 +134,7 @@ export function UserProfilePage({ user, onBackToUsers }) {
         <button onClick={onBackToUsers} className="hover:text-slate-700">Users</button> / <span className="text-slate-700">User Profile</span>
       </div>
 
+      {/* User Information Details Card */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="mb-6 text-2xl font-semibold text-slate-900">User Profile</h1>
         <div className="grid gap-4 md:grid-cols-2">
@@ -38,6 +155,14 @@ export function UserProfilePage({ user, onBackToUsers }) {
             <p className="text-slate-900">{user.status}</p>
           </div>
           <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Phone Number</p>
+            <p className="text-slate-900">+{user.phoneNumber || 'Not available'}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Gender</p>
+            <p className="text-slate-900">{user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available'}</p>
+          </div>
+          <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Barangay</p>
             <p className="text-slate-900">{user.barangay || 'Not available'}</p>
           </div>
@@ -55,6 +180,50 @@ export function UserProfilePage({ user, onBackToUsers }) {
           </div>
         </div>
       </section>
+
+      {/* Reports Submitted by User Section */}
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
+        <h2 className="text-xl font-semibold text-slate-900">Reports Submitted by User</h2>
+        
+        {/* Filters Toolbar */}
+        <UrgencyFilterChips
+          chips={URGENCY_FILTER_CHIPS}
+          selectedChip={selectedUrgency}
+          onSelectChip={handleSelectUrgency}
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          statusFilter={statusFilter}
+          onStatusChange={handleStatusChange}
+        />
+
+        {isLoading ? (
+          <div className="py-10 text-center text-sm text-slate-400">Loading user reports...</div>
+        ) : reportsError ? (
+          <div className="py-10 text-center text-sm text-red-500">Failed to load reports.</div>
+        ) : (
+          <>
+            <UrgencyFeedTable
+              rows={visibleRows}
+              onViewReport={onViewReport}
+              isLoading={isFetching}
+            />
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                visiblePages={visiblePages}
+                onPageChange={handlePageChange}
+                onNext={handleNextPage}
+                onPrevious={handlePreviousPage}
+              />
+            )}
+          </>
+        )}
+      </section>
     </main>
   )
 }
+
+

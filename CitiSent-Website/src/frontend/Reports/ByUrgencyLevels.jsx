@@ -6,7 +6,9 @@ import {
   UrgencyDoughnutChart,
   UrgencyFeedTable,
   UrgencyFilterChips,
+  EmotionFilterChips,
 } from '../../components/Reports-Ui'
+import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import {
   ALL_URGENCY_FILTER,
@@ -17,6 +19,7 @@ import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 const URGENCY_COLORS = ['#ef4444', '#f97316', '#eab308', '#10b981']
 const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
+const EMOTION_FILTER_CHIPS = ['All Emotions', ...REPORT_EMOTION_OPTIONS]
 
 export function ByUrgencyLevels({
   rows,
@@ -30,6 +33,7 @@ export function ByUrgencyLevels({
   const [selectedUrgency, setSelectedUrgency] = useState(URGENCY_FILTER_CHIPS[0])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [emotionFilter, setEmotionFilter] = useState('All Emotions')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
   useEffect(() => {
@@ -67,8 +71,13 @@ export function ByUrgencyLevels({
       result = result.filter((r) => r.status === statusFilter)
     }
 
+    // Apply emotion filter
+    if (emotionFilter !== 'All Emotions') {
+      result = result.filter((r) => (r.emotionLevel || 'Neutral') === emotionFilter)
+    }
+
     return result
-  }, [defaultSorting, selectedUrgency, rows, debouncedSearchTerm, statusFilter])
+  }, [defaultSorting, selectedUrgency, rows, debouncedSearchTerm, statusFilter, emotionFilter])
 
   const {
     totalPages,
@@ -93,6 +102,11 @@ export function ByUrgencyLevels({
 
   function handleStatusChange(value) {
     setStatusFilter(value)
+    resetToFirstPage()
+  }
+
+  function handleEmotionChange(value) {
+    setEmotionFilter(value)
     resetToFirstPage()
   }
 
@@ -192,15 +206,22 @@ export function ByUrgencyLevels({
           </div>
         </section>
 
-        <UrgencyFilterChips
-          chips={URGENCY_FILTER_CHIPS}
-          selectedChip={selectedUrgency}
-          onSelectChip={handleSelectUrgency}
-          searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
-          statusFilter={statusFilter}
-          onStatusChange={handleStatusChange}
-        />
+        <div className="flex flex-col gap-4">
+          <UrgencyFilterChips
+            chips={URGENCY_FILTER_CHIPS}
+            selectedChip={selectedUrgency}
+            onSelectChip={handleSelectUrgency}
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            statusFilter={statusFilter}
+            onStatusChange={handleStatusChange}
+          />
+          <EmotionFilterChips
+            chips={EMOTION_FILTER_CHIPS}
+            selectedChip={emotionFilter}
+            onSelectChip={handleEmotionChange}
+          />
+        </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <UrgencyFeedTable
             rows={visibleRows}

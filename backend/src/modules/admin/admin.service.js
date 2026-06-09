@@ -716,7 +716,7 @@ export const adminService = {
     });
   },
 
-  async listReports({ actor, accessToken, limit, offset, status }) {
+  async listReports({ actor, accessToken, limit, offset, status, userId }) {
     const [result, departmentCatalog] = await Promise.all([
       adminRepository.listReports({
         actor,
@@ -724,6 +724,7 @@ export const adminService = {
         limit,
         offset,
         status,
+        userId,
       }),
       departmentsService.listDepartments({
         accessToken,

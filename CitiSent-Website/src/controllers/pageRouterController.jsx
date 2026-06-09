@@ -84,6 +84,7 @@ export function renderActivePage({
         onDeleteDepartment,
         onApproveTransfer,
         onRejectTransfer,
+        onRefreshAdminAccounts,
     } = appActions
 
     switch (activePage) {
@@ -105,6 +106,7 @@ export function renderActivePage({
                     onDeleteDepartment={onDeleteDepartment}
                     onApproveTransfer={onApproveTransfer}
                     onRejectTransfer={onRejectTransfer}
+                    onRefreshAdminAccounts={onRefreshAdminAccounts}
                     departmentOptions={departmentOptions}
                     departmentCatalog={departmentCatalog}
                 />
@@ -157,6 +159,7 @@ export function renderActivePage({
                     transferRequests={transferRequests}
                     onUpdateProfile={onUpdateProfile}
                     onSubmitTransferRequest={onSubmitTransferRequest}
+                    onLogout={onConfirmLogout}
                     departmentOptions={departmentOptions}
                 />
             )
@@ -180,7 +183,7 @@ export function renderActivePage({
         case APP_PAGES.LOGOUT:
             return <Logout onConfirmLogout={onConfirmLogout} onCancel={onCancelLogout} />
         case APP_PAGES.USER_PROFILE:
-            return <UserProfilePage user={selectedUserProfile} onBackToUsers={onBackToUsers} />
+            return <UserProfilePage user={selectedUserProfile} onBackToUsers={onBackToUsers} onViewReport={onViewReport} />
         case APP_PAGES.REPORT_DETAIL:
             return (
                 <ReportDetailPage

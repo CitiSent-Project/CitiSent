@@ -83,6 +83,7 @@ export function mapBackendUserToUiRow(payload = {}) {
     role: payload.role || '',
     accountType: payload.accountType || '',
     phoneNumber: payload.phoneNumber || '',
+    gender: payload.gender || '',
     departmentLabel: payload.departmentLabel || '',
     departmentId: payload.departmentId || '',
     ban: payload.ban || null,

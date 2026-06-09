@@ -36,7 +36,7 @@ export function ProfileSummaryCard({ profile }) {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div className="flex items-center gap-4">
-          <div className="grid h-15 w-15 place-items-center rounded-full bg-cyan-100 text-lg font-semibold text-cyan-900">
+          <div className="grid h-15 w-15 place-items-center rounded-full bg-blue-100 text-lg font-semibold text-cyan-900">
             {initials}
           </div>
           <div>

@@ -37,7 +37,7 @@ function toErrorText(error) {
 
   try {
     parts.push(JSON.stringify(error));
-  } catch {}
+  } catch { }
 
   return parts.join(" ").toLowerCase();
 }
@@ -381,7 +381,7 @@ export const adminRepository = {
     }
   },
 
-  async listReports({ actor, accessToken, limit, offset, status }) {
+  async listReports({ actor, accessToken, limit, offset, status, userId }) {
     const db = getDb(accessToken);
 
     let query = db
@@ -394,6 +394,10 @@ export const adminRepository = {
 
     if (status) {
       query = query.eq("status", status);
+    }
+
+    if (userId) {
+      query = query.eq("user_id", userId);
     }
 
     const { data, error, count } = await query;

@@ -28,7 +28,7 @@ export function TransferRequestQueueSection({
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
                       unreadByAdminId[request.adminId] > 0
-                        ? 'bg-cyan-100 text-cyan-800'
+                        ? 'bg-blue-100 text-cyan-800'
                         : 'bg-slate-100 text-slate-600'
                     }`}
                   >

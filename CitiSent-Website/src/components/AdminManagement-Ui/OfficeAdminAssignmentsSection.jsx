@@ -33,7 +33,7 @@ export function OfficeAdminAssignmentsSection({
             Update department assignments for office admins.
           </p>
         </div>
-        <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
+        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-cyan-800">
           {totalOfficeUnread} unread admin notifications
         </span>
       </div>

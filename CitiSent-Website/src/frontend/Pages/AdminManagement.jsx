@@ -1,16 +1,31 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { getPendingTransferRequests } from '../../controllers/departmentTransferController'
 import { getOfficeAdmins } from '../../controllers/adminManagementController'
 import { USER_ROLES } from '../../models/roleAccessModel'
-import { notifyError } from '../../components/ui/toastHelpers'
+import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { useAdminManagementState } from '../../hooks/useAdminManagementState'
+import { usersApiService } from '../../services/api/admin/usersApiService'
+import { getStorageSchemaRule } from '../../models/storageSchemaModel'
+import { loadFromStorageWithSchema } from '../../services/storageService'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import {
   AgencyCatalogSection,
   OfficeAdminAssignmentsSection,
   TransferRequestQueueSection,
   TransferReviewModal,
+  AddAdminFormModal,
 } from '../../components/AdminManagement-Ui'
+
+function getStoredAccessToken() {
+  const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+
+  return loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', {
+    schemaVersion: schemaRule.schemaVersion,
+    migrate: schemaRule.migrate,
+    validate: schemaRule.validate,
+  })
+}
 
 export function AdminManagement({
   profile,
@@ -26,6 +41,7 @@ export function AdminManagement({
   onDeleteDepartment,
   onApproveTransfer,
   onRejectTransfer,
+  onRefreshAdminAccounts,
   departmentOptions,
   departmentCatalog,
 }) {
@@ -34,6 +50,8 @@ export function AdminManagement({
     () => getPendingTransferRequests(transferRequests),
     [transferRequests]
   )
+
+  const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
 
   const {
     reviewModal,
@@ -78,6 +96,37 @@ export function AdminManagement({
     containerRef: reviewModalRef,
   })
 
+  async function handleAddAdminSubmit(form) {
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Action failed.', 'Your session has expired. Please sign in again.')
+      return false
+    }
+
+    const selectedDepartment = departmentOptions.find((dep) => dep.id === form.departmentId)
+
+    try {
+      await usersApiService.createUser(token, {
+        ...form,
+        accountType: 'admin',
+        role: USER_ROLES.OFFICE_ADMIN,
+        departmentLabel: selectedDepartment?.label,
+      })
+      notifySuccess(
+        'Admin account created.',
+        `An activation email has been sent to ${form.email}.`
+      )
+      if (onRefreshAdminAccounts) {
+        onRefreshAdminAccounts()
+      }
+      setIsAddAdminModalOpen(false)
+      return true
+    } catch (error) {
+      notifyError('Failed to create admin account.', error.message)
+      return false
+    }
+  }
+
   if (profile?.role !== USER_ROLES.SUPERADMIN) {
     return (
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -94,11 +143,19 @@ export function AdminManagement({
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
-        <header>
-          <h1 className="text-2xl font-semibold text-slate-900">Admin Management</h1>
-          <p className="text-sm text-slate-600">
-            Assign office admins by department and process transfer queue approvals.
-          </p>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Admin Management</h1>
+            <p className="text-sm text-slate-600">
+              Assign office admins by department and process transfer queue approvals.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsAddAdminModalOpen(true)}
+            className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+          >
+            Add Admin
+          </button>
         </header>
 
         <OfficeAdminAssignmentsSection
@@ -145,6 +202,13 @@ export function AdminManagement({
         onSubmit={submitReviewModal}
         onReviewNotesChange={handleReviewNotesChange}
         isSubmittingReview={isSubmittingReview}
+      />
+
+      <AddAdminFormModal
+        isOpen={isAddAdminModalOpen}
+        onClose={() => setIsAddAdminModalOpen(false)}
+        onSubmit={handleAddAdminSubmit}
+        departmentOptions={departmentOptions}
       />
     </main>
   )

@@ -101,6 +101,7 @@ export function toAdminUserResponse({ profile, activeBan }) {
       profile?.email ||
       "",
     phoneNumber: profile?.phone_number || null,
+    gender: profile?.gender || null,
     barangay: profile?.barangay || null,
     city: profile?.city || null,
     province: profile?.province || null,

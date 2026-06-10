@@ -309,9 +309,9 @@ export function AgencyCatalogSection({
     }
 
     return (
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-slate-900">Agency catalog</h2>
                     <p className="mt-1 text-sm text-slate-600">
                         Manage agency names, availability, and official logos shown across CitiSent.
@@ -340,20 +340,140 @@ export function AgencyCatalogSection({
                     />
                 </label>
 
-                <div className="md:col-span-2 flex justify-end">
+                <div className="flex md:col-span-2 md:justify-end">
                     <button
                         type="submit"
                         disabled={isCreating}
-                        className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:py-2"
                     >
                         {isCreating ? 'Adding agency...' : 'Add agency'}
                     </button>
                 </div>
             </form>
 
-            <div className="mt-5 overflow-hidden rounded-xl border border-slate-200">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-230 text-left text-sm">
+            <div className="mt-5 space-y-3 md:hidden">
+                {sortedCatalog.map((department) => {
+                    const isBusy = busyDepartmentSlug === department.id
+                    const logoError = logoErrorBySlug[department.id]
+                    const fileInputId = `agency-logo-mobile-${department.id}`
+
+                    return (
+                        <article key={department.id} className="rounded-xl border border-slate-200 p-4">
+                            <div className="flex gap-3">
+                                <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-slate-400">
+                                    {department.logoUrl ? (
+                                        <img
+                                            src={department.logoUrl}
+                                            alt={`${department.label} logo`}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <FiImage className="text-lg" aria-hidden="true" />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-slate-900">{department.label}</p>
+                                    <p className="break-all text-sm text-slate-600">{department.id}</p>
+                                    <span
+                                        className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-medium ${department.isActive
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-slate-100 text-slate-600'
+                                            }`}
+                                    >
+                                        {department.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                                <label
+                                    htmlFor={fileInputId}
+                                    className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 ${isBusy ? 'pointer-events-none opacity-60' : ''}`}
+                                >
+                                    <FiUploadCloud aria-hidden="true" />
+                                    {department.logoUrl ? 'Replace' : 'Upload'}
+                                </label>
+                                <input
+                                    id={fileInputId}
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    disabled={isBusy}
+                                    onChange={(event) => handleLogoFileChange(department, event)}
+                                    className="sr-only"
+                                />
+                                {department.logoUrl || department.logoPath ? (
+                                    <button
+                                        type="button"
+                                        disabled={isBusy}
+                                        onClick={() => handleDeleteDepartmentLogo(department)}
+                                        title="Remove logo"
+                                        aria-label={`Remove ${department.label} logo`}
+                                        className="grid h-9 w-9 place-items-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <FiXCircle className="text-sm" />
+                                    </button>
+                                ) : null}
+                                <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => handleOpenRenameModal(department)}
+                                    title="Rename agency"
+                                    aria-label={`Rename ${department.label}`}
+                                    className="grid h-9 w-9 place-items-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <FiEdit2 className="text-sm" />
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => handleToggleDepartmentActive(department)}
+                                    title={department.isActive ? 'Deactivate agency' : 'Activate agency'}
+                                    aria-label={`${department.isActive ? 'Deactivate' : 'Activate'} ${department.label}`}
+                                    className="grid h-9 w-9 place-items-center rounded-md bg-blue-700 text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {department.isActive ? (
+                                        <FiToggleRight className="text-base" />
+                                    ) : (
+                                        <FiToggleLeft className="text-base" />
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() => handleOpenDeleteModal(department)}
+                                    title="Delete agency"
+                                    aria-label={`Delete ${department.label}`}
+                                    className="grid h-9 w-9 place-items-center rounded-md bg-rose-600 text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <FiTrash2 className="text-sm" />
+                                </button>
+                            </div>
+                            {logoError ? (
+                                <p className="mt-2 text-xs text-rose-600">{logoError}</p>
+                            ) : (
+                                <p className="mt-2 text-xs text-slate-500">PNG, JPG, or WebP up to 2MB</p>
+                            )}
+                        </article>
+                    )
+                })}
+
+                {sortedCatalog.length === 0 ? (
+                    <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+                        No agencies found in catalog.
+                    </p>
+                ) : null}
+            </div>
+
+            <div className="mt-5 hidden overflow-hidden rounded-xl border border-slate-200 md:block">
+                <div className="max-w-full overflow-x-auto">
+                <table className="w-full min-w-[860px] table-fixed text-left text-sm">
+                    <colgroup>
+                        <col className="w-[30%]" />
+                        <col className="w-[24%]" />
+                        <col className="w-[22%]" />
+                        <col className="w-[10%]" />
+                        <col className="w-[14%]" />
+                    </colgroup>
                     <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                             <th className="px-3 py-3">Logo</th>
@@ -422,8 +542,8 @@ export function AgencyCatalogSection({
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-3 py-3 font-medium text-slate-800">{department.label}</td>
-                                    <td className="px-3 py-3 text-slate-600">{department.id}</td>
+                                    <td className="break-words px-3 py-3 font-medium text-slate-800">{department.label}</td>
+                                    <td className="break-all px-3 py-3 text-slate-600">{department.id}</td>
                                     <td className="px-3 py-3">
                                         <span
                                             className={`rounded-full px-2 py-1 text-xs font-medium ${department.isActive
@@ -490,7 +610,7 @@ export function AgencyCatalogSection({
 
             {renameModal ? (
                 <div
-                    className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+                    className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 sm:p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             handleCloseRenameModal()
@@ -503,16 +623,16 @@ export function AgencyCatalogSection({
                         aria-modal="true"
                         aria-label="Rename agency modal"
                         tabIndex={-1}
-                        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+                        className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl"
                     >
-                        <div className="border-b border-slate-200 px-5 py-4">
+                        <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
                             <h3 className="text-lg font-semibold text-slate-900">Rename agency</h3>
-                            <p className="m-5 text-sm text-slate-600">
+                            <p className="mt-1 text-sm text-slate-600">
                                 Update the display name for {renameModal.label}.
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmitRenameDepartment} className="space-y-4 px-5 py-4">
+                        <form onSubmit={handleSubmitRenameDepartment} className="space-y-4 px-4 py-4 sm:px-5">
                             <div>
                                 <label className="mb-1 block text-sm text-slate-700">Agency Name</label>
                                 <input
@@ -525,18 +645,18 @@ export function AgencyCatalogSection({
                                 {renameError ? <p className="mt-1 text-xs text-rose-600">{renameError}</p> : null}
                             </div>
 
-                            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+                            <div className="grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end">
                                 <button
                                     type="button"
                                     onClick={handleCloseRenameModal}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-300 theme-dark-btn-outline"
+                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-300 sm:py-2 theme-dark-btn-outline"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={busyDepartmentSlug === renameModal.id}
-                                    className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70 theme-dark-btn-primary"
+                                    className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70 sm:py-2 theme-dark-btn-primary"
                                 >
                                     {busyDepartmentSlug === renameModal.id ? 'Saving...' : 'Save changes'}
                                 </button>
@@ -548,7 +668,7 @@ export function AgencyCatalogSection({
 
             {deleteModal ? (
                 <div
-                    className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+                    className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 sm:p-4"
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             handleCloseDeleteModal()
@@ -561,18 +681,18 @@ export function AgencyCatalogSection({
                         aria-modal="true"
                         aria-label="Delete agency modal"
                         tabIndex={-1}
-                        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+                        className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl"
                     >
-                        <div className="border-b border-slate-200 px-5 py-4">
+                        <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
                             <h3 className="text-lg font-semibold text-slate-900">Delete agency</h3>
                         </div>
-                        <p className="pt-3 m-5 text-sm text-slate-600">
+                        <p className="mx-4 pt-3 text-sm text-slate-600 sm:mx-5">
                             This will permanently remove {deleteModal.label}. This action cannot be undone.
                         </p>
-                        <p className="mx-5 -mt-2 text-xs text-slate-500">
+                        <p className="mx-4 mt-1 text-xs text-slate-500 sm:mx-5">
                             Inactive agencies can still be blocked when they are referenced by existing records.
                         </p>
-                        <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-5 py-4">
+                        <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-4 py-4 sm:px-5">
                             <label className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900">
                                 <input
                                     type="checkbox"
@@ -592,18 +712,18 @@ export function AgencyCatalogSection({
                                 </p>
                             ) : null}
 
-                            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+                            <div className="grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end">
                                 <button
                                     type="button"
                                     onClick={handleCloseDeleteModal}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-300 theme-dark-btn-outline"
+                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-300 sm:py-2 theme-dark-btn-outline"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={busyDepartmentSlug === deleteModal.id}
-                                    className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-70"
+                                    className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-70 sm:py-2"
                                 >
                                     {busyDepartmentSlug === deleteModal.id ? 'Deleting...' : 'Delete agency'}
                                 </button>

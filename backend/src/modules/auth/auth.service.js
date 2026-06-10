@@ -149,7 +149,7 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
   ]);
 
   if (!profileEmail) {
-    throw new AppError("Invalid credentials", StatusCodes.UNAUTHORIZED);
+    throw new AppError("Incorrect username or phone number.", StatusCodes.UNAUTHORIZED);
   }
 
   return profileEmail;

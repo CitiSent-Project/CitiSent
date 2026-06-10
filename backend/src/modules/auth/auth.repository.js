@@ -600,7 +600,7 @@ export const authRepository = {
 
       if (isInvalidCredentialsAuthError(error)) {
         throw new AppError(
-          "Invalid credentials",
+          "Incorrect password.",
           StatusCodes.UNAUTHORIZED,
           error,
         );

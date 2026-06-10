@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Text, View } from "react-native";
+import { useMemo, useState, useCallback } from "react";
+import { Text, View, ScrollView, RefreshControl } from "react-native";
 import { AuthCityFooter } from "../../modules/auth";
 import {
   CREATE_REPORT_ISSUES,
@@ -32,16 +32,25 @@ function IssueGridSkeleton() {
 
 export default function CreateReportScreen() {
   const { departments, error, isInitialLoading, reloadDepartments } = useDepartments();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await reloadDepartments();
+    setRefreshing(false);
+  }, [reloadDepartments]);
 
   const { issues, isFallback } = useMemo(() => {
     const fromApi = buildIssueOptionsFromDepartments(departments);
 
     if (fromApi.length > 0) {
-      return { issues: fromApi, isFallback: false };
+      const sortedApi = [...fromApi].sort((a, b) => a.label.localeCompare(b.label));
+      return { issues: sortedApi, isFallback: false };
     }
 
     if (error) {
-      return { issues: CREATE_REPORT_ISSUES, isFallback: true };
+      const sortedFallback = [...CREATE_REPORT_ISSUES].sort((a, b) => a.label.localeCompare(b.label));
+      return { issues: sortedFallback, isFallback: true };
     }
 
     return { issues: [], isFallback: false };
@@ -55,7 +64,14 @@ export default function CreateReportScreen() {
 
       <CreateReportTopBar />
 
-      <View className="flex-1 px-3 pt-4" style={{ paddingBottom: 160 }}>
+      <ScrollView 
+        className="flex-1 px-3 pt-4" 
+        contentContainerStyle={{ paddingBottom: 160 }} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select an Issue</Text>
         <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>Select your Local Government Unit (LGU) to continue.</Text>
 
@@ -87,7 +103,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         {issues.length > 0 ? <IssueGrid issues={issues} /> : null}
-      </View>
+      </ScrollView>
     </View>
   );
 }

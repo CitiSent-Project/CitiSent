@@ -132,7 +132,7 @@ export const listAdminReportsSchema = z.object({
   body: z.object({}).optional().default({}),
   params: z.object({}).optional().default({}),
   query: z.object({
-    limit: z.coerce.number().int().min(1).max(100).default(50),
+    limit: z.coerce.number().int().min(1).max(1000).default(50),
     offset: z.coerce.number().int().min(0).default(0),
     status: persistedStatusSchema.optional(),
     userId: userIdSchema.optional(),

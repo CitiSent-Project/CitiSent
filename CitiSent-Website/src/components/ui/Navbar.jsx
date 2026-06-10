@@ -285,7 +285,7 @@ export function Navbar({
 			</MotionAside>
 
 			<div
-				className={`flex-1 transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
+				className={`min-w-0 flex-1 overflow-x-hidden transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
 					expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
 				}`}
 			>

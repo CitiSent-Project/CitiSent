@@ -61,7 +61,7 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           handleClose()
@@ -74,9 +74,9 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
         aria-modal="true"
         aria-label="Add admin form"
         tabIndex={-1}
-        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+        className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl"
       >
-        <div className="border-b border-slate-200 px-5 py-4">
+        <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
           <h2 className="text-lg font-semibold text-slate-900">Add New Admin</h2>
           <p className="mt-1 text-sm text-slate-500">
             Fill in the required details below. An activation email will be sent to the admin's
@@ -84,8 +84,8 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
-          <div className="grid gap-4 md:grid-cols-3">
+        <form onSubmit={handleSubmit} className="space-y-4 px-4 py-4 sm:px-5">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm text-slate-700">First Name</label>
               <input
@@ -149,7 +149,7 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm text-slate-700">Barangay</label>
               <input
@@ -186,19 +186,19 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+          <div className="grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end">
             <button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="rounded-lg border border-slate-300 hover:bg-blue-100 transition duration-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700 transition duration-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-70 sm:py-2"
             >
               {isSubmitting ? (
                 <>

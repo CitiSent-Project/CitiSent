@@ -234,7 +234,7 @@ export function DropdownButton({
 	}, [open, updatePopoverPosition])
 
 	return (
-		<div className={`relative inline-flex ${className}`}>
+		<div className={`relative inline-flex max-w-full min-w-0 ${className}`}>
 			{/** Keep form compatibility */}
 			{name ? <input type="hidden" name={name} value={value ?? ''} /> : null}
 
@@ -279,7 +279,7 @@ export function DropdownButton({
 				aria-expanded={open}
 				aria-controls={listboxId}
 				aria-label={ariaLabel || label || 'Dropdown'}
-				className={`group inline-flex h-10 min-w-48 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+				className={`group inline-flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 ${
 					disabled
 						? 'cursor-not-allowed opacity-70'
 						: 'cursor-pointer shadow-sm hover:shadow-md'

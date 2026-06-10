@@ -34,7 +34,7 @@ export function Reports({
     queryKey: ['admin-reports', accessToken],
     enabled: Boolean(accessToken),
     queryFn: async () => {
-      const response = await reportsApiService.listReports(accessToken, { limit: 100, offset: 0 })
+      const response = await reportsApiService.listReports(accessToken, { limit: 1000, offset: 0 })
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
     refetchInterval: 10000,

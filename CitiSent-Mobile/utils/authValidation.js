@@ -30,19 +30,6 @@ export const validateLoginFields = (identifier, password) => {
 export const getLoginErrorMessage = (error) => {
   const apiMessage = error?.response?.data?.message || "";
 
-  if (
-    error?.response?.status === 401 ||
-    error?.response?.status === 403 ||
-    error?.response?.status === 404 ||
-    error?.message?.toLowerCase().includes("invalid") ||
-    error?.message?.toLowerCase().includes("incorrect") ||
-    error?.message?.toLowerCase().includes("not found") ||
-    apiMessage.toLowerCase().includes("invalid") ||
-    apiMessage.toLowerCase().includes("incorrect")
-  ) {
-    return "Incorrect username, phone number, or password. Please try again.";
-  }
-
   if (error?.response?.status === 429) {
     return "Too many login attempts. Please try again later.";
   }

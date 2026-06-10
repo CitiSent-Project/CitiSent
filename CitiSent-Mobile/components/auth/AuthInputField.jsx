@@ -23,7 +23,7 @@ export default function AuthInputField({
     <View className="mb-4 w-full">
       <View
         className={`h-[48px] flex-row items-center rounded-full border px-4 ${
-          error ? "border-[#FCA5A5]" : "border-[#D5E6FF]"
+          error ? "border-[#FCA5A5] bg-[#FCA5A5]/10" : "border-[#D5E6FF]"
         }`}
       >
         <Ionicons name={icon} size={18} color={error ? "#FCA5A5" : "#B7CCE6"} />

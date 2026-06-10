@@ -60,7 +60,7 @@ export default function LoginFormScreen() {
     const { isValid } = validateFields();
 
     if (!isValid) {
-      setErrorMessage("Please check your inputs and resolve the errors. Please try again.");
+      // Local field errors are shown directly on the inputs, no global error needed.
       return;
     }
 
@@ -78,10 +78,20 @@ export default function LoginFormScreen() {
       });
       router.replace("/(tabs)");
     } catch (error) {
+      const apiMessage = error?.response?.data?.message || error?.message || "";
       const raw = getLoginErrorMessage(error);
-      setErrorMessage(
-        raw.toLowerCase().includes("please try again") ? raw : `${raw} Please try again.`,
-      );
+      
+      const textToMatch = `${apiMessage} ${raw}`.toLowerCase();
+      
+      if (textToMatch.includes("username or phone number")) {
+        setFieldErrors((prev) => ({ ...prev, identifier: "Incorrect username or phone number. Please try again." }));
+      } else if (textToMatch.includes("incorrect password") || textToMatch.includes("invalid password") || textToMatch.includes("invalid credentials")) {
+        setFieldErrors((prev) => ({ ...prev, password: "Incorrect password. Please try again." }));
+      } else {
+        setErrorMessage(
+          raw.toLowerCase().includes("please try again") ? raw : `${raw} Please try again.`,
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }

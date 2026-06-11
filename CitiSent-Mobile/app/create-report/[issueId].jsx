@@ -206,7 +206,7 @@ export default function CreateReportIssueDetailScreen() {
                 Issue not found
               </Text>
               <Text className="text-center text-sm" style={{ color: Colors.text.slate }}>
-                Please go back and select an issue again.
+                Please go back and select a department again.
               </Text>
               {isFallback ? (
                 <View className="mt-4 w-full">

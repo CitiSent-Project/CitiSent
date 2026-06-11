@@ -56,6 +56,8 @@ export default function CreateReportIssueDetailScreen() {
   );
 
   const [issueLocation, setIssueLocation] = useState("");
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [report, setReport] = useState("");
   const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,9 +73,20 @@ export default function CreateReportIssueDetailScreen() {
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
   const reportContentHeightRef = useRef(0);
 
-  // Enforce backend validation: location min 1, description min 10, issueType min 1
+  const isWithinStoTomas = (lat, lon) => {
+    if (lat == null || lon == null) return false;
+    return lat >= 13.9796305 && lat <= 14.1473362 && lon >= 121.1250228 && lon <= 121.2319705;
+  };
+
+  // Enforce backend validation: location min 1, description min 10, issueType min 1, coordinates within Sto. Tomas
   const canSubmit =
-    issue ? (issueLocation.trim().length > 0 && report.trim().length >= 10) : false;
+    issue
+      ? issueLocation.trim().length > 0 &&
+        report.trim().length >= 10 &&
+        latitude !== null &&
+        longitude !== null &&
+        isWithinStoTomas(Number(latitude), Number(longitude))
+      : false;
 
   function showModal(type, title, message, onCloseAction = null) {
     setModalConfig({ visible: true, type, title, message, onCloseAction });
@@ -120,6 +133,14 @@ export default function CreateReportIssueDetailScreen() {
       showModal("error", "Missing details", "Please provide the issue location.");
       return;
     }
+    if (latitude === null || longitude === null) {
+      showModal("error", "Invalid Location", "Please select a verified location from the suggestions or use your current location.");
+      return;
+    }
+    if (!isWithinStoTomas(Number(latitude), Number(longitude))) {
+      showModal("error", "Outside Allowed Area", "The selected location is outside the official boundaries of Sto. Tomas City, Batangas.");
+      return;
+    }
     if (report.trim().length < 10) {
       showModal(
         "error",
@@ -140,6 +161,8 @@ export default function CreateReportIssueDetailScreen() {
       await reportsApi.createReport({
         issueType: issue.name || issue.label,
         location: issueLocation,
+        latitude,
+        longitude,
         description: report,
         ...(attachmentUrl ? { attachmentUrl } : {}),
       });
@@ -150,6 +173,8 @@ export default function CreateReportIssueDetailScreen() {
         "Your report has been submitted successfully.",
         () => {
           setIssueLocation("");
+          setLatitude(null);
+          setLongitude(null);
           setReport("");
           setImageUri(null);
           router.back();
@@ -233,6 +258,13 @@ export default function CreateReportIssueDetailScreen() {
                 onInputLayout={handleInputLayout}
                 onInputFocus={handleInputFocus}
                 onReportSizeChange={handleReportSizeChange}
+                latitude={latitude}
+                longitude={longitude}
+                onLocationSelected={(address, lat, lon) => {
+                  setIssueLocation(address);
+                  setLatitude(lat);
+                  setLongitude(lon);
+                }}
               />
 
               <SubmitReportButton

@@ -15,11 +15,30 @@ import {
 } from "./reports.sentiment.js";
 import { departmentsService } from "../departments/departments.service.js";
 
+const ST_LAT_MIN = 13.9796305;
+const ST_LAT_MAX = 14.1473362;
+const ST_LON_MIN = 121.1250228;
+const ST_LON_MAX = 121.2319705;
+
+function isWithinStoTomas(latitude, longitude) {
+  if (latitude == null || longitude == null) return false;
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  return (
+    lat >= ST_LAT_MIN &&
+    lat <= ST_LAT_MAX &&
+    lng >= ST_LON_MIN &&
+    lng <= ST_LON_MAX
+  );
+}
+
 function buildReportCreatePayload({
   userId,
   issueType,
   description,
   location,
+  latitude,
+  longitude,
   attachmentUrl,
   urgency,
   emotionLevel,
@@ -30,6 +49,8 @@ function buildReportCreatePayload({
     issue_type: issueType,
     description,
     location,
+    latitude,
+    longitude,
     ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
     sentiment_label: urgency,
     ...(emotionLevel != null ? { emotion_level: emotionLevel } : {}),
@@ -43,6 +64,8 @@ function buildReportUpdatePayload(payload) {
     ...(payload.issueType !== undefined ? { issue_type: payload.issueType } : {}),
     ...(payload.description !== undefined ? { description: payload.description } : {}),
     ...(payload.location !== undefined ? { location: payload.location } : {}),
+    ...(payload.latitude !== undefined ? { latitude: payload.latitude } : {}),
+    ...(payload.longitude !== undefined ? { longitude: payload.longitude } : {}),
     ...(payload.attachmentUrl !== undefined
       ? { attachment_url: payload.attachmentUrl }
       : {}),
@@ -149,9 +172,18 @@ export const reportsService = {
     issueType,
     description,
     location,
+    latitude,
+    longitude,
     attachmentUrl,
     accessToken,
   }) {
+    if (latitude === undefined || longitude === undefined) {
+      throw new AppError("Location coordinates (latitude and longitude) are required.", StatusCodes.BAD_REQUEST);
+    }
+    if (!isWithinStoTomas(latitude, longitude)) {
+      throw new AppError("The selected location is outside Sto. Tomas City, Batangas.", StatusCodes.BAD_REQUEST);
+    }
+
     const department = await resolveActiveDepartment({
       accessToken,
       value: issueType,
@@ -169,6 +201,8 @@ export const reportsService = {
         issueType: department?.slug || issueType,
         description,
         location,
+        latitude,
+        longitude,
         attachmentUrl,
         urgency,
         emotionLevel,
@@ -209,6 +243,18 @@ export const reportsService = {
 
     if (existingReport.status && existingReport.status.toLowerCase() !== "pending") {
       throw new AppError("This report can no longer be edited because it has already been reviewed by an administrator.", StatusCodes.FORBIDDEN);
+    }
+
+    if (payload.latitude !== undefined || payload.longitude !== undefined || payload.location !== undefined) {
+      const lat = payload.latitude !== undefined ? payload.latitude : existingReport.latitude;
+      const lng = payload.longitude !== undefined ? payload.longitude : existingReport.longitude;
+      
+      if (lat === null || lng === null || lat === undefined || lng === undefined) {
+        throw new AppError("Location coordinates (latitude and longitude) are required.", StatusCodes.BAD_REQUEST);
+      }
+      if (!isWithinStoTomas(lat, lng)) {
+        throw new AppError("The selected location is outside Sto. Tomas City, Batangas.", StatusCodes.BAD_REQUEST);
+      }
     }
 
     const updatePayload = buildReportUpdatePayload(payload);

@@ -158,17 +158,7 @@ export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, remem
 							variant="admin-login"
 						/>
 
-						<div className="flex items-center justify-between">
-							<label className="flex items-center gap-2 text-sm text-white/95 cursor-pointer">
-								<input
-									type="checkbox"
-									checked={form.rememberMe}
-									onChange={(event) => updateField('rememberMe', event.target.checked)}
-									className="h-4 w-4 rounded border-white/60 bg-white"
-								/>
-								Remember this sign-in
-							</label>
-
+						<div className="flex items-center justify-end">
 							<button
 								type="button"
 								onClick={() => {

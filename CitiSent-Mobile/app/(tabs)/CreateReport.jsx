@@ -72,7 +72,7 @@ export default function CreateReportScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select an Issue</Text>
+        <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select a Department</Text>
         <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>Select your Local Government Unit (LGU) to continue.</Text>
 
         {isInitialLoading ? <IssueGridSkeleton /> : null}

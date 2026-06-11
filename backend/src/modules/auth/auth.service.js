@@ -64,7 +64,7 @@ function normalizeUsername(value) {
 function assertAccountIsActive(profile) {
   if (String(profile?.account_status || "").trim().toLowerCase() === "banned") {
     throw new AppError(
-      "Your account has been banned. Please contact support.",
+      "Your account has been banned.",
       StatusCodes.FORBIDDEN,
     );
   }
@@ -425,7 +425,7 @@ export const authService = {
       const isBanned = await authRepository.checkActiveBanByUserId(preProfile.user_id);
       if (isBanned) {
         throw new AppError(
-          "Your account has been banned. Please contact support.",
+          "Your account has been banned.",
           StatusCodes.FORBIDDEN,
         );
       }

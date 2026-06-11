@@ -21,6 +21,8 @@ export const createReportSchema = z.object({
       issueType: z.string().min(1).max(120),
       description: z.string().min(10).max(3000),
       location: z.string().min(1).max(240),
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
       attachmentUrl: z.string().url().optional(),
     })
     .strict(),
@@ -44,6 +46,8 @@ export const updateReportSchema = z.object({
       issueType: z.string().min(1).max(120).optional(),
       description: z.string().min(10).max(3000).optional(),
       location: z.string().min(1).max(240).optional(),
+      latitude: z.number().min(-90).max(90).optional(),
+      longitude: z.number().min(-180).max(180).optional(),
       attachmentUrl: z.string().url().nullable().optional(),
       status: z.enum(allowedStatus).optional(),
     })

@@ -4,6 +4,8 @@ export function toReportResponse(reportRow) {
     issueType: reportRow.issue_type,
     description: reportRow.description,
     location: reportRow.location,
+    latitude: reportRow.latitude != null ? Number(reportRow.latitude) : null,
+    longitude: reportRow.longitude != null ? Number(reportRow.longitude) : null,
     status: reportRow.status,
     sentimentLabel: reportRow.sentiment_label,
     emotionLevel: reportRow.emotion_level ?? null,

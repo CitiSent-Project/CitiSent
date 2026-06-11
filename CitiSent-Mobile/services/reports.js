@@ -188,12 +188,14 @@ export const reportsApi = {
     if (!reportId) throw new Error("Missing report ID");
     return api.delete(`/reports/${reportId}`);
   },
-  updateReport: async (reportId, { issueType, location, description }) => {
+  updateReport: async (reportId, { issueType, location, latitude, longitude, description }) => {
     if (!reportId) throw new Error("Missing report ID");
 
     const payload = {};
     if (issueType) payload.issueType = issueType;
     if (location) payload.location = location;
+    if (latitude !== undefined) payload.latitude = latitude;
+    if (longitude !== undefined) payload.longitude = longitude;
     if (description) payload.description = description;
 
     return api.patch(`/reports/${reportId}`, payload);
@@ -201,6 +203,8 @@ export const reportsApi = {
   createReport: async ({
     issueType,
     location,
+    latitude,
+    longitude,
     description,
     attachmentUrl,
   }) => {
@@ -208,6 +212,8 @@ export const reportsApi = {
     const payload = {
       issueType,
       location,
+      latitude: latitude != null ? Number(latitude) : null,
+      longitude: longitude != null ? Number(longitude) : null,
       description,
       ...(attachmentUrl &&
       typeof attachmentUrl === "string" &&

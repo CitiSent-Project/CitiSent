@@ -59,7 +59,6 @@ export function AgencyCatalogSection({
     onDeleteDepartment,
 }) {
     const [form, setForm] = useState({
-        slug: '',
         name: '',
     })
     const [isCreating, setIsCreating] = useState(false)
@@ -102,11 +101,6 @@ export function AgencyCatalogSection({
         setForm((previous) => ({
             ...previous,
             [field]: value,
-            ...(field === 'name' && !previous.slug
-                ? {
-                    slug: toSlug(value),
-                }
-                : {}),
         }))
     }
 
@@ -114,7 +108,7 @@ export function AgencyCatalogSection({
         event.preventDefault()
 
         const payload = {
-            slug: toSlug(form.slug),
+            slug: toSlug(form.name),
             name: String(form.name || '').trim(),
         }
 
@@ -128,7 +122,6 @@ export function AgencyCatalogSection({
 
         if (result?.ok) {
             setForm({
-                slug: '',
                 name: '',
             })
         }
@@ -319,17 +312,7 @@ export function AgencyCatalogSection({
                 </div>
             </div>
 
-            <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={handleCreateDepartment}>
-                <label className="flex flex-col gap-1 text-sm text-slate-700">
-                    Slug
-                    <input
-                        value={form.slug}
-                        onChange={(event) => updateForm('slug', event.target.value)}
-                        placeholder="city-treasury"
-                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                    />
-                </label>
-
+            <form className="mt-4 grid gap-3" onSubmit={handleCreateDepartment}>
                 <label className="flex flex-col gap-1 text-sm text-slate-700">
                     Agency Name
                     <input
@@ -340,7 +323,7 @@ export function AgencyCatalogSection({
                     />
                 </label>
 
-                <div className="flex md:col-span-2 md:justify-end">
+                <div className="flex justify-end">
                     <button
                         type="submit"
                         disabled={isCreating}

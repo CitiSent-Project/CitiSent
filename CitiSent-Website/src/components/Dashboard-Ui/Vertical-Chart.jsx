@@ -11,6 +11,9 @@ import { Bar } from "react-chartjs-2";
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export function VerticalChart({ title, labels, values }) {
+  const maxReports = Math.max(...values.map((value) => Number(value) || 0), 0);
+  const suggestedMax = Math.max(100, Math.ceil(maxReports / 100) * 100);
+
   const data = {
     labels,
     datasets: [
@@ -53,9 +56,9 @@ export function VerticalChart({ title, labels, values }) {
         ticks: {
           color: "#6b7280",
           font: { size: 11 },
-          stepSize: 100,
+          stepSize: 20,
         },
-        suggestedMax: 300,
+        suggestedMax,
       },
     },
   };

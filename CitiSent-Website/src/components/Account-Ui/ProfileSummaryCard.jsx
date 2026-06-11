@@ -80,16 +80,6 @@ export function ProfileSummaryCard({ profile }) {
             {formatDateTime(profile.joinedAt)}
           </p>
         </article>
-
-        <article className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-            <FiCalendar className="text-slate-500" />
-            Last login
-          </div>
-          <p className="text-sm text-slate-800">
-            {formatDateTime(profile.lastLoginAt)}
-          </p>
-        </article>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { resolveApiBaseUrl } from "./apiConfig";
-import { getAuthToken } from "./authSession";
+import { getAuthToken, clearAuthToken } from "./authSession";
 
 const BASE_URL = resolveApiBaseUrl();
 
@@ -52,6 +52,13 @@ async function request(endpoint, options = {}) {
       error.details = parsedBody.details;
       error.status = response.status;
       error.requestId = parsedBody.requestId;
+    }
+
+    // Auto-clear stale or expired session on auth failures so the app
+    // immediately falls back to local/cached data on subsequent calls
+    // without spamming repeated failing network requests.
+    if (response.status === 401 || response.status === 403) {
+      clearAuthToken();
     }
 
     throw error;

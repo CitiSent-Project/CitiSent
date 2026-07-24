@@ -72,7 +72,23 @@ function readNotificationsPayload(payload) {
   return readArray(payload, "data", []);
 }
 
+function isAuthError(error) {
+  const status = error?.status;
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    status === 401 ||
+    status === 403 ||
+    message.includes("invalid") ||
+    message.includes("expired") ||
+    message.includes("unauthorized") ||
+    message.includes("token")
+  );
+}
+
 function warnFallbackOnce(label, error) {
+  // Auth errors are handled automatically — no need to log them
+  if (isAuthError(error)) return;
+
   const message = error?.message || String(error || "Unknown error");
   const dedupeKey = `${label}:${message}`;
 

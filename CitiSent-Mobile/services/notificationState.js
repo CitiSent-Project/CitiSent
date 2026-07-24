@@ -1,6 +1,8 @@
 import { notificationsApi } from "./notifications";
+import { setCache, getCache } from "./cache";
 
 const listeners = new Set();
+const NOTIFICATIONS_CACHE_KEY = "notifications_state";
 
 let notifications = [];
 let totalCount = 0;
@@ -33,6 +35,11 @@ let cachedSnapshot = buildSnapshot();
 function emitChange() {
   cachedSnapshot = buildSnapshot();
   listeners.forEach((listener) => listener());
+
+  // Save to persistent storage in background
+  if (isHydrated) {
+    setCache(NOTIFICATIONS_CACHE_KEY, { notifications, totalCount }, 600);
+  }
 }
 
 function updateNotifications(nextNotifications) {
@@ -83,6 +90,21 @@ export async function ensureNotificationsLoaded({ force = false } = {}) {
     return;
   }
 
+  // Hydrate from persistent disk cache immediately if available
+  if (!isHydrated) {
+    try {
+      const cached = await getCache(NOTIFICATIONS_CACHE_KEY, { ignoreExpiry: true });
+      if (cached && Array.isArray(cached.notifications) && cached.notifications.length > 0) {
+        notifications = cached.notifications;
+        totalCount = cached.totalCount || notifications.length;
+        isHydrated = true;
+        emitChange();
+      }
+    } catch (err) {
+      console.warn("Failed to read notifications cache:", err);
+    }
+  }
+
   setLoadingState(true);
 
   try {
@@ -97,7 +119,9 @@ export async function ensureNotificationsLoaded({ force = false } = {}) {
     emitChange();
   } catch (error) {
     setLastError(error);
-    throw error;
+    if (!isHydrated) {
+      throw error;
+    }
   } finally {
     setLoadingState(false);
   }

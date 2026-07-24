@@ -111,14 +111,20 @@ export default function IssueReportForm({
   const getDetailedAddressFromCoords = async (lat, lon) => {
     // 1. Try Nominatim API first for precise Philippines Barangay & street names
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
         {
           headers: {
             "User-Agent": "CitiSent-Mobile/1.0 (Location reverse geocode)",
           },
+          signal: controller.signal,
         }
       );
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const data = await response.json();
         if (data && data.address) {
@@ -161,8 +167,9 @@ export default function IssueReportForm({
           }
         }
       }
-    } catch (err) {
-      console.warn("Nominatim reverse geocode error:", err);
+    } catch {
+      // Silently fall through: network errors (e.g., emulator restrictions,
+      // no internet, Nominatim unavailable) are expected and handled by fallback.
     }
 
     // 2. Fallback to Expo Location reverseGeocodeAsync
@@ -194,12 +201,13 @@ export default function IssueReportForm({
           return uniqueParts.join(", ");
         }
       }
-    } catch (err) {
-      console.warn("Expo reverse geocode error:", err);
+    } catch {
+      // Silently fall through: Google geocoding may be unavailable on emulators.
     }
 
     return "Sto. Tomas City, Batangas";
   };
+
 
   const handleUseCurrentLocation = async () => {
     setLoadingGps(true);

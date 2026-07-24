@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Colors } from "../../modules/shared";
 import { discussionService } from "../../services/discussionService";
+import { getAuthUser } from "../../services/authSession";
 
 function formatMessageTime(isoString) {
   if (!isoString) return "";
@@ -30,6 +31,8 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollViewRef = useRef(null);
+  const currentUser = getAuthUser();
+  const currentUserId = currentUser?.id ?? null;
 
   useEffect(() => {
     if (visible && report?.id) {
@@ -44,7 +47,7 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
   const loadMessages = async () => {
     setLoading(true);
     try {
-      const data = await discussionService.getDiscussion(report.id);
+      const data = await discussionService.getDiscussion(report.id, currentUserId);
       setMessages(data);
     } catch (err) {
       console.warn("Failed to load messages:", err);
@@ -83,7 +86,8 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 100);
-        }
+        },
+        currentUserId
       );
       setMessages(updatedMessages);
       setInputText("");

@@ -108,6 +108,99 @@ export default function IssueReportForm({
     setSuggestions([]);
   };
 
+  const getDetailedAddressFromCoords = async (lat, lon) => {
+    // 1. Try Nominatim API first for precise Philippines Barangay & street names
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
+        {
+          headers: {
+            "User-Agent": "CitiSent-Mobile/1.0 (Location reverse geocode)",
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.address) {
+          const addr = data.address;
+          const mainName =
+            data.name ||
+            addr.amenity ||
+            addr.building ||
+            addr.shop ||
+            addr.tourism ||
+            "";
+          const road = addr.road && addr.road !== mainName ? addr.road : "";
+          const barangay =
+            addr.village ||
+            addr.suburb ||
+            addr.quarter ||
+            addr.neighbourhood ||
+            addr.hamlet ||
+            addr.district ||
+            "";
+          const city = addr.city || addr.town || addr.municipality || "Sto. Tomas";
+          const province = addr.province || addr.state || "Batangas";
+
+          const parts = [];
+          if (mainName) parts.push(mainName);
+          if (road) parts.push(road);
+          if (barangay) {
+            const brgyText =
+              barangay.toLowerCase().includes("barangay") ||
+              barangay.toLowerCase().includes("brgy")
+                ? barangay
+                : `Brgy. ${barangay}`;
+            if (!parts.includes(brgyText)) parts.push(brgyText);
+          }
+          if (city && !parts.includes(city)) parts.push(city);
+          if (province && !parts.includes(province)) parts.push(province);
+
+          if (parts.length > 0) {
+            return parts.join(", ");
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Nominatim reverse geocode error:", err);
+    }
+
+    // 2. Fallback to Expo Location reverseGeocodeAsync
+    try {
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: lat,
+        longitude: lon,
+      });
+
+      if (reverseGeocode && reverseGeocode.length > 0) {
+        const place = reverseGeocode[0];
+        const parts = [];
+        if (place.name && place.name !== place.street && !/^\+?\d+$/.test(place.name)) {
+          parts.push(place.name);
+        }
+        if (place.street) {
+          parts.push(place.street);
+        }
+        const barangayOrDistrict = place.district || place.subregion;
+        if (barangayOrDistrict && barangayOrDistrict !== place.city) {
+          parts.push(barangayOrDistrict);
+        }
+        if (place.city) {
+          parts.push(place.city);
+        }
+
+        const uniqueParts = Array.from(new Set(parts.filter(Boolean)));
+        if (uniqueParts.length > 0) {
+          return uniqueParts.join(", ");
+        }
+      }
+    } catch (err) {
+      console.warn("Expo reverse geocode error:", err);
+    }
+
+    return "Sto. Tomas City, Batangas";
+  };
+
   const handleUseCurrentLocation = async () => {
     setLoadingGps(true);
     setValidationError("");
@@ -119,9 +212,30 @@ export default function IssueReportForm({
         return;
       }
 
-      const locationResult = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      let locationResult = null;
+
+      // Attempt 1: Get current position with highest hardware accuracy
+      try {
+        locationResult = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest,
+        });
+      } catch {
+        // Attempt 2: Fall back to High accuracy if Highest times out or fails
+        try {
+          locationResult = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+        } catch {
+          // Attempt 3: Fall back to last known position if active GPS lock fails
+          locationResult = await Location.getLastKnownPositionAsync();
+        }
+      }
+
+      if (!locationResult || !locationResult.coords) {
+        setValidationError("Could not acquire GPS coordinates. Please check your device location settings.");
+        setLoadingGps(false);
+        return;
+      }
 
       const { latitude: lat, longitude: lon } = locationResult.coords;
 
@@ -131,24 +245,7 @@ export default function IssueReportForm({
         return;
       }
 
-      // Reverse geocode to get a readable address name
-      const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude: lat,
-        longitude: lon,
-      });
-
-      let address = "Sto. Tomas City, Batangas";
-      if (reverseGeocode && reverseGeocode.length > 0) {
-        const place = reverseGeocode[0];
-        const parts = [
-          place.name,
-          place.street,
-          place.district || place.subregion,
-          place.city || place.subregion,
-        ].filter(Boolean);
-        address = parts.join(", ") || address;
-      }
-
+      const address = await getDetailedAddressFromCoords(lat, lon);
       onLocationSelected(address, lat, lon);
     } catch (error) {
       console.error("GPS error:", error);

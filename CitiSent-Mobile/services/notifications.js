@@ -52,6 +52,15 @@ function mapBackendNotificationToUi(notification, index) {
   }
 
   const createdAt = notification.createdAt || notification.created_at;
+  const reportId = notification.reportId || notification.report_id || null;
+
+  // Backend uses 'metadata'; some legacy notifications may use 'meta'
+  const rawMeta = notification.metadata || notification.meta || null;
+  const meta = rawMeta
+    ? { reportId, ...rawMeta }
+    : reportId
+    ? { reportId }
+    : null;
 
   return {
     id: notification.id || `notif-${index + 1}`,
@@ -63,8 +72,8 @@ function mapBackendNotificationToUi(notification, index) {
     timeLabel: formatRelativeTime(createdAt),
     createdAt: createdAt || null,
     read: Boolean(notification.read ?? notification.is_read),
-    reportId: notification.reportId || notification.report_id || null,
-    meta: notification.meta || null,
+    reportId,
+    meta,
   };
 }
 

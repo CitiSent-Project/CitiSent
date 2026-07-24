@@ -99,10 +99,15 @@ export const reportMessagesService = {
         accessToken,
         userId: recipient.user_id,
         type: "message",
-        title: "New report message",
+        title: "Admin replied to your report",
         message: normalizedMessage,
         reportId,
-        metadata: { senderId: actor.id },
+        metadata: {
+          senderId: actor.id,
+          reportId,
+          issueType: access.report?.issue_type || null,
+          reportDescription: access.report?.description || null,
+        },
       });
     }
 

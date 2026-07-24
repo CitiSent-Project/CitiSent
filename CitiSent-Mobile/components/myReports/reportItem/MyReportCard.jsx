@@ -9,7 +9,7 @@ function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>{text}</Text>;
 }
 
-export default function MyReportCard({ report, containerClassName = "mb-4", onDelete, onOpenDiscussion }) {
+export default function MyReportCard({ report, containerClassName = "mb-4", onDelete, onOpenDiscussion, unreadCount = 0 }) {
   const handleDelete = () => {
     Alert.alert(
       "Delete Report",
@@ -55,15 +55,27 @@ export default function MyReportCard({ report, containerClassName = "mb-4", onDe
 
         <View className="flex-row items-center gap-2">
           {onOpenDiscussion && (
-            <Pressable
-              onPress={() => onOpenDiscussion(report)}
-              className="flex-row items-center rounded-lg px-2.5 py-1.5 bg-blue-50 border border-blue-200 active:bg-blue-100"
-            >
-              <Ionicons name="chatbubbles-outline" size={14} color={Colors.primaryStrong} />
-              <Text className="ml-1 text-xs font-bold" style={{ color: Colors.primaryStrong }}>
-                Chat with Admin
-              </Text>
-            </Pressable>
+            <View>
+              <Pressable
+                onPress={() => onOpenDiscussion(report)}
+                className="flex-row items-center rounded-lg px-2.5 py-1.5 bg-blue-50 border border-blue-200 active:bg-blue-100"
+              >
+                <Ionicons name="chatbubbles-outline" size={14} color={Colors.primaryStrong} />
+                <Text className="ml-1 text-xs font-bold" style={{ color: Colors.primaryStrong }}>
+                  Chat with Admin
+                </Text>
+              </Pressable>
+              {unreadCount > 0 && (
+                <View
+                  className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full items-center justify-center px-1"
+                  style={{ backgroundColor: Colors.error }}
+                >
+                  <Text className="text-white font-bold" style={{ fontSize: 9, lineHeight: 12 }}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           )}
 
           {onDelete && (

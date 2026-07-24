@@ -10,6 +10,7 @@ import {
   updateReportSchema,
 } from "./reports.schema.js";
 import { reportsController } from "./reports.controller.js";
+import { reportMessagesRouter } from "./messages.route.js";
 
 const reportsRouter = Router();
 
@@ -53,5 +54,7 @@ reportsRouter.delete(
   validateRequest(deleteReportSchema),
   asyncHandler(reportsController.remove),
 );
+
+reportsRouter.use("/:reportId/messages", reportMessagesRouter);
 
 export { reportsRouter };

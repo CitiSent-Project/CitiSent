@@ -87,3 +87,25 @@ export function mapUiStatusToBackendStatus(status) {
 
   return 'pending'
 }
+
+export function mapBackendMessageToUi(payload = {}) {
+  const sender = payload.sender || {}
+  return {
+    id: payload.id || '',
+    senderId: payload.senderId || sender.id || '',
+    senderName: payload.senderName || sender.fullName || sender.name || 'User',
+    senderRole: String(payload.senderRole || payload.role || 'citizen').toLowerCase(),
+    content: payload.content || payload.message || '',
+    createdAt: payload.createdAt || payload.timestamp || '',
+    isRead: Boolean(payload.isRead ?? payload.read),
+    readAt: payload.readAt || null,
+  }
+}
+
+export function mapBackendMessagesResponse(response) {
+  const payload = Array.isArray(response) ? response : response?.data || []
+  const rows = Array.isArray(payload) ? payload : [payload]
+  return rows.map(mapBackendMessageToUi).sort((a, b) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+}

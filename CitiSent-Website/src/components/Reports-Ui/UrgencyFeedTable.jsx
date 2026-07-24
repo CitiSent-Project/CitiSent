@@ -66,7 +66,7 @@ function TableLegend() {
         {/* Emotion Legend */}
         <div>
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Emotion Level
+            Emotion Status
           </p>
           <div className="flex flex-wrap gap-2">
             {EMOTION_LEGEND.map((item) => (

@@ -3,8 +3,8 @@ import { MY_REPORTS } from "../constants/myReportsData";
 import { api } from "./api";
 import { getAuthToken } from "./authSession";
 import { runtimeFlags } from "./runtimeFlags";
-
 import { getSupabaseClient } from "./supabase";
+import { setCache, getCache } from "./cache";
 
 const reportedFallbackWarnings = new Set();
 const TEMP_TOKEN_PREFIX = "temp-";
@@ -165,7 +165,7 @@ export const reportsApi = {
     const response = await fetch(imageUri);
     const arrayBuffer = await response.arrayBuffer();
 
-    const { error, data } = await supabase.storage
+    const { error } = await supabase.storage
       .from("attachments")
       .upload(`public/${fileName}`, arrayBuffer, {
         cacheControl: "3600",
@@ -208,7 +208,6 @@ export const reportsApi = {
     description,
     attachmentUrl,
   }) => {
-    // Only include attachmentUrl if it's a valid, non-empty URL
     const payload = {
       issueType,
       location,
@@ -224,6 +223,8 @@ export const reportsApi = {
     return api.post("/reports", payload);
   },
   getMyReports: async (limit = 10, offset = 0, statusFilter = "all") => {
+    const cacheKey = `my_reports_${limit}_${offset}_${statusFilter}`;
+
     if (shouldUseLocalReportsData()) {
       return { data: MY_REPORTS, total: MY_REPORTS.length };
     }
@@ -244,12 +245,15 @@ export const reportsApi = {
       const mappedReports = toMyReportsPayload(response);
       const total = response?.pagination?.total ?? response?.total ?? mappedReports.length;
 
-      return {
-        data: mappedReports,
-        total,
-      };
+      const result = { data: mappedReports, total };
+      setCache(cacheKey, result, 300); // cache for 5 minutes
+      return result;
     } catch (error) {
-      warnFallbackOnce("Falling back to local my reports data:", error);
+      warnFallbackOnce("Falling back to cached or local my reports data:", error);
+      const cached = await getCache(cacheKey, { ignoreExpiry: true });
+      if (cached) {
+        return cached;
+      }
       if (!runtimeFlags.allowLocalReportsFallback) {
         throw error;
       }
@@ -258,6 +262,8 @@ export const reportsApi = {
   },
 
   getMyReportCounts: async () => {
+    const cacheKey = "my_report_counts";
+
     if (shouldUseLocalReportsData()) {
       return {
         pending: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Pending").length,
@@ -270,19 +276,27 @@ export const reportsApi = {
     try {
       const response = await api.get("/reports/counts");
       const counts = response.data || {};
-      return {
+      const result = {
         pending: counts.pending || 0,
         inProgress: counts.in_review || 0,
         completed: counts.resolved || 0,
         unresolved: counts.rejected || 0,
       };
+      setCache(cacheKey, result, 300);
+      return result;
     } catch (error) {
-      warnFallbackOnce("Falling back to local counts data:", error);
+      warnFallbackOnce("Falling back to cached or local counts data:", error);
+      const cached = await getCache(cacheKey, { ignoreExpiry: true });
+      if (cached) {
+        return cached;
+      }
       return { pending: 0, inProgress: 0, completed: 0, unresolved: 0 };
     }
   },
 
   getLatestHomeReport: async () => {
+    const cacheKey = "latest_home_report";
+
     if (shouldUseLocalReportsData()) {
       return LATEST_HOME_REPORT;
     }
@@ -291,10 +305,15 @@ export const reportsApi = {
       const response = await api.get("/reports?limit=1&offset=0");
       const latestReport = toMyReportsPayload(response)[0] || null;
       const mappedLatestHomeReport = toLatestHomeReport(latestReport);
-
-      return mappedLatestHomeReport || LATEST_HOME_REPORT;
+      const result = mappedLatestHomeReport || LATEST_HOME_REPORT;
+      setCache(cacheKey, result, 300);
+      return result;
     } catch (error) {
-      warnFallbackOnce("Falling back to local home report data:", error);
+      warnFallbackOnce("Falling back to cached or local home report data:", error);
+      const cached = await getCache(cacheKey, { ignoreExpiry: true });
+      if (cached) {
+        return cached;
+      }
       if (!runtimeFlags.allowLocalReportsFallback) {
         throw error;
       }

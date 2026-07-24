@@ -1,5 +1,9 @@
+import { setCache, getCache, removeCache, clearAllCache } from "./cache";
+
 let sessionToken = "";
 let sessionUser = null;
+let isInitialized = false;
+
 const reservedRoleLabels = new Set([
   "citizen",
   "admin",
@@ -98,8 +102,28 @@ function normalizeUser(user, options = {}) {
   };
 }
 
+export async function initAuthSession() {
+  if (isInitialized) return { token: sessionToken, user: sessionUser };
+  try {
+    const token = await getCache("auth_token", { ignoreExpiry: true });
+    const user = await getCache("auth_user", { ignoreExpiry: true });
+    if (token) sessionToken = token;
+    if (user) sessionUser = user;
+  } catch (err) {
+    console.warn("Failed to initialize auth session from storage:", err);
+  } finally {
+    isInitialized = true;
+  }
+  return { token: sessionToken, user: sessionUser };
+}
+
 export function setAuthToken(token) {
   sessionToken = normalizeToken(token);
+  if (sessionToken) {
+    setCache("auth_token", sessionToken);
+  } else {
+    removeCache("auth_token");
+  }
 }
 
 export function getAuthToken() {
@@ -108,6 +132,11 @@ export function getAuthToken() {
 
 export function setAuthUser(user, options = {}) {
   sessionUser = normalizeUser(user, options);
+  if (sessionUser) {
+    setCache("auth_user", sessionUser);
+  } else {
+    removeCache("auth_user");
+  }
 }
 
 export function getAuthUser() {
@@ -135,4 +164,5 @@ export function getAuthPhoneNumber(fallbackValue = "") {
 export function clearAuthToken() {
   sessionToken = "";
   sessionUser = null;
+  clearAllCache();
 }

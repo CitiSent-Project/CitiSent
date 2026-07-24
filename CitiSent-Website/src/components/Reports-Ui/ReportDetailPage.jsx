@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
@@ -13,6 +13,10 @@ import {
   validateReportStatusChange,
 } from '../../controllers/reportStatusController'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
+import { ReportChatDrawer } from './ReportChatDrawer'
+import { loadFromStorageWithSchema } from '../../services/storageService'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
+import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
 const STATUS_ICONS = {
   Pending: FiClock,
@@ -29,6 +33,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
   const [isSaving, setIsSaving] = useState(false)
   const [isCooldown, setIsCooldown] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const cooldownTimerRef = useRef(null)
   const [timeline, setTimeline] = useState(() => [
     {
@@ -69,10 +74,13 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
 
   const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
-  
+
   // A report marked as Unresolved or Resolved is permanently locked.
   const isPermanentlyLocked = currentStatus === 'Unresolved' || currentStatus === 'Resolved'
   const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
+  const canChat = canAdminUpdateReport({ profile, report })
+  const accessTokenRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+  const accessToken = loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', accessTokenRule)
   const isSaveDisabled =
     !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
 
@@ -148,7 +156,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
       setAdminNotes('')
       setSelectedStatus(validation.nextStatus)
-      
+
       // Clear modal state on success
       setIsVerificationModalOpen(false)
       setPendingValidation(null)
@@ -227,7 +235,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <p className="mt-0.5 text-slate-900">{report.source}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Emotion Level</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Emotion Status</p>
               <p className="mt-0.5">
                 <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30'}`}>
                   {report.emotionLevel || 'Neutral'}
@@ -246,7 +254,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <p className="text-xs uppercase tracking-wide text-slate-500">Message</p>
               <p className="mt-0.5 leading-relaxed text-slate-900">{report.message}</p>
             </div>
-            
+
             {/* Display the attachment button only if an image is provided */}
             {report.attachmentUrl ? (
               <div>
@@ -282,7 +290,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <p className="mb-3 text-sm text-slate-500">
             Update the status of this report. Adding notes is required when resolving or marking as unresolved.
           </p>
-          
+
           {!canProcessReport && !isPermanentlyLocked ? (
             <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               You can view this report, but only admins assigned to this department can change its status.
@@ -316,10 +324,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                 <label
                   key={status}
                   className={`shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${!canProcessReport
-                      ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                      : isSelected
-                        ? 'border-blue-500 bg-blue-50 text-blue-900'
-                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                    : isSelected
+                      ? 'border-blue-500 bg-blue-50 text-blue-900'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                 >
                   <input
@@ -339,19 +347,24 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             })}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleStatusSave}
               disabled={isSaveDisabled}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isSaveDisabled
-                  ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
-                  : 'bg-blue-700 text-white hover:bg-blue-600'
+              className={`inline-flex min-w-30 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isSaveDisabled
+                ? 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                : 'bg-blue-700 text-white hover:bg-blue-600'
                 }`}
             >
               {isSaving ? 'Saving...' : 'Save Status'}
             </button>
+
+            {canChat ? <button type="button" onClick={() => setIsChatOpen(true)} className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a]"><FiMessageCircle /> Talk to User</button> : null}
           </div>
+
+          
+
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -389,13 +402,13 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
         Only renders when the state is true AND an attachment URL exists.
       */}
       {isImageModalOpen && report.attachmentUrl ? (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity"
           onClick={() => setIsImageModalOpen(false)} // Clicking backdrop closes modal
           aria-modal="true"
           role="dialog"
         >
-          <div 
+          <div
             className="relative max-h-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()} // Prevent clicks on the image from closing the modal
           >
@@ -406,10 +419,10 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             >
               <FiX className="text-xl" />
             </button>
-            <img 
-              src={report.attachmentUrl} 
-              alt="Attached report evidence" 
-              className="max-h-[85vh] w-auto object-contain" 
+            <img
+              src={report.attachmentUrl}
+              alt="Attached report evidence"
+              className="max-h-[85vh] w-auto object-contain"
             />
           </div>
         </div>
@@ -420,51 +433,51 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
         Renders when the admin attempts to save the Unresolved or Resolved status.
       */}
       {isVerificationModalOpen && pendingValidation ? (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity"
           aria-modal="true"
           role="dialog"
         >
           <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-2xl text-center">
-             <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${pendingValidation.nextStatus === 'Resolved' ? 'bg-green-100' : 'bg-red-100'}`}>
-               {pendingValidation.nextStatus === 'Resolved' ? (
-                 <FiCheckCircle className="text-2xl text-green-600" />
-               ) : (
-                 <FiAlertTriangle className="text-2xl text-red-600" />
-               )}
-             </div>
-             <h3 className="mb-2 text-lg font-bold text-slate-900">Mark as {pendingValidation.nextStatus}?</h3>
-             <p className="mb-6 text-sm text-slate-500">
-               Are you sure you want to mark this report as {pendingValidation.nextStatus}? This action is irreversible and will permanently lock the report from further updates.
-             </p>
-             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-               <button
-                 type="button"
-                 onClick={() => {
-                   setIsVerificationModalOpen(false)
-                   setPendingValidation(null)
-                 }}
-                 disabled={isSaving}
-                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-               >
-                 Cancel
-               </button>
-               <button
-                 type="button"
-                 onClick={() => executeStatusSave(pendingValidation)}
-                 disabled={isSaving}
-                 className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                   pendingValidation.nextStatus === 'Resolved' 
-                     ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' 
-                     : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                 }`}
-               >
-                 {isSaving ? 'Processing...' : 'Confirm & Lock Report'}
-               </button>
-             </div>
+            <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${pendingValidation.nextStatus === 'Resolved' ? 'bg-green-100' : 'bg-red-100'}`}>
+              {pendingValidation.nextStatus === 'Resolved' ? (
+                <FiCheckCircle className="text-2xl text-green-600" />
+              ) : (
+                <FiAlertTriangle className="text-2xl text-red-600" />
+              )}
+            </div>
+            <h3 className="mb-2 text-lg font-bold text-slate-900">Mark as {pendingValidation.nextStatus}?</h3>
+            <p className="mb-6 text-sm text-slate-500">
+              Are you sure you want to mark this report as {pendingValidation.nextStatus}? This action is irreversible and will permanently lock the report from further updates.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsVerificationModalOpen(false)
+                  setPendingValidation(null)
+                }}
+                disabled={isSaving}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => executeStatusSave(pendingValidation)}
+                disabled={isSaving}
+                className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${pendingValidation.nextStatus === 'Resolved'
+                    ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                    : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                  }`}
+              >
+                {isSaving ? 'Processing...' : 'Confirm & Lock Report'}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
+      {isChatOpen ? <ReportChatDrawer report={report} profile={profile} token={accessToken} onClose={() => setIsChatOpen(false)} /> : null}
     </main>
   )
 }

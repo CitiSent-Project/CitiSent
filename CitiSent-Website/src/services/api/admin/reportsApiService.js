@@ -27,4 +27,10 @@ export const reportsApiService = {
     apiClient.patch(`/admin/reports/${reportId}`, payload, {
       token,
     }),
+  listReportMessages: (token, reportId, options = {}) =>
+    apiClient.get(`/reports/${reportId}/messages`, { token, signal: options.signal }),
+  sendReportMessage: (token, reportId, content) =>
+    apiClient.post(`/reports/${reportId}/messages`, { message: content }, { token }),
+  markReportMessagesRead: (token, reportId) =>
+    apiClient.patch(`/reports/${reportId}/messages/read`, {}, { token }),
 }

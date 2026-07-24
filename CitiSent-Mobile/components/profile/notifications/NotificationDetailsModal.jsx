@@ -11,6 +11,7 @@ export default function NotificationDetailsModal({ visible, notification, onClos
     status: "checkmark-done-circle-outline",
     account: "person-circle-outline",
     alert: "warning-outline",
+    message: "chatbubble-ellipses-outline",
   };
 
   const iconName = iconByType[notification.type] || "notifications-outline";
@@ -46,7 +47,66 @@ export default function NotificationDetailsModal({ visible, notification, onClos
               {notification.timeLabel}
             </Text>
 
-            {notification.meta && notification.meta.status ? (
+            {notification.type === "message" ? (
+              <View className="mb-4">
+                {/* Report context card */}
+                {(notification.meta?.issueType || notification.meta?.reportId) && (
+                  <View
+                    className="rounded-xl border px-4 py-3 mb-3"
+                    style={{ backgroundColor: Colors.ui.infoSurface, borderColor: Colors.ui.infoSurfaceBorder }}
+                  >
+                    <Text className="text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: Colors.text.infoHeading }}>
+                      Report
+                    </Text>
+                    {notification.meta?.issueType && (
+                      <Text className="text-sm font-extrabold mb-0.5" style={{ color: Colors.text.issueType }}>
+                        {notification.meta.issueType}
+                      </Text>
+                    )}
+                    {notification.meta?.reportDescription && (
+                      <Text className="text-xs leading-5 mb-1" style={{ color: Colors.text.bodySoft }} numberOfLines={2}>
+                        {notification.meta.reportDescription}
+                      </Text>
+                    )}
+                    {notification.meta?.reportId && (
+                      <Text className="text-xs font-semibold mt-1" style={{ color: Colors.text.secondary }}>
+                        Ref: #{String(notification.meta.reportId).slice(-8).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* Admin reply bubble */}
+                <View className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <View className="flex-row items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                    <View
+                      className="h-8 w-8 items-center justify-center rounded-full"
+                      style={{ backgroundColor: Colors.ui.infoSurfaceBorder }}
+                    >
+                      <Ionicons name="shield-checkmark" size={16} color={Colors.primaryStrong} />
+                    </View>
+                    <View>
+                      <Text className="text-sm font-bold" style={{ color: Colors.text.heading }}>Admin replied</Text>
+                      <Text className="text-xs" style={{ color: Colors.text.secondary }}>{notification.timeLabel}</Text>
+                    </View>
+                  </View>
+
+                  {/* Admin message in a chat bubble style */}
+                  <View className="rounded-xl px-4 py-3" style={{ backgroundColor: Colors.background }}>
+                    <Text className="text-sm leading-6" style={{ color: Colors.text.bodyStrong }}>
+                      {notification.message}
+                    </Text>
+                  </View>
+
+                  <View className="flex-row items-center gap-1.5 mt-3">
+                    <Ionicons name="chatbubbles-outline" size={13} color={Colors.primaryStrong} />
+                    <Text className="text-xs flex-1" style={{ color: Colors.text.secondary }}>
+                      Go to <Text className="font-bold" style={{ color: Colors.primaryStrong }}>Manage Reports</Text> → <Text className="font-bold" style={{ color: Colors.primaryStrong }}>Chat with Admin</Text> to reply.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : notification.meta && notification.meta.status ? (
               <View className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm mb-4">
                 <View className="flex-row items-center justify-between mb-3 border-b border-slate-100 pb-3">
                   <Text className="text-sm font-bold" style={{ color: Colors.text.heading }}>

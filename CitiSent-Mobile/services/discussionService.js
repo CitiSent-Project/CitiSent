@@ -3,10 +3,15 @@ import { getAuthToken } from "./authSession";
 import { getCache, setCache } from "./cache";
 
 const CACHE_KEY_PREFIX = "report_discussion_";
+const LAST_SEEN_KEY_PREFIX = "report_last_seen_";
 const CACHE_TTL = 60 * 5; // 5 minutes
 
 function cacheKey(reportId) {
   return `${CACHE_KEY_PREFIX}${reportId}`;
+}
+
+function lastSeenKey(reportId) {
+  return `${LAST_SEEN_KEY_PREFIX}${reportId}`;
 }
 
 /**
@@ -58,7 +63,7 @@ export const discussionService = {
       return cached;
     }
 
-    // Absolute fallback: seed message
+    // Absolute fallback: seed message (mark as already seen so it doesn't trigger badge)
     const seed = [
       {
         id: `msg-init-${reportId}`,
@@ -66,7 +71,7 @@ export const discussionService = {
         senderName: "City Admin",
         message: "Thank you for submitting your report. Our team is currently reviewing your submission.",
         attachmentUri: null,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(0).toISOString(), // epoch — always "old"
         isRead: false,
       },
     ];
@@ -121,5 +126,55 @@ export const discussionService = {
     }
 
     return optimisticThread;
+  },
+
+  /**
+   * Count how many admin messages arrived AFTER the last time the user
+   * opened this conversation. Uses a locally stored "last seen" timestamp
+   * so even offline/local messages are tracked correctly.
+   */
+  getUnreadCount: async (reportId, currentUserId = null) => {
+    if (!reportId) return 0;
+    try {
+      const [messages, lastSeenTs] = await Promise.all([
+        discussionService.getDiscussion(reportId, currentUserId),
+        getCache(lastSeenKey(reportId), { ignoreExpiry: true }),
+      ]);
+
+      // If the user has never opened the chat, treat all messages as read
+      // (avoids badge spam on first load for old reports)
+      if (!lastSeenTs) return 0;
+
+      const lastSeenTime = new Date(lastSeenTs).getTime();
+
+      return messages.filter((m) => {
+        if (m.senderRole === "citizen") return false; // own messages never count
+        const msgTime = new Date(m.createdAt).getTime();
+        return msgTime > lastSeenTime;
+      }).length;
+    } catch {
+      return 0;
+    }
+  },
+
+  /**
+   * Record the moment the user opened a conversation so future unread
+   * counts only include messages that arrived AFTER this timestamp.
+   * Also tells the backend to mark the conversation as read.
+   */
+  markAsRead: async (reportId) => {
+    if (!reportId) return;
+
+    // Save timestamp locally — this is the source of truth for the badge
+    await setCache(lastSeenKey(reportId), new Date().toISOString(), 86400 * 365);
+
+    // Best-effort server sync
+    if (isAuthAvailable()) {
+      try {
+        await api.patch(`/reports/${reportId}/messages/read`, {});
+      } catch {
+        // Non-critical — silently ignore
+      }
+    }
   },
 };

@@ -7,6 +7,8 @@ import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
 import FeedbackModal from "../../components/ui/FeedbackModal";
 import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
+import { discussionService } from "../../services/discussionService";
+import { getAuthUser } from "../../services/authSession";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -25,6 +27,7 @@ export default function ReportsMadePage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
   const [discussionReport, setDiscussionReport] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState({});
   
   // Feedback modal state
   const [feedback, setFeedback] = useState({ visible: false, type: "info", title: "", message: "" });
@@ -61,6 +64,29 @@ export default function ReportsMadePage() {
   }, [reports]);
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
+
+  // Fetch unread message counts for all reports when the list changes
+  useEffect(() => {
+    if (!reports.length) return;
+    const currentUser = getAuthUser();
+    const currentUserId = currentUser?.id ?? null;
+    let cancelled = false;
+
+    async function fetchUnreadCounts() {
+      const entries = await Promise.all(
+        reports.map(async (report) => {
+          const count = await discussionService.getUnreadCount(report.id, currentUserId);
+          return [report.id, count];
+        })
+      );
+      if (!cancelled) {
+        setUnreadCounts(Object.fromEntries(entries));
+      }
+    }
+
+    fetchUnreadCounts();
+    return () => { cancelled = true; };
+  }, [reports]);
 
   // When saving, close the edit modal and perform api call
   const handleSaveReport = async (updatedData) => {
@@ -144,7 +170,13 @@ export default function ReportsMadePage() {
               <MyReportCard
                 report={report}
                 containerClassName="mb-2"
-                onOpenDiscussion={(rep) => setDiscussionReport(rep)}
+                unreadCount={unreadCounts[report.id] || 0}
+                onOpenDiscussion={(rep) => {
+                  setDiscussionReport(rep);
+                  // Clear badge immediately, then mark as read on server
+                  setUnreadCounts((prev) => ({ ...prev, [rep.id]: 0 }));
+                  discussionService.markAsRead(rep.id);
+                }}
               />
               <View className="mb-4 flex-row justify-end">
                 {normalizeStatus(report.status) === "pending" ? (

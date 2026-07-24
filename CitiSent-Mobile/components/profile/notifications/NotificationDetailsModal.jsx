@@ -50,15 +50,15 @@ export default function NotificationDetailsModal({ visible, notification, onClos
               <View className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm mb-4">
                 <View className="flex-row items-center justify-between mb-3 border-b border-slate-100 pb-3">
                   <Text className="text-sm font-bold" style={{ color: Colors.text.heading }}>
-                    Status
+                    Report Status
                   </Text>
                   <View 
                     className="rounded-full px-3 py-1" 
                     style={{ 
                       backgroundColor: notification.meta.status.toLowerCase() === "resolved" 
-                        ? Colors.ui.successSurface 
+                        ? Colors.ui.successSoft 
                         : notification.meta.status.toLowerCase() === "unresolved"
-                        ? Colors.ui.dangerSurface
+                        ? Colors.ui.dangerSoft
                         : Colors.ui.infoSurface 
                     }}
                   >
@@ -66,10 +66,10 @@ export default function NotificationDetailsModal({ visible, notification, onClos
                       className="text-xs font-bold"
                       style={{ 
                         color: notification.meta.status.toLowerCase() === "resolved" 
-                          ? Colors.ui.successText 
+                          ? Colors.text.statusComplete 
                           : notification.meta.status.toLowerCase() === "unresolved"
-                          ? Colors.ui.dangerText
-                          : Colors.primaryStrong 
+                          ? Colors.text.statusUnresolved
+                          : Colors.text.statusProgress 
                       }}
                     >
                       {notification.meta.status}

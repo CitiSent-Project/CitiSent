@@ -6,6 +6,7 @@ import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
 import FeedbackModal from "../../components/ui/FeedbackModal";
+import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -23,6 +24,7 @@ export default function ReportsMadePage() {
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
+  const [discussionReport, setDiscussionReport] = useState(null);
   
   // Feedback modal state
   const [feedback, setFeedback] = useState({ visible: false, type: "info", title: "", message: "" });
@@ -139,7 +141,11 @@ export default function ReportsMadePage() {
         <>
           {reports.map((report) => (
             <View key={report.id}>
-              <MyReportCard report={report} containerClassName="mb-2" />
+              <MyReportCard
+                report={report}
+                containerClassName="mb-2"
+                onOpenDiscussion={(rep) => setDiscussionReport(rep)}
+              />
               <View className="mb-4 flex-row justify-end">
                 {normalizeStatus(report.status) === "pending" ? (
                   <Pressable
@@ -197,6 +203,12 @@ export default function ReportsMadePage() {
         report={editingReport}
         onClose={() => setEditingReportId(null)}
         onSave={handleSaveReport}
+      />
+
+      <ReportDiscussionModal
+        visible={Boolean(discussionReport)}
+        report={discussionReport}
+        onClose={() => setDiscussionReport(null)}
       />
 
       <FeedbackModal

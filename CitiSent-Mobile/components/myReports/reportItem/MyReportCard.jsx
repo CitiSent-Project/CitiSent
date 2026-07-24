@@ -9,7 +9,7 @@ function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>{text}</Text>;
 }
 
-export default function MyReportCard({ report, containerClassName = "mb-4", onDelete }) {
+export default function MyReportCard({ report, containerClassName = "mb-4", onDelete, onOpenDiscussion }) {
   const handleDelete = () => {
     Alert.alert(
       "Delete Report",
@@ -47,25 +47,40 @@ export default function MyReportCard({ report, containerClassName = "mb-4", onDe
 
       <ReportAttachmentPreview attachment={report.attachment} />
 
-      <View className="mt-3 flex-row items-center justify-between gap-1.5">
+      <View className="mt-3 flex-row items-center justify-between gap-1.5 border-t border-slate-100 pt-3">
         <View className="flex-row items-center gap-1.5">
           <Ionicons name="time-outline" size={13} color={Colors.text.secondary} />
           <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>{formatDateTime(report.createdAt)}</Text>
         </View>
-        {onDelete && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Delete report"
-            onPress={handleDelete}
-            className="ml-2 flex-row items-center rounded px-2 py-1"
-            style={{ backgroundColor: Colors.ui.errorSurface }}
-          >
-            <Ionicons name="trash-outline" size={16} color={Colors.error} />
-            <Text className="ml-1 text-xs font-semibold" style={{ color: Colors.error }}>
-              Delete
-            </Text>
-          </Pressable>
-        )}
+
+        <View className="flex-row items-center gap-2">
+          {onOpenDiscussion && (
+            <Pressable
+              onPress={() => onOpenDiscussion(report)}
+              className="flex-row items-center rounded-lg px-2.5 py-1.5 bg-blue-50 border border-blue-200 active:bg-blue-100"
+            >
+              <Ionicons name="chatbubbles-outline" size={14} color={Colors.primaryStrong} />
+              <Text className="ml-1 text-xs font-bold" style={{ color: Colors.primaryStrong }}>
+                Chat with Admin
+              </Text>
+            </Pressable>
+          )}
+
+          {onDelete && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Delete report"
+              onPress={handleDelete}
+              className="flex-row items-center rounded-lg px-2 py-1.5"
+              style={{ backgroundColor: Colors.ui.errorSurface }}
+            >
+              <Ionicons name="trash-outline" size={14} color={Colors.error} />
+              <Text className="ml-1 text-xs font-semibold" style={{ color: Colors.error }}>
+                Delete
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );

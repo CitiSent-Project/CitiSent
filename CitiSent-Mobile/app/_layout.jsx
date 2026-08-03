@@ -1,18 +1,40 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Stack } from "expo-router";
-import { View, useColorScheme } from "react-native";
+import { View, useColorScheme, AppState, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as SystemUI from "expo-system-ui";
 import { AnimatedSplashLayout } from "../modules/shared";
 import { initAuthSession } from "../services/authSession";
 import "../globals.css";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const appState = useRef(AppState.currentState);
   
   useEffect(() => {
     initAuthSession();
-  }, []);
+    
+    // Workaround for Android edge-to-edge mode not reapplying 
+    // the navigation bar settings when it resumes from the background.
+    if (Platform.OS === 'android') {
+      const bgColor = colorScheme === "dark" ? "#000000" : "#ffffff";
+      SystemUI.setBackgroundColorAsync(bgColor);
+      const subscription = AppState.addEventListener("change", (nextAppState) => {
+        if (
+          appState.current.match(/inactive|background/) &&
+          nextAppState === "active"
+        ) {
+          SystemUI.setBackgroundColorAsync(colorScheme === "dark" ? "#000000" : "#ffffff");
+        }
+        appState.current = nextAppState;
+      });
+
+      return () => {
+        subscription.remove();
+      };
+    }
+  }, [colorScheme]);
 
   return (
     <SafeAreaProvider>

@@ -6,13 +6,11 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import { Colors } from "../../modules/shared";
 import { discussionService } from "../../services/discussionService";
 import { getAuthUser } from "../../services/authSession";
@@ -27,7 +25,6 @@ function formatMessageTime(isoString) {
 export default function ReportDiscussionModal({ visible, report, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
-  const [attachedImage, setAttachedImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollViewRef = useRef(null);
@@ -40,7 +37,6 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
     } else {
       setMessages([]);
       setInputText("");
-      setAttachedImage(null);
     }
   }, [visible, report?.id]);
 
@@ -56,31 +52,15 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
     }
   };
 
-  const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setAttachedImage(result.assets[0].uri);
-      }
-    } catch (err) {
-      console.warn("Image picker error:", err);
-    }
-  };
-
   const handleSendMessage = async () => {
-    if (!inputText.trim() && !attachedImage) return;
+    if (!inputText.trim()) return;
 
     setSending(true);
     try {
       const updatedMessages = await discussionService.sendMessage(
         report.id,
         inputText,
-        attachedImage,
+        null,
         (adminUpdatedMessages) => {
           setMessages(adminUpdatedMessages);
           setTimeout(() => {
@@ -91,7 +71,6 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
       );
       setMessages(updatedMessages);
       setInputText("");
-      setAttachedImage(null);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -119,34 +98,34 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
           >
             <View className="flex-1 pr-2">
               <View className="flex-row items-center gap-2 mb-0.5">
-                <Ionicons name="chatbubbles" size={18} color={Colors.icon.primary} />
-                <Text className="text-base font-extrabold" style={{ color: Colors.text.inverse }}>
+                <Ionicons name="chatbubbles" size={20} color={Colors.icon.primary} />
+                <Text className="text-lg font-bold" style={{ color: Colors.text.inverse }}>
                   Admin Discussion
                 </Text>
               </View>
-              <Text className="text-xs font-medium" style={{ color: Colors.ui.heroSoft }}>
+              <Text className="text-xs font-semibold" style={{ color: Colors.ui.heroSoft }}>
                 Report Ref: #{String(report.id).slice(-8).toUpperCase()} • {report.issueType}
               </Text>
             </View>
 
             <Pressable
               onPress={onClose}
-              className="h-8 w-8 items-center justify-center rounded-full"
+              className="h-9 w-9 items-center justify-center rounded-full"
               style={{ backgroundColor: Colors.ui.headerAvatarDark }}
             >
-              <Ionicons name="close" size={20} color={Colors.icon.light} />
+              <Ionicons name="close" size={22} color={Colors.icon.light} />
             </Pressable>
           </View>
 
           {/* Report Details Brief Summary */}
-          <View className="border-b px-5 py-3" style={{ backgroundColor: Colors.surface, borderColor: Colors.borderLight }}>
-            <Text className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: Colors.text.secondary }}>
+          <View className="border-b px-5 py-3.5" style={{ backgroundColor: Colors.surface, borderColor: Colors.borderSoft }}>
+            <Text className="text-[10px] font-extrabold uppercase tracking-wider mb-1" style={{ color: Colors.text.secondary }}>
               Report Summary
             </Text>
             <Text className="text-xs font-bold" style={{ color: Colors.text.headingCard }} numberOfLines={1}>
               📍 {report.location}
             </Text>
-            <Text className="mt-0.5 text-xs" style={{ color: Colors.text.body }} numberOfLines={2}>
+            <Text className="mt-1 text-xs leading-4" style={{ color: Colors.text.body }} numberOfLines={2}>
               "{report.description}"
             </Text>
           </View>
@@ -174,19 +153,23 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
                   >
                     {isAdmin && (
                       <View className="mr-2 pt-1 items-center justify-start">
-                        <Ionicons name="person-circle" size={45} color={Colors.icon.primary} />
+                        <Ionicons name="person-circle" size={40} color={Colors.icon.primary} />
                       </View>
                     )}
 
                     <View 
-                      className="max-w-[85%] p-3.5 border rounded-xl"
+                      className={`max-w-[80%] p-3.5 border ${
+                        isAdmin 
+                          ? "rounded-2xl rounded-tl-none" 
+                          : "rounded-2xl rounded-tr-none"
+                      }`}
                       style={{ 
                         backgroundColor: isAdmin ? Colors.surface : Colors.primary,
-                        borderColor: isAdmin ? Colors.borderMuted : Colors.primaryStrong,
+                        borderColor: isAdmin ? Colors.borderSoft : Colors.primaryStrong,
                       }}
                     >
                       <Text 
-                        className="text-xs font-bold mb-1"
+                        className="text-[11px] font-bold mb-1"
                         style={{ color: isAdmin ? Colors.text.headingBrand : Colors.ui.heroSoft }}
                       >
                         {item.senderName}
@@ -201,16 +184,8 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
                         </Text>
                       ) : null}
 
-                      {item.attachmentUri && (
-                        <Image
-                          source={{ uri: item.attachmentUri }}
-                          className="mt-2 h-40 w-full"
-                          resizeMode="cover"
-                        />
-                      )}
-
                       <Text 
-                        className="mt-1.5 text-xs text-right"
+                        className="mt-1.5 text-[10px] text-right"
                         style={{ color: isAdmin ? Colors.text.secondary : Colors.ui.heroSoft }}
                       >
                         {formatMessageTime(item.createdAt)}
@@ -222,49 +197,35 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
             </ScrollView>
           )}
 
-          {/* Attached Image Preview Bar */}
-          {attachedImage && (
-            <View 
-              className="flex-row items-center border-t px-4 py-2"
-              style={{ backgroundColor: Colors.ui.neutralSoft, borderColor: Colors.borderMuted }}
-            >
-              <Image source={{ uri: attachedImage }} className="h-10 w-10 mr-2" />
-              <Text className="flex-1 text-xs font-semibold" style={{ color: Colors.text.bodyStrong }}>Image attached</Text>
-              <Pressable onPress={() => setAttachedImage(null)} className="p-1">
-                <Ionicons name="close-circle" size={18} color={Colors.error} />
-              </Pressable>
-            </View>
-          )}
-
           {/* Input Bar */}
           <View 
             className="border-t px-4 py-3 flex-row items-center gap-2"
-            style={{ backgroundColor: Colors.surface, borderColor: Colors.borderMuted }}
+            style={{ 
+              backgroundColor: Colors.surface, 
+              borderColor: Colors.borderSoft,
+              paddingBottom: Platform.OS === 'ios' ? 24 : 12
+            }}
           >
-            <Pressable
-              onPress={handlePickImage}
-              className="h-10 w-10 items-center justify-center border"
-              style={{ backgroundColor: Colors.background, borderColor: Colors.borderMuted }}
-            >
-              <Ionicons name="camera-outline" size={18} color={Colors.text.bodySoft} />
-            </Pressable>
-
             <TextInput
               value={inputText}
               onChangeText={setInputText}
               placeholder="Type your message to admin..."
               placeholderTextColor={Colors.icon.muted}
-              className="flex-1 min-h-[40px] max-h-[100px] border px-3 py-2 text-sm"
-              style={{ backgroundColor: Colors.background, borderColor: Colors.borderMuted, color: Colors.text.primary }}
+              className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-full"
+              style={{ 
+                backgroundColor: Colors.ui.slateSoft, 
+                borderColor: Colors.borderSoft, 
+                color: Colors.text.primary 
+              }}
               multiline
             />
 
             <Pressable
               onPress={handleSendMessage}
-              disabled={sending || (!inputText.trim() && !attachedImage)}
-              className="h-10 w-10 items-center justify-center"
+              disabled={sending || !inputText.trim()}
+              className="h-11 w-11 items-center justify-center rounded-full"
               style={{ 
-                backgroundColor: (inputText.trim() || attachedImage) ? Colors.primaryStrong : Colors.ui.neutralSoft
+                backgroundColor: inputText.trim() ? Colors.primaryStrong : Colors.ui.neutralSoft
               }}
             >
               {sending ? (
@@ -272,8 +233,8 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
               ) : (
                 <Ionicons
                   name="send"
-                  size={15}
-                  color={(inputText.trim() || attachedImage) ? Colors.surface : Colors.icon.subtle}
+                  size={16}
+                  color={inputText.trim() ? Colors.surface : Colors.icon.subtle}
                 />
               )}
             </Pressable>

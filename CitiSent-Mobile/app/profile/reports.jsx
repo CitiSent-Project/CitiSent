@@ -88,6 +88,34 @@ export default function ReportsMadePage() {
     return () => { cancelled = true; };
   }, [reports]);
 
+  /**
+   * Immediately clear the badge for a specific report in local state.
+   * Called by the modal's onMarkRead prop the moment the chat opens.
+   */
+  const handleMarkRead = (reportId) => {
+    setUnreadCounts((prev) => ({ ...prev, [reportId]: 0 }));
+  };
+
+  /**
+   * When the discussion modal closes, re-fetch the unread count for that
+   * specific report so the badge always reflects the true server state
+   * (handles edge-cases like network delays or partial reads).
+   */
+  const handleDiscussionClose = async () => {
+    const reportId = discussionReport?.id;
+    setDiscussionReport(null);
+    if (reportId) {
+      try {
+        const currentUser = getAuthUser();
+        const currentUserId = currentUser?.id ?? null;
+        const count = await discussionService.getUnreadCount(reportId, currentUserId);
+        setUnreadCounts((prev) => ({ ...prev, [reportId]: count }));
+      } catch {
+        // Non-critical; badge will update on next full refresh
+      }
+    }
+  };
+
   // When saving, close the edit modal and perform api call
   const handleSaveReport = async (updatedData) => {
     if (!editingReportId) return;
@@ -173,9 +201,6 @@ export default function ReportsMadePage() {
                 unreadCount={unreadCounts[report.id] || 0}
                 onOpenDiscussion={(rep) => {
                   setDiscussionReport(rep);
-                  // Clear badge immediately, then mark as read on server
-                  setUnreadCounts((prev) => ({ ...prev, [rep.id]: 0 }));
-                  discussionService.markAsRead(rep.id);
                 }}
               />
               <View className="mb-4 flex-row justify-end">
@@ -240,7 +265,8 @@ export default function ReportsMadePage() {
       <ReportDiscussionModal
         visible={Boolean(discussionReport)}
         report={discussionReport}
-        onClose={() => setDiscussionReport(null)}
+        onClose={handleDiscussionClose}
+        onMarkRead={handleMarkRead}
       />
 
       <FeedbackModal

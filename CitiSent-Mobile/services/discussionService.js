@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { getAuthToken } from "./authSession";
-import { getCache, setCache } from "./cache";
+import { getCache, setCache, removeCache } from "./cache";
 
 const CACHE_KEY_PREFIX = "report_discussion_";
 const LAST_SEEN_KEY_PREFIX = "report_last_seen_";
@@ -15,21 +15,36 @@ function lastSeenKey(reportId) {
 }
 
 /**
- * Map a backend message row to a UI-friendly shape.
- * The backend response from the mapper includes:
- *   id, reportId, senderId, sender_name, message, isRead, readAt, createdAt, updatedAt
+ * Map a backend message row to a cacheable shape.
+ * We store senderId so that senderRole can be computed at read-time
+ * with the correct currentUserId, avoiding stale role misclassification
+ * when auth hasn't loaded yet.
  */
-function mapApiMessage(msg, currentUserId) {
-  const isCurrentUser = currentUserId && String(msg.senderId) === String(currentUserId);
+function mapApiMessage(msg) {
   return {
     id: msg.id,
-    senderRole: isCurrentUser ? "citizen" : "admin",
-    senderName: isCurrentUser ? "You" : (msg.sender_name || "City Admin"),
+    senderId: String(msg.senderId ?? ""),
+    senderName: msg.sender_name || "City Admin",
     message: msg.message || "",
     attachmentUri: null,
     createdAt: msg.createdAt || new Date().toISOString(),
     isRead: msg.isRead ?? false,
   };
+}
+
+/**
+ * Classify cached messages using the current userId at read-time.
+ * This avoids stale senderRole values in the cache.
+ */
+function classifyMessages(messages, currentUserId) {
+  return messages.map((m) => {
+    const isCurrentUser = currentUserId && m.senderId && String(m.senderId) === String(currentUserId);
+    return {
+      ...m,
+      senderRole: isCurrentUser ? "citizen" : "admin",
+      senderName: isCurrentUser ? "You" : (m.senderName || "City Admin"),
+    };
+  });
 }
 
 function isAuthAvailable() {
@@ -40,43 +55,43 @@ function isAuthAvailable() {
 export const discussionService = {
   /**
    * Fetch the full conversation for a report from the backend.
-   * Falls back to local cache if the network or auth is unavailable.
+   * Stores raw senderId in cache, then classifies messages at read-time
+   * using the current user's ID to avoid stale senderRole mismatches.
    */
   getDiscussion: async (reportId, currentUserId = null) => {
     if (isAuthAvailable()) {
       try {
         const response = await api.get(`/reports/${reportId}/messages`);
         const rows = Array.isArray(response?.data) ? response.data : [];
-        const messages = rows.map((msg) => mapApiMessage(msg, currentUserId));
-
-        // Update local cache with the latest data
-        await setCache(cacheKey(reportId), messages, CACHE_TTL);
-        return messages;
+        // Store raw shape (with senderId) — no senderRole baked in
+        const rawMessages = rows.map((msg) => mapApiMessage(msg));
+        await setCache(cacheKey(reportId), rawMessages, CACHE_TTL);
+        return classifyMessages(rawMessages, currentUserId);
       } catch (err) {
         console.warn("Failed to fetch report messages from API, using cache:", err?.message);
       }
     }
 
-    // Fallback: local cache
+    // Fallback: local cache — classify at read-time with fresh userId
     const cached = await getCache(cacheKey(reportId), { ignoreExpiry: true });
     if (Array.isArray(cached) && cached.length > 0) {
-      return cached;
+      return classifyMessages(cached, currentUserId);
     }
 
-    // Absolute fallback: seed message (mark as already seen so it doesn't trigger badge)
+    // Absolute fallback: seed message — epoch timestamp means it never counts as unread
     const seed = [
       {
         id: `msg-init-${reportId}`,
-        senderRole: "admin",
+        senderId: "",
         senderName: "City Admin",
         message: "Thank you for submitting your report. Our team is currently reviewing your submission.",
         attachmentUri: null,
-        createdAt: new Date(0).toISOString(), // epoch — always "old"
+        createdAt: new Date(0).toISOString(),
         isRead: false,
       },
     ];
     await setCache(cacheKey(reportId), seed, CACHE_TTL);
-    return seed;
+    return classifyMessages(seed, currentUserId);
   },
 
   /**
@@ -88,11 +103,10 @@ export const discussionService = {
     if (!trimmedText && !attachmentUri) return [];
 
     const cached = await getCache(cacheKey(reportId), { ignoreExpiry: true }) || [];
-
-    // Optimistic local message
+    // Optimistic local message — uses senderId for cache shape consistency
     const localMessage = {
       id: `msg-local-${Date.now()}`,
-      senderRole: "citizen",
+      senderId: String(currentUserId ?? ""),
       senderName: "You",
       message: trimmedText,
       attachmentUri: attachmentUri || null,
@@ -100,6 +114,7 @@ export const discussionService = {
       isRead: false,
       pending: true,
     };
+
 
     const optimisticThread = [...cached, localMessage];
     await setCache(cacheKey(reportId), optimisticThread, CACHE_TTL);
@@ -129,9 +144,17 @@ export const discussionService = {
   },
 
   /**
-   * Count how many admin messages arrived AFTER the last time the user
-   * opened this conversation. Uses a locally stored "last seen" timestamp
-   * so even offline/local messages are tracked correctly.
+   * Count how many admin messages are currently unread for the current user.
+   *
+   * Primary truth: server `isRead` field (resolved from the report_message_reads
+   * join table by the backend mapper). A message is unread when isRead === false.
+   *
+   * Secondary guard (lastSeenTime): used only for locally-generated or offline
+   * messages that predate the DB (e.g. the epoch-timestamp seed message). This
+   * prevents seed messages from ever counting as unread.
+   *
+   * This replaces the old "count by timestamp" approach that ignored isRead entirely
+   * and caused every message to re-appear as unread after a cache clear or restart.
    */
   getUnreadCount: async (reportId, currentUserId = null) => {
     if (!reportId) return 0;
@@ -141,16 +164,24 @@ export const discussionService = {
         getCache(lastSeenKey(reportId), { ignoreExpiry: true }),
       ]);
 
-      // If the user has never opened the chat, treat all messages as read
-      // (avoids badge spam on first load for old reports)
-      if (!lastSeenTs) return 0;
-
-      const lastSeenTime = new Date(lastSeenTs).getTime();
+      // lastSeenTime is used only to guard against offline/seed messages.
+      // Server-authored messages use isRead as the authoritative signal.
+      const lastSeenTime = lastSeenTs ? new Date(lastSeenTs).getTime() : 0;
 
       return messages.filter((m) => {
         if (m.senderRole === "citizen") return false; // own messages never count
+        if (m.id && String(m.id).startsWith("msg-init-")) return false; // ignore seed
+
         const msgTime = new Date(m.createdAt).getTime();
-        return msgTime > lastSeenTime;
+
+        // For messages created before the user ever opened the chat (epoch guard),
+        // use the timestamp fallback so pre-existing content isn't suddenly flagged.
+        if (lastSeenTime > 0 && msgTime <= lastSeenTime) return false;
+
+        // Primary truth: use server-confirmed isRead.
+        // isRead is false by default on cached/local messages, so this catches
+        // both new server messages and any locally-cached unread ones.
+        return m.isRead === false;
       }).length;
     } catch {
       return 0;
@@ -160,13 +191,19 @@ export const discussionService = {
   /**
    * Record the moment the user opened a conversation so future unread
    * counts only include messages that arrived AFTER this timestamp.
-   * Also tells the backend to mark the conversation as read.
+   * Also tells the backend to mark the conversation as read, and
+   * invalidates the local message cache so the next getUnreadCount call
+   * always fetches fresh isRead state from the server.
    */
   markAsRead: async (reportId) => {
     if (!reportId) return;
 
-    // Save timestamp locally — this is the source of truth for the badge
+    // Save timestamp locally — used as a secondary guard for offline messages
     await setCache(lastSeenKey(reportId), new Date().toISOString(), 86400 * 365);
+
+    // Bust the stale message cache so getUnreadCount fetches fresh isRead data.
+    // Without this, the 5-min TTL cache would re-surface old messages as unread.
+    await removeCache(cacheKey(reportId));
 
     // Best-effort server sync
     if (isAuthAvailable()) {

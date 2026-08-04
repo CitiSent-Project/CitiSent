@@ -41,14 +41,19 @@ export const reportMessagesService = {
     return {
       data: result.rows.map((row) => {
         const senderProfile = result.senderProfilesByUserId[row.sender_id];
-        return toReportMessageResponse({
-          ...row,
-          sender_name:
-            senderProfile?.fname ||
-            senderProfile?.username ||
-            senderProfile?.email ||
-            null,
-        });
+        return toReportMessageResponse(
+          {
+            ...row,
+            sender_name:
+              senderProfile?.fname ||
+              senderProfile?.username ||
+              senderProfile?.email ||
+              null,
+          },
+          // Pass the current user's ID so isRead is resolved from the correct
+          // report_message_reads join entry rather than always returning false.
+          actor.id,
+        );
       }),
       conversation: {
         reportId,
@@ -137,7 +142,8 @@ export const reportMessagesService = {
     });
 
     return {
-      data: updatedRows.map(toReportMessageResponse),
+      // Pass actor.id so the returned rows correctly reflect the reader's isRead state.
+      data: updatedRows.map((row) => toReportMessageResponse(row, actor.id)),
       updatedCount: updatedRows.length,
     };
   },

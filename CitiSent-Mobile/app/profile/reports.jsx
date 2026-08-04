@@ -65,7 +65,11 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // Fetch unread message counts for all reports when the list changes
+  // Fetch unread message counts for all reports when the list changes.
+  // IMPORTANT: This runs sequentially (not Promise.all) to avoid firing N
+  // simultaneous API requests which causes Supabase 429 rate-limit errors.
+  // Most calls hit the local cache (5-min TTL) and complete instantly;
+  // only cold-cache reports touch the network, and they do so one at a time.
   useEffect(() => {
     if (!reports.length) return;
     const currentUser = getAuthUser();
@@ -73,14 +77,17 @@ export default function ReportsMadePage() {
     let cancelled = false;
 
     async function fetchUnreadCounts() {
-      const entries = await Promise.all(
-        reports.map(async (report) => {
-          const count = await discussionService.getUnreadCount(report.id, currentUserId);
-          return [report.id, count];
-        })
-      );
+      const result = {};
+      for (const report of reports) {
+        if (cancelled) break;
+        try {
+          result[report.id] = await discussionService.getUnreadCount(report.id, currentUserId);
+        } catch {
+          result[report.id] = 0;
+        }
+      }
       if (!cancelled) {
-        setUnreadCounts(Object.fromEntries(entries));
+        setUnreadCounts(result);
       }
     }
 

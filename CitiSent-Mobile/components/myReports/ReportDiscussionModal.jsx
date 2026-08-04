@@ -22,7 +22,7 @@ function formatMessageTime(isoString) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function ReportDiscussionModal({ visible, report, onClose }) {
+export default function ReportDiscussionModal({ visible, report, onClose, onMarkRead }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,6 +34,12 @@ export default function ReportDiscussionModal({ visible, report, onClose }) {
   useEffect(() => {
     if (visible && report?.id) {
       loadMessages();
+      // Mark as read whenever the chat is opened, ensuring the badge always
+      // clears immediately and server read-state is reconciled. The parent's
+      // onMarkRead callback lets the badge update in the list without waiting
+      // for a full data refetch.
+      discussionService.markAsRead(report.id).catch(() => {});
+      onMarkRead?.(report.id);
     } else {
       setMessages([]);
       setInputText("");

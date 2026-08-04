@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { getAuthToken } from "./authSession";
-import { getCache, setCache, removeCache } from "./cache";
+import { getCache, setCache } from "./cache";
 
 const CACHE_KEY_PREFIX = "report_discussion_";
 const LAST_SEEN_KEY_PREFIX = "report_last_seen_";
@@ -191,9 +191,12 @@ export const discussionService = {
   /**
    * Record the moment the user opened a conversation so future unread
    * counts only include messages that arrived AFTER this timestamp.
-   * Also tells the backend to mark the conversation as read, and
-   * invalidates the local message cache so the next getUnreadCount call
-   * always fetches fresh isRead state from the server.
+   * Also tells the backend to mark the conversation as read.
+   *
+   * IMPORTANT: Instead of removing the cache (which forces a new API fetch and
+   * causes 429 rate-limit errors when many reports are loaded), we patch the
+   * cached messages in-place by marking all of them as isRead: true. This keeps
+   * the cache warm so getUnreadCount can compute a 0 count without any API call.
    */
   markAsRead: async (reportId) => {
     if (!reportId) return;
@@ -201,9 +204,14 @@ export const discussionService = {
     // Save timestamp locally — used as a secondary guard for offline messages
     await setCache(lastSeenKey(reportId), new Date().toISOString(), 86400 * 365);
 
-    // Bust the stale message cache so getUnreadCount fetches fresh isRead data.
-    // Without this, the 5-min TTL cache would re-surface old messages as unread.
-    await removeCache(cacheKey(reportId));
+    // Patch cached messages: mark all as isRead so getUnreadCount returns 0
+    // immediately from cache. This avoids a forced API re-fetch that would
+    // hammer Supabase and trigger 429 rate-limiting errors.
+    const cached = await getCache(cacheKey(reportId), { ignoreExpiry: true });
+    if (Array.isArray(cached) && cached.length > 0) {
+      const patched = cached.map((msg) => ({ ...msg, isRead: true }));
+      await setCache(cacheKey(reportId), patched, CACHE_TTL);
+    }
 
     // Best-effort server sync
     if (isAuthAvailable()) {

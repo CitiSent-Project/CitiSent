@@ -15,11 +15,13 @@ import { Colors } from "../../modules/shared";
 import { discussionService } from "../../services/discussionService";
 import { getAuthUser } from "../../services/authSession";
 
-function formatMessageTime(isoString) {
+function formatMessageDateTime(isoString) {
   if (!isoString) return "";
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `${date} • ${time}`;
 }
 
 export default function ReportDiscussionModal({ visible, report, onClose, onMarkRead }) {
@@ -38,7 +40,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       // clears immediately and server read-state is reconciled. The parent's
       // onMarkRead callback lets the badge update in the list without waiting
       // for a full data refetch.
-      discussionService.markAsRead(report.id).catch(() => {});
+      discussionService.markAsRead(report.id).catch(() => { });
       onMarkRead?.(report.id);
     } else {
       setMessages([]);
@@ -98,7 +100,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       >
         <View className="flex-1 w-full" style={{ backgroundColor: Colors.background }}>
           {/* Header */}
-          <View 
+          <View
             className="flex-row items-center justify-between border-b px-5 py-4"
             style={{ backgroundColor: Colors.ui.headerDark, borderColor: Colors.ui.headerAvatarDark }}
           >
@@ -147,6 +149,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               ref={scrollViewRef}
               className="flex-1 px-4 py-4"
               style={{ backgroundColor: Colors.screen.profileSubpage }}
+              contentContainerStyle={{ paddingBottom: 16 }}
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
               {messages.map((item) => {
@@ -163,18 +166,17 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
                       </View>
                     )}
 
-                    <View 
-                      className={`max-w-[80%] p-3.5 border ${
-                        isAdmin 
-                          ? "rounded-2xl rounded-tl-none" 
-                          : "rounded-2xl rounded-tr-none"
-                      }`}
-                      style={{ 
+                    <View
+                      className={`max-w-[80%] p-3.5 border ${isAdmin
+                        ? "rounded-2xl rounded-tl-none"
+                        : "rounded-2xl rounded-tr-none"
+                        }`}
+                      style={{
                         backgroundColor: isAdmin ? Colors.surface : Colors.primary,
                         borderColor: isAdmin ? Colors.borderSoft : Colors.primaryStrong,
                       }}
                     >
-                      <Text 
+                      <Text
                         className="text-[11px] font-bold mb-1"
                         style={{ color: isAdmin ? Colors.text.headingBrand : Colors.ui.heroSoft }}
                       >
@@ -182,7 +184,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
                       </Text>
 
                       {item.message ? (
-                        <Text 
+                        <Text
                           className="text-sm leading-5"
                           style={{ color: isAdmin ? Colors.text.bodyStrong : Colors.text.inverse }}
                         >
@@ -190,11 +192,11 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
                         </Text>
                       ) : null}
 
-                      <Text 
+                      <Text
                         className="mt-1.5 text-[10px] text-right"
                         style={{ color: isAdmin ? Colors.text.secondary : Colors.ui.heroSoft }}
                       >
-                        {formatMessageTime(item.createdAt)}
+                        {formatMessageDateTime(item.createdAt)}
                       </Text>
                     </View>
                   </View>
@@ -204,10 +206,10 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
           )}
 
           {/* Input Bar */}
-          <View 
+          <View
             className="border-t px-4 py-3 flex-row items-center gap-2"
-            style={{ 
-              backgroundColor: Colors.surface, 
+            style={{
+              backgroundColor: Colors.surface,
               borderColor: Colors.borderSoft,
               paddingBottom: Platform.OS === 'ios' ? 24 : 12
             }}
@@ -218,10 +220,10 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               placeholder="Type your message to admin..."
               placeholderTextColor={Colors.icon.muted}
               className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-full"
-              style={{ 
-                backgroundColor: Colors.ui.slateSoft, 
-                borderColor: Colors.borderSoft, 
-                color: Colors.text.primary 
+              style={{
+                backgroundColor: Colors.ui.slateSoft,
+                borderColor: Colors.borderSoft,
+                color: Colors.text.primary
               }}
               multiline
             />
@@ -230,7 +232,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               onPress={handleSendMessage}
               disabled={sending || !inputText.trim()}
               className="h-11 w-11 items-center justify-center rounded-full"
-              style={{ 
+              style={{
                 backgroundColor: inputText.trim() ? Colors.primaryStrong : Colors.ui.neutralSoft
               }}
             >

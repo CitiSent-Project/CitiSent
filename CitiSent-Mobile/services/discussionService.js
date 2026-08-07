@@ -51,14 +51,14 @@ function lastSeenKey(reportId) {
  * with the correct currentUserId, avoiding stale role misclassification
  * when auth hasn't loaded yet.
  */
-function mapApiMessage(msg) {
+export function mapApiMessage(msg) {
   return {
     id: msg.id,
-    senderId: String(msg.senderId ?? ""),
-    senderName: msg.sender_name || "City Admin",
-    message: msg.message || "",
+    senderId: String(msg.senderId ?? msg.sender_id ?? ""),
+    senderName: msg.sender_name || msg.senderName || "City Admin",
+    message: msg.message || msg.content || "",
     attachmentUri: null,
-    createdAt: msg.createdAt || new Date().toISOString(),
+    createdAt: msg.createdAt || msg.created_at || new Date().toISOString(),
     isRead: msg.isRead ?? false,
   };
 }
@@ -67,7 +67,7 @@ function mapApiMessage(msg) {
  * Classify cached messages using the current userId at read-time.
  * This avoids stale senderRole values in the cache.
  */
-function classifyMessages(messages, currentUserId) {
+export function classifyMessages(messages, currentUserId) {
   return messages.map((m) => {
     const isCurrentUser = currentUserId && m.senderId && String(m.senderId) === String(currentUserId);
     return {
@@ -76,6 +76,14 @@ function classifyMessages(messages, currentUserId) {
       senderName: isCurrentUser ? "You" : (m.senderName || "City Admin"),
     };
   });
+}
+
+/**
+ * Convert a raw message object or socket payload row to a classified UI message.
+ */
+export function mapRawRow(row, currentUserId) {
+  const mapped = mapApiMessage(row);
+  return classifyMessages([mapped], currentUserId)[0];
 }
 
 function isAuthAvailable() {

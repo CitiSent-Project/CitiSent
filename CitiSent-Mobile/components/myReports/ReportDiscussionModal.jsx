@@ -12,8 +12,17 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../modules/shared";
-import { discussionService } from "../../services/discussionService";
+import { discussionService, mapRawRow } from "../../services/discussionService";
 import { getAuthUser } from "../../services/authSession";
+import {
+  getSocket,
+  joinReportRoom,
+  leaveReportRoom,
+  sendSocketMessage,
+  markSocketConversationRead,
+  sendSocketTyping,
+  sendSocketStopTyping,
+} from "../../services/socketService";
 
 function formatMessageDateTime(isoString) {
   if (!isoString) return "";
@@ -24,20 +33,49 @@ function formatMessageDateTime(isoString) {
   return `${date} • ${time}`;
 }
 
+function formatIncomingMessage(raw, userId) {
+  if (!raw) return null;
+  if (typeof mapRawRow === "function") {
+    try {
+      return mapRawRow(raw, userId);
+    } catch {}
+  }
+  if (typeof discussionService?.mapRawRow === "function") {
+    try {
+      return discussionService.mapRawRow(raw, userId);
+    } catch {}
+  }
+
+  const senderId = String(raw.senderId ?? raw.sender_id ?? "");
+  const isCurrentUser = userId && senderId && String(senderId) === String(userId);
+  return {
+    id: raw.id || `msg-${Date.now()}`,
+    senderId,
+    senderName: isCurrentUser ? "You" : (raw.sender_name || raw.senderName || "City Admin"),
+    senderRole: raw.senderRole || (isCurrentUser ? "citizen" : "admin"),
+    message: raw.message || raw.content || "",
+    attachmentUri: null,
+    createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
+    isRead: raw.isRead ?? false,
+  };
+}
+
 export default function ReportDiscussionModal({ visible, report, onClose, onMarkRead }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [isAdminTyping, setIsAdminTyping] = useState(false);
+
   const scrollViewRef = useRef(null);
+  const typingTimerRef = useRef(null);
+
   const currentUser = getAuthUser();
   const currentUserId = currentUser?.id ?? null;
 
   /**
    * Guard ref to prevent setState calls after the component unmounts.
-   * This protects the onAdminReply callback in handleSendMessage, which fires
-   * inside a 3-second setTimeout that outlives the modal if the user closes it.
-   * Fix for Issue #7 (uncancelled setTimeout causing state update on unmounted component).
+   * This protects async send callbacks if the user closes the modal mid-request.
    */
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -46,21 +84,96 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       isMountedRef.current = false;
     };
   }, []);
-
+  
+  // ─── Initial Load & Mark Read ──────────────────────────────────────────────
   useEffect(() => {
     if (visible && report?.id) {
       loadMessages();
-      // Mark as read whenever the chat is opened, ensuring the badge always
-      // clears immediately and server read-state is reconciled. The parent's
-      // onMarkRead callback lets the badge update in the list without waiting
-      // for a full data refetch.
-      discussionService.markAsRead(report.id).catch(() => { });
+      discussionService.markAsRead(report.id).catch(() => {});
+      markSocketConversationRead({ reportId: report.id });
       onMarkRead?.(report.id);
     } else {
       setMessages([]);
       setInputText("");
+      setIsAdminTyping(false);
     }
   }, [visible, report?.id]);
+
+  // ─── Socket.IO Realtime Subscriptions ───────────────────────────────────────
+  useEffect(() => {
+    if (!visible || !report?.id) return;
+
+    const socket = getSocket();
+    joinReportRoom(report.id);
+
+    const handleReceiveMessage = (data) => {
+      if (String(data?.reportId) !== String(report.id) || !data?.message) return;
+
+      const newMsg = formatIncomingMessage(data.message, currentUserId);
+      if (!newMsg) return;
+
+      setMessages((prev) => {
+        // 1. Skip if message ID is already present
+        if (prev.some((m) => String(m.id) === String(newMsg.id))) {
+          return prev;
+        }
+
+        // 2. If an optimistic pending message matches sender & message text, replace it
+        const pendingIndex = prev.findIndex(
+          (m) => m.pending && m.message === newMsg.message && String(m.senderId) === String(newMsg.senderId)
+        );
+
+        if (pendingIndex !== -1) {
+          const updated = [...prev];
+          updated[pendingIndex] = newMsg;
+          return updated;
+        }
+
+        return [...prev, newMsg];
+      });
+
+      // Auto-scroll
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 80);
+    };
+
+    const handleMessagesRead = (data) => {
+      if (String(data?.reportId) !== String(report.id)) return;
+
+      setMessages((prev) =>
+        prev.map((msg) => ({
+          ...msg,
+          isRead: true,
+        }))
+      );
+    };
+
+    const handleTyping = (data) => {
+      if (String(data?.reportId) === String(report.id) && String(data?.userId) !== String(currentUserId)) {
+        setIsAdminTyping(true);
+      }
+    };
+
+    const handleStopTyping = (data) => {
+      if (String(data?.reportId) === String(report.id) && String(data?.userId) !== String(currentUserId)) {
+        setIsAdminTyping(false);
+      }
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+    socket.on("messages_read", handleMessagesRead);
+    socket.on("typing", handleTyping);
+    socket.on("stop_typing", handleStopTyping);
+
+    return () => {
+      socket.off("receive_message", handleReceiveMessage);
+      socket.off("messages_read", handleMessagesRead);
+      socket.off("typing", handleTyping);
+      socket.off("stop_typing", handleStopTyping);
+      leaveReportRoom(report.id);
+    };
+  }, [visible, report?.id, currentUserId]);
 
   const loadMessages = async () => {
     setLoading(true);
@@ -74,37 +187,95 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
     }
   };
 
+  const handleInputChange = (text) => {
+    setInputText(text);
+
+    if (report?.id) {
+      sendSocketTyping(report.id);
+
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+
+      typingTimerRef.current = setTimeout(() => {
+        sendSocketStopTyping(report.id);
+      }, 2000);
+    }
+  };
+
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+    const trimmedText = inputText.trim();
+    if (!trimmedText || !report?.id) return;
+
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+    }
+    sendSocketStopTyping(report.id);
 
     setSending(true);
+    const tempId = `msg-local-${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      senderId: String(currentUserId ?? ""),
+      senderName: "You",
+      senderRole: "citizen",
+      message: trimmedText,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      pending: true,
+    };
+
+    // Optimistically update UI
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setInputText("");
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 80);
+
     try {
-      const updatedMessages = await discussionService.sendMessage(
-        report.id,
-        inputText,
-        null,
-        (adminUpdatedMessages) => {
-          // Guard: only update state if the modal is still mounted.
-          // The callback fires from a 3-second setTimeout in sendMessage,
-          // which can outlive the modal if the user closes it first.
-          // Fix for Issue #7.
-          if (!isMountedRef.current) return;
-          setMessages(adminUpdatedMessages);
-          setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-          }, 100);
-        },
-        currentUserId
-      );
-      setMessages(updatedMessages);
-      setInputText("");
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      // Send via Socket.IO
+      const confirmedMessage = await sendSocketMessage({
+        reportId: report.id,
+        message: trimmedText,
+      });
+
+      const mappedConfirmed = formatIncomingMessage(confirmedMessage, currentUserId);
+
+      // Replace optimistic message safely or deduplicate if receive_message arrived first
+      setMessages((prev) => {
+        if (!mappedConfirmed) {
+          return prev.filter((m) => m.id !== tempId);
+        }
+        if (prev.some((m) => String(m.id) === String(mappedConfirmed.id))) {
+          return prev.filter((m) => m.id !== tempId);
+        }
+        return prev.map((msg) => (msg.id === tempId ? mappedConfirmed : msg));
+      });
+    } catch (socketErr) {
+      console.warn("Socket send failed, falling back to HTTP API:", socketErr?.message);
+      try {
+        const updatedMessages = await discussionService.sendMessage(
+          report.id,
+          trimmedText,
+          null,
+          null,
+          currentUserId
+        );
+        if (isMountedRef.current) {
+          setMessages(updatedMessages);
+        }
+      } catch (httpErr) {
+        console.warn("Failed to send message via HTTP fallback:", httpErr);
+      }
     } catch (err) {
       console.warn("Failed to send message:", err);
     } finally {
-      setSending(false);
+      if (isMountedRef.current) {
+        setSending(false);
+      }
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 80);
     }
   };
 
@@ -171,12 +342,13 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               contentContainerStyle={{ paddingBottom: 16 }}
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
-              {messages.map((item) => {
+              {messages.map((item, index) => {
                 const isAdmin = item.senderRole === "admin";
+                const itemKey = item.id ? String(item.id) : `msg-${index}`;
 
                 return (
                   <View
-                    key={item.id}
+                    key={itemKey}
                     className={`mb-4 flex-row ${isAdmin ? "justify-start" : "justify-end"}`}
                   >
                     {isAdmin && (
@@ -224,6 +396,16 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
             </ScrollView>
           )}
 
+          {/* Typing Indicator Bar */}
+          {isAdminTyping && (
+            <View className="px-5 py-1.5 bg-slate-100 flex-row items-center gap-1.5">
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text className="text-xs italic text-slate-500 font-medium">
+                City Admin is typing...
+              </Text>
+            </View>
+          )}
+
           {/* Input Bar */}
           <View
             className="border-t px-4 py-3 flex-row items-center gap-2"
@@ -235,7 +417,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
           >
             <TextInput
               value={inputText}
-              onChangeText={setInputText}
+              onChangeText={handleInputChange}
               placeholder="Type your message to admin..."
               placeholderTextColor={Colors.icon.muted}
               className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-full"

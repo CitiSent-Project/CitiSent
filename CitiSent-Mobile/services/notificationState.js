@@ -1,5 +1,6 @@
 import { notificationsApi } from "./notifications";
 import { setCache, getCache } from "./cache";
+import { getSocket } from "./socketService";
 import { getAuthUser } from "./authSession";
 
 const listeners = new Set();
@@ -22,6 +23,18 @@ let isLoadingMore = false;
 let lastError = null;
 let offset = 0;
 const LIMIT = 10;
+let isSocketInitialized = false;
+
+function initSocketNotificationListener() {
+  if (isSocketInitialized) return;
+  isSocketInitialized = true;
+  try {
+    const socket = getSocket();
+    socket.on("receive_message", () => {
+      refreshNotifications().catch(() => {});
+    });
+  } catch {}
+}
 
 function getUnreadCount(items = []) {
   return items.filter((item) => !item.read).length;
@@ -83,6 +96,7 @@ function setLastError(error) {
 }
 
 export function subscribeToNotifications(listener) {
+  initSocketNotificationListener();
   listeners.add(listener);
 
   return () => {

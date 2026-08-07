@@ -1,7 +1,9 @@
+import { createServer } from "node:http";
 import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { healthService } from "./modules/health/health.service.js";
+import { initSocketIO } from "./realtime/socket.js";
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 let isShuttingDown = false;
@@ -142,7 +144,7 @@ function shutdown(signal, options = {}) {
         return;
       }
 
-      logger.info("HTTP server closed gracefully");
+      logger.info("HTTP & Socket.IO server closed gracefully");
       server = null;
       process.exit(exitCode);
     });
@@ -152,7 +154,6 @@ function shutdown(signal, options = {}) {
     logger.error("Error while shutting down server (sync)", { message: err.message });
     process.exit(1);
   }
-  
 }
 
 async function startServer() {
@@ -167,8 +168,11 @@ async function startServer() {
     return;
   }
 
-  server = app.listen(env.PORT, () => {
-    logger.info("Backend server started", {
+  const httpServer = createServer(app);
+  initSocketIO(httpServer);
+
+  server = httpServer.listen(env.PORT, () => {
+    logger.info("Backend HTTP & Socket.IO server started", {
       port: env.PORT,
       env: env.NODE_ENV,
       apiPrefix: env.API_PREFIX,

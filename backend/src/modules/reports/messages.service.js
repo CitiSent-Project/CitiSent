@@ -3,6 +3,7 @@ import { AppError } from "../../shared/errors/appError.js";
 import { reportMessagesRepository } from "./messages.repository.js";
 import { toReportMessageResponse } from "./messages.mapper.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
+import { emitToReportRoom } from "../../realtime/socket.js";
 
 function normalizeMessageInput(message) {
   return String(message || "").trim();
@@ -92,6 +93,18 @@ export const reportMessagesService = {
       accessToken,
     });
 
+    const formattedMessage = toReportMessageResponse(created);
+
+    // Broadcast receive_message to all connected socket clients viewing this report
+    try {
+      emitToReportRoom(reportId, "receive_message", {
+        reportId,
+        message: formattedMessage,
+      });
+    } catch {
+      // Non-critical socket broadcast fallback
+    }
+
     const participants = await reportMessagesRepository.getAgencyParticipants({
       agencyId: access.report.agency_id,
       accessToken,
@@ -116,7 +129,7 @@ export const reportMessagesService = {
       });
     }
 
-    return toReportMessageResponse(created);
+    return formattedMessage;
   },
 
   async markConversationRead({ actor, reportId, messageIds = null, accessToken }) {
@@ -141,10 +154,24 @@ export const reportMessagesService = {
       messageIds,
     });
 
+    const formattedRows = updatedRows.map((row) => toReportMessageResponse(row, actor.id));
+
+    // Broadcast messages_read event via Socket.IO
+    try {
+      emitToReportRoom(reportId, "messages_read", {
+        reportId,
+        readerId: actor.id,
+        updatedCount: updatedRows.length,
+      });
+    } catch {
+      // Non-critical socket broadcast fallback
+    }
+
     return {
       // Pass actor.id so the returned rows correctly reflect the reader's isRead state.
-      data: updatedRows.map((row) => toReportMessageResponse(row, actor.id)),
+      data: formattedRows,
       updatedCount: updatedRows.length,
     };
   },
 };
+

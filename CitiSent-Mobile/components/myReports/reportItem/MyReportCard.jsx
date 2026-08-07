@@ -58,10 +58,11 @@ export default function MyReportCard({ report, containerClassName = "mb-4", onDe
             <View>
               <Pressable
                 onPress={() => onOpenDiscussion(report)}
-                className="flex-row items-center rounded-lg px-2.5 py-1.5 bg-blue-50 border border-blue-200 active:bg-blue-100"
+                className="flex-row items-center rounded-lg px-2.5 py-1.5 active:opacity-80"
+                style={{ backgroundColor: Colors.primaryStrong }}
               >
-                <Ionicons name="chatbubbles-outline" size={14} color={Colors.primaryStrong} />
-                <Text className="ml-1 text-xs font-bold" style={{ color: Colors.primaryStrong }}>
+                <Ionicons name="chatbubbles-outline" size={14} color="#fff" />
+                <Text className="ml-1 text-xs font-bold text-white">
                   Chat with Admin
                 </Text>
               </Pressable>

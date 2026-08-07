@@ -33,6 +33,20 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   const currentUser = getAuthUser();
   const currentUserId = currentUser?.id ?? null;
 
+  /**
+   * Guard ref to prevent setState calls after the component unmounts.
+   * This protects the onAdminReply callback in handleSendMessage, which fires
+   * inside a 3-second setTimeout that outlives the modal if the user closes it.
+   * Fix for Issue #7 (uncancelled setTimeout causing state update on unmounted component).
+   */
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (visible && report?.id) {
       loadMessages();
@@ -70,6 +84,11 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
         inputText,
         null,
         (adminUpdatedMessages) => {
+          // Guard: only update state if the modal is still mounted.
+          // The callback fires from a 3-second setTimeout in sendMessage,
+          // which can outlive the modal if the user closes it first.
+          // Fix for Issue #7.
+          if (!isMountedRef.current) return;
           setMessages(adminUpdatedMessages);
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });

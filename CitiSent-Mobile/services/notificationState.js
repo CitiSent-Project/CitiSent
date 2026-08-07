@@ -1,8 +1,18 @@
 import { notificationsApi } from "./notifications";
 import { setCache, getCache } from "./cache";
+import { getAuthUser } from "./authSession";
 
 const listeners = new Set();
-const NOTIFICATIONS_CACHE_KEY = "notifications_state";
+
+/**
+ * Per-user cache key for notifications state.
+ * Namespaced by user ID to prevent data leaking between users on shared
+ * devices. Fix for Issue #3 (no per-user cache isolation).
+ */
+function getNotificationsCacheKey() {
+  const uid = getAuthUser()?.id ?? "anon";
+  return `notifications_state_${uid}`;
+}
 
 let notifications = [];
 let totalCount = 0;
@@ -36,9 +46,12 @@ function emitChange() {
   cachedSnapshot = buildSnapshot();
   listeners.forEach((listener) => listener());
 
-  // Save to persistent storage in background
+  // Persist to storage in background (no TTL — data is always refreshed on
+  // next hydration via the API call that follows immediately after cache load).
+  // Fix for Issue #4: removed the 10-min TTL that was set but then ignored via
+  // ignoreExpiry: true on every read, making it meaningless decoration.
   if (isHydrated) {
-    setCache(NOTIFICATIONS_CACHE_KEY, { notifications, totalCount }, 600);
+    setCache(getNotificationsCacheKey(), { notifications, totalCount });
   }
 }
 
@@ -93,7 +106,9 @@ export async function ensureNotificationsLoaded({ force = false } = {}) {
   // Hydrate from persistent disk cache immediately if available
   if (!isHydrated) {
     try {
-      const cached = await getCache(NOTIFICATIONS_CACHE_KEY, { ignoreExpiry: true });
+      // No ignoreExpiry here — we don't set a TTL anymore, so this is a
+      // simple presence check. Fix for Issue #4.
+      const cached = await getCache(getNotificationsCacheKey());
       if (cached && Array.isArray(cached.notifications) && cached.notifications.length > 0) {
         notifications = cached.notifications;
         totalCount = cached.totalCount || notifications.length;
@@ -222,5 +237,14 @@ export async function markAllNotificationsAsRead() {
 }
 
 export async function resetNotifications() {
+  // Synchronously zero out all module-level state before fetching so that
+  // a newly logged-in user never sees the previous user's notifications even
+  // briefly while the API call is in flight. Fix for Issue #8.
+  notifications = [];
+  totalCount = 0;
+  offset = 0;
+  isHydrated = false;
+  lastError = null;
+  emitChange();
   await refreshNotifications();
 }

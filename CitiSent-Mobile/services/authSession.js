@@ -117,10 +117,13 @@ export async function initAuthSession() {
   return { token: sessionToken, user: sessionUser };
 }
 
-export function setAuthToken(token) {
+export function setAuthToken(token, expiresInSeconds = 7 * 86400) {
   sessionToken = normalizeToken(token);
   if (sessionToken) {
-    setCache("auth_token", sessionToken);
+    // Store with a TTL matching your JWT expiry (default 7 days).
+    // This prevents the client from sending a server-expired token on every
+    // request until a 401 finally clears it. Fix for Issue #6.
+    setCache("auth_token", sessionToken, expiresInSeconds);
   } else {
     removeCache("auth_token");
   }

@@ -1,17 +1,48 @@
 import { api } from "./api";
-import { getAuthToken } from "./authSession";
+import { getAuthToken, getAuthUser } from "./authSession";
 import { getCache, setCache } from "./cache";
 
 const CACHE_KEY_PREFIX = "report_discussion_";
 const LAST_SEEN_KEY_PREFIX = "report_last_seen_";
 const CACHE_TTL = 60 * 5; // 5 minutes
 
-function cacheKey(reportId) {
-  return `${CACHE_KEY_PREFIX}${reportId}`;
+/**
+ * In-flight request deduplication map.
+ *
+ * Prevents duplicate API calls for the same reportId when getDiscussion is
+ * called concurrently — e.g. loadMessages + getUnreadCount both firing in the
+ * same modal useEffect. Both calls await the same Promise instead of spawning
+ * two separate HTTP requests.
+ *
+ * Fix for Issue #10 (no request deduplication).
+ */
+const _inflight = new Map();
+
+/**
+ * Returns the current authenticated user's ID, or "anon" as a safe fallback.
+ * Used to namespace all cache keys so data from one user is never served to
+ * another on a shared device.
+ *
+ * Fix for Issue #3 (no per-user cache isolation).
+ */
+function getUid() {
+  return getAuthUser()?.id ?? "anon";
 }
 
+/**
+ * Per-user, per-report cache key for the message thread.
+ * Format: report_discussion_{userId}_{reportId}
+ */
+function cacheKey(reportId) {
+  return `${CACHE_KEY_PREFIX}${getUid()}_${reportId}`;
+}
+
+/**
+ * Per-user, per-report cache key for the "last seen" timestamp.
+ * Format: report_last_seen_{userId}_{reportId}
+ */
 function lastSeenKey(reportId) {
-  return `${LAST_SEEN_KEY_PREFIX}${reportId}`;
+  return `${LAST_SEEN_KEY_PREFIX}${getUid()}_${reportId}`;
 }
 
 /**
@@ -60,33 +91,74 @@ function isAuthAvailable() {
   return Boolean(token) && !token.startsWith("temp-");
 }
 
+/**
+ * Shared fetch logic used by both the cache-miss path and the background
+ * revalidation path. Deduplicates concurrent requests via the _inflight map.
+ *
+ * Returns a Promise<rawMessages[]> and registers itself in _inflight so
+ * concurrent callers can await the same in-flight request.
+ */
+function ensureDiscussionFetched(reportId) {
+  if (!_inflight.has(reportId)) {
+    const fetchPromise = (async () => {
+      const response = await api.get(`/reports/${reportId}/messages`);
+      const rows = Array.isArray(response?.data) ? response.data : [];
+      const rawMessages = rows.map(mapApiMessage);
+      // Fire-and-forget cache write — don't block the return value
+      setCache(cacheKey(reportId), rawMessages, CACHE_TTL).catch(() => {});
+      return rawMessages;
+    })();
+
+    _inflight.set(reportId, fetchPromise);
+    // Always clean up the in-flight entry when settled (success or failure)
+    fetchPromise.finally(() => _inflight.delete(reportId));
+  }
+
+  return _inflight.get(reportId);
+}
+
 export const discussionService = {
   /**
-   * Fetch the full conversation for a report from the backend.
-   * Stores raw senderId in cache, then classifies messages at read-time
-   * using the current user's ID to avoid stale senderRole mismatches.
+   * Fetch the full conversation for a report.
+   *
+   * Strategy (Fix for Issue #2 — cache-first):
+   *   1. Fresh cache hit → return immediately, kick off background revalidation
+   *   2. Cache miss → fetch from API (deduplicated via _inflight map)
+   *   3. API failure → fall back to stale cache (offline support)
+   *   4. No cache at all → return ephemeral seed message
+   *
+   * This replaces the old "always hit the API first" approach that ignored the
+   * cache entirely and caused excessive Supabase requests and 429 errors.
    */
   getDiscussion: async (reportId, currentUserId = null) => {
+    // Step 1: Fresh cache hit — serve instantly, revalidate in background
+    const cached = await getCache(cacheKey(reportId));
+    if (Array.isArray(cached) && cached.length > 0) {
+      if (isAuthAvailable()) {
+        // Stale-while-revalidate: refresh cache in background without blocking UI
+        ensureDiscussionFetched(reportId).catch(() => {});
+      }
+      return classifyMessages(cached, currentUserId);
+    }
+
+    // Step 2: Cache miss — fetch from API with in-flight deduplication
     if (isAuthAvailable()) {
       try {
-        const response = await api.get(`/reports/${reportId}/messages`);
-        const rows = Array.isArray(response?.data) ? response.data : [];
-        // Store raw shape (with senderId) — no senderRole baked in
-        const rawMessages = rows.map((msg) => mapApiMessage(msg));
-        await setCache(cacheKey(reportId), rawMessages, CACHE_TTL);
+        const rawMessages = await ensureDiscussionFetched(reportId);
         return classifyMessages(rawMessages, currentUserId);
       } catch (err) {
         console.warn("Failed to fetch report messages from API, using cache:", err?.message);
       }
     }
 
-    // Fallback: local cache — classify at read-time with fresh userId
-    const cached = await getCache(cacheKey(reportId), { ignoreExpiry: true });
-    if (Array.isArray(cached) && cached.length > 0) {
-      return classifyMessages(cached, currentUserId);
+    // Step 3: Stale cache fallback (offline or auth unavailable)
+    const stale = await getCache(cacheKey(reportId), { ignoreExpiry: true });
+    if (Array.isArray(stale) && stale.length > 0) {
+      return classifyMessages(stale, currentUserId);
     }
 
-    // Absolute fallback: seed message — epoch timestamp means it never counts as unread
+    // Step 4: Absolute fallback — ephemeral seed message.
+    // isRead: true so it is never counted as unread (Fix for Issue #9).
     const seed = [
       {
         id: `msg-init-${reportId}`,
@@ -95,7 +167,7 @@ export const discussionService = {
         message: "Thank you for submitting your report. Our team is currently reviewing your submission.",
         attachmentUri: null,
         createdAt: new Date(0).toISOString(),
-        isRead: false,
+        isRead: true,
       },
     ];
     await setCache(cacheKey(reportId), seed, CACHE_TTL);
@@ -123,7 +195,6 @@ export const discussionService = {
       pending: true,
     };
 
-
     const optimisticThread = [...cached, localMessage];
     await setCache(cacheKey(reportId), optimisticThread, CACHE_TTL);
 
@@ -135,7 +206,9 @@ export const discussionService = {
         const fresh = await discussionService.getDiscussion(reportId, currentUserId);
 
         if (onAdminReply) {
-          // Poll for a real admin reply after 3 seconds (handles reply notification gap)
+          // Poll for a real admin reply after 3 seconds (handles reply notification gap).
+          // The caller is responsible for guarding against unmounted component updates
+          // via an isMountedRef (see ReportDiscussionModal).
           setTimeout(async () => {
             const refreshed = await discussionService.getDiscussion(reportId, currentUserId);
             onAdminReply(refreshed);
@@ -160,9 +233,6 @@ export const discussionService = {
    * Secondary guard (lastSeenTime): used only for locally-generated or offline
    * messages that predate the DB (e.g. the epoch-timestamp seed message). This
    * prevents seed messages from ever counting as unread.
-   *
-   * This replaces the old "count by timestamp" approach that ignored isRead entirely
-   * and caused every message to re-appear as unread after a cache clear or restart.
    */
   getUnreadCount: async (reportId, currentUserId = null) => {
     if (!reportId) return 0;
@@ -187,8 +257,6 @@ export const discussionService = {
         if (lastSeenTime > 0 && msgTime <= lastSeenTime) return false;
 
         // Primary truth: use server-confirmed isRead.
-        // isRead is false by default on cached/local messages, so this catches
-        // both new server messages and any locally-cached unread ones.
         return m.isRead === false;
       }).length;
     } catch {
@@ -201,10 +269,9 @@ export const discussionService = {
    * counts only include messages that arrived AFTER this timestamp.
    * Also tells the backend to mark the conversation as read.
    *
-   * IMPORTANT: Instead of removing the cache (which forces a new API fetch and
-   * causes 429 rate-limit errors when many reports are loaded), we patch the
-   * cached messages in-place by marking all of them as isRead: true. This keeps
-   * the cache warm so getUnreadCount can compute a 0 count without any API call.
+   * Cache strategy: patch cached messages in-place (isRead: true) rather than
+   * deleting the cache. Keeps the cache warm so getUnreadCount returns 0
+   * immediately without a forced API re-fetch that would trigger 429 errors.
    */
   markAsRead: async (reportId) => {
     if (!reportId) return;
@@ -213,8 +280,7 @@ export const discussionService = {
     await setCache(lastSeenKey(reportId), new Date().toISOString(), 86400 * 365);
 
     // Patch cached messages: mark all as isRead so getUnreadCount returns 0
-    // immediately from cache. This avoids a forced API re-fetch that would
-    // hammer Supabase and trigger 429 rate-limiting errors.
+    // immediately from cache without any network request.
     const cached = await getCache(cacheKey(reportId), { ignoreExpiry: true });
     if (Array.isArray(cached) && cached.length > 0) {
       const patched = cached.map((msg) => ({ ...msg, isRead: true }));

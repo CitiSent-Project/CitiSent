@@ -1,7 +1,7 @@
 import { LATEST_HOME_REPORT } from "../constants/homeData";
 import { MY_REPORTS } from "../constants/myReportsData";
 import { api } from "./api";
-import { getAuthToken } from "./authSession";
+import { getAuthToken, getAuthUser } from "./authSession";
 import { runtimeFlags } from "./runtimeFlags";
 import { getSupabaseClient } from "./supabase";
 import { setCache, getCache } from "./cache";
@@ -239,7 +239,10 @@ export const reportsApi = {
     return api.post("/reports", payload);
   },
   getMyReports: async (limit = 10, offset = 0, statusFilter = "all") => {
-    const cacheKey = `my_reports_${limit}_${offset}_${statusFilter}`;
+    // Namespace cache key by user ID to prevent data leaking between users
+    // on shared devices. Fix for Issue #3.
+    const uid = getAuthUser()?.id ?? "anon";
+    const cacheKey = `my_reports_${uid}_${limit}_${offset}_${statusFilter}`;
 
     if (shouldUseLocalReportsData()) {
       return { data: MY_REPORTS, total: MY_REPORTS.length };
@@ -262,7 +265,9 @@ export const reportsApi = {
       const total = response?.pagination?.total ?? response?.total ?? mappedReports.length;
 
       const result = { data: mappedReports, total };
-      setCache(cacheKey, result, 300); // cache for 5 minutes
+      // Await the write so the cache is ready before any concurrent reader.
+      // Fix for Issue #5 (unawaited setCache race condition).
+      await setCache(cacheKey, result, 300);
       return result;
     } catch (error) {
       warnFallbackOnce("Falling back to cached or local my reports data:", error);
@@ -278,7 +283,9 @@ export const reportsApi = {
   },
 
   getMyReportCounts: async () => {
-    const cacheKey = "my_report_counts";
+    // Namespace cache key by user ID. Fix for Issue #3.
+    const uid = getAuthUser()?.id ?? "anon";
+    const cacheKey = `my_report_counts_${uid}`;
 
     if (shouldUseLocalReportsData()) {
       return {
@@ -298,7 +305,7 @@ export const reportsApi = {
         completed: counts.resolved || 0,
         unresolved: counts.rejected || 0,
       };
-      setCache(cacheKey, result, 300);
+      await setCache(cacheKey, result, 300); // Fix for Issue #5
       return result;
     } catch (error) {
       warnFallbackOnce("Falling back to cached or local counts data:", error);
@@ -311,7 +318,9 @@ export const reportsApi = {
   },
 
   getLatestHomeReport: async () => {
-    const cacheKey = "latest_home_report";
+    // Namespace cache key by user ID. Fix for Issue #3.
+    const uid = getAuthUser()?.id ?? "anon";
+    const cacheKey = `latest_home_report_${uid}`;
 
     if (shouldUseLocalReportsData()) {
       return LATEST_HOME_REPORT;
@@ -322,7 +331,7 @@ export const reportsApi = {
       const latestReport = toMyReportsPayload(response)[0] || null;
       const mappedLatestHomeReport = toLatestHomeReport(latestReport);
       const result = mappedLatestHomeReport || LATEST_HOME_REPORT;
-      setCache(cacheKey, result, 300);
+      await setCache(cacheKey, result, 300); // Fix for Issue #5
       return result;
     } catch (error) {
       warnFallbackOnce("Falling back to cached or local home report data:", error);

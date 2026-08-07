@@ -73,6 +73,18 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   const currentUser = getAuthUser();
   const currentUserId = currentUser?.id ?? null;
 
+  /**
+   * Guard ref to prevent setState calls after the component unmounts.
+   * This protects async send callbacks if the user closes the modal mid-request.
+   */
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
   // ─── Initial Load & Mark Read ──────────────────────────────────────────────
   useEffect(() => {
     if (visible && report?.id) {
@@ -231,6 +243,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
 
       // Replace optimistic message safely or deduplicate if receive_message arrived first
       setMessages((prev) => {
+        if (!mappedConfirmed) {
+          return prev.filter((m) => m.id !== tempId);
+        }
         if (prev.some((m) => String(m.id) === String(mappedConfirmed.id))) {
           return prev.filter((m) => m.id !== tempId);
         }
@@ -246,12 +261,18 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
           null,
           currentUserId
         );
-        setMessages(updatedMessages);
+        if (isMountedRef.current) {
+          setMessages(updatedMessages);
+        }
       } catch (httpErr) {
         console.warn("Failed to send message via HTTP fallback:", httpErr);
       }
+    } catch (err) {
+      console.warn("Failed to send message:", err);
     } finally {
-      setSending(false);
+      if (isMountedRef.current) {
+        setSending(false);
+      }
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 80);

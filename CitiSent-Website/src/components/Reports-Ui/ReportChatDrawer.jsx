@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FiMessageCircle, FiRefreshCw, FiX } from 'react-icons/fi'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
-import { mapBackendMessagesResponse, mapBackendMessageToUi } from '../../services/api/admin/reportsApiMappers'
+import { mapBackendMessagesResponse, mapBackendMessageToUi, mapBackendSuggestionsToUi } from '../../services/api/admin/reportsApiMappers'
 import { ReportChatThread } from './ReportChatThread'
 import { ReportChatComposer } from './ReportChatComposer'
 import {
@@ -22,6 +22,30 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
   const [isUserTyping, setIsUserTyping] = useState(false)
   const typingTimerRef = useRef(null)
 
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [suggestionText, setSuggestionText] = useState('')
+
+  const fetchSuggestions = useCallback(async (force = false) => {
+    if (!report?.id || !token) return
+    setSuggestionsLoading(true)
+    try {
+      const res = await reportsApiService.getReportChatSuggestions(token, report.id, force)
+      const mapped = mapBackendSuggestionsToUi(res)
+      setSuggestions(mapped.suggestedReplies || [])
+    } catch (err) {
+      console.error('Failed to load chat suggestions:', err)
+      setSuggestions([
+        { text: "Thank you for reaching out. We have received your message and are looking into it.", rank: 1 },
+        { text: "Could you please provide more details or clarify your request?", rank: 2 },
+        { text: "We are currently reviewing this issue and will update you as soon as possible.", rank: 3 },
+        { text: "If this is an immediate emergency, please contact our direct hotline or emergency services.", rank: 4 }
+      ])
+    } finally {
+      setSuggestionsLoading(false)
+    }
+  }, [report?.id, token])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -35,10 +59,13 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
     } finally {
       setLoading(false)
     }
-  }, [report.id, token])
+  }, [report?.id, token])
 
   // Initial load
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    fetchSuggestions()
+  }, [load, fetchSuggestions])
 
   // Socket.IO Real-time Subscriptions
   useEffect(() => {
@@ -52,6 +79,11 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
       const raw = data.message
       const isOwn = profile?.id && String(raw.senderId || raw.sender_id) === String(profile.id)
+      
+      if (!isOwn) {
+        fetchSuggestions(false)
+      }
+
       const newMsg = mapBackendMessageToUi({
         id: raw.id,
         senderId: raw.senderId || raw.sender_id,
@@ -174,6 +206,9 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
     }
   }
 
+  const lastMessage = messages[messages.length - 1]
+  const showSuggestions = !lastMessage || lastMessage.senderRole !== 'admin'
+
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-900/20" onClick={onClose} aria-hidden="true" />
@@ -204,7 +239,52 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
           </div>
         )}
 
-        <ReportChatComposer onSend={send} onTyping={handleComposerTyping} disabled={sending || loading} />
+        {/* AI-Assisted Reply Suggestions */}
+        {showSuggestions && (
+          <div className="flex flex-col gap-2 p-3 bg-slate-50 border-t border-slate-250">
+            <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold tracking-wider">
+              <span>AI-ASSISTED REPLY SUGGESTIONS</span>
+              <button
+                type="button"
+                onClick={() => fetchSuggestions(true)}
+                disabled={suggestionsLoading}
+                className="flex items-center gap-1 hover:text-blue-600 transition disabled:opacity-50 text-[10px] text-slate-500 font-bold"
+              >
+                <FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE
+              </button>
+            </div>
+            {suggestionsLoading ? (
+              <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div>
+            ) : suggestions.length > 0 ? (
+              <div className="flex flex-col gap-1.5">
+                {suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => !sending && send(suggestion.text)}
+                    disabled={sending}
+                    className={`text-left text-xs p-2 rounded-lg border border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 transition text-slate-700 font-normal ${
+                      idx === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/5' : ''
+                    }`}
+                  >
+                    {idx === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-0.5 uppercase tracking-wide">Recommended</span>}
+                    {suggestion.text}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="py-2 text-center text-xs text-slate-400">No suggestions available.</div>
+            )}
+          </div>
+        )}
+
+        <ReportChatComposer
+          onSend={send}
+          onTyping={handleComposerTyping}
+          disabled={sending || loading}
+          suggestionText={suggestionText}
+          onSuggestionUsed={() => setSuggestionText('')}
+        />
       </aside>
     </>
   )

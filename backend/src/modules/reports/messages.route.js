@@ -7,6 +7,7 @@ import {
   listReportMessagesSchema,
   markReportMessagesReadSchema,
   sendReportMessageSchema,
+  getReportMessagesSuggestionsSchema,
 } from "./messages.schema.js";
 
 const reportMessagesRouter = Router({ mergeParams: true });
@@ -16,6 +17,13 @@ reportMessagesRouter.get(
   requireAuth,
   validateRequest(listReportMessagesSchema),
   asyncHandler(reportMessagesController.getConversation),
+);
+
+reportMessagesRouter.get(
+  "/suggestions",
+  requireAuth,
+  validateRequest(getReportMessagesSuggestionsSchema),
+  asyncHandler(reportMessagesController.getSuggestions),
 );
 
 reportMessagesRouter.post(

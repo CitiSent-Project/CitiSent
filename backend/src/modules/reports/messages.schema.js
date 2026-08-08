@@ -34,3 +34,19 @@ export const markReportMessagesReadSchema = z.object({
     })
     .strict(),
 });
+
+export const getReportMessagesSuggestionsSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z
+    .object({
+      forceRegenerate: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean(),
+      ).optional().default(false),
+    })
+    .optional()
+    .default({}),
+  body: z.object({}).optional().default({}),
+});

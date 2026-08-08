@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.post_report import router as post_router
 from api.get_report import router as get_router
+from api.get_suggestions import router as suggestions_router
 
 app = FastAPI(
     title="CitiSent LGU Report API",
@@ -19,3 +20,4 @@ app.add_middleware(
 
 app.include_router(post_router)
 app.include_router(get_router)
+app.include_router(suggestions_router)

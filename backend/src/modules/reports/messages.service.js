@@ -4,6 +4,8 @@ import { reportMessagesRepository } from "./messages.repository.js";
 import { toReportMessageResponse } from "./messages.mapper.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
 import { emitToReportRoom } from "../../realtime/socket.js";
+import { reportsSentimentClient } from "./reports.sentiment.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 function normalizeMessageInput(message) {
   return String(message || "").trim();
@@ -172,6 +174,90 @@ export const reportMessagesService = {
       data: formattedRows,
       updatedCount: updatedRows.length,
     };
+  },
+
+  async getChatSuggestions({ actor, reportId, accessToken, forceRegenerate = false }) {
+    const access = await reportMessagesRepository.isParticipantForReport({
+      reportId,
+      userId: actor.id,
+      accessToken,
+    });
+
+    if (!access.report) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (!access.allowed) {
+      throw new AppError("Forbidden", StatusCodes.FORBIDDEN);
+    }
+
+    // Only LGU staff/admins should see suggested replies
+    if (access.participantType === "citizen") {
+      throw new AppError("Forbidden: Citizens cannot fetch suggestions.", StatusCodes.FORBIDDEN);
+    }
+
+    const conversation = await reportMessagesRepository.getConversation({ reportId, accessToken });
+    const messages = conversation.rows || [];
+    const citizenUserId = access.report.user_id;
+
+    // Filter messages sent by the citizen
+    const citizenMessages = messages.filter((m) => String(m.sender_id) === String(citizenUserId));
+
+    let latestUserMessage = access.report.description || "";
+    let latestCitizenMessageId = "initial_report";
+
+    if (citizenMessages.length > 0) {
+      const lastMsg = citizenMessages[citizenMessages.length - 1];
+      latestUserMessage = lastMsg.message;
+      latestCitizenMessageId = lastMsg.id;
+    }
+
+    const cacheKey = `chat_suggestions:report:${reportId}:msg:${latestCitizenMessageId}`;
+
+    if (!forceRegenerate) {
+      const cached = await cacheService.getJSON(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Take last 10 messages for context
+    const contextLimit = 10;
+    const recentMessages = messages.slice(-contextLimit);
+    const conversationContext = recentMessages.map((m) => ({
+      sender: String(m.sender_id) === String(citizenUserId) ? "Citizen" : "Admin",
+      text: m.message || "",
+    }));
+
+    let suggestions;
+    try {
+      suggestions = await reportsSentimentClient.getChatSuggestions({
+        latestUserMessage,
+        conversationContext,
+        reportCategory: access.report.issue_type || "General",
+        urgency: access.report.sentiment_label || "Medium",
+        detectedEmotion: access.report.emotion_level || "Neutral",
+      }, { accessToken });
+    } catch (error) {
+      suggestions = {
+        suggestedReplies: [
+          { text: "Thank you for reaching out. We have received your message and are looking into it.", rank: 1 },
+          { text: "Could you please provide more details or clarify your request?", rank: 2 },
+          { text: "We are currently reviewing this issue and will update you as soon as possible.", rank: 3 },
+          { text: "If this is an immediate emergency, please contact our direct hotline or emergency services.", rank: 4 }
+        ],
+        tone: "neutral",
+        confidence: 0.5,
+        reason: `Suggestions API request failed: ${error?.message || String(error)}`,
+        triggerEmotion: access.report.emotion_level || "Neutral",
+        fallbackMessage: "Thank you for reaching out. We have received your message and are looking into it."
+      };
+    }
+
+    // Cache the suggestions (TTL of 5 minutes)
+    await cacheService.setJSON(cacheKey, suggestions, 300);
+
+    return suggestions;
   },
 };
 

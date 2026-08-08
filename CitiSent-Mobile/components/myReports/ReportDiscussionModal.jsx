@@ -264,11 +264,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
         if (isMountedRef.current) {
           setMessages(updatedMessages);
         }
-      } catch (httpErr) {
-        console.warn("Failed to send message via HTTP fallback:", httpErr);
+      } catch (err) {
+        console.warn("Failed to send message:", err);
       }
-    } catch (err) {
-      console.warn("Failed to send message:", err);
     } finally {
       if (isMountedRef.current) {
         setSending(false);

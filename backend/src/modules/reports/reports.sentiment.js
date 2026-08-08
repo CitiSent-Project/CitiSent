@@ -174,4 +174,84 @@ export const reportsSentimentClient = {
         : null,
     };
   },
+
+  async getChatSuggestions(input, options = {}) {
+    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+    // Replace "/analyze" with "/chat/suggestions" dynamically
+    const apiUrl = (options.apiUrl ?? env.SENTIMENT_API_URL).replace("/analyze", "/chat/suggestions");
+    const timeoutMs = options.timeoutMs ?? env.SENTIMENT_API_TIMEOUT_MS;
+
+    if (typeof fetchImpl !== "function") {
+      throw new AppError(
+        "Suggestions service fetch is unavailable",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+
+    let response;
+
+    try {
+      response = await fetchImpl(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          latestUserMessage: input.latestUserMessage,
+          conversationContext: input.conversationContext || [],
+          reportCategory: input.reportCategory || "General",
+          urgency: input.urgency || "Medium",
+          detectedEmotion: input.detectedEmotion || "Neutral",
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new AppError(
+          "Suggestions service timed out",
+          StatusCodes.GATEWAY_TIMEOUT,
+          {
+            apiUrl,
+            timeoutMs,
+          },
+        );
+      }
+
+      throw new AppError(
+        "Suggestions service request failed",
+        StatusCodes.BAD_GATEWAY,
+        toErrorDetails(error),
+      );
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+
+    let responsePayload;
+    try {
+      responsePayload = await response.json();
+    } catch (error) {
+      throw new AppError(
+        "Suggestions service returned malformed JSON",
+        StatusCodes.BAD_GATEWAY,
+        toErrorDetails(error),
+      );
+    }
+
+    if (!response.ok) {
+      throw new AppError("Suggestions service request failed", StatusCodes.BAD_GATEWAY, {
+        status: response.status,
+        detail:
+          responsePayload?.detail ||
+          responsePayload?.message ||
+          "Unknown sidecar error",
+      });
+    }
+
+    return responsePayload;
+  },
 };

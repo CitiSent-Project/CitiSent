@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiSend } from 'react-icons/fi'
 
-export function ReportChatComposer({ onSend, onTyping, disabled }) {
+export function ReportChatComposer({ onSend, onTyping, disabled, suggestionText, onSuggestionUsed }) {
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (suggestionText) {
+      setContent(suggestionText)
+      onSuggestionUsed?.()
+    }
+  }, [suggestionText, onSuggestionUsed])
+
   async function submit(event) {
     event.preventDefault()
     const value = content.trim()

@@ -109,3 +109,19 @@ export function mapBackendMessagesResponse(response) {
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   )
 }
+
+export function mapBackendSuggestionsToUi(response = {}) {
+  const data = response?.data || response || {}
+  return {
+    suggestedReplies: (data.suggestedReplies || []).map((reply) => ({
+      text: reply.text || "",
+      rank: Number(reply.rank) || 0,
+    })),
+    tone: data.tone || "neutral",
+    confidence: Number(data.confidence) || 0.5,
+    reason: data.reason || "",
+    triggerEmotion: data.triggerEmotion || "Neutral",
+    fallbackMessage: data.fallbackMessage || "",
+  }
+}
+

@@ -24,6 +24,8 @@ import {
   sendSocketStopTyping,
 } from "../../services/socketService";
 
+import { getSupabaseClient } from "../../services/supabase";
+
 function formatMessageDateTime(isoString) {
   if (!isoString) return "";
   const d = new Date(isoString);
@@ -99,10 +101,59 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
     }
   }, [visible, report?.id]);
 
-  // ─── Socket.IO Realtime Subscriptions ───────────────────────────────────────
+  // ─── Supabase Realtime & Socket.IO Subscriptions ───────────────────────────
   useEffect(() => {
     if (!visible || !report?.id) return;
 
+    // Supabase Realtime channel
+    let supabaseChannel = null;
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        supabaseChannel = supabase
+          .channel(`report_modal_messages:${report.id}`)
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "report_messages", filter: `report_id=eq.${report.id}` },
+            (payload) => {
+              const rawMsg = payload.new;
+              if (!rawMsg) return;
+              const newMsg = formatIncomingMessage(rawMsg, currentUserId);
+              if (!newMsg) return;
+
+              setMessages((prev) => {
+                if (prev.some((m) => String(m.id) === String(newMsg.id))) {
+                  return prev;
+                }
+                const pendingIndex = prev.findIndex(
+                  (m) => m.pending && m.message === newMsg.message && String(m.senderId) === String(newMsg.senderId)
+                );
+                if (pendingIndex !== -1) {
+                  const updated = [...prev];
+                  updated[pendingIndex] = newMsg;
+                  return updated;
+                }
+                return [...prev, newMsg];
+              });
+
+              if (newMsg.senderRole !== "citizen") {
+                discussionService.markAsRead(report.id).catch(() => {});
+                markSocketConversationRead({ reportId: report.id });
+                onMarkRead?.(report.id);
+              }
+
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 80);
+            }
+          )
+          .subscribe();
+      }
+    } catch (err) {
+      console.warn("Failed to subscribe to Supabase Realtime in modal:", err);
+    }
+
+    // Socket.IO room & listeners
     const socket = getSocket();
     joinReportRoom(report.id);
 
@@ -131,6 +182,12 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
 
         return [...prev, newMsg];
       });
+
+      if (newMsg.senderRole !== "citizen") {
+        discussionService.markAsRead(report.id).catch(() => {});
+        markSocketConversationRead({ reportId: report.id });
+        onMarkRead?.(report.id);
+      }
 
       // Auto-scroll
       setTimeout(() => {
@@ -167,6 +224,12 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
     socket.on("stop_typing", handleStopTyping);
 
     return () => {
+      if (supabaseChannel) {
+        try {
+          const supabase = getSupabaseClient();
+          supabase.removeChannel(supabaseChannel);
+        } catch {}
+      }
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_read", handleMessagesRead);
       socket.off("typing", handleTyping);

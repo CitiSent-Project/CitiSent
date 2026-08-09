@@ -1,5 +1,5 @@
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Pressable, Text, View, ActivityIndicator } from "react-native";
 import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
@@ -9,6 +9,8 @@ import FeedbackModal from "../../components/ui/FeedbackModal";
 import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
 import { discussionService } from "../../services/discussionService";
 import { getAuthUser } from "../../services/authSession";
+import { getSupabaseClient } from "../../services/supabase";
+import { getSocket } from "../../services/socketService";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -27,8 +29,13 @@ export default function ReportsMadePage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
   const [discussionReport, setDiscussionReport] = useState(null);
-  const [unreadCounts, setUnreadCounts] = useState({});
+  const [unreadState, setUnreadState] = useState({});
   
+  const discussionReportRef = useRef(discussionReport);
+  useEffect(() => {
+    discussionReportRef.current = discussionReport;
+  }, [discussionReport]);
+
   // Feedback modal state
   const [feedback, setFeedback] = useState({ visible: false, type: "info", title: "", message: "" });
 
@@ -65,34 +72,112 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // Fetch unread message counts for all reports when the list changes.
-  // IMPORTANT: This runs sequentially (not Promise.all) to avoid firing N
-  // simultaneous API requests which causes Supabase 429 rate-limit errors.
-  // Most calls hit the local cache (5-min TTL) and complete instantly;
-  // only cold-cache reports touch the network, and they do so one at a time.
+  // Fetch unread admin message boolean state for all reports when list changes
   useEffect(() => {
     if (!reports.length) return;
     const currentUser = getAuthUser();
     const currentUserId = currentUser?.id ?? null;
     let cancelled = false;
 
-    async function fetchUnreadCounts() {
+    async function fetchUnreadStates() {
       const result = {};
       for (const report of reports) {
         if (cancelled) break;
         try {
-          result[report.id] = await discussionService.getUnreadCount(report.id, currentUserId);
+          result[report.id] = await discussionService.hasUnreadAdminMessage(report.id, currentUserId);
         } catch {
-          result[report.id] = 0;
+          result[report.id] = false;
         }
       }
       if (!cancelled) {
-        setUnreadCounts(result);
+        setUnreadState(result);
       }
     }
 
-    fetchUnreadCounts();
+    fetchUnreadStates();
     return () => { cancelled = true; };
+  }, [reports]);
+
+  // Real-Time Subscriptions: Supabase Realtime & Socket.IO
+  useEffect(() => {
+    if (!reports.length) return;
+    const currentUser = getAuthUser();
+    const currentUserId = currentUser?.id ?? null;
+
+    let channel = null;
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        channel = client
+          .channel("public:report_messages_unread_badges")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "report_messages" },
+            (payload) => {
+              const newMsg = payload.new;
+              if (!newMsg || !newMsg.report_id) return;
+              const senderId = String(newMsg.sender_id || newMsg.senderId || "");
+
+              if (currentUserId && senderId === String(currentUserId)) {
+                return;
+              }
+
+              const targetReportId = newMsg.report_id;
+              if (discussionReportRef.current?.id === targetReportId) {
+                discussionService.markAsRead(targetReportId).catch(() => {});
+                setUnreadState((prev) => ({ ...prev, [targetReportId]: false }));
+              } else {
+                setUnreadState((prev) => ({ ...prev, [targetReportId]: true }));
+              }
+            }
+          )
+          .subscribe();
+      }
+    } catch (err) {
+      console.warn("Failed to subscribe to Supabase Realtime for report messages:", err);
+    }
+
+    let socket = null;
+    const handleSocketMessage = (data) => {
+      const reportId = data?.reportId || data?.message?.reportId || data?.message?.report_id;
+      const msg = data?.message || data;
+      if (!reportId || !msg) return;
+
+      const senderId = String(msg.sender_id || msg.senderId || msg.sender?.id || "");
+      if (currentUserId && senderId === String(currentUserId)) {
+        return;
+      }
+
+      if (discussionReportRef.current?.id === reportId) {
+        discussionService.markAsRead(reportId).catch(() => {});
+        setUnreadState((prev) => ({ ...prev, [reportId]: false }));
+      } else {
+        setUnreadState((prev) => ({ ...prev, [reportId]: true }));
+      }
+    };
+
+    try {
+      socket = getSocket();
+      if (socket) {
+        socket.on("receive_message", handleSocketMessage);
+      }
+    } catch (err) {
+      console.warn("Failed to attach socket listener:", err);
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          const client = getSupabaseClient();
+          client.removeChannel(channel);
+        } catch {}
+      }
+      if (socket) {
+        try {
+          socket.off("receive_message", handleSocketMessage);
+        } catch {}
+      }
+    };
   }, [reports]);
 
   /**
@@ -100,13 +185,12 @@ export default function ReportsMadePage() {
    * Called by the modal's onMarkRead prop the moment the chat opens.
    */
   const handleMarkRead = (reportId) => {
-    setUnreadCounts((prev) => ({ ...prev, [reportId]: 0 }));
+    setUnreadState((prev) => ({ ...prev, [reportId]: false }));
   };
 
   /**
-   * When the discussion modal closes, re-fetch the unread count for that
-   * specific report so the badge always reflects the true server state
-   * (handles edge-cases like network delays or partial reads).
+   * When the discussion modal closes, re-fetch the unread state for that
+   * specific report so the badge always reflects the true server state.
    */
   const handleDiscussionClose = async () => {
     const reportId = discussionReport?.id;
@@ -115,8 +199,8 @@ export default function ReportsMadePage() {
       try {
         const currentUser = getAuthUser();
         const currentUserId = currentUser?.id ?? null;
-        const count = await discussionService.getUnreadCount(reportId, currentUserId);
-        setUnreadCounts((prev) => ({ ...prev, [reportId]: count }));
+        const hasUnread = await discussionService.hasUnreadAdminMessage(reportId, currentUserId);
+        setUnreadState((prev) => ({ ...prev, [reportId]: hasUnread }));
       } catch {
         // Non-critical; badge will update on next full refresh
       }
@@ -205,7 +289,7 @@ export default function ReportsMadePage() {
               <MyReportCard
                 report={report}
                 containerClassName="mb-2"
-                unreadCount={unreadCounts[report.id] || 0}
+                hasUnreadAdminMessage={Boolean(unreadState[report.id])}
                 onOpenDiscussion={(rep) => {
                   setDiscussionReport(rep);
                 }}

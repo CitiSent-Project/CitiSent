@@ -225,43 +225,39 @@ export const discussionService = {
   },
 
   /**
-   * Count how many admin messages are currently unread for the current user.
-   *
-   * Primary truth: server `isRead` field (resolved from the report_message_reads
-   * join table by the backend mapper). A message is unread when isRead === false.
-   *
-   * Secondary guard (lastSeenTime): used only for locally-generated or offline
-   * messages that predate the DB (e.g. the epoch-timestamp seed message). This
-   * prevents seed messages from ever counting as unread.
+   * Check if at least one admin message is currently unread for the current user.
+   * Short-circuits as a boolean state (hasUnreadAdminMessage = true / false).
    */
-  getUnreadCount: async (reportId, currentUserId = null) => {
-    if (!reportId) return 0;
+  hasUnreadAdminMessage: async (reportId, currentUserId = null) => {
+    if (!reportId) return false;
     try {
       const [messages, lastSeenTs] = await Promise.all([
         discussionService.getDiscussion(reportId, currentUserId),
         getCache(lastSeenKey(reportId), { ignoreExpiry: true }),
       ]);
 
-      // lastSeenTime is used only to guard against offline/seed messages.
-      // Server-authored messages use isRead as the authoritative signal.
       const lastSeenTime = lastSeenTs ? new Date(lastSeenTs).getTime() : 0;
 
-      return messages.filter((m) => {
+      return messages.some((m) => {
         if (m.senderRole === "citizen") return false; // own messages never count
         if (m.id && String(m.id).startsWith("msg-init-")) return false; // ignore seed
 
         const msgTime = new Date(m.createdAt).getTime();
-
-        // For messages created before the user ever opened the chat (epoch guard),
-        // use the timestamp fallback so pre-existing content isn't suddenly flagged.
         if (lastSeenTime > 0 && msgTime <= lastSeenTime) return false;
 
-        // Primary truth: use server-confirmed isRead.
         return m.isRead === false;
-      }).length;
+      });
     } catch {
-      return 0;
+      return false;
     }
+  },
+
+  /**
+   * Legacy wrapper for backwards compatibility. Returns 1 if unread admin message exists, 0 otherwise.
+   */
+  getUnreadCount: async (reportId, currentUserId = null) => {
+    const hasUnread = await discussionService.hasUnreadAdminMessage(reportId, currentUserId);
+    return hasUnread ? 1 : 0;
   },
 
   /**

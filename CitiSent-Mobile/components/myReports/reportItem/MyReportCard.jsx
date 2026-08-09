@@ -9,7 +9,15 @@ function FieldLabel({ text }) {
   return <Text className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>{text}</Text>;
 }
 
-export default function MyReportCard({ report, containerClassName = "mb-4", onDelete, onOpenDiscussion, unreadCount = 0 }) {
+export default function MyReportCard({
+  report,
+  containerClassName = "mb-4",
+  onDelete,
+  onOpenDiscussion,
+  hasUnreadAdminMessage = false,
+  unreadCount = 0,
+}) {
+  const showBadge = Boolean(hasUnreadAdminMessage || unreadCount > 0);
   const handleDelete = () => {
     Alert.alert(
       "Delete Report",
@@ -55,7 +63,7 @@ export default function MyReportCard({ report, containerClassName = "mb-4", onDe
 
         <View className="flex-row items-center gap-2">
           {onOpenDiscussion && (
-            <View>
+            <View className="relative">
               <Pressable
                 onPress={() => onOpenDiscussion(report)}
                 className="flex-row items-center rounded-lg px-2.5 py-1.5 active:opacity-80"
@@ -66,15 +74,11 @@ export default function MyReportCard({ report, containerClassName = "mb-4", onDe
                   Chat with Admin
                 </Text>
               </Pressable>
-              {unreadCount > 0 && (
+              {showBadge && (
                 <View
-                  className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full items-center justify-center px-1"
+                  className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white"
                   style={{ backgroundColor: Colors.error }}
-                >
-                  <Text className="text-white font-bold" style={{ fontSize: 9, lineHeight: 12 }}>
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Text>
-                </View>
+                />
               )}
             </View>
           )}

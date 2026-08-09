@@ -59,13 +59,6 @@ The mobile app lives in the `CitiSent-Mobile` folder and uses Expo.
 
    Expo will open the development menu, where you can run the app on Android, iOS, or the web.
 
-4. **Optional platform commands:**
-
-   ```powershell
-   npm run android
-   npm run ios
-   npm run web
-   ```
 
 ## Running the AI Sentiment Service
 

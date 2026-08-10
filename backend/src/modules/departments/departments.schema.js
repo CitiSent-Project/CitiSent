@@ -36,6 +36,7 @@ export const updateDepartmentSchema = z.object({
   }),
   body: z
     .object({
+      slug: departmentSlugSchema.optional(),
       name: z.string().trim().min(2).max(160).optional(),
       description: z.string().trim().max(600).optional(),
     })

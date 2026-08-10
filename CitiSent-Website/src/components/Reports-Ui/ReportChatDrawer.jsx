@@ -219,7 +219,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
               <FiMessageCircle />
               <h2 className="font-semibold">Talk to User</h2>
             </div>
-            <p className="mt-1 text-xs text-blue-100">Report {report.id} · {report.category}</p>
+            <p className="mt-1 text-xs text-blue-100">Report {report.reportNum || report.id} · {report.category}</p>
           </div>
           <div className="flex gap-1">
             <button type="button" onClick={load} className="rounded-lg p-2 hover:bg-white/10" aria-label="Refresh conversation">

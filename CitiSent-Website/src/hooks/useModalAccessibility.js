@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -10,6 +10,12 @@ const FOCUSABLE_SELECTOR = [
 ].join(',')
 
 export function useModalAccessibility({ isOpen, onClose, containerRef }) {
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   useEffect(() => {
     if (!isOpen) {
       return undefined
@@ -29,7 +35,7 @@ export function useModalAccessibility({ isOpen, onClose, containerRef }) {
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onClose()
+        onCloseRef.current()
         return
       }
 
@@ -66,5 +72,5 @@ export function useModalAccessibility({ isOpen, onClose, containerRef }) {
         previousFocusedElement.focus()
       }
     }
-  }, [containerRef, isOpen, onClose])
+  }, [containerRef, isOpen])
 }

@@ -251,6 +251,7 @@ export const departmentsRepository = {
     const { data, error } = await db
       .from(AGENCIES_TABLE)
       .update({
+        ...(payload.slug !== undefined ? { slug: payload.slug } : {}),
         ...(payload.name !== undefined ? { name: payload.name } : {}),
         ...(payload.description !== undefined
           ? { description: payload.description || null }

@@ -33,16 +33,16 @@ export function buildUserReportRows({ userReports = [], users = [], agencies = [
   }, {})
 
   return userReports.map((report) => {
-    const reportNumber = Number(report.reportNum)
-    const safeReportNumber = Number.isNaN(reportNumber) ? 0 : reportNumber
+    const reportNumber = report.reportNumber || report.reportNum || report.id
     const user = usersById[report.userId] || {}
     const fullName = `${user.firstName || 'Unknown'} ${user.lastName || 'User'}`.trim()
     const createdAt = Date.parse(report.createdAt)
     const safeCreatedAt = Number.isNaN(createdAt) ? Date.now() : createdAt
 
     return {
-      id: `UR-${String(safeReportNumber)}`,
-      reportNum: safeReportNumber,
+      id: report.id || `UR-${String(reportNumber)}`,
+      reportNum: reportNumber,
+      reportNumber,
       userId: report.userId,
       name: fullName,
       email: user.email || 'unknown@citisent.gov',

@@ -5,6 +5,7 @@ import { getAuthToken, getAuthUser } from "./authSession";
 import { runtimeFlags } from "./runtimeFlags";
 import { getSupabaseClient } from "./supabase";
 import { setCache, getCache } from "./cache";
+import { departmentsApi } from "./departments";
 
 const reportedFallbackWarnings = new Set();
 const TEMP_TOKEN_PREFIX = "temp-";
@@ -83,14 +84,17 @@ function resolveAttachment(report) {
   };
 }
 
-function mapBackendReportToMyReport(report, index) {
+function mapBackendReportToMyReport(report, index, departments = []) {
   if (!report || typeof report !== "object") {
     return null;
   }
 
+  const issueType = report.issueType || report.issue_type || "";
+  const department = departments.find((item) => item.slug === issueType || item.id === issueType);
+
   return {
     id: report.id || `report-${index + 1}`,
-    issueType: report.issueType || report.issue_type || "Unspecified Issue",
+    issueType: department?.name || issueType || "Unspecified Issue",
     location: report.location || "Unknown location",
     description: report.description || "No description provided.",
     createdAt:
@@ -104,7 +108,7 @@ function readReportsPayload(payload) {
   return readArray(payload, "data", readArray(payload, "reports", []));
 }
 
-function toMyReportsPayload(payload) {
+function toMyReportsPayload(payload, departments = []) {
   const reportRows = readReportsPayload(payload);
 
   if (!Array.isArray(reportRows) || reportRows.length === 0) {
@@ -112,7 +116,7 @@ function toMyReportsPayload(payload) {
   }
 
   return reportRows
-    .map(mapBackendReportToMyReport)
+    .map((report, index) => mapBackendReportToMyReport(report, index, departments))
     .filter((report) => report !== null);
 }
 
@@ -260,8 +264,11 @@ export const reportsApi = {
         query += `&status=${backendStatus}`;
       }
 
-      const response = await api.get(query);
-      const mappedReports = toMyReportsPayload(response);
+      const [response, departments] = await Promise.all([
+        api.get(query),
+        departmentsApi.getDepartments().catch(() => []),
+      ]);
+      const mappedReports = toMyReportsPayload(response, departments);
       const total = response?.pagination?.total ?? response?.total ?? mappedReports.length;
 
       const result = { data: mappedReports, total };
@@ -327,8 +334,11 @@ export const reportsApi = {
     }
 
     try {
-      const response = await api.get("/reports?limit=1&offset=0");
-      const latestReport = toMyReportsPayload(response)[0] || null;
+      const [response, departments] = await Promise.all([
+        api.get("/reports?limit=1&offset=0"),
+        departmentsApi.getDepartments().catch(() => []),
+      ]);
+      const latestReport = toMyReportsPayload(response, departments)[0] || null;
       const mappedLatestHomeReport = toLatestHomeReport(latestReport);
       const result = mappedLatestHomeReport || LATEST_HOME_REPORT;
       await setCache(cacheKey, result, 300); // Fix for Issue #5

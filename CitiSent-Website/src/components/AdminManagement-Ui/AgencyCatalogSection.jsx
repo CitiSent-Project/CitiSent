@@ -65,6 +65,7 @@ export function AgencyCatalogSection({
     const [busyDepartmentSlug, setBusyDepartmentSlug] = useState('')
     const [renameModal, setRenameModal] = useState(null)
     const [renameName, setRenameName] = useState('')
+    const [renameSlug, setRenameSlug] = useState('')
     const [renameError, setRenameError] = useState('')
     const [deleteModal, setDeleteModal] = useState(null)
     const [deleteError, setDeleteError] = useState('')
@@ -78,6 +79,7 @@ export function AgencyCatalogSection({
         onClose: () => {
             setRenameModal(null)
             setRenameName('')
+            setRenameSlug('')
             setRenameError('')
         },
         containerRef: renameModalRef,
@@ -130,12 +132,14 @@ export function AgencyCatalogSection({
     function handleOpenRenameModal(department) {
         setRenameModal(department)
         setRenameName(department.label)
+        setRenameSlug(department.slug || department.id)
         setRenameError('')
     }
 
     function handleCloseRenameModal() {
         setRenameModal(null)
         setRenameName('')
+        setRenameSlug('')
         setRenameError('')
     }
 
@@ -194,12 +198,18 @@ export function AgencyCatalogSection({
         }
 
         const nextName = String(renameName || '').trim()
+        const nextSlug = toSlug(renameSlug)
         if (!nextName) {
             setRenameError('Agency name is required.')
             return
         }
 
-        if (nextName === renameModal.label) {
+        if (!nextSlug) {
+            setRenameError('A valid slug is required (letters, numbers, and hyphens only).')
+            return
+        }
+
+        if (nextName === renameModal.label && nextSlug === (renameModal.slug || renameModal.id)) {
             handleCloseRenameModal()
             return
         }
@@ -209,6 +219,7 @@ export function AgencyCatalogSection({
         const result = await onUpdateDepartment({
             departmentSlug: renameModal.id,
             name: nextName,
+            slug: nextSlug,
         })
         setBusyDepartmentSlug('')
 
@@ -626,6 +637,17 @@ export function AgencyCatalogSection({
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                                 />
                                 {renameError ? <p className="mt-1 text-xs text-rose-600">{renameError}</p> : null}
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-sm text-slate-700">Slug</label>
+                                <input
+                                    type="text"
+                                    value={renameSlug}
+                                    onChange={(event) => setRenameSlug(event.target.value)}
+                                    placeholder="city-treasury-office"
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                                />
+                                <p className="mt-1 text-xs text-slate-500">Use lowercase letters, numbers, and hyphens.</p>
                             </div>
 
                             <div className="grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end">

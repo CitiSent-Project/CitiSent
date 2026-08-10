@@ -136,11 +136,29 @@ export const departmentsService = {
     assertDepartmentFound(existing);
 
     try {
+      const nextSlug = payload.slug !== undefined ? normalizeSlug(payload.slug) : existing.slug;
+      const nextName = payload.name !== undefined ? String(payload.name || "").trim() : existing.name;
+
+      if (!nextSlug) {
+        throw new AppError("A valid department slug is required.", StatusCodes.BAD_REQUEST);
+      }
+
+      if (nextSlug !== existing.slug) {
+        await departmentsRepository.reassignDepartmentReferences({
+          accessToken,
+          fromSlug: existing.slug,
+          fromName: existing.name,
+          toSlug: nextSlug,
+          toName: nextName,
+        });
+      }
+
       const updated = await departmentsRepository.updateDepartmentBySlug({
         accessToken,
         slug: departmentSlug,
         payload: {
-          ...(payload.name !== undefined ? { name: String(payload.name || "").trim() } : {}),
+          ...(payload.slug !== undefined ? { slug: nextSlug } : {}),
+          ...(payload.name !== undefined ? { name: nextName } : {}),
           ...(payload.description !== undefined
             ? { description: String(payload.description || "").trim() }
             : {}),

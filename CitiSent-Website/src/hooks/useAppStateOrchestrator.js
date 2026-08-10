@@ -1022,7 +1022,7 @@ export function useAppStateOrchestrator() {
     }
   }
 
-  async function handleUpdateDepartment({ departmentSlug, name, description }) {
+  async function handleUpdateDepartment({ departmentSlug, name, slug, description }) {
     if (!canReviewTransferRequest(profile.role)) {
       notifyError('Update denied.', 'Only superadmins can update departments.')
       return { ok: false }
@@ -1039,6 +1039,7 @@ export function useAppStateOrchestrator() {
         departmentSlug,
         {
           ...(name !== undefined ? { name } : {}),
+          ...(slug !== undefined ? { slug } : {}),
           ...(description !== undefined ? { description } : {}),
         }
       )

@@ -175,13 +175,13 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <FiChevronRight className="text-xs" />
           <span className="text-slate-700 font-medium">Report Detail</span>
           <FiChevronRight className="text-xs" />
-          <span className="text-slate-400 font-numeric">{report.id}</span>
+              <span className="text-slate-400 font-numeric">{report.reportNum || report.id}</span>
         </nav>
 
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">
-              Report <span className="font-numeric">{report.id}</span>
+              Report <span className="font-numeric">{report.reportNum || report.id}</span>
             </h1>
             <p className="mt-1 text-sm text-slate-500">
               Submitted on <span className="font-numeric">{report.date}</span>
@@ -212,7 +212,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Report ID</p>
-              <p className="mt-0.5 text-slate-900 font-numeric">{report.id}</p>
+              <p className="mt-0.5 text-slate-900 font-numeric">{report.reportNum || report.id}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Reported By</p>

@@ -1,6 +1,7 @@
 export function toReportResponse(reportRow) {
   return {
     id: reportRow.id,
+    reportNumber: reportRow.report_number || reportRow.id,
     issueType: reportRow.issue_type,
     description: reportRow.description,
     location: reportRow.location,

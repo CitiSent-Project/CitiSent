@@ -45,7 +45,8 @@ export function mapBackendReportToUiRow(payload = {}) {
 
   return {
     id: payload.id || '',
-    reportNum: payload.id || '',
+    reportNum: payload.reportNumber || payload.id || '',
+    reportNumber: payload.reportNumber || payload.id || '',
     userId: reporter.id || '',
     name: reporterName || 'Unknown Reporter',
     email: reporter.email || 'unknown@citisent.gov',

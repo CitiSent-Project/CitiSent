@@ -135,8 +135,8 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                   key={row.id}
                   className="border-b border-slate-100 transition-colors hover:bg-slate-100"
                 >
-                  <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24" title={row.id}>
-                    {truncateId(row.id)}
+                  <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24" title={row.reportNum || row.id}>
+                    {row.reportNum || truncateId(row.id)}
                   </td>
                   <td className="px-4 py-3 text-slate-800">{row.name}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-slate-600">

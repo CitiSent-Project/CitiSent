@@ -138,15 +138,13 @@ export default function ReportsMadePage() {
     }
 
     let socket = null;
-    const handleSocketMessage = (data) => {
-      const reportId = data?.reportId || data?.message?.reportId || data?.message?.report_id;
-      const msg = data?.message || data;
-      if (!reportId || !msg) return;
+    const handleNewReportMessage = (data) => {
+      const reportId = data?.reportId;
+      if (!reportId) return;
 
-      const senderId = String(msg.sender_id || msg.senderId || msg.sender?.id || "");
-      if (currentUserId && senderId === String(currentUserId)) {
-        return;
-      }
+      // Only update badge for reports currently in the list
+      const reportIds = reports.map((r) => String(r.id));
+      if (!reportIds.includes(String(reportId))) return;
 
       if (discussionReportRef.current?.id === reportId) {
         discussionService.markAsRead(reportId).catch(() => {});
@@ -159,7 +157,7 @@ export default function ReportsMadePage() {
     try {
       socket = getSocket();
       if (socket) {
-        socket.on("receive_message", handleSocketMessage);
+        socket.on("new_report_message", handleNewReportMessage);
       }
     } catch (err) {
       console.warn("Failed to attach socket listener:", err);
@@ -174,7 +172,7 @@ export default function ReportsMadePage() {
       }
       if (socket) {
         try {
-          socket.off("receive_message", handleSocketMessage);
+          socket.off("new_report_message", handleNewReportMessage);
         } catch {}
       }
     };

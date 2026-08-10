@@ -3,7 +3,7 @@ import { AppError } from "../../shared/errors/appError.js";
 import { reportMessagesRepository } from "./messages.repository.js";
 import { toReportMessageResponse } from "./messages.mapper.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
-import { emitToReportRoom } from "../../realtime/socket.js";
+import { emitToReportRoom, emitToUser } from "../../realtime/socket.js";
 import { reportsSentimentClient } from "./reports.sentiment.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 
@@ -105,6 +105,20 @@ export const reportMessagesService = {
       });
     } catch {
       // Non-critical socket broadcast fallback
+    }
+
+    // Also notify the report owner's personal room so the badge updates
+    // even when they are NOT viewing the specific report chat room
+    try {
+      const reportOwnerId = access.report.user_id;
+      if (reportOwnerId && String(reportOwnerId) !== String(actor.id)) {
+        emitToUser(reportOwnerId, "new_report_message", {
+          reportId,
+          message: formattedMessage,
+        });
+      }
+    } catch {
+      // Non-critical
     }
 
     const participants = await reportMessagesRepository.getAgencyParticipants({

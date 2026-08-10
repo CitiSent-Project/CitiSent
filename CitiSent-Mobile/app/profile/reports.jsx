@@ -80,16 +80,21 @@ export default function ReportsMadePage() {
     let cancelled = false;
 
     async function fetchUnreadStates() {
-      const result = {};
-      for (const report of reports) {
-        if (cancelled) break;
-        try {
-          result[report.id] = await discussionService.hasUnreadAdminMessage(report.id, currentUserId);
-        } catch {
-          result[report.id] = false;
-        }
-      }
+      const results = await Promise.all(
+        reports.map(async (report) => {
+          try {
+            const hasUnread = await discussionService.hasUnreadAdminMessage(report.id, currentUserId);
+            return { id: report.id, hasUnread };
+          } catch {
+            return { id: report.id, hasUnread: false };
+          }
+        })
+      );
       if (!cancelled) {
+        const result = {};
+        for (const r of results) {
+          result[r.id] = r.hasUnread;
+        }
         setUnreadState(result);
       }
     }

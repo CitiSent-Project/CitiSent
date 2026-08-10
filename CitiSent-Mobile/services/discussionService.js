@@ -227,15 +227,29 @@ export const discussionService = {
   /**
    * Check if at least one admin message is currently unread for the current user.
    * Short-circuits as a boolean state (hasUnreadAdminMessage = true / false).
+   *
+   * Always awaits fresh data from the API (via ensureDiscussionFetched) rather
+   * than the cache-first getDiscussion path, because the stale-while-revalidate
+   * cache can miss new admin messages that arrived while the component was
+   * unmounted. Falls back to cache-first if the API call fails.
    */
   hasUnreadAdminMessage: async (reportId, currentUserId = null) => {
     if (!reportId) return false;
     try {
-      const [messages, lastSeenTs] = await Promise.all([
-        discussionService.getDiscussion(reportId, currentUserId),
-        getCache(lastSeenKey(reportId), { ignoreExpiry: true }),
-      ]);
+      let messages;
+      if (isAuthAvailable()) {
+        try {
+          const rawMessages = await ensureDiscussionFetched(reportId);
+          messages = classifyMessages(rawMessages, currentUserId);
+        } catch {
+          // API failed — fall back to cache-first approach
+          messages = await discussionService.getDiscussion(reportId, currentUserId);
+        }
+      } else {
+        messages = await discussionService.getDiscussion(reportId, currentUserId);
+      }
 
+      const lastSeenTs = await getCache(lastSeenKey(reportId), { ignoreExpiry: true });
       const lastSeenTime = lastSeenTs ? new Date(lastSeenTs).getTime() : 0;
 
       return messages.some((m) => {

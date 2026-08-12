@@ -11,11 +11,15 @@ import {
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
 import { getAuthPhoneNumber, getAuthUsername, getAuthGender, getAuthProfileImage } from "../../services/authSession";
+import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [isLogoutVisible, setIsLogoutVisible] = useState(false);
+
+  // Shared real-time notification state from the global singleton
+  const { hasUnreadAdminMessage } = useAdminMessageState();
 
   // Fix 2: store session-derived values in state so they update when the
   // screen regains focus (e.g. after returning from Edit Profile).
@@ -98,6 +102,7 @@ export default function Profile() {
               icon={item.icon}
               label={item.label}
               onPress={() => router.push(item.route)}
+              showBadge={item.id === "reports" && hasUnreadAdminMessage}
             />
           ))}
 

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../../modules/shared";
 
-export default function ProfileMenuItem({ icon, label, iconColor = Colors.icon.primary, onPress, danger = false }) {
+export default function ProfileMenuItem({ icon, label, iconColor = Colors.icon.primary, onPress, danger = false, showBadge = false }) {
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -17,7 +17,20 @@ export default function ProfileMenuItem({ icon, label, iconColor = Colors.icon.p
         {label}
       </Text>
 
+      {showBadge && (
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: Colors.error ?? "#ef4444",
+            marginRight: 8,
+          }}
+        />
+      )}
+
       <Ionicons name="chevron-forward" size={22} color={Colors.icon.chevron} />
     </TouchableOpacity>
   );
 }
+

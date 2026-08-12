@@ -55,6 +55,9 @@ app.use(
     limit: env.RATE_LIMIT_MAX,
     standardHeaders: "draft-7",
     legacyHeaders: false,
+    // Browser CORS preflights are negotiation requests, not API work.
+    // Counting them halves the useful quota for cross-origin clients.
+    skip: (req) => req.method === "OPTIONS",
   }),
 );
 

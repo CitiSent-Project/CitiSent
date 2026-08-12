@@ -248,3 +248,107 @@ export const notifyErrorWithRetry = (
     }
   )
 }
+
+/**
+ * Chat message notification toast helper.
+ * Renders a sleek, non-disruptive toast when a new message arrives from a citizen while the admin is not viewing that thread.
+ */
+export const notifyChatMessage = ({
+  senderName = 'Citizen',
+  messageText = '',
+  reportNumber = '',
+  onView,
+}) => {
+  if (!messageText) return
+
+  toast.custom(
+    (toastRef) =>
+      createElement(
+        'div',
+        {
+          style: {
+            maxWidth: '360px',
+            width: '100%',
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            color: '#0f172a',
+            boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1)',
+            padding: '12px 14px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            cursor: 'pointer',
+          },
+          onClick: () => {
+            toast.dismiss(toastRef.id)
+            if (typeof onView === 'function') onView()
+          },
+        },
+        createElement(
+          'div',
+          {
+            style: {
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: '#1d4ed8',
+              color: '#ffffff',
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 600,
+              fontSize: '14px',
+              flexShrink: 0,
+            },
+          },
+          (senderName.charAt(0) || 'C').toUpperCase()
+        ),
+        createElement(
+          'div',
+          { style: { flex: 1, minWidth: 0 } },
+          createElement(
+            'div',
+            { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' } },
+            createElement(
+              'span',
+              { style: { fontSize: '13px', fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+              senderName
+            ),
+            reportNumber
+              ? createElement(
+                  'span',
+                  { style: { fontSize: '10px', color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' } },
+                  `#${reportNumber}`
+                )
+              : null
+          ),
+          createElement(
+            'p',
+            {
+              style: {
+                margin: '2px 0 0 0',
+                fontSize: '12px',
+                color: '#475569',
+                lineHeight: 1.4,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              },
+            },
+            messageText
+          ),
+          createElement(
+            'span',
+            { style: { fontSize: '11px', fontWeight: 600, color: '#1d4ed8', display: 'inline-block', marginTop: '4px' } },
+            'View message →'
+          )
+        )
+      ),
+    {
+      duration: 5000,
+      position: 'bottom-right',
+    }
+  )
+}
+

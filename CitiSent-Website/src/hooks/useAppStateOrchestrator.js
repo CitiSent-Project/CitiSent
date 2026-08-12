@@ -190,6 +190,10 @@ export function useAppStateOrchestrator() {
   )
   const [profile, setProfile] = useState(() => storedProfile)
   // Fetch active department options for all users and full catalog for superadmins.
+  // The public /departments list is fetched eagerly (no auth required).
+  // The /departments/catalog endpoint requires a superadmin token and is only
+  // fetched after the session bootstrap has completed (authReady=true), so we
+  // never fire it with a stale or expired stored token.
   useEffect(() => {
     let isMounted = true
 
@@ -206,7 +210,8 @@ export function useAppStateOrchestrator() {
         }
       }
 
-      if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN || !accessToken) {
+      // Do not fetch the authenticated catalog until the session is confirmed valid.
+      if (!authReady || normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN || !accessToken) {
         if (isMounted) {
           setDepartmentCatalog([])
         }
@@ -232,7 +237,7 @@ export function useAppStateOrchestrator() {
     return () => {
       isMounted = false
     }
-  }, [accessToken, profile.role])
+  }, [accessToken, profile.role, authReady])
   const [adminAccounts, setAdminAccounts] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.adminAccounts, DEFAULT_ADMIN_ACCOUNTS)
   )

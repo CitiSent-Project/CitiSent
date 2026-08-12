@@ -84,7 +84,6 @@ export function Users({ onViewUserProfile, profile }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
-  const [isViewProfileOpen, setIsViewProfileOpen] = useState(false)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
   const [selectedUserIds, setSelectedUserIds] = useState([])
   const resolvedRole = normalizeUserRole(profile?.role)
@@ -333,10 +332,7 @@ export function Users({ onViewUserProfile, profile }) {
 
       if (onViewUserProfile) {
         onViewUserProfile(detailedUser)
-        return
       }
-
-      setIsViewProfileOpen(true)
     } catch (error) {
       notifyError('View profile failed.', error.message)
     }

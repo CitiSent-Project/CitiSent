@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  FiMessageCircle,
   FiSearch,
   FiRefreshCw,
   FiArrowLeft,
@@ -18,11 +17,13 @@ import {
   mapBackendReportToUiRow,
 } from '../../services/api/admin/reportsApiMappers'
 
+// ─── Toast Notifications ──────────────────────────────────────────────────────
+import { notifyChatMessage } from '../../components/ui/toastHelpers'
+
 // ─── Socket services (reuses the same socket layer as ReportChatDrawer) ───────
 import {
   getSocket,
   joinReportRoom,
-  leaveReportRoom,
   sendSocketMessage,
   markSocketConversationRead,
   sendSocketTyping,
@@ -45,29 +46,34 @@ import { ConversationEmptyState } from './ConversationEmptyState'
 // ─── Framer Motion shorthand ──────────────────────────────────────────────────
 const MotionDiv = motion.div
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 /**
- * Reads the admin access token from localStorage using the same
- * schema-backed approach that ReportDetailPage uses.
+ * Reads the admin access token from localStorage using schema validation.
  */
 function readAccessToken() {
   const rule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
   return loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', rule)
 }
 
+/**
+ * Formats presence text (e.g. "Last seen 8 mins ago")
+ */
+function formatLastSeen(dateString) {
+  if (!dateString) return 'Offline'
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return 'Offline'
+
+  const diffMs = Date.now() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+
+  if (diffMins < 1) return 'Active just now'
+  if (diffMins < 60) return `Last seen ${diffMins}m ago`
+  if (diffHours < 24) return `Last seen ${diffHours}h ago`
+  return `Last seen ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ConversationsPage
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// Full-page split-panel messaging interface for admins.
-//
-// Left panel  → scrollable conversation list with search
-// Right panel → active chat thread with composer & AI suggestions
-//
-// Props:
-//   profile      — Admin profile object (id, fullName, etc.)
-//   onViewReport — Callback to navigate to the ReportDetailPage for a report.
 // ═══════════════════════════════════════════════════════════════════════════════
 export function ConversationsPage({ profile, onViewReport }) {
   // ── Access Token ──────────────────────────────────────────────────────────
@@ -80,7 +86,7 @@ export function ConversationsPage({ profile, onViewReport }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeConversation, setActiveConversation] = useState(null)
 
-  // ── Chat Thread State (for the selected conversation) ─────────────────────
+  // ── Chat Thread State ─────────────────────────────────────────────────────
   const [messages, setMessages] = useState([])
   const [chatLoading, setChatLoading] = useState(false)
   const [chatError, setChatError] = useState('')
@@ -92,14 +98,23 @@ export function ConversationsPage({ profile, onViewReport }) {
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
-  // ── Mobile: toggle between list and chat views ────────────────────────────
+  // ── Mobile Toggle ─────────────────────────────────────────────────────────
   const [mobileShowChat, setMobileShowChat] = useState(false)
 
-  // ── Ref to the previously joined socket room ──────────────────────────────
-  const prevRoomRef = useRef(null)
+  const activeConversationRef = useRef(activeConversation)
+  useEffect(() => {
+    activeConversationRef.current = activeConversation
+  }, [activeConversation])
+
+  // Sort helper: keep conversations ordered by recent activity timestamp
+  const sortConversations = (list) => {
+    return [...list].sort(
+      (a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime()
+    )
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. Load Conversations List
+  // 1. Load Conversations List & Join Socket Rooms
   // ─────────────────────────────────────────────────────────────────────────
   const loadConversations = useCallback(async () => {
     if (!token) return
@@ -107,7 +122,14 @@ export function ConversationsPage({ profile, onViewReport }) {
     setConversationsError('')
     try {
       const response = await reportsApiService.listConversations(token)
-      setConversations(mapBackendConversationsResponse(response))
+      const mapped = mapBackendConversationsResponse(response)
+      const sorted = sortConversations(mapped)
+      setConversations(sorted)
+
+      // Join socket rooms for all loaded conversations so real-time updates arrive
+      sorted.forEach((c) => {
+        if (c.reportId) joinReportRoom(token, c.reportId)
+      })
     } catch (err) {
       console.error('Failed to load conversations:', err)
       setConversationsError(err.message || 'Failed to load conversations')
@@ -117,7 +139,6 @@ export function ConversationsPage({ profile, onViewReport }) {
     }
   }, [token])
 
-  // Initial fetch
   useEffect(() => {
     loadConversations()
   }, [loadConversations])
@@ -125,135 +146,177 @@ export function ConversationsPage({ profile, onViewReport }) {
   // ─────────────────────────────────────────────────────────────────────────
   // 2. Load Messages for the active conversation
   // ─────────────────────────────────────────────────────────────────────────
-  const loadMessages = useCallback(async (reportId) => {
-    if (!reportId || !token) return
-    setChatLoading(true)
-    setChatError('')
-    try {
-      const response = await reportsApiService.listReportMessages(token, reportId)
-      setMessages(mapBackendMessagesResponse(response))
-      // Mark messages as read
-      await reportsApiService.markReportMessagesRead(token, reportId)
-      markSocketConversationRead(token, { reportId })
-      // Clear the unread count in the conversation list for this report
-      setConversations((prev) =>
-        prev.map((c) => (c.reportId === reportId ? { ...c, unreadCount: 0 } : c))
-      )
-    } catch (err) {
-      setChatError(err.message)
-    } finally {
-      setChatLoading(false)
-    }
-  }, [token])
+  const loadMessages = useCallback(
+    async (reportId) => {
+      if (!reportId || !token) return
+      setChatLoading(true)
+      setChatError('')
+      try {
+        const response = await reportsApiService.listReportMessages(token, reportId)
+        setMessages(mapBackendMessagesResponse(response))
+        // Mark as read
+        await reportsApiService.markReportMessagesRead(token, reportId)
+        markSocketConversationRead(token, { reportId })
+        // Clear unread count for this active conversation
+        setConversations((prev) =>
+          prev.map((c) => (c.reportId === reportId ? { ...c, unreadCount: 0 } : c))
+        )
+      } catch (err) {
+        setChatError(err.message)
+      } finally {
+        setChatLoading(false)
+      }
+    },
+    [token]
+  )
 
   // ─────────────────────────────────────────────────────────────────────────
   // 3. Fetch AI Reply Suggestions
   // ─────────────────────────────────────────────────────────────────────────
-  const fetchSuggestions = useCallback(async (reportId, force = false) => {
-    if (!reportId || !token) return
-    setSuggestionsLoading(true)
-    try {
-      const res = await reportsApiService.getReportChatSuggestions(token, reportId, force)
-      const mapped = mapBackendSuggestionsToUi(res)
-      setSuggestions(mapped.suggestedReplies || [])
-    } catch {
-      setSuggestions([
-        { text: 'Thank you for reaching out. We have received your message and are looking into it.', rank: 1 },
-        { text: 'Could you please provide more details or clarify your request?', rank: 2 },
-        { text: 'We are currently reviewing this issue and will update you as soon as possible.', rank: 3 },
-        { text: 'If this is an immediate emergency, please contact our direct hotline or emergency services.', rank: 4 },
-      ])
-    } finally {
-      setSuggestionsLoading(false)
-    }
-  }, [token])
+  const fetchSuggestions = useCallback(
+    async (reportId, force = false) => {
+      if (!reportId || !token) return
+      setSuggestionsLoading(true)
+      try {
+        const res = await reportsApiService.getReportChatSuggestions(token, reportId, force)
+        const mapped = mapBackendSuggestionsToUi(res)
+        setSuggestions(mapped.suggestedReplies || [])
+      } catch {
+        setSuggestions([
+          { text: 'Thank you for reaching out. We have received your message and are looking into it.', rank: 1 },
+          { text: 'Could you please provide more details or clarify your request?', rank: 2 },
+          { text: 'We are currently reviewing this issue and will update you as soon as possible.', rank: 3 },
+          { text: 'If this is an immediate emergency, please contact our direct hotline or emergency services.', rank: 4 },
+        ])
+      } finally {
+        setSuggestionsLoading(false)
+      }
+    },
+    [token]
+  )
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 4. Select a conversation
+  // 4. Select Conversation
   // ─────────────────────────────────────────────────────────────────────────
-  function handleSelectConversation(conversation) {
-    // Leave the previous socket room (if any)
-    if (prevRoomRef.current && token) {
-      leaveReportRoom(token, prevRoomRef.current)
-    }
-
+  const handleSelectConversation = useCallback((conversation) => {
     setActiveConversation(conversation)
     setMessages([])
     setSuggestions([])
     setIsUserTyping(false)
     setMobileShowChat(true)
 
-    loadMessages(conversation.reportId)
-    fetchSuggestions(conversation.reportId)
-    prevRoomRef.current = conversation.reportId
-  }
+    if (conversation.reportId) {
+      joinReportRoom(token, conversation.reportId)
+      loadMessages(conversation.reportId)
+      fetchSuggestions(conversation.reportId)
+    }
+  }, [token, loadMessages, fetchSuggestions])
+
+  const handleSelectConversationRef = useRef(handleSelectConversation)
+  useEffect(() => {
+    handleSelectConversationRef.current = handleSelectConversation
+  }, [handleSelectConversation])
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5. Socket.IO Real-Time Subscriptions
-  //    (mirrors the approach in ReportChatDrawer)
+  // 5. Global Socket Listener for All Joined Report Rooms
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeConversation?.reportId || !token) return
+    if (!token) return
 
-    const reportId = activeConversation.reportId
     const socket = getSocket(token)
-    joinReportRoom(token, reportId)
 
     const handleReceiveMessage = (data) => {
-      if (String(data?.reportId) !== String(reportId) || !data?.message) return
+      if (!data?.reportId || !data?.message) return
 
+      const reportId = String(data.reportId)
       const raw = data.message
       const isOwn = profile?.id && String(raw.senderId || raw.sender_id) === String(profile.id)
-
-      if (!isOwn) {
-        fetchSuggestions(reportId, false)
-      }
+      const nowIso = raw.createdAt || raw.created_at || new Date().toISOString()
+      const contentText = raw.message || raw.content || ''
 
       const newMsg = mapBackendMessageToUi({
         id: raw.id,
         senderId: raw.senderId || raw.sender_id,
-        content: raw.message || raw.content,
-        message: raw.message || raw.content,
-        createdAt: raw.createdAt || raw.created_at,
+        content: contentText,
+        message: contentText,
+        createdAt: nowIso,
         isRead: false,
         senderRole: isOwn ? 'admin' : 'citizen',
       })
 
-      setMessages((current) => {
-        if (current.some((m) => String(m.id) === String(newMsg.id))) return current
-        return [...current, newMsg].sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        )
-      })
+      const isCurrentActive = String(activeConversationRef.current?.reportId) === reportId
 
-      // Update the last message preview in the conversation list
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.reportId === reportId
-            ? {
-                ...c,
-                lastMessage: newMsg.content,
-                lastMessageAt: newMsg.createdAt,
-                lastMessageSenderRole: newMsg.senderRole,
-              }
-            : c
-        )
-      )
+      // If viewing this thread, append to message thread
+      if (isCurrentActive) {
+        setMessages((current) => {
+          if (current.some((m) => String(m.id) === String(newMsg.id))) return current
+          return [...current, newMsg].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          )
+        })
+
+        if (!isOwn) {
+          fetchSuggestions(reportId, false)
+        }
+      }
+
+      // Update conversation list item & dynamically re-order list to top
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => String(c.reportId) === reportId)
+        if (index === -1) return prev
+
+        const target = prev[index]
+        const updatedTarget = {
+          ...target,
+          lastMessage: contentText,
+          lastMessageAt: nowIso,
+          lastMessageSenderRole: isOwn ? 'admin' : 'citizen',
+          unreadCount: isCurrentActive ? 0 : isOwn ? target.unreadCount : (target.unreadCount || 0) + 1,
+        }
+
+        const nextList = [...prev]
+        nextList[index] = updatedTarget
+
+        // Show toast notification if message is from citizen and admin is not actively viewing that thread
+        if (!isOwn && !isCurrentActive) {
+          notifyChatMessage({
+            senderName: target.userName || 'Citizen',
+            messageText: contentText,
+            reportNumber: target.reportNumber,
+            onView: () => handleSelectConversationRef.current?.(updatedTarget),
+          })
+        }
+
+        return sortConversations(nextList)
+      })
     }
 
     const handleMessagesRead = (data) => {
-      if (String(data?.reportId) !== String(reportId)) return
-      setMessages((current) => current.map((msg) => ({ ...msg, isRead: true })))
+      if (!data?.reportId) return
+      const reportId = String(data.reportId)
+      if (String(activeConversationRef.current?.reportId) === reportId) {
+        setMessages((current) => current.map((msg) => ({ ...msg, isRead: true })))
+      }
     }
 
     const handleTyping = (data) => {
-      if (String(data?.reportId) === String(reportId) && String(data?.userId) !== String(profile?.id)) {
+      const reportId = String(data?.reportId || '')
+      if (
+        reportId &&
+        String(activeConversationRef.current?.reportId) === reportId &&
+        String(data?.userId) !== String(profile?.id)
+      ) {
         setIsUserTyping(true)
       }
     }
 
     const handleStopTyping = (data) => {
-      if (String(data?.reportId) === String(reportId) && String(data?.userId) !== String(profile?.id)) {
+      const reportId = String(data?.reportId || '')
+      if (
+        reportId &&
+        String(activeConversationRef.current?.reportId) === reportId &&
+        String(data?.userId) !== String(profile?.id)
+      ) {
         setIsUserTyping(false)
       }
     }
@@ -268,18 +331,16 @@ export function ConversationsPage({ profile, onViewReport }) {
       socket.off('messages_read', handleMessagesRead)
       socket.off('typing', handleTyping)
       socket.off('stop_typing', handleStopTyping)
-      leaveReportRoom(token, reportId)
     }
-  }, [activeConversation?.reportId, token, profile?.id, fetchSuggestions])
+  }, [token, profile?.id, fetchSuggestions])
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 6. Send a message (socket-first with HTTP fallback)
+  // 6. Send Message
   // ─────────────────────────────────────────────────────────────────────────
   async function handleSend(content) {
     if (!content.trim() || !activeConversation?.reportId) return false
     const reportId = activeConversation.reportId
 
-    // Stop typing indicator
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
     sendSocketStopTyping(token, reportId)
 
@@ -290,14 +351,17 @@ export function ConversationsPage({ profile, onViewReport }) {
         message: content,
       })
 
+      const nowIso = new Date().toISOString()
+
       if (confirmedMessage) {
-        const isOwn = profile?.id && String(confirmedMessage.senderId || confirmedMessage.sender_id) === String(profile.id)
+        const isOwn =
+          profile?.id && String(confirmedMessage.senderId || confirmedMessage.sender_id) === String(profile.id)
         const newMsg = mapBackendMessageToUi({
           id: confirmedMessage.id,
           senderId: confirmedMessage.senderId || confirmedMessage.sender_id,
           content: confirmedMessage.message || confirmedMessage.content,
           message: confirmedMessage.message || confirmedMessage.content,
-          createdAt: confirmedMessage.createdAt || confirmedMessage.created_at,
+          createdAt: confirmedMessage.createdAt || confirmedMessage.created_at || nowIso,
           isRead: false,
           senderRole: isOwn ? 'admin' : 'citizen',
         })
@@ -308,18 +372,28 @@ export function ConversationsPage({ profile, onViewReport }) {
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           )
         })
-
-        // Update the conversation list preview
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.reportId === reportId
-              ? { ...c, lastMessage: content, lastMessageAt: new Date().toISOString(), lastMessageSenderRole: 'admin' }
-              : c
-          )
-        )
       } else {
         await loadMessages(reportId)
       }
+
+      // Update preview & re-sort list to top
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => String(c.reportId) === String(reportId))
+        if (index === -1) return prev
+
+        const updated = {
+          ...prev[index],
+          lastMessage: content,
+          lastMessageAt: nowIso,
+          lastMessageSenderRole: 'admin',
+          unreadCount: 0,
+        }
+
+        const nextList = [...prev]
+        nextList[index] = updated
+        return sortConversations(nextList)
+      })
+
       return true
     } catch (socketErr) {
       console.warn('Socket send failed, falling back to HTTP:', socketErr?.message)
@@ -334,6 +408,24 @@ export function ConversationsPage({ profile, onViewReport }) {
         } else {
           await loadMessages(reportId)
         }
+
+        setConversations((prev) => {
+          const index = prev.findIndex((c) => String(c.reportId) === String(reportId))
+          if (index === -1) return prev
+
+          const updated = {
+            ...prev[index],
+            lastMessage: content,
+            lastMessageAt: new Date().toISOString(),
+            lastMessageSenderRole: 'admin',
+            unreadCount: 0,
+          }
+
+          const nextList = [...prev]
+          nextList[index] = updated
+          return sortConversations(nextList)
+        })
+
         return true
       } catch (err) {
         setChatError(err.message)
@@ -344,9 +436,7 @@ export function ConversationsPage({ profile, onViewReport }) {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 7. Typing Indicator
-  // ─────────────────────────────────────────────────────────────────────────
+  // Typing indicator trigger
   function handleComposerTyping() {
     if (activeConversation?.reportId && token) {
       sendSocketTyping(token, activeConversation.reportId)
@@ -357,9 +447,7 @@ export function ConversationsPage({ profile, onViewReport }) {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 8. Filtered conversations list
-  // ─────────────────────────────────────────────────────────────────────────
+  // Filtered list
   const filteredConversations = useMemo(() => {
     if (!searchQuery.trim()) return conversations
     const query = searchQuery.toLowerCase()
@@ -371,26 +459,20 @@ export function ConversationsPage({ profile, onViewReport }) {
     )
   }, [conversations, searchQuery])
 
-  // Count total unread across all conversations
+  // Unread total badge count
   const totalUnread = useMemo(
-    () => conversations.reduce((sum, c) => sum + c.unreadCount, 0),
+    () => conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0),
     [conversations]
   )
 
-  // Should AI suggestions be shown? (only if last message is NOT from admin)
   const lastMessage = messages[messages.length - 1]
   const showSuggestions = activeConversation && (!lastMessage || lastMessage.senderRole !== 'admin')
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 9. Render
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <main className="mx-auto max-w-[1600px] flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
       <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            LEFT PANEL — Conversations List
-            ═══════════════════════════════════════════════════════════════════ */}
+        {/* LEFT PANEL — Conversations List */}
         <div
           className={`flex w-full flex-col border-r border-slate-200 md:w-[360px] md:shrink-0 lg:w-[380px] ${
             mobileShowChat ? 'hidden md:flex' : 'flex'
@@ -402,7 +484,7 @@ export function ConversationsPage({ profile, onViewReport }) {
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-semibold text-slate-900">Conversations</h1>
                 {totalUnread > 0 && (
-                  <span className="grid h-6 min-w-6 place-items-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white font-numeric">
+                  <span className="grid h-6 min-w-6 place-items-center rounded-full bg-blue-600 px-1.5 text-xs font-bold text-white font-numeric">
                     {totalUnread > 99 ? '99+' : totalUnread}
                   </span>
                 )}
@@ -433,10 +515,9 @@ export function ConversationsPage({ profile, onViewReport }) {
             </div>
           </header>
 
-          {/* Conversation List */}
+          {/* Conversation List Container */}
           <div className="flex-1 overflow-y-auto px-2 py-2">
             {conversationsLoading ? (
-              // Loading skeleton
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="flex animate-pulse items-center gap-3 rounded-xl p-3">
@@ -482,20 +563,13 @@ export function ConversationsPage({ profile, onViewReport }) {
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            RIGHT PANEL — Active Chat
-            ═══════════════════════════════════════════════════════════════════ */}
-        <div
-          className={`flex flex-1 flex-col ${
-            mobileShowChat ? 'flex' : 'hidden md:flex'
-          }`}
-        >
+        {/* RIGHT PANEL — Active Chat */}
+        <div className={`flex flex-1 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
           {activeConversation ? (
             <>
-              {/* Chat Header */}
+              {/* Chat Header with Presence */}
               <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-[#183b68] px-5 py-3.5 text-white">
                 <div className="flex items-center gap-3">
-                  {/* Mobile back button */}
                   <button
                     type="button"
                     onClick={() => setMobileShowChat(false)}
@@ -505,12 +579,18 @@ export function ConversationsPage({ profile, onViewReport }) {
                     <FiArrowLeft />
                   </button>
 
-                  {/* User info */}
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="font-semibold">{activeConversation.userName}</h2>
-                      {activeConversation.isOnline && (
-                        <span className="h-2 w-2 rounded-full bg-emerald-400" title="Online" />
+                      {activeConversation.isOnline ? (
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                          Online
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-medium text-blue-200">
+                          {formatLastSeen(activeConversation.lastMessageAt)}
+                        </span>
                       )}
                     </div>
                     <p className="text-xs text-blue-100">
@@ -520,7 +600,6 @@ export function ConversationsPage({ profile, onViewReport }) {
                   </div>
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex items-center gap-1">
                   {onViewReport && (
                     <button
@@ -548,7 +627,7 @@ export function ConversationsPage({ profile, onViewReport }) {
                 </div>
               </header>
 
-              {/* Chat Thread (reuses the existing component) */}
+              {/* Chat Thread */}
               <ReportChatThread
                 messages={messages}
                 loading={chatLoading}
@@ -563,7 +642,7 @@ export function ConversationsPage({ profile, onViewReport }) {
                 </div>
               )}
 
-              {/* AI-Assisted Reply Suggestions (same pattern as ReportChatDrawer) */}
+              {/* AI-Assisted Reply Suggestions */}
               <AnimatePresence>
                 {showSuggestions && (
                   <MotionDiv
@@ -586,7 +665,9 @@ export function ConversationsPage({ profile, onViewReport }) {
                         </button>
                       </div>
                       {suggestionsLoading ? (
-                        <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div>
+                        <div className="py-4 text-center text-xs text-slate-400">
+                          Generating suggestions...
+                        </div>
                       ) : suggestions.length > 0 ? (
                         <div className="flex flex-col gap-1.5">
                           {suggestions.map((suggestion, idx) => (
@@ -596,7 +677,9 @@ export function ConversationsPage({ profile, onViewReport }) {
                               onClick={() => !sending && handleSend(suggestion.text)}
                               disabled={sending}
                               className={`text-left text-xs p-2 rounded-lg border border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 transition text-slate-700 font-normal ${
-                                idx === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/5' : ''
+                                idx === 0
+                                  ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/5'
+                                  : ''
                               }`}
                             >
                               {idx === 0 && (
@@ -609,14 +692,16 @@ export function ConversationsPage({ profile, onViewReport }) {
                           ))}
                         </div>
                       ) : (
-                        <div className="py-2 text-center text-xs text-slate-400">No suggestions available.</div>
+                        <div className="py-2 text-center text-xs text-slate-400">
+                          No suggestions available.
+                        </div>
                       )}
                     </div>
                   </MotionDiv>
                 )}
               </AnimatePresence>
 
-              {/* Chat Composer (reuses the existing component) */}
+              {/* Chat Composer */}
               <ReportChatComposer
                 onSend={handleSend}
                 onTyping={handleComposerTyping}
@@ -626,7 +711,6 @@ export function ConversationsPage({ profile, onViewReport }) {
               />
             </>
           ) : (
-            /* No conversation selected — show the "select" empty state */
             <ConversationEmptyState variant="select" />
           )}
         </div>

@@ -14,6 +14,8 @@ import {
 } from '../../controllers/reportStatusController'
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import { ReportChatDrawer } from './ReportChatDrawer'
+import { reportsApiService } from '../../services/api/admin/reportsApiService'
+import { mapBackendMessagesResponse } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
@@ -45,6 +47,21 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       actor: report?.name || 'Citizen',
     },
   ])
+
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
+
+  useEffect(() => {
+    if (!report?.id || !accessToken) return
+    let isMounted = true
+    reportsApiService.listReportMessages(accessToken, report.id)
+      .then((res) => {
+        const msgs = mapBackendMessagesResponse(res)
+        const unread = msgs.filter((m) => m.senderRole !== 'admin' && !m.isRead).length
+        if (isMounted) setUnreadChatCount(unread)
+      })
+      .catch(() => {})
+    return () => { isMounted = false }
+  }, [report?.id, accessToken])
 
   useEffect(() => {
     return () => {
@@ -360,7 +377,25 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               {isSaving ? 'Saving...' : 'Save Status'}
             </button>
 
-            {canChat ? <button type="button" onClick={() => setIsChatOpen(true)} className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a]"><FiMessageCircle /> Talk to User</button> : null}
+            {canChat ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChatOpen(true)
+                  setUnreadChatCount(0)
+                }}
+                className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a]"
+              >
+                <FiMessageCircle />
+                <span>Talk to User</span>
+                {unreadChatCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-500 px-1.5 py-0.5 text-[10px] font-bold text-white font-numeric">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    {unreadChatCount > 1 ? unreadChatCount : ''}
+                  </span>
+                )}
+              </button>
+            ) : null}
           </div>
 
           

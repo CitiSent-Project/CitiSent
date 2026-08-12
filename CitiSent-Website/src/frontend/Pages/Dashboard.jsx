@@ -144,15 +144,18 @@ export function Dashboard() {
         [iconMap]
     )
 
+    const dashboardQueryError = dashboardQuery.error
+    const refetchDashboard = dashboardQuery.refetch
+
     useEffect(() => {
-        if (dashboardQuery.error) {
+        if (dashboardQueryError) {
             notifyErrorWithRetry(
                 'Unable to load dashboard.',
-                dashboardQuery.error.message,
-                () => dashboardQuery.refetch()
+                dashboardQueryError.message,
+                () => refetchDashboard()
             )
         }
-    }, [dashboardQuery, dashboardQuery.error])
+    }, [dashboardQueryError, refetchDashboard])
 
     const isLoadingDashboard = Boolean(accessToken) && (dashboardQuery.isLoading || dashboardQuery.isFetching)
 

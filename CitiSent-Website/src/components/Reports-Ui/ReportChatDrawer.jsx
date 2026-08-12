@@ -136,7 +136,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
       socket.off('stop_typing', handleStopTyping)
       leaveReportRoom(token, report.id)
     }
-  }, [report.id, token, profile?.id])
+  }, [report.id, token, profile?.id, fetchSuggestions])
 
   async function send(content) {
     if (!content.trim() || !report?.id) return false
@@ -217,9 +217,15 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
           <div>
             <div className="flex items-center gap-2">
               <FiMessageCircle />
-              <h2 className="font-semibold">Talk to User</h2>
+              <h2 className="font-semibold">{report.name || 'Talk to User'}</h2>
+              <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                Online
+              </span>
             </div>
-            <p className="mt-1 text-xs text-blue-100">Report {report.reportNum || report.id} · {report.category}</p>
+            <p className="mt-1 text-xs text-blue-100">
+              Report {report.reportNum || report.id} · {report.category}
+            </p>
           </div>
           <div className="flex gap-1">
             <button type="button" onClick={load} className="rounded-lg p-2 hover:bg-white/10" aria-label="Refresh conversation">

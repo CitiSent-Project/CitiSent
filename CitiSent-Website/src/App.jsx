@@ -61,7 +61,9 @@ function AuthenticatedApp() {
         .getAll()
         .some((query) => isBackendUnavailableError(query.state.error))
 
-      setHasBackendQueryError(hasUnavailableError)
+      setTimeout(() => {
+        setHasBackendQueryError(hasUnavailableError)
+      }, 0)
     }
 
     updateQueryErrorState()

@@ -7,8 +7,11 @@ export function ReportChatComposer({ onSend, onTyping, disabled, suggestionText,
 
   useEffect(() => {
     if (suggestionText) {
-      setContent(suggestionText)
-      onSuggestionUsed?.()
+      const timer = setTimeout(() => {
+        setContent(suggestionText)
+        onSuggestionUsed?.()
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [suggestionText, onSuggestionUsed])
 

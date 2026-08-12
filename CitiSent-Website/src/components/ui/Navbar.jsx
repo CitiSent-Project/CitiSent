@@ -219,19 +219,30 @@ export function Navbar({
 	onNavigate,
 	profileRole,
 	unreadNotifications = 0,
+	unreadChatCount = 0,
 	connectionStatus = 'connected',
 }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
 	const resolvedRole = normalizeUserRole(profileRole)
 
-	const visibleNavItems = navItems.filter((item) => {
-		if (!item.roles) {
-			return true
-		}
+	const visibleNavItems = navItems
+		.filter((item) => {
+			if (!item.roles) {
+				return true
+			}
 
-		return item.roles.includes(resolvedRole)
-	})
+			return item.roles.includes(resolvedRole)
+		})
+		.map((item) => {
+			if (item.pageKey === APP_PAGES.CONVERSATIONS && unreadChatCount > 0) {
+				return {
+					...item,
+					notifications: unreadChatCount > 99 ? '99+' : unreadChatCount,
+				}
+			}
+			return item
+		})
 
 	function handleNavigate(nextPage) {
 		onNavigate(nextPage)

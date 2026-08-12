@@ -68,7 +68,7 @@ export const reportMessagesService = {
     };
   },
 
-  async sendMessage({ actor, reportId, message, accessToken }) {
+  async sendMessage({ actor, reportId, message, accessToken, suppressRoomBroadcast = false }) {
     const normalizedMessage = normalizeMessageInput(message);
     if (!normalizedMessage) {
       throw new AppError("Message content is required.", StatusCodes.BAD_REQUEST);
@@ -98,13 +98,15 @@ export const reportMessagesService = {
     const formattedMessage = toReportMessageResponse(created);
 
     // Broadcast receive_message to all connected socket clients viewing this report
-    try {
-      emitToReportRoom(reportId, "receive_message", {
-        reportId,
-        message: formattedMessage,
-      });
-    } catch {
-      // Non-critical socket broadcast fallback
+    if (!suppressRoomBroadcast) {
+      try {
+        emitToReportRoom(reportId, "receive_message", {
+          reportId,
+          message: formattedMessage,
+        });
+      } catch {
+        // Non-critical socket broadcast fallback
+      }
     }
 
     // Also notify the report owner's personal room so the badge updates

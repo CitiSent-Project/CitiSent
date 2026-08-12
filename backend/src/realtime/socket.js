@@ -105,6 +105,9 @@ export function initSocketIO(httpServer) {
           reportId,
           message,
           accessToken: socket.accessToken,
+          // The socket handler broadcasts the room below. Avoid emitting the
+          // same receive_message event from the service as well.
+          suppressRoomBroadcast: true,
         });
 
         // Broadcast receive_message to everyone viewing the report room

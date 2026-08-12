@@ -1,5 +1,5 @@
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Pressable, Text, View, ActivityIndicator } from "react-native";
 import { MyReportCard, useMyReports } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
@@ -7,10 +7,8 @@ import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
 import FeedbackModal from "../../components/ui/FeedbackModal";
 import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
-import { discussionService } from "../../services/discussionService";
 import { getAuthUser } from "../../services/authSession";
-import { getSupabaseClient } from "../../services/supabase";
-import { getSocket } from "../../services/socketService";
+import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
@@ -29,8 +27,10 @@ export default function ReportsMadePage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
   const [discussionReport, setDiscussionReport] = useState(null);
-  const [unreadState, setUnreadState] = useState({});
-  
+
+  // Shared real-time notification state — single source of truth
+  const { unreadByReport, setReportRead, refreshFromApi } = useAdminMessageState();
+
   const discussionReportRef = useRef(discussionReport);
   useEffect(() => {
     discussionReportRef.current = discussionReport;
@@ -72,123 +72,23 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // Fetch unread admin message boolean state for all reports when list changes
+  // Seed shared state from API when report list changes.
+  // Uses refreshFromApi so the singleton store (and all three badge locations)
+  // are updated atomically — no local state copy.
   useEffect(() => {
     if (!reports.length) return;
     const currentUser = getAuthUser();
     const currentUserId = currentUser?.id ?? null;
-    let cancelled = false;
-
-    async function fetchUnreadStates() {
-      const results = await Promise.all(
-        reports.map(async (report) => {
-          try {
-            const hasUnread = await discussionService.hasUnreadAdminMessage(report.id, currentUserId);
-            return { id: report.id, hasUnread };
-          } catch {
-            return { id: report.id, hasUnread: false };
-          }
-        })
-      );
-      if (!cancelled) {
-        const result = {};
-        for (const r of results) {
-          result[r.id] = r.hasUnread;
-        }
-        setUnreadState(result);
-      }
-    }
-
-    fetchUnreadStates();
-    return () => { cancelled = true; };
-  }, [reports]);
-
-  // Real-Time Subscriptions: Supabase Realtime & Socket.IO
-  useEffect(() => {
-    if (!reports.length) return;
-    const currentUser = getAuthUser();
-    const currentUserId = currentUser?.id ?? null;
-
-    let channel = null;
-    try {
-      const client = getSupabaseClient();
-      if (client) {
-        channel = client
-          .channel("public:report_messages_unread_badges")
-          .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "report_messages" },
-            (payload) => {
-              const newMsg = payload.new;
-              if (!newMsg || !newMsg.report_id) return;
-              const senderId = String(newMsg.sender_id || newMsg.senderId || "");
-
-              if (currentUserId && senderId === String(currentUserId)) {
-                return;
-              }
-
-              const targetReportId = newMsg.report_id;
-              if (discussionReportRef.current?.id === targetReportId) {
-                discussionService.markAsRead(targetReportId).catch(() => {});
-                setUnreadState((prev) => ({ ...prev, [targetReportId]: false }));
-              } else {
-                setUnreadState((prev) => ({ ...prev, [targetReportId]: true }));
-              }
-            }
-          )
-          .subscribe();
-      }
-    } catch (err) {
-      console.warn("Failed to subscribe to Supabase Realtime for report messages:", err);
-    }
-
-    let socket = null;
-    const handleNewReportMessage = (data) => {
-      const reportId = data?.reportId;
-      if (!reportId) return;
-
-      // Only update badge for reports currently in the list
-      const reportIds = reports.map((r) => String(r.id));
-      if (!reportIds.includes(String(reportId))) return;
-
-      if (discussionReportRef.current?.id === reportId) {
-        discussionService.markAsRead(reportId).catch(() => {});
-        setUnreadState((prev) => ({ ...prev, [reportId]: false }));
-      } else {
-        setUnreadState((prev) => ({ ...prev, [reportId]: true }));
-      }
-    };
-
-    try {
-      socket = getSocket();
-      if (socket) {
-        socket.on("new_report_message", handleNewReportMessage);
-      }
-    } catch (err) {
-      console.warn("Failed to attach socket listener:", err);
-    }
-
-    return () => {
-      if (channel) {
-        try {
-          const client = getSupabaseClient();
-          client.removeChannel(channel);
-        } catch {}
-      }
-      if (socket) {
-        try {
-          socket.off("new_report_message", handleNewReportMessage);
-        } catch {}
-      }
-    };
+    const reportIds = reports.map((r) => String(r.id));
+    refreshFromApi(reportIds, currentUserId).catch(() => {});
   }, [reports]);
 
   /**
-   * Immediately clear the badge for a specific report in local state.
+   * Immediately clear the badge for a specific report in the shared store.
    * Called by the modal's onMarkRead prop the moment the chat opens.
    */
   const handleMarkRead = (reportId) => {
-    setUnreadState((prev) => ({ ...prev, [reportId]: false }));
+    setReportRead(reportId);
   };
 
   /**
@@ -202,8 +102,7 @@ export default function ReportsMadePage() {
       try {
         const currentUser = getAuthUser();
         const currentUserId = currentUser?.id ?? null;
-        const hasUnread = await discussionService.hasUnreadAdminMessage(reportId, currentUserId);
-        setUnreadState((prev) => ({ ...prev, [reportId]: hasUnread }));
+        await refreshFromApi([String(reportId)], currentUserId);
       } catch {
         // Non-critical; badge will update on next full refresh
       }
@@ -292,7 +191,7 @@ export default function ReportsMadePage() {
               <MyReportCard
                 report={report}
                 containerClassName="mb-2"
-                hasUnreadAdminMessage={Boolean(unreadState[report.id])}
+                hasUnreadAdminMessage={Boolean(unreadByReport[String(report.id)])}
                 onOpenDiscussion={(rep) => {
                   setDiscussionReport(rep);
                 }}

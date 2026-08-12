@@ -23,6 +23,7 @@ import {
   sendSocketTyping,
   sendSocketStopTyping,
 } from "../../services/socketService";
+import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 import { getSupabaseClient } from "../../services/supabase";
 
@@ -75,6 +76,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   const currentUser = getAuthUser();
   const currentUserId = currentUser?.id ?? null;
 
+  // Shared notification state — so opening this modal clears badges globally
+  const { setReportRead: setReportReadGlobal } = useAdminMessageState();
+
   /**
    * Guard ref to prevent setState calls after the component unmounts.
    * This protects async send callbacks if the user closes the modal mid-request.
@@ -93,6 +97,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       loadMessages();
       discussionService.markAsRead(report.id).catch(() => {});
       markSocketConversationRead({ reportId: report.id });
+      // Clear the badge in the global singleton so all three badge locations
+      // (Profile tab, Manage Reports row, Chat button) clear simultaneously.
+      setReportReadGlobal(report.id);
       onMarkRead?.(report.id);
     } else {
       setMessages([]);
@@ -139,6 +146,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               if (newMsg.senderRole !== "citizen") {
                 discussionService.markAsRead(report.id).catch(() => {});
                 markSocketConversationRead({ reportId: report.id });
+                // The modal is open — incoming admin message should be marked
+                // read immediately in the global store too.
+                setReportReadGlobal(report.id);
                 onMarkRead?.(report.id);
               }
 
@@ -186,6 +196,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       if (newMsg.senderRole !== "citizen") {
         discussionService.markAsRead(report.id).catch(() => {});
         markSocketConversationRead({ reportId: report.id });
+        setReportReadGlobal(report.id);
         onMarkRead?.(report.id);
       }
 

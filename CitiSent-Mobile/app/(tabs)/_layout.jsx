@@ -1,7 +1,39 @@
+import { View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "../../modules/shared";
+import { useAdminMessageState } from "../../contexts/AdminMessageContext";
+
+/**
+ * Profile tab icon with a shared real-time red notification dot.
+ * Reads hasUnreadAdminMessage from the singleton-backed context so it updates
+ * immediately on Supabase Realtime events regardless of which screen is active.
+ */
+function ProfileTabIcon({ color, size }) {
+  const { hasUnreadAdminMessage } = useAdminMessageState();
+
+  return (
+    <View style={{ position: "relative" }}>
+      <Ionicons name="person-outline" size={size} color={color} />
+      {hasUnreadAdminMessage && (
+        <View
+          style={{
+            position: "absolute",
+            top: -2,
+            right: -4,
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: Colors.error ?? "#ef4444",
+            borderWidth: 1.5,
+            borderColor: Colors.surface ?? "#ffffff",
+          }}
+        />
+      )}
+    </View>
+  );
+}
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -53,13 +85,12 @@ export default function TabLayout() {
         name="Profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (props) => <ProfileTabIcon {...props} />,
         }}
       />
     </Tabs>
   );
 }
+
 
 

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Pressable, Text, View, ActivityIndicator } from "react-native";
-import { MyReportCard, useMyReports } from "../../modules/myReports";
+import { MyReportCard, useMyReports, ReportsFeedSkeleton } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
@@ -184,7 +184,9 @@ export default function ReportsMadePage() {
         })}
       </View>
 
-      {reports.length > 0 ? (
+      {isInitialLoading ? (
+        <ReportsFeedSkeleton />
+      ) : reports.length > 0 ? (
         <>
           {reports.map((report) => (
             <View key={report.id}>

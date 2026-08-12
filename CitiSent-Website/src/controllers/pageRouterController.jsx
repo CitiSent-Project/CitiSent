@@ -10,6 +10,7 @@ import { Settings } from '../frontend/Pages/Settings'
 import { UserProfilePage } from '../frontend/Users/UserProfilePage/UserProfilePage'
 import { ReportDetailPage } from '../components/Reports-Ui/ReportDetailPage'
 import { AdminManagement } from '../frontend/Pages/AdminManagement'
+import { ConversationsPage } from '../frontend/Conversations/ConversationsPage'
 import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 
 export function renderAuthPage({
@@ -193,6 +194,8 @@ export function renderActivePage({
                     onUpdateStatus={onUpdateReportStatus}
                 />
             )
+        case APP_PAGES.CONVERSATIONS:
+            return <ConversationsPage profile={profile} onViewReport={onViewReport} />
         default:
             return <Dashboard />
     }

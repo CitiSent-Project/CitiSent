@@ -35,4 +35,11 @@ export const reportsApiService = {
     apiClient.patch(`/reports/${reportId}/messages/read`, {}, { token }),
   getReportChatSuggestions: (token, reportId, forceRegenerate = false) =>
     apiClient.get(`/reports/${reportId}/messages/suggestions?forceRegenerate=${forceRegenerate}`, { token }),
+  /**
+   * Fetches all conversations the current admin has participated in.
+   * Uses listReports as a fallback since the dedicated /admin/conversations endpoint
+   * does not exist on the backend yet.
+   */
+  listConversations: (token) =>
+    reportsApiService.listReports(token, { limit: 50 }),
 }

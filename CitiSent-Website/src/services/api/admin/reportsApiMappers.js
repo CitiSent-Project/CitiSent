@@ -126,3 +126,46 @@ export function mapBackendSuggestionsToUi(response = {}) {
   }
 }
 
+/**
+ * Maps a single backend conversation object into a UI-friendly shape.
+ * Each conversation represents a report-based chat thread with a citizen.
+ */
+export function mapBackendConversationToUi(payload = {}) {
+  const reporter = payload.reporter || payload.user || {}
+  const lastMsg = payload.lastMessage || {}
+  const reporterName =
+    composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
+    reporter.fullName ||
+    reporter.name ||
+    'Unknown User'
+
+  return {
+    reportId: payload.reportId || payload.id || '',
+    reportNumber: payload.reportNumber || payload.reportNum || '',
+    userId: reporter.id || payload.userId || '',
+    userName: reporterName,
+    userAvatar: reporter.avatar || reporter.avatarUrl || null,
+    lastMessage: lastMsg.content || lastMsg.message || '',
+    lastMessageAt: lastMsg.createdAt || lastMsg.timestamp || payload.updatedAt || '',
+    lastMessageSenderRole: String(lastMsg.senderRole || lastMsg.role || '').toLowerCase(),
+    unreadCount: Number(payload.unreadCount ?? payload.unread_count ?? 0),
+    isOnline: Boolean(payload.isOnline ?? false),
+    category: payload.category || payload.departmentLabel || payload.issueType || '',
+    status: payload.status || 'pending',
+    rawReport: payload,
+  }
+}
+
+/**
+ * Maps the backend response array of conversations into UI-friendly format.
+ * Sorts conversations by most-recent message first.
+ */
+export function mapBackendConversationsResponse(response) {
+  const data = response?.data || response || {}
+  const payload = Array.isArray(data) ? data : data.rows || []
+  const rows = Array.isArray(payload) ? payload : [payload]
+  return rows
+    .map(mapBackendConversationToUi)
+    .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+}
+

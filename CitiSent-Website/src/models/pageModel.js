@@ -7,6 +7,7 @@ export const APP_PAGES = {
   REPORTS_BY_CATEGORY: 'Reports:By Category',
   REPORTS_BY_URGENCY: 'Reports:By Urgency Levels',
   REPORT_DETAIL: 'Report Detail',
+  CONVERSATIONS: 'Conversations',
   ADMIN_PROFILE: 'Admin Profile',
   NOTIFICATIONS: 'Notifications',
   SETTINGS: 'Settings',

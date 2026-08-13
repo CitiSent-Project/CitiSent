@@ -4,6 +4,7 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { healthService } from "./modules/health/health.service.js";
 import { initSocketIO } from "./realtime/socket.js";
+import { cacheService } from "./shared/cache/cacheService.js";
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 let isShuttingDown = false;
@@ -90,7 +91,7 @@ async function verifyStartupDependencies() {
   });
 }
 
-function shutdown(signal, options = {}) {
+async function shutdown(signal, options = {}) {
   const { exitCode = 0, error = null } = options;
 
   if (isShuttingDown) return;
@@ -117,6 +118,13 @@ function shutdown(signal, options = {}) {
     });
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
+
+  // Gracefully close cache connection first
+  try {
+    await cacheService.close();
+  } catch (err) {
+    logger.warn("Failed to close cache service gracefully on shutdown", { message: err.message });
+  }
 
   if (!server) {
     clearTimeout(forceExitTimer);
@@ -159,6 +167,7 @@ function shutdown(signal, options = {}) {
 async function startServer() {
   try {
     await verifyStartupDependencies();
+    await cacheService.initialize();
   } catch (error) {
     logger.error("Startup dependency verification failed", {
       message: error.message,

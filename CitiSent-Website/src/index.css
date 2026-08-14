@@ -49,6 +49,10 @@ body {
 }
 
 :root[data-theme='dark'] .bg-blue-50,
+:root[data-theme='dark'] .bg-blue-50\/90,
+:root[data-theme='dark'] .bg-blue-50\/60,
+:root[data-theme='dark'] .bg-blue-50\/30,
+:root[data-theme='dark'] .bg-blue-50\/5,
 :root[data-theme='dark'] .bg-blue-100 {
   background-color: #1e293b !important;
 }
@@ -166,6 +170,8 @@ body {
 
 :root[data-theme='dark'] .hover\:bg-slate-50:hover,
 :root[data-theme='dark'] .hover\:bg-slate-50\/60:hover,
+:root[data-theme='dark'] .hover\:bg-blue-50\/60:hover,
+:root[data-theme='dark'] .hover\:bg-blue-50\/30:hover,
 :root[data-theme='dark'] .hover\:bg-rose-50:hover,
 :root[data-theme='dark'] .hover\:bg-emerald-50:hover {
   background-color: #1e293b !important;

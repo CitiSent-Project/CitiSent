@@ -49,6 +49,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   ])
 
   const [unreadChatCount, setUnreadChatCount] = useState(0)
+  const accessTokenRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
+  const accessToken = loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', accessTokenRule)
 
   useEffect(() => {
     if (!report?.id || !accessToken) return
@@ -96,8 +98,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const isPermanentlyLocked = currentStatus === 'Unresolved' || currentStatus === 'Resolved'
   const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
   const canChat = canAdminUpdateReport({ profile, report })
-  const accessTokenRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
-  const accessToken = loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', accessTokenRule)
   const isSaveDisabled =
     !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
 

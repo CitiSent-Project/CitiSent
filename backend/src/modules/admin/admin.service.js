@@ -751,6 +751,40 @@ export const adminService = {
     };
   },
 
+  async listConversations({ actor, accessToken }) {
+    const [result, departmentCatalog] = await Promise.all([
+      adminRepository.listConversations({
+        actor,
+        accessToken,
+        readerId: actor.id,
+      }),
+      departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      }),
+    ]);
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
+
+    return {
+      data: result.rows
+        .map((row) => applyDepartmentMetadataToReportRow(row, departmentLookup))
+        .map((row) => ({
+          ...toAdminReportResponse({
+            reportRow: row,
+            reporterProfile: result.reporterProfilesByUserId[row.user_id] || null,
+          }),
+          lastMessage: {
+            id: row.lastMessage?.id || null,
+            content: row.lastMessage?.message || "",
+            createdAt: row.lastMessage?.created_at || null,
+            senderRole: String(row.lastMessage?.sender_id) === String(row.user_id) ? "citizen" : "admin",
+          },
+          unreadCount: row.unreadCount || 0,
+        }))
+        .sort((a, b) => new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0)),
+    };
+  },
+
   async getReportById({ actor, accessToken, reportId }) {
     const [result, departmentCatalog] = await Promise.all([
       adminRepository.getReportById({

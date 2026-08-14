@@ -11,6 +11,8 @@ import { buildDepartmentCandidates } from "../../shared/data/departments.js";
 const PROFILES_TABLE = "profiles";
 const BANNED_USERS_TABLE = "banned_users";
 const REPORTS_TABLE = "reports";
+const REPORT_MESSAGES_TABLE = "report_messages";
+const REPORT_MESSAGE_READS_TABLE = "report_message_reads";
 const TRANSFER_REQUESTS_TABLE = "transfer_requests";
 
 function getDb(accessToken) {
@@ -413,6 +415,72 @@ export const adminRepository = {
       count: count || 0,
       reporterProfilesByUserId,
     };
+  },
+
+  async listConversations({ actor, accessToken, readerId }) {
+    const db = getDb(accessToken);
+
+    let reportsQuery = db
+      .from(REPORTS_TABLE)
+      .select("*")
+      .not("status", "in", "(resolved,rejected)");
+    reportsQuery = applyDepartmentScope(reportsQuery, actor);
+
+    const { data: reports, error: reportsError } = await reportsQuery;
+    if (reportsError) {
+      throw toGatewayError("Failed to fetch conversation reports", reportsError);
+    }
+
+    const reportRows = reports || [];
+    const reportIds = reportRows.map((row) => row.id).filter(Boolean);
+    if (!reportIds.length) {
+      return { rows: [], reporterProfilesByUserId: {} };
+    }
+
+    const { data: messages, error: messagesError } = await db
+      .from(REPORT_MESSAGES_TABLE)
+      .select("id, report_id, sender_id, message, created_at")
+      .in("report_id", reportIds)
+      .order("created_at", { ascending: true });
+    if (messagesError) {
+      throw toGatewayError("Failed to fetch conversation messages", messagesError);
+    }
+
+    const messageRows = messages || [];
+    if (!messageRows.length) {
+      return { rows: [], reporterProfilesByUserId: {} };
+    }
+
+    const messageIds = messageRows.map((row) => row.id).filter(Boolean);
+    const { data: readRows, error: readsError } = await db
+      .from(REPORT_MESSAGE_READS_TABLE)
+      .select("message_id, is_read")
+      .eq("user_id", readerId)
+      .in("message_id", messageIds);
+    if (readsError) {
+      throw toGatewayError("Failed to fetch conversation read state", readsError);
+    }
+
+    const readMessageIds = new Set(
+      (readRows || []).filter((row) => row.is_read).map((row) => String(row.message_id)),
+    );
+    const messagesByReportId = new Map();
+    messageRows.forEach((message) => {
+      const reportId = String(message.report_id);
+      const entry = messagesByReportId.get(reportId) || { lastMessage: null, unreadCount: 0 };
+      entry.lastMessage = message;
+      if (String(message.sender_id) !== String(readerId) && !readMessageIds.has(String(message.id))) {
+        entry.unreadCount += 1;
+      }
+      messagesByReportId.set(reportId, entry);
+    });
+
+    const rows = reportRows
+      .filter((report) => messagesByReportId.has(String(report.id)))
+      .map((report) => ({ ...report, ...messagesByReportId.get(String(report.id)) }));
+    const reporterProfilesByUserId = await loadReporterProfiles(db, rows);
+
+    return { rows, reporterProfilesByUserId };
   },
 
   async getReportById({ actor, accessToken, reportId }) {

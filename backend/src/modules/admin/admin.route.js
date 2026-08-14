@@ -20,6 +20,7 @@ import {
   getAdminReportByIdSchema,
   getAdminUserByIdSchema,
   listAdminReportsSchema,
+  listAdminConversationsSchema,
   listAdminUsersSchema,
   listOfficeAdminsSchema,
   listTransferRequestsSchema,
@@ -84,6 +85,13 @@ adminRouter.get(
   requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
   validateRequest(listAdminReportsSchema),
   asyncHandler(adminController.listReports),
+);
+
+adminRouter.get(
+  "/conversations",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(listAdminConversationsSchema),
+  asyncHandler(adminController.listConversations),
 );
 
 adminRouter.get(

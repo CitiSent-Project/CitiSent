@@ -101,6 +101,18 @@ export const adminController = {
     });
   },
 
+  async listConversations(req, res) {
+    const result = await adminService.listConversations({
+      actor: req.actor,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      ...result,
+    });
+  },
+
   async getReportById(req, res) {
     const result = await adminService.getReportById({
       actor: req.actor,

@@ -102,3 +102,8 @@ Follow these steps to start the Python AI (ai-sentiment):
    ```powershell
    .\.venv\Scripts\python.exe -m uvicorn main:app --port 8000
    ```
+
+   Open a terminal in the root of your project (c:\Users\marcd\Desktop\academics\CitiSent) where we created the docker-compose.yml file, and run:
+
+bash
+docker compose up -d redis

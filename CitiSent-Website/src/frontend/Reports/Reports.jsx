@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
+import { History } from './History'
 import { canAdminUpdateReport, filterReportsForAdmin } from '../../controllers/reportAccessController'
 import { notifyError, notifyErrorWithRetry } from '../../components/ui/toastHelpers'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
@@ -119,6 +120,16 @@ export function Reports({
     } catch {
       return { ok: false }
     }
+  }
+
+  if (section === 'history') {
+    return (
+      <History
+        rows={scopedRows}
+        onViewReport={onViewReport}
+        isLoading={loading}
+      />
+    )
   }
 
   if (section === 'urgency') {

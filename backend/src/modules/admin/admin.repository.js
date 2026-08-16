@@ -510,7 +510,17 @@ export const adminRepository = {
   async updateReportById({ actor, accessToken, reportId, payload }) {
     const db = getDb(accessToken);
 
-    let query = db.from(REPORTS_TABLE).update(payload).eq("id", reportId);
+    const updatePayload = { ...payload };
+    if (payload.status) {
+      const statusLower = String(payload.status).toLowerCase();
+      if (statusLower === "resolved" || statusLower === "rejected") {
+        updatePayload.resolved_at = new Date().toISOString();
+      } else {
+        updatePayload.resolved_at = null;
+      }
+    }
+
+    let query = db.from(REPORTS_TABLE).update(updatePayload).eq("id", reportId);
     query = applyDepartmentScope(query, actor);
 
     const { data, error } = await query.select("*").maybeSingle();

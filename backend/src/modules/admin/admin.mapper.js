@@ -151,6 +151,7 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     attachmentUrl: reportRow?.attachment_url || null,
     source: reportRow?.source || "Website",
     createdAt: reportRow?.created_at || null,
+    resolvedAt: reportRow?.resolved_at || null,
     updatedAt: reportRow?.updated_at || null,
     reporter: {
       id: reportRow?.user_id || null,

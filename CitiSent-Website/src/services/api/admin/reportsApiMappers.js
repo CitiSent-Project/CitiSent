@@ -67,6 +67,7 @@ export function mapBackendReportToUiRow(payload = {}) {
     attachmentUrl: payload.attachmentUrl || null,
     backendStatus: payload.status || 'pending',
     createdAt: payload.createdAt || '',
+    resolvedAt: payload.resolvedAt || payload.resolved_at || null,
     updatedAt: payload.updatedAt || '',
   }
 }

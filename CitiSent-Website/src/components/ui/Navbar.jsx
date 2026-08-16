@@ -38,6 +38,7 @@ const navItems = [
 		children: [
 			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY },
 			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY },
+			{ label: 'History', pageKey: APP_PAGES.REPORTS_HISTORY },
 		],
 	},
 	{

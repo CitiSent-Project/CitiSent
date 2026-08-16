@@ -6,6 +6,7 @@ export const APP_PAGES = {
   REPORTS: 'Reports',
   REPORTS_BY_CATEGORY: 'Reports:By Category',
   REPORTS_BY_URGENCY: 'Reports:By Urgency Levels',
+  REPORTS_HISTORY: 'Reports:History',
   REPORT_DETAIL: 'Report Detail',
   CONVERSATIONS: 'Conversations',
   ADMIN_PROFILE: 'Admin Profile',
@@ -22,4 +23,5 @@ export const AUTH_PAGES = {
 export const REPORT_SECTIONS = {
   CATEGORY: 'category',
   URGENCY: 'urgency',
+  HISTORY: 'history',
 }

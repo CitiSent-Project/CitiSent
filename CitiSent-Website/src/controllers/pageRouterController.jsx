@@ -152,6 +152,17 @@ export function renderActivePage({
                     onUpdateStatus={onUpdateReportStatus}
                 />
             )
+        case APP_PAGES.REPORTS_HISTORY:
+            return (
+                <Reports
+                    section={REPORT_SECTIONS.HISTORY}
+                    profile={profile}
+                    preferences={preferences}
+                    departmentOptions={departmentOptions}
+                    onViewReport={onViewReport}
+                    onUpdateStatus={onUpdateReportStatus}
+                />
+            )
         case APP_PAGES.ADMIN_PROFILE:
             return (
                 <ProfileInformation

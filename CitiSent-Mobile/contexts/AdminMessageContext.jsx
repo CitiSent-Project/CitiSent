@@ -9,7 +9,7 @@
  *   const { hasUnreadAdminMessage, unreadByReport, setReportRead } = useAdminMessageState();
  */
 
-import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 import {
   subscribeToAdminMessages,
   getAdminMessagesSnapshot,
@@ -17,7 +17,9 @@ import {
   setReportUnread as _setReportUnread,
   seedUnreadState as _seedUnreadState,
   seedUnreadStateFromApi,
+  initializeAdminMessageState,
 } from "../services/adminMessageState";
+import { getAuthUser } from "../services/authSession";
 
 const AdminMessageContext = createContext(null);
 
@@ -26,6 +28,13 @@ const AdminMessageContext = createContext(null);
  * can access the shared state without prop-drilling.
  */
 export function AdminMessageProvider({ children }) {
+  useEffect(() => {
+    const user = getAuthUser();
+    if (user?.id) {
+      initializeAdminMessageState(user.id).catch(() => {});
+    }
+  }, []);
+
   // useSyncExternalStore keeps this perfectly in sync with the singleton.
   const snapshot = useSyncExternalStore(
     subscribeToAdminMessages,

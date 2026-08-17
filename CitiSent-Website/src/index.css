@@ -39,7 +39,10 @@ body {
 }
 
 :root[data-theme='dark'] .bg-slate-50,
-:root[data-theme='dark'] .bg-slate-100 {
+:root[data-theme='dark'] .bg-slate-50\/70,
+:root[data-theme='dark'] .bg-slate-50\/80,
+:root[data-theme='dark'] .bg-slate-100,
+:root[data-theme='dark'] .bg-slate-100\/80 {
   background-color: #1f2937 !important;
 }
 

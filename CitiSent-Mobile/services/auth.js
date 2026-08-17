@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
 import { clearAuthToken, setAuthToken, setAuthUser } from "./authSession";
+import { initializeAdminMessageState, resetAdminMessageState } from "./adminMessageState";
 import { runtimeFlags } from "./runtimeFlags";
 
 // TODO: Remove this temporary local test account before production release.
@@ -94,6 +95,7 @@ export const authApi = {
         fallbackUsername: normalizedUsername,
         fallbackPhoneNumber: normalizedPhoneNumber,
       });
+      initializeAdminMessageState(TEMP_TEST_LOGIN_RESPONSE.user.id).catch(() => {});
       return TEMP_TEST_LOGIN_RESPONSE;
     }
 
@@ -111,6 +113,11 @@ export const authApi = {
       fallbackPhoneNumber: normalizedPhoneNumber,
     });
 
+    if (authPayload?.user?.id || authPayload?.user?.user_id) {
+      const userId = authPayload.user.id || authPayload.user.user_id;
+      initializeAdminMessageState(userId).catch(() => {});
+    }
+
     return authPayload;
   },
   register: async (payload) => {
@@ -119,6 +126,7 @@ export const authApi = {
   },
 
   logout: () => {
+    resetAdminMessageState();
     clearAuthToken();
   },
 

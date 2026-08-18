@@ -285,6 +285,52 @@ body {
   color: #eff6ff !important;
 }
 
+/* Admin note copilot: preserve contrast when the app switches to its data-theme dark mode. */
+:root[data-theme='dark'] .theme-dark-note-panel {
+  border-color: #334155 !important;
+  background: linear-gradient(135deg, #172554 0%, #111827 55%, #082f49 100%) !important;
+  box-shadow: 0 8px 24px rgb(2 6 23 / 35%) !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .text-slate-600,
+:root[data-theme='dark'] .theme-dark-note-panel .text-slate-500,
+:root[data-theme='dark'] .theme-dark-note-panel .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .bg-white\/70,
+:root[data-theme='dark'] .theme-dark-note-panel .bg-white\/80,
+:root[data-theme='dark'] .theme-dark-note-panel .bg-white\/85 {
+  background-color: rgb(15 23 42 / 75%) !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .border-white\/80,
+:root[data-theme='dark'] .theme-dark-note-panel .border-slate-200,
+:root[data-theme='dark'] .theme-dark-note-panel .border-slate-200\/90,
+:root[data-theme='dark'] .theme-dark-note-panel .border-blue-200,
+:root[data-theme='dark'] .theme-dark-note-panel .border-blue-100 {
+  border-color: #475569 !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel button:hover {
+  background-color: #1e293b !important;
+  border-color: #818cf8 !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .bg-blue-100 {
+  background-color: #312e81 !important;
+  color: #c7d2fe !important;
+}
+
+:root[data-theme='dark'] .theme-dark-note-panel .text-blue-600,
+:root[data-theme='dark'] .theme-dark-note-panel .text-blue-700 {
+  color: #a5b4fc !important;
+}
+
 :root.reduced-motion *,
 :root.reduced-motion *::before,
 :root.reduced-motion *::after {

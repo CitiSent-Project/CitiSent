@@ -360,37 +360,55 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           </label>
 
           {canProcessReport ? (
-            <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="text-[10px] font-bold tracking-wider text-slate-500">AI-ASSISTED NOTE SUGGESTIONS</span>
+            <div className="theme-dark-note-panel relative mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-linear-to-br from-blue-50 via-white to-sky-50 p-4 shadow-[0_8px_24px_rgba(79,70,229,0.08)]">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-200/30 blur-2xl" />
+              <div className="relative mb-3 flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-linear-to-br from-blue-600 to-blue-600 text-white shadow-sm shadow-blue-300/50">
+                    <FiCpu className="text-sm" />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold tracking-wide text-slate-800">Note copilot</span>
+                      <span className="rounded-full border border-blue-200 bg-white/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-600">AI assist</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Choose a starting point, then tailor it to the action taken.</p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => loadAdminNoteSuggestions(true)}
                   disabled={isAdminNoteSuggestionsLoading}
-                  className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 transition hover:text-blue-600 disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-200 bg-white/80 px-2.5 py-1.5 text-[10px] font-bold tracking-wide text-slate-600 shadow-sm transition hover:border-blue-300 hover:bg-white disabled:cursor-wait disabled:opacity-50"
                 >
                   <FiRefreshCw className={isAdminNoteSuggestionsLoading ? 'animate-spin' : ''} />
-                  REGENERATE
+                  Refresh
                 </button>
               </div>
               {isAdminNoteSuggestionsLoading ? (
-                <p className="py-2 text-center text-xs text-slate-400">Generating suggestions...</p>
+                <div className="relative flex items-center gap-2 rounded-xl border border-white/80 bg-white/70 px-3 py-3 text-xs text-slate-500">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+                  Shaping notes from the report context...
+                </div>
               ) : adminNoteSuggestions.length > 0 ? (
-                <div className="flex flex-col gap-1.5">
+                <div className="relative grid gap-2 sm:grid-cols-2">
                   {adminNoteSuggestions.map((suggestion, index) => (
                     <button
                       key={`${suggestion.rank}-${index}`}
                       type="button"
                       onClick={() => setAdminNotes(suggestion.text)}
-                      className={`rounded-lg border border-slate-200 bg-white p-2 text-left text-xs text-slate-700 transition hover:border-blue-400 hover:bg-blue-50/30 ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900' : ''}`}
+                      className={`group rounded-xl border bg-white/85 p-3 text-left text-xs leading-relaxed text-slate-600 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${index === 0 ? 'border-blue-200 ring-1 ring-blue-100' : 'border-slate-200/90'}`}
                     >
-                      {index === 0 ? <span className="mb-0.5 block text-[9px] font-bold uppercase tracking-wide text-blue-600">Recommended</span> : null}
-                      {suggestion.text}
+                      <span className="mb-1.5 flex items-center justify-between gap-2">
+                        {index === 0 ? <span className="rounded-full bg-blue-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700">Best fit</span> : <span className="text-[10px] font-semibold text-slate-400">Option {index + 1}</span>}
+                        <span className="text-blue-300 transition group-hover:translate-x-0.5 group-hover:text-blue-500">→</span>
+                      </span>
+                      <span className="block">{suggestion.text}</span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="py-1 text-xs text-slate-400">Suggestions are unavailable. You can still enter a note manually.</p>
+                <p className="relative rounded-xl border border-white/80 bg-white/70 px-3 py-2.5 text-xs text-slate-500">Suggestions are unavailable right now. You can still enter a note manually.</p>
               )}
             </div>
           ) : null}

@@ -164,6 +164,20 @@ export const updateAdminReportSchema = z.object({
   }),
 });
 
+export const getAdminNoteSuggestionsSchema = z.object({
+  body: z.object({}).optional().default({}),
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({
+    status: persistedStatusSchema.optional(),
+    forceRegenerate: z.preprocess(
+      (value) => value === "true" || value === true,
+      z.boolean(),
+    ).optional().default(false),
+  }).optional().default({}),
+});
+
 export const listTransferRequestsSchema = z.object({
   body: z.object({}).optional().default({}),
   params: z.object({}).optional().default({}),

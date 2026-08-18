@@ -254,4 +254,50 @@ export const reportsSentimentClient = {
 
     return responsePayload;
   },
+
+  async getAdminNoteSuggestions(input, options = {}) {
+    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+    const apiUrl = (options.apiUrl ?? env.SENTIMENT_API_URL).replace("/analyze", "/admin-notes/suggestions");
+    const timeoutMs = options.timeoutMs ?? env.SENTIMENT_API_TIMEOUT_MS;
+
+    if (typeof fetchImpl !== "function") {
+      throw new AppError("Suggestions service fetch is unavailable", StatusCodes.SERVICE_UNAVAILABLE);
+    }
+
+    const controller = new AbortController();
+    const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+    let response;
+
+    try {
+      response = await fetchImpl(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportStatus: input.reportStatus || "pending",
+          conversationContext: input.conversationContext || [],
+          reportCategory: input.reportCategory || "General",
+          urgency: input.urgency || "Medium",
+          detectedEmotion: input.detectedEmotion || "Neutral",
+          reportDescription: input.reportDescription || "",
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new AppError("Suggestions service timed out", StatusCodes.GATEWAY_TIMEOUT, { apiUrl, timeoutMs });
+      }
+      throw new AppError("Suggestions service request failed", StatusCodes.BAD_GATEWAY, toErrorDetails(error));
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+
+    const responsePayload = await parseSentimentResponse(response);
+    if (!response.ok) {
+      throw new AppError("Suggestions service request failed", StatusCodes.BAD_GATEWAY, {
+        status: response.status,
+        detail: responsePayload?.detail || responsePayload?.message || "Unknown sidecar error",
+      });
+    }
+    return responsePayload;
+  },
 };

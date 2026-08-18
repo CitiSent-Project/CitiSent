@@ -143,6 +143,70 @@ def get_default_suggestions(reason: str) -> dict:
     }
 
 
+ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE = (
+    "You are assisting a Local Government Unit (LGU) admin with an internal status note for a citizen report.\n"
+    "Generate exactly 4 concise, factual, professional note suggestions. The admin will review and edit one before saving it.\n\n"
+    "Report details:\n"
+    "- Category: {report_category}\n"
+    "- Status being applied: {report_status}\n"
+    "- Urgency: {urgency}\n"
+    "- Citizen emotion: {detected_emotion}\n"
+    "- Original report: {report_description}\n\n"
+    "Recent conversation (chronological, oldest to newest):\n"
+    "{conversation_context_str}\n\n"
+    "Rules:\n"
+    "1. Suggestions are internal processing notes, not chat replies.\n"
+    "2. pending: acknowledge triage or assignment; in_review: record investigation/progress; resolved: record a completed action and outcome; rejected: state a respectful, factual reason it cannot proceed.\n"
+    "3. Use conversation details when available. If there is no conversation, tailor the wording to the citizen emotion without inventing facts.\n"
+    "4. Never invent completed work, dates, contacts, evidence, or promises.\n"
+    "5. Return JSON only with exactly these keys:\n"
+    "   \"suggestedNotes\": [{{ \"text\": \"...\", \"rank\": 1 }}, {{ \"text\": \"...\", \"rank\": 2 }}, {{ \"text\": \"...\", \"rank\": 3 }}, {{ \"text\": \"...\", \"rank\": 4 }}],\n"
+    "   \"tone\": \"empathetic|neutral|professional|urgent\",\n"
+    "   \"confidence\": 0.0-1.0,\n"
+    "   \"reason\": \"...\",\n"
+    "   \"triggerEmotion\": \"...\"\n"
+)
+
+
+def get_default_admin_note_suggestions(report_status: str, reason: str) -> dict:
+    """Return safe, status-specific notes when Gemini cannot produce suggestions."""
+    status = str(report_status or "pending").strip().lower()
+    templates_by_status = {
+        "in_review": [
+            "Report is under review. The assigned office is assessing the reported concern and available details.",
+            "Initial review is in progress. Additional verification may be required before a final update is provided.",
+            "The report has been forwarded for assessment based on its category and reported location.",
+            "Review is ongoing. The citizen's concern has been noted for follow-up by the responsible office.",
+        ],
+        "resolved": [
+            "The report has been reviewed and the recorded resolution details have been completed.",
+            "The responsible office has completed the applicable action based on the report information provided.",
+            "The concern has been processed and marked resolved following the office's review.",
+            "Resolution has been recorded. The report is closed based on the completed review and action.",
+        ],
+        "rejected": [
+            "The report was reviewed but cannot be processed further based on the available information.",
+            "The concern could not be resolved through this report after review by the responsible office.",
+            "The report has been closed because the available details do not support further action at this time.",
+            "After review, this report cannot proceed. Additional or corrected information may be needed for a future submission.",
+        ],
+        "pending": [
+            "Report received and queued for initial review by the responsible office.",
+            "The reported concern has been logged for triage and assignment.",
+            "Initial report details have been received and will be reviewed by the appropriate office.",
+            "The citizen's concern has been recorded for assessment and follow-up.",
+        ],
+    }
+    notes = templates_by_status.get(status, templates_by_status["pending"])
+    return {
+        "suggestedNotes": [{"text": text, "rank": index + 1} for index, text in enumerate(notes)],
+        "tone": "professional",
+        "confidence": 0.5,
+        "reason": reason,
+        "triggerEmotion": "Neutral",
+    }
+
+
 async def generate_suggestions(
     latest_message: str,
     conversation_context: list,
@@ -219,4 +283,66 @@ async def generate_suggestions(
         "reason": result.get("reason", "Generated from conversation history."),
         "triggerEmotion": result.get("triggerEmotion", "Neutral"),
         "fallbackMessage": result.get("fallbackMessage", "Thank you for your message.")
-    }
+    }
+
+
+async def generate_admin_note_suggestions(
+    report_status: str,
+    conversation_context: list,
+    report_category: str,
+    urgency: str,
+    detected_emotion: str,
+    report_description: str,
+) -> dict:
+    """Generate structured, editable internal notes for a report status update."""
+    client = _get_client()
+    ctx_lines = [
+        f"- {message.get('sender', 'unknown')}: {message.get('text', '')}"
+        for message in conversation_context
+    ]
+    context_text = "\n".join(ctx_lines) if ctx_lines else "(No conversation is available.)"
+    prompt = ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE.format(
+        report_status=report_status,
+        conversation_context_str=context_text,
+        report_category=report_category,
+        urgency=urgency,
+        detected_emotion=detected_emotion,
+        report_description=report_description,
+    )
+
+    try:
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=600,
+                    temperature=0.2,
+                ),
+            ),
+            timeout=GEMINI_TIMEOUT_SECONDS,
+        )
+        raw_text = getattr(response, "text", None)
+        if not raw_text or not raw_text.strip():
+            return get_default_admin_note_suggestions(report_status, "Gemini returned an empty response")
+        result = json.loads(raw_text.strip())
+        notes = result.get("suggestedNotes")
+        if not isinstance(notes, list) or len(notes) != 4:
+            return get_default_admin_note_suggestions(report_status, "Gemini did not return exactly 4 suggestions")
+        for item in notes:
+            if not isinstance(item, dict) or not str(item.get("text", "")).strip() or "rank" not in item:
+                return get_default_admin_note_suggestions(report_status, "Gemini returned invalid suggestion items")
+        return {
+            "suggestedNotes": notes,
+            "tone": result.get("tone", "professional"),
+            "confidence": result.get("confidence", 0.8),
+            "reason": result.get("reason", "Generated from report context."),
+            "triggerEmotion": result.get("triggerEmotion", detected_emotion or "Neutral"),
+        }
+    except asyncio.TimeoutError:
+        logger.warning("Gemini admin-note suggestions timed out after %ds", GEMINI_TIMEOUT_SECONDS)
+        return get_default_admin_note_suggestions(report_status, "Gemini suggestions API call timed out")
+    except Exception as exc:
+        logger.error("Gemini admin-note suggestions failed: %s", str(exc))
+        return get_default_admin_note_suggestions(report_status, f"Gemini suggestions API call failed: {exc}")

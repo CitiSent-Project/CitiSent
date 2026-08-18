@@ -18,6 +18,7 @@ import {
   getDashboardSummarySchema,
   getDashboardWeeklyTrendSchema,
   getAdminReportByIdSchema,
+  getAdminNoteSuggestionsSchema,
   getAdminUserByIdSchema,
   listAdminReportsSchema,
   listAdminConversationsSchema,
@@ -99,6 +100,13 @@ adminRouter.get(
   requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
   validateRequest(getAdminReportByIdSchema),
   asyncHandler(adminController.getReportById),
+);
+
+adminRouter.get(
+  "/reports/:reportId/admin-note-suggestions",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(getAdminNoteSuggestionsSchema),
+  asyncHandler(adminController.getAdminNoteSuggestions),
 );
 
 adminRouter.patch(

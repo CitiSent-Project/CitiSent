@@ -25,7 +25,7 @@ const USERS_STATS = [
     id: 'active-users',
     label: 'Active Users',
     icon: 'user',
-    accent: 'indigo',
+    accent: 'blue',
   },
   {
     id: 'pending-users',

@@ -23,6 +23,9 @@ import { notificationsRepository } from "./notifications/notifications.repositor
 import { logger } from "../../config/logger.js";
 import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
 import { departmentsService } from "../departments/departments.service.js";
+import { reportMessagesRepository } from "../reports/messages.repository.js";
+import { reportsSentimentClient } from "../reports/reports.sentiment.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 import { composeFullName, normalizeNamePart } from "../../shared/utils/name.js";
 import {
   createAccountActivationToken,
@@ -40,6 +43,43 @@ const REPORT_STATUS_LABELS = Object.freeze({
   resolved: "Resolved",
   rejected: "Unresolved",
 });
+
+function buildAdminNoteFallbacks(status, reason, emotion = "Neutral") {
+  const templates = {
+    pending: [
+      "Report received and queued for initial review by the responsible office.",
+      "The reported concern has been logged for triage and assignment.",
+      "Initial report details have been received and will be reviewed by the appropriate office.",
+      "The citizen's concern has been recorded for assessment and follow-up.",
+    ],
+    in_review: [
+      "Report is under review. The assigned office is assessing the reported concern and available details.",
+      "Initial review is in progress. Additional verification may be required before a final update is provided.",
+      "The report has been forwarded for assessment based on its category and reported location.",
+      "Review is ongoing. The citizen's concern has been noted for follow-up by the responsible office.",
+    ],
+    resolved: [
+      "The report has been reviewed and the recorded resolution details have been completed.",
+      "The responsible office has completed the applicable action based on the report information provided.",
+      "The concern has been processed and marked resolved following the office's review.",
+      "Resolution has been recorded. The report is closed based on the completed review and action.",
+    ],
+    rejected: [
+      "The report was reviewed but cannot be processed further based on the available information.",
+      "The concern could not be resolved through this report after review by the responsible office.",
+      "The report has been closed because the available details do not support further action at this time.",
+      "After review, this report cannot proceed. Additional or corrected information may be needed for a future submission.",
+    ],
+  };
+  const notes = templates[status] || templates.pending;
+  return {
+    suggestedNotes: notes.map((text, index) => ({ text, rank: index + 1 })),
+    tone: "professional",
+    confidence: 0.5,
+    reason,
+    triggerEmotion: emotion || "Neutral",
+  };
+}
 
 function normalizeDashboardLimit(limit) {
   const normalizedLimit = Number(limit);
@@ -885,6 +925,53 @@ export const adminService = {
       ),
       reporterProfile: result.reporterProfile,
     });
+  },
+
+  async getAdminNoteSuggestions({ actor, accessToken, reportId, status, forceRegenerate = false }) {
+    // getReportById applies the same department scope as admin report updates.
+    const existingReport = await adminRepository.getReportById({ actor, accessToken, reportId });
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    const report = existingReport.row;
+    const reportStatus = status || normalizeReportStatus(report.status);
+    const conversation = await reportMessagesRepository.getConversation({ reportId, accessToken });
+    const messages = conversation.rows || [];
+    const latestMessageId = messages.length ? messages[messages.length - 1].id : "no-conversation";
+    const cacheKey = `admin_note_suggestions:report:${reportId}:status:${reportStatus}:msg:${latestMessageId}`;
+
+    if (!forceRegenerate) {
+      const cached = await cacheService.getJSON(cacheKey);
+      if (cached) return cached;
+    }
+
+    const conversationContext = messages.slice(-10).map((message) => ({
+      sender: String(message.sender_id) === String(report.user_id) ? "Citizen" : "Admin",
+      text: message.message || "",
+    }));
+    const detectedEmotion = report.emotion_level || "Neutral";
+
+    let suggestions;
+    try {
+      suggestions = await reportsSentimentClient.getAdminNoteSuggestions({
+        reportStatus,
+        conversationContext,
+        reportCategory: report.issue_type || "General",
+        urgency: report.sentiment_label || "Medium",
+        detectedEmotion,
+        reportDescription: report.description || "",
+      }, { accessToken });
+    } catch (error) {
+      suggestions = buildAdminNoteFallbacks(
+        reportStatus,
+        `Suggestions API request failed: ${error?.message || String(error)}`,
+        detectedEmotion,
+      );
+    }
+
+    await cacheService.setJSON(cacheKey, suggestions, 300);
+    return suggestions;
   },
 
   async listOfficeAdmins({ accessToken }) {

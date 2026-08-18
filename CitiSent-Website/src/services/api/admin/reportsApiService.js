@@ -35,6 +35,13 @@ export const reportsApiService = {
     apiClient.patch(`/reports/${reportId}/messages/read`, {}, { token }),
   getReportChatSuggestions: (token, reportId, forceRegenerate = false) =>
     apiClient.get(`/reports/${reportId}/messages/suggestions?forceRegenerate=${forceRegenerate}`, { token }),
+  getReportAdminNoteSuggestions: (token, reportId, status, forceRegenerate = false) => {
+    const params = new URLSearchParams({
+      status: String(status || 'pending'),
+      forceRegenerate: String(forceRegenerate),
+    })
+    return apiClient.get(`/admin/reports/${reportId}/admin-note-suggestions?${params.toString()}`, { token })
+  },
   listConversations: (token) =>
     apiClient.get('/admin/conversations', { token }),
 }

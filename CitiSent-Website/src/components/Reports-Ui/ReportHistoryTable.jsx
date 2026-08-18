@@ -1,13 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle } from "react-icons/fi";
+import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle } from "react-icons/fi";
 import { TableLoader } from '../ui/TableLoader';
 import { Pagination } from '../ui/Pagination';
 import { useReportPaginationState } from '../../hooks/useReportPaginationState';
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,
+  REPORT_EMOTION_BADGE_CLASSES,
+  REPORT_EMOTION_OPTIONS,
   normalizeReportStatus,
 } from "../../models/reportStatusModel";
+
+function formatReportId(reportNum, id) {
+  const value = String(reportNum || id || '').trim()
+  if (!value) return 'N/A'
+  return value.length > 12 ? `${value.slice(0, 8)}…` : value
+}
+
+const URGENCY_OPTIONS = ['All Urgencies', 'Critical', 'High', 'Medium', 'Low'];
+const EMOTION_OPTIONS = ['All Emotions', ...REPORT_EMOTION_OPTIONS];
 
 /**
  * ReportHistoryTable
@@ -15,11 +26,34 @@ import {
  * Production-ready component for displaying resolved and rejected reports (Report History / Audit Log).
  * Provides month/year filtering, status filtering, pagination, and CSV export functionality for municipal reporting.
  */
-export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false, pageSize = 8 }) {
+export function ReportHistoryTable({
+  rows = [],
+  departmentOptions = [],
+  onViewReport,
+  isLoading = false,
+  pageSize = 8,
+}) {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'resolved', 'rejected'
+  const [departmentFilter, setDepartmentFilter] = useState('All');
+  const [emotionFilter, setEmotionFilter] = useState('All');
+  const [urgencyFilter, setUrgencyFilter] = useState('All');
 
-  // Filter history records based on month selection & status filter
+  // Derive department list from passed options or rows
+  const availableDepartments = useMemo(() => {
+    const list = new Set();
+    departmentOptions.forEach((dept) => {
+      const label = dept?.label || dept?.name || dept;
+      if (label) list.add(String(label).trim());
+    });
+    rows.forEach((row) => {
+      const cat = row?.category || row?.issueType || row?.department;
+      if (cat) list.add(String(cat).trim());
+    });
+    return ['All Departments', ...Array.from(list)];
+  }, [departmentOptions, rows]);
+
+  // Filter history records based on month selection & all filter controls
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const normalizedStatus = normalizeReportStatus(row.status);
@@ -29,11 +63,30 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
         return false;
       }
 
+      // Status Filter
       if (statusFilter !== 'all') {
         if (statusFilter === 'resolved' && normalizedStatus !== 'Resolved') return false;
         if (statusFilter === 'rejected' && normalizedStatus !== 'Unresolved') return false;
       }
 
+      // Department Filter
+      if (departmentFilter !== 'All' && departmentFilter !== 'All Departments') {
+        const rowDept = String(row.category || row.issueType || row.department || '').trim();
+        if (rowDept !== departmentFilter) return false;
+      }
+
+      // Urgency Filter
+      if (urgencyFilter !== 'All' && urgencyFilter !== 'All Urgencies') {
+        if (row.urgency !== urgencyFilter) return false;
+      }
+
+      // Emotion Filter
+      if (emotionFilter !== 'All' && emotionFilter !== 'All Emotions') {
+        const rowEmotion = row.emotionLevel || 'Neutral';
+        if (rowEmotion !== emotionFilter) return false;
+      }
+
+      // Date / Month Filter
       if (selectedMonth && (row.resolvedAt || row.createdAt || row.date)) {
         const dateStr = row.resolvedAt || row.createdAt || row.date;
         const dateObj = new Date(dateStr);
@@ -45,7 +98,7 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
 
       return true;
     });
-  }, [rows, selectedMonth, statusFilter]);
+  }, [rows, selectedMonth, statusFilter, departmentFilter, urgencyFilter, emotionFilter]);
 
   const {
     totalPages,
@@ -61,7 +114,7 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
   const exportToCSV = () => {
     if (filteredRows.length === 0) return;
 
-    const headers = ["Report ID", "Reporter Name", "Location", "Issue Type", "Urgency", "Emotion", "Status", "Date Resolved / Logged"];
+    const headers = ["Report ID", "Reporter Name", "Location", "Department / Issue Type", "Urgency", "Emotion", "Status", "Date Resolved / Logged"];
     const csvLines = [headers.join(",")];
 
     filteredRows.forEach((row) => {
@@ -69,7 +122,7 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
         `"${row.reportNum || row.id}"`,
         `"${row.name || 'Anonymous'}"`,
         `"${row.location || ''}"`,
-        `"${row.issueType || ''}"`,
+        `"${row.category || row.issueType || ''}"`,
         `"${row.urgency || ''}"`,
         `"${row.emotionLevel || 'Neutral'}"`,
         `"${normalizeReportStatus(row.status)}"`,
@@ -93,8 +146,8 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
   return (
     <div className="space-y-4">
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
           {/* Month Selector */}
           <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
             <FiCalendar className="text-slate-500 text-sm" />
@@ -111,36 +164,105 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
                 onClick={() => setSelectedMonth('')}
                 className="text-[10px] text-blue-600 hover:underline font-semibold ml-1"
               >
-                Show All Dates
+                Reset
               </button>
             )}
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter Group */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-medium">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`rounded-md px-2.5 py-1 transition-colors ${statusFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`rounded-md px-2.5 py-1 transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
               All History
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter('resolved')}
-              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${statusFilter === 'resolved' ? 'bg-emerald-50 text-emerald-700 font-semibold shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
+                statusFilter === 'resolved'
+                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                  : 'text-slate-600 hover:text-emerald-600'
+              }`}
             >
-              <FiCheckCircle className="text-emerald-500" />
+              <FiCheckCircle className={statusFilter === 'resolved' ? 'text-white' : 'text-emerald-500'} />
               Resolved
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter('rejected')}
-              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${statusFilter === 'rejected' ? 'bg-rose-50 text-rose-700 font-semibold shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
+                statusFilter === 'rejected'
+                  ? 'bg-rose-600 text-white font-semibold shadow-sm'
+                  : 'text-slate-600 hover:text-rose-600'
+              }`}
             >
-              <FiXCircle className="text-rose-500" />
+              <FiXCircle className={statusFilter === 'rejected' ? 'text-white' : 'text-rose-500'} />
               Rejected
             </button>
+          </div>
+
+          {/* 3 Categorization Filter Buttons: Department, Emotion, Urgency */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Department Filter Button */}
+            <div className="relative flex items-center">
+              <FiGrid className="pointer-events-none absolute left-3 text-sm text-blue-500 z-10" />
+              <select
+                aria-label="Filter by department"
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+              >
+                {availableDepartments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept === 'All Departments' ? 'Department: All' : dept}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+            </div>
+
+            {/* Emotion Status Filter Button */}
+            <div className="relative flex items-center">
+              <FiSmile className="pointer-events-none absolute left-3 text-sm text-amber-500 z-10" />
+              <select
+                aria-label="Filter by emotional status"
+                value={emotionFilter}
+                onChange={(e) => setEmotionFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+              >
+                {EMOTION_OPTIONS.map((emotion) => (
+                  <option key={emotion} value={emotion}>
+                    {emotion === 'All Emotions' ? 'Emotion: All' : emotion}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+            </div>
+
+            {/* Urgency Level Filter Button */}
+            <div className="relative flex items-center">
+              <FiAlertTriangle className="pointer-events-none absolute left-3 text-sm text-rose-500 z-10" />
+              <select
+                aria-label="Filter by urgency level"
+                value={urgencyFilter}
+                onChange={(e) => setUrgencyFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+              >
+                {URGENCY_OPTIONS.map((urgency) => (
+                  <option key={urgency} value={urgency}>
+                    {urgency === 'All Urgencies' ? 'Urgency: All' : urgency}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+            </div>
           </div>
         </div>
 
@@ -149,7 +271,7 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
           type="button"
           onClick={exportToCSV}
           disabled={filteredRows.length === 0}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
         >
           <FiDownload className="text-sm" />
           Export CSV Report
@@ -160,8 +282,8 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wider text-slate-500">
-              <th className="px-4 py-3.5 w-28">Report #</th>
+            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-4 py-3.5 w-32">Report #</th>
               <th className="px-4 py-3.5">Reporter</th>
               <th className="px-4 py-3.5 hidden md:table-cell">Location</th>
               <th className="px-4 py-3.5">Urgency</th>
@@ -190,16 +312,20 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
             ) : (
               visibleRows.map((row) => {
                 const normalizedStatus = normalizeReportStatus(row.status);
+                const rawId = row.reportNum || row.id || '';
+                const displayId = formatReportId(row.reportNum, row.id);
 
                 return (
                   <tr
                     key={row.id}
-                    className="border-b border-slate-100 transition-colors hover:bg-slate-50/80"
+                    className="border-b border-slate-100 transition-colors hover:bg-slate-50"
                   >
-                    <td className="px-4 py-3.5 font-medium text-slate-800 font-numeric w-28" title={row.reportNum || row.id}>
-                      {row.reportNum || row.id?.slice(0, 8)}
+                    <td className="px-4 py-3.5 font-medium text-slate-800 font-numeric w-32" title={rawId}>
+                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700">
+                        {displayId}
+                      </span>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-800">{row.name || 'Citizen'}</td>
+                    <td className="px-4 py-3.5 text-slate-800 font-medium">{row.name || 'Citizen'}</td>
                     <td className="px-4 py-3.5 hidden md:table-cell text-slate-600 max-w-xs truncate">
                       {row.location}
                     </td>
@@ -224,9 +350,9 @@ export function ReportHistoryTable({ rows = [], onViewReport, isLoading = false,
                       <button
                         type="button"
                         onClick={() => onViewReport?.(row)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-xs theme-dark-btn-outline"
                       >
-                        <FiEye className="text-slate-500 text-xs" />
+                        <FiEye className="text-xs" />
                         Details
                       </button>
                     </td>

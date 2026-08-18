@@ -126,6 +126,7 @@ export function Reports({
     return (
       <History
         rows={scopedRows}
+        departmentOptions={departmentOptions}
         onViewReport={onViewReport}
         isLoading={loading}
       />

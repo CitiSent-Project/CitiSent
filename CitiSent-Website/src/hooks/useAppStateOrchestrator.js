@@ -28,6 +28,9 @@ import {
   getLogoutPage,
   getReportsCategoryPage,
   getUsersPage,
+  getPageFromPath,
+  getPathFromPage,
+  syncBrowserHistory,
 } from '../controllers/navigationController'
 import { useAuthSession } from './useAuthSession'
 import { useNotificationsState } from './useNotificationsState'
@@ -158,23 +161,41 @@ export function useAppStateOrchestrator() {
   const storedAuthSession = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
 
   const [activePage, setActivePage] = useState(() => {
-    const storedPage = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activePage, APP_PAGES.DASHBOARD)
-    if (!Object.values(APP_PAGES).includes(storedPage)) {
-      return APP_PAGES.DASHBOARD
+    let initialPage = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.activePage, APP_PAGES.DASHBOARD)
+
+    if (typeof window !== 'undefined') {
+      const { pageKey } = getPageFromPath(window.location.pathname)
+      if (pageKey) {
+        initialPage = pageKey
+      }
+    }
+
+    if (!Object.values(APP_PAGES).includes(initialPage)) {
+      initialPage = APP_PAGES.DASHBOARD
     }
 
     // USER_PROFILE depends on transient in-memory state that is not persisted,
     // so redirect to the parent list page on reload.
-    if (storedPage === APP_PAGES.USER_PROFILE) {
-      return APP_PAGES.USERS
+    if (initialPage === APP_PAGES.USER_PROFILE) {
+      initialPage = APP_PAGES.USERS
     }
 
     const accessDecision = buildPageAccessDecision({
       role: storedProfile.role,
-      requestedPage: storedPage,
+      requestedPage: initialPage,
     })
 
-    return accessDecision.allowed ? storedPage : APP_PAGES.DASHBOARD
+    const finalPage = accessDecision.allowed ? initialPage : APP_PAGES.DASHBOARD
+
+    // Sync URL immediately if it diverges from storage/access controls
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const { params } = getPageFromPath(window.location.pathname)
+        syncBrowserHistory({ pageKey: finalPage, params, replace: true })
+      }, 0)
+    }
+
+    return finalPage
   })
   const [isPageLoading, setIsPageLoading] = useState(false)
   const [authPage, setAuthPage] = useState(AUTH_PAGES.LOGIN)
@@ -276,9 +297,15 @@ export function useAppStateOrchestrator() {
   )
   const [selectedUserProfile, setSelectedUserProfile] = useState(null)
   const [selectedReport, setSelectedReport] = useState(null)
-  const [selectedReportId, setSelectedReportId] = useState(() =>
-    loadSchemaBackedValue(ADMIN_STORAGE_KEYS.selectedReportId, '')
-  )
+  const [selectedReportId, setSelectedReportId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const { pageKey, params } = getPageFromPath(window.location.pathname)
+      if (pageKey === APP_PAGES.REPORT_DETAIL && params.reportId) {
+        return params.reportId
+      }
+    }
+    return loadSchemaBackedValue(ADMIN_STORAGE_KEYS.selectedReportId, '')
+  })
   const [reportStatusMap, setReportStatusMap] = useState({})
 
   usePersistToStorage(
@@ -336,6 +363,39 @@ export function useAppStateOrchestrator() {
     selectedReportId,
     getSchemaPersistenceOptions(ADMIN_STORAGE_KEYS.selectedReportId)
   )
+
+  useEffect(() => {
+    function handlePopState() {
+      const { pageKey, params } = getPageFromPath(window.location.pathname)
+      
+      const accessDecision = buildPageAccessDecision({
+        role: profile.role,
+        requestedPage: pageKey,
+      })
+
+      if (!accessDecision.allowed) {
+        notifyError('Access denied.', accessDecision.message)
+        syncBrowserHistory({ pageKey: APP_PAGES.DASHBOARD, replace: true })
+        setActivePage(APP_PAGES.DASHBOARD)
+        return
+      }
+
+      setActivePage(pageKey)
+      
+      if (pageKey === APP_PAGES.REPORT_DETAIL && params.reportId) {
+        setSelectedReportId(params.reportId)
+      } else if (pageKey !== APP_PAGES.REPORT_DETAIL) {
+        setSelectedReportId('')
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', handlePopState)
+      return () => {
+        window.removeEventListener('popstate', handlePopState)
+      }
+    }
+  }, [profile.role])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -855,6 +915,8 @@ export function useAppStateOrchestrator() {
       return
     }
 
+    syncBrowserHistory({ pageKey: transition.nextActivePage })
+
     setIsPageLoading(transition.shouldShowLoading)
     setActivePage(transition.nextActivePage)
   }
@@ -862,6 +924,8 @@ export function useAppStateOrchestrator() {
   function handleViewUserProfile(user) {
     const transition = buildUserProfileTransition({ user })
     setSelectedUserProfile(transition.selectedUserProfile)
+    
+    syncBrowserHistory({ pageKey: transition.nextActivePage, params: { id: user.id } })
     setActivePage(transition.nextActivePage)
   }
 
@@ -870,6 +934,8 @@ export function useAppStateOrchestrator() {
     setSelectedReportId(report.id)
     setSelectedReport(transition.selectedReport)
     setIsPageLoading(transition.shouldShowLoading)
+    
+    syncBrowserHistory({ pageKey: transition.nextActivePage, params: { id: report.id } })
     setActivePage(transition.nextActivePage)
   }
 
@@ -1366,19 +1432,23 @@ export function useAppStateOrchestrator() {
   }
 
   function handleBackToUsers() {
+    syncBrowserHistory({ pageKey: getUsersPage() })
     setActivePage(getUsersPage())
   }
 
   function handleBackToReports() {
     setSelectedReportId('')
+    syncBrowserHistory({ pageKey: getReportsCategoryPage() })
     setActivePage(getReportsCategoryPage())
   }
 
   function handleRequestLogout() {
+    syncBrowserHistory({ pageKey: getLogoutPage() })
     setActivePage(getLogoutPage())
   }
 
   function handleCancelLogout() {
+    syncBrowserHistory({ pageKey: getDashboardPage() })
     setActivePage(getDashboardPage())
   }
 

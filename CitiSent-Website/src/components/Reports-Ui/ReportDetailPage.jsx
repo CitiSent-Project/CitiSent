@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle } from 'react-icons/fi'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle, FiRefreshCw } from 'react-icons/fi'
 import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
@@ -15,7 +15,7 @@ import {
 import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import { ReportChatDrawer } from './ReportChatDrawer'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
-import { mapBackendMessagesResponse } from '../../services/api/admin/reportsApiMappers'
+import { mapBackendAdminNoteSuggestionsToUi, mapBackendMessagesResponse, mapUiStatusToBackendStatus } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
@@ -36,6 +36,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const [isSaving, setIsSaving] = useState(false)
   const [isCooldown, setIsCooldown] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [adminNoteSuggestions, setAdminNoteSuggestions] = useState([])
+  const [isAdminNoteSuggestionsLoading, setIsAdminNoteSuggestionsLoading] = useState(false)
   const cooldownTimerRef = useRef(null)
   const [timeline, setTimeline] = useState(() => [
     {
@@ -64,6 +66,31 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       .catch(() => {})
     return () => { isMounted = false }
   }, [report?.id, accessToken])
+
+  const loadAdminNoteSuggestions = useCallback(async (forceRegenerate = false) => {
+    if (!report?.id || !accessToken) return
+
+    setIsAdminNoteSuggestionsLoading(true)
+    try {
+      const response = await reportsApiService.getReportAdminNoteSuggestions(
+        accessToken,
+        report.id,
+        mapUiStatusToBackendStatus(selectedStatus),
+        forceRegenerate,
+      )
+      const mapped = mapBackendAdminNoteSuggestionsToUi(response)
+      setAdminNoteSuggestions(mapped.suggestedNotes || [])
+    } catch {
+      // The backend normally returns status-specific fallbacks. Keep the note field usable if it is unavailable.
+      setAdminNoteSuggestions([])
+    } finally {
+      setIsAdminNoteSuggestionsLoading(false)
+    }
+  }, [accessToken, report?.id, selectedStatus])
+
+  useEffect(() => {
+    loadAdminNoteSuggestions()
+  }, [loadAdminNoteSuggestions])
 
   useEffect(() => {
     return () => {
@@ -331,6 +358,42 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </label>
+
+          {canProcessReport ? (
+            <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-[10px] font-bold tracking-wider text-slate-500">AI-ASSISTED NOTE SUGGESTIONS</span>
+                <button
+                  type="button"
+                  onClick={() => loadAdminNoteSuggestions(true)}
+                  disabled={isAdminNoteSuggestionsLoading}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 transition hover:text-blue-600 disabled:opacity-50"
+                >
+                  <FiRefreshCw className={isAdminNoteSuggestionsLoading ? 'animate-spin' : ''} />
+                  REGENERATE
+                </button>
+              </div>
+              {isAdminNoteSuggestionsLoading ? (
+                <p className="py-2 text-center text-xs text-slate-400">Generating suggestions...</p>
+              ) : adminNoteSuggestions.length > 0 ? (
+                <div className="flex flex-col gap-1.5">
+                  {adminNoteSuggestions.map((suggestion, index) => (
+                    <button
+                      key={`${suggestion.rank}-${index}`}
+                      type="button"
+                      onClick={() => setAdminNotes(suggestion.text)}
+                      className={`rounded-lg border border-slate-200 bg-white p-2 text-left text-xs text-slate-700 transition hover:border-blue-400 hover:bg-blue-50/30 ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900' : ''}`}
+                    >
+                      {index === 0 ? <span className="mb-0.5 block text-[9px] font-bold uppercase tracking-wide text-blue-600">Recommended</span> : null}
+                      {suggestion.text}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="py-1 text-xs text-slate-400">Suggestions are unavailable. You can still enter a note manually.</p>
+              )}
+            </div>
+          ) : null}
 
           <div className="flex gap-2 overflow-x-auto pb-1">
             {REPORT_STATUS_OPTIONS.map((status) => {

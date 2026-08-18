@@ -8,6 +8,7 @@ const api = vi.hoisted(() => ({
   sendReportMessage: vi.fn(),
   markReportMessagesRead: vi.fn(),
   getReportChatSuggestions: vi.fn(),
+  getReportAdminNoteSuggestions: vi.fn(),
 }))
 const socket = vi.hoisted(() => ({
   on: vi.fn(),
@@ -50,12 +51,34 @@ async function render(element) {
 afterEach(async () => {
   if (root) await act(async () => { root.unmount() })
   container?.remove()
+  window.localStorage.clear()
   root = null
   container = null
   vi.clearAllMocks()
 })
 
 describe('Report chat drawer', () => {
+  it('loads status-aware admin note suggestions and inserts a selected note into the textarea', async () => {
+    window.localStorage.setItem('citisent.admin.accessToken', JSON.stringify('token'))
+    api.listReportMessages.mockResolvedValue({ data: [] })
+    api.getReportAdminNoteSuggestions.mockResolvedValue({
+      data: {
+        suggestedNotes: [
+          { text: 'Initial review has been recorded.', rank: 1 },
+        ],
+      },
+    })
+
+    await render(<ReportDetailPage report={report} profile={profile} onBackToReports={vi.fn()} onUpdateStatus={vi.fn()} />)
+
+    expect(api.getReportAdminNoteSuggestions).toHaveBeenCalledWith('token', report.id, 'pending', false)
+    const suggestion = Array.from(container.querySelectorAll('button')).find((button) => button.textContent.includes('Initial review has been recorded.'))
+    await act(async () => { suggestion.click() })
+
+    const noteTextarea = Array.from(container.querySelectorAll('textarea')).find((textarea) => textarea.placeholder.includes('Add remarks'))
+    expect(noteTextarea.value).toBe('Initial review has been recorded.')
+  })
+
   it('opens from report detail and loads the report conversation', async () => {
     api.listReportMessages.mockResolvedValue({ data: [] })
     api.markReportMessagesRead.mockResolvedValue({ data: [] })

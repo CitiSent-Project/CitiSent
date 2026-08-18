@@ -207,3 +207,38 @@ test("reportsSentimentClient.getChatSuggestions posts context data and returns s
   assert.equal(result.tone, "urgent");
 });
 
+test("reportsSentimentClient.getAdminNoteSuggestions posts the status-aware note context", async () => {
+  const requests = [];
+  const result = await reportsSentimentClient.getAdminNoteSuggestions(
+    {
+      reportStatus: "in_review",
+      conversationContext: [{ sender: "Citizen", text: "The flooding is getting worse." }],
+      reportCategory: "Flooding",
+      urgency: "High",
+      detectedEmotion: "Frustrated",
+      reportDescription: "Water is blocking the road.",
+    },
+    {
+      apiUrl: "http://127.0.0.1:8000/analyze",
+      fetchImpl: async (url, options) => {
+        requests.push({ url, payload: JSON.parse(options.body) });
+        return {
+          ok: true,
+          json: async () => ({ suggestedNotes: [{ text: "Review started.", rank: 1 }] }),
+        };
+      },
+    },
+  );
+
+  assert.equal(requests[0].url, "http://127.0.0.1:8000/admin-notes/suggestions");
+  assert.deepEqual(requests[0].payload, {
+    reportStatus: "in_review",
+    conversationContext: [{ sender: "Citizen", text: "The flooding is getting worse." }],
+    reportCategory: "Flooding",
+    urgency: "High",
+    detectedEmotion: "Frustrated",
+    reportDescription: "Water is blocking the road.",
+  });
+  assert.equal(result.suggestedNotes[0].text, "Review started.");
+});
+

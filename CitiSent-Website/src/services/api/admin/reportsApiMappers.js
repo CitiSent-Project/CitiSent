@@ -127,6 +127,20 @@ export function mapBackendSuggestionsToUi(response = {}) {
   }
 }
 
+export function mapBackendAdminNoteSuggestionsToUi(response = {}) {
+  const data = response?.data || response || {}
+  return {
+    suggestedNotes: (data.suggestedNotes || []).map((note) => ({
+      text: note.text || '',
+      rank: Number(note.rank) || 0,
+    })),
+    tone: data.tone || 'professional',
+    confidence: Number(data.confidence) || 0.5,
+    reason: data.reason || '',
+    triggerEmotion: data.triggerEmotion || 'Neutral',
+  }
+}
+
 /**
  * Maps a single backend conversation object into a UI-friendly shape.
  * Each conversation represents a report-based chat thread with a citizen.

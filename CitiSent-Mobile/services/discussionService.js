@@ -86,6 +86,34 @@ export function mapRawRow(row, currentUserId) {
   return classifyMessages([mapped], currentUserId)[0];
 }
 
+/**
+ * Append a single raw message row (from a Supabase Realtime INSERT) to the
+ * cached discussion thread for a report.
+ *
+ * Called by adminMessageState when a new message arrives while the chat modal
+ * is closed, so the next `getDiscussion` call immediately returns the correct
+ * latest message instead of serving a stale cache entry.
+ *
+ * Safe to call concurrently — idempotent on duplicate message IDs.
+ *
+ * @param {string} reportId
+ * @param {object} rawMessage - The `payload.new` object from Supabase Realtime
+ */
+export async function appendMessageToCache(reportId, rawMessage) {
+  if (!reportId || !rawMessage) return;
+  try {
+    const key = cacheKey(reportId);
+    const cached = await getCache(key, { ignoreExpiry: true });
+    const existing = Array.isArray(cached) ? cached : [];
+    const mapped = mapApiMessage(rawMessage);
+    // Idempotent — skip if already present
+    if (existing.some((m) => String(m.id) === String(mapped.id))) return;
+    await setCache(key, [...existing, mapped], CACHE_TTL);
+  } catch {
+    // Non-critical — cache miss will be recovered on next API fetch
+  }
+}
+
 function isAuthAvailable() {
   const token = getAuthToken();
   return Boolean(token) && !token.startsWith("temp-");

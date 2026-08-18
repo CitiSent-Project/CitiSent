@@ -141,6 +141,21 @@ export const adminController = {
     });
   },
 
+  async getAdminNoteSuggestions(req, res) {
+    const result = await adminService.getAdminNoteSuggestions({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      reportId: req.params.reportId,
+      status: req.query.status,
+      forceRegenerate: req.query.forceRegenerate,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async listOfficeAdmins(req, res) {
     const result = await adminService.listOfficeAdmins({
       accessToken: req.accessToken,

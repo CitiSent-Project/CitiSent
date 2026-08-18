@@ -61,6 +61,7 @@ export function AdminMessageProvider({ children }) {
   const value = {
     hasUnreadAdminMessage: snapshot.hasUnreadAdminMessage,
     unreadByReport: snapshot.unreadByReport,
+    latestMessageByReport: snapshot.latestMessageByReport,
     setReportRead,
     setReportUnread,
     seedUnreadState,
@@ -80,6 +81,7 @@ export function AdminMessageProvider({ children }) {
  * @returns {{
  *   hasUnreadAdminMessage: boolean,
  *   unreadByReport: Record<string, boolean>,
+ *   latestMessageByReport: Record<string, object>,
  *   setReportRead: (reportId: string) => void,
  *   setReportUnread: (reportId: string) => void,
  *   seedUnreadState: (map: Record<string, boolean>) => void,

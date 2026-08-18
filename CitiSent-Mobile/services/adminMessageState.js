@@ -16,7 +16,7 @@
 import { getSupabaseClient } from "./supabase";
 import { getSocket } from "./socketService";
 import { getAuthUser } from "./authSession";
-import { discussionService } from "./discussionService";
+import { discussionService, appendMessageToCache } from "./discussionService";
 
 // ─── Module-level state ────────────────────────────────────────────────────────
 
@@ -25,6 +25,13 @@ const listeners = new Set();
 
 /** @type {{ [reportId: string]: boolean }} */
 let unreadByReport = {};
+
+/**
+ * Latest raw message row per report, populated from Supabase Realtime INSERTs.
+ * Allows consumers to show a message preview without opening the modal.
+ * @type {{ [reportId: string]: object }}
+ */
+let latestMessageByReport = {};
 
 /** Whether the singleton has been initialized for the current session. */
 let isInitialized = false;
@@ -48,6 +55,7 @@ function buildSnapshot() {
   return {
     unreadByReport: { ...unreadByReport },
     hasUnreadAdminMessage: computeHasUnread(),
+    latestMessageByReport: { ...latestMessageByReport },
   };
 }
 
@@ -85,17 +93,8 @@ export function setReportRead(reportId) {
   const key = String(reportId);
   if (unreadByReport[key] === false) return; // already clear — skip re-render
 
-  const previousState = { ...cachedSnapshot };
   unreadByReport = { ...unreadByReport, [key]: false };
   emitChange();
-  const newState = getAdminMessagesSnapshot();
-
-  console.log("[Notification] Read state updated for report:", key);
-  console.log("[Notification] Previous state:", previousState);
-  console.log("[Notification] New state:", newState);
-  console.log("[Notification] Manage Reports badge updated");
-  console.log("[Notification] Profile badge updated");
-  console.log("[Notification] Chat Admin badge updated");
 }
 
 /**
@@ -106,17 +105,8 @@ export function setReportUnread(reportId) {
   const key = String(reportId);
   if (unreadByReport[key] === true) return; // already set — skip re-render
 
-  const previousState = { ...cachedSnapshot };
   unreadByReport = { ...unreadByReport, [key]: true };
   emitChange();
-  const newState = getAdminMessagesSnapshot();
-
-  console.log("[Notification] Admin message detected");
-  console.log("[Notification] Previous state:", previousState);
-  console.log("[Notification] New state:", newState);
-  console.log("[Notification] Manage Reports badge updated");
-  console.log("[Notification] Profile badge updated");
-  console.log("[Notification] Chat Admin badge updated");
 }
 
 /**
@@ -155,6 +145,7 @@ export function seedUnreadState(map) {
  */
 export function resetAdminMessageState() {
   unreadByReport = {};
+  latestMessageByReport = {};
   isInitialized = false;
   initializedForUserId = null;
   _teardownSubscriptions();
@@ -181,9 +172,6 @@ function _getEffectiveUserId(fallbackUserId = null) {
 }
 
 function _handleRealtimeInsert(payload, fallbackUserId) {
-  console.log("[Realtime] INSERT received:", payload);
-  console.log("[Realtime] New message:", payload?.new);
-
   const newMsg = payload?.new;
   if (!newMsg || !newMsg.report_id) return;
 
@@ -191,12 +179,26 @@ function _handleRealtimeInsert(payload, fallbackUserId) {
   const senderId = String(newMsg.sender_id ?? newMsg.senderId ?? "");
 
   // Ignore own messages
-  if (currentUserId && senderId === String(currentUserId)) {
-    return;
+  if (currentUserId && senderId === String(currentUserId)) return;
+
+  const reportId = String(newMsg.report_id);
+  let changed = false;
+
+  // Mark report as unread (badge)
+  if (unreadByReport[reportId] !== true) {
+    unreadByReport = { ...unreadByReport, [reportId]: true };
+    changed = true;
   }
 
-  // Message from admin / external sender — update realtime notification badge
-  setReportUnread(newMsg.report_id);
+  // Store latest message so consumers can read it without opening the modal
+  latestMessageByReport = { ...latestMessageByReport, [reportId]: newMsg };
+  changed = true;
+
+  if (changed) emitChange();
+
+  // Patch the discussion cache so the next modal open shows the new message
+  // immediately instead of serving a stale cache entry.
+  appendMessageToCache(reportId, newMsg).catch(() => {});
 }
 
 function _handleSocketMessage(data, fallbackUserId) {
@@ -207,7 +209,23 @@ function _handleSocketMessage(data, fallbackUserId) {
   const senderId = String(data?.message?.senderId ?? data?.message?.sender_id ?? "");
   if (currentUserId && senderId === String(currentUserId)) return;
 
-  setReportUnread(reportId);
+  const key = String(reportId);
+  let changed = false;
+
+  if (unreadByReport[key] !== true) {
+    unreadByReport = { ...unreadByReport, [key]: true };
+    changed = true;
+  }
+
+  // Store latest message from socket payload
+  if (data?.message) {
+    latestMessageByReport = { ...latestMessageByReport, [key]: data.message };
+    changed = true;
+    // Patch discussion cache via socket payload message shape
+    appendMessageToCache(key, data.message).catch(() => {});
+  }
+
+  if (changed) emitChange();
 }
 
 function _setupSupabaseChannel(userId) {
@@ -217,7 +235,6 @@ function _setupSupabaseChannel(userId) {
     const client = getSupabaseClient();
     if (!client) return;
 
-    console.log("[Realtime] Creating subscription");
     supabaseChannel = client
       .channel("admin_msg_state_global")
       .on(
@@ -226,7 +243,6 @@ function _setupSupabaseChannel(userId) {
         (payload) => _handleRealtimeInsert(payload, userId)
       )
       .subscribe((status) => {
-        console.log("[Realtime] Subscription status:", status);
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           // Channel failed — clear the reference so the next call will re-subscribe
           supabaseChannel = null;

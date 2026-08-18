@@ -84,8 +84,18 @@ export function setReportRead(reportId) {
   if (!reportId) return;
   const key = String(reportId);
   if (unreadByReport[key] === false) return; // already clear — skip re-render
+
+  const previousState = { ...cachedSnapshot };
   unreadByReport = { ...unreadByReport, [key]: false };
   emitChange();
+  const newState = getAdminMessagesSnapshot();
+
+  console.log("[Notification] Read state updated for report:", key);
+  console.log("[Notification] Previous state:", previousState);
+  console.log("[Notification] New state:", newState);
+  console.log("[Notification] Manage Reports badge updated");
+  console.log("[Notification] Profile badge updated");
+  console.log("[Notification] Chat Admin badge updated");
 }
 
 /**
@@ -95,25 +105,45 @@ export function setReportUnread(reportId) {
   if (!reportId) return;
   const key = String(reportId);
   if (unreadByReport[key] === true) return; // already set — skip re-render
+
+  const previousState = { ...cachedSnapshot };
   unreadByReport = { ...unreadByReport, [key]: true };
   emitChange();
+  const newState = getAdminMessagesSnapshot();
+
+  console.log("[Notification] Admin message detected");
+  console.log("[Notification] Previous state:", previousState);
+  console.log("[Notification] New state:", newState);
+  console.log("[Notification] Manage Reports badge updated");
+  console.log("[Notification] Profile badge updated");
+  console.log("[Notification] Chat Admin badge updated");
 }
 
 /**
  * Seed the initial per-report unread state from a map of { reportId: boolean }.
  * Called by the Manage Reports screen after it fetches its report list.
+ *
+ * NOTE: Realtime events take precedence over stale false API/cache data.
+ * If a report was marked true via Realtime event, seedUnreadState will NOT
+ * overwrite it to false unless setReportRead was explicitly called.
  */
 export function seedUnreadState(map) {
   if (!map || typeof map !== "object") return;
   let changed = false;
   const next = { ...unreadByReport };
+
   for (const [key, value] of Object.entries(map)) {
     const boolVal = Boolean(value);
+    // If currently true from a realtime event, preserve it unless API confirms true
+    if (next[key] === true && !boolVal) {
+      continue;
+    }
     if (next[key] !== boolVal) {
       next[key] = boolVal;
       changed = true;
     }
   }
+
   if (changed) {
     unreadByReport = next;
     emitChange();
@@ -137,72 +167,84 @@ function _teardownSubscriptions() {
   if (supabaseChannel) {
     try {
       const client = getSupabaseClient();
-      client.removeChannel(supabaseChannel);
+      if (client) {
+        client.removeChannel(supabaseChannel);
+      }
     } catch {}
     supabaseChannel = null;
   }
-  // Socket.IO: we don't remove the listener here because the socket is a
-  // singleton too. We just gate on isInitialized in the handler itself.
   socketListenerAttached = false;
 }
 
-function _handleRealtimeInsert(payload, currentUserId) {
-  if (!isInitialized) return;
+function _getEffectiveUserId(fallbackUserId = null) {
+  return fallbackUserId || getAuthUser()?.id || initializedForUserId || null;
+}
+
+function _handleRealtimeInsert(payload, fallbackUserId) {
+  console.log("[Realtime] INSERT received:", payload);
+  console.log("[Realtime] New message:", payload?.new);
+
   const newMsg = payload?.new;
   if (!newMsg || !newMsg.report_id) return;
 
+  const currentUserId = _getEffectiveUserId(fallbackUserId);
   const senderId = String(newMsg.sender_id ?? newMsg.senderId ?? "");
-  // Ignore own messages
-  if (currentUserId && senderId === String(currentUserId)) return;
 
-  // It's a message from someone else (admin) — mark that report unread
+  // Ignore own messages
+  if (currentUserId && senderId === String(currentUserId)) {
+    return;
+  }
+
+  // Message from admin / external sender — update realtime notification badge
   setReportUnread(newMsg.report_id);
 }
 
-function _handleSocketMessage(data, currentUserId) {
-  if (!isInitialized) return;
+function _handleSocketMessage(data, fallbackUserId) {
   const reportId = data?.reportId;
   if (!reportId) return;
 
+  const currentUserId = _getEffectiveUserId(fallbackUserId);
   const senderId = String(data?.message?.senderId ?? data?.message?.sender_id ?? "");
   if (currentUserId && senderId === String(currentUserId)) return;
 
   setReportUnread(reportId);
 }
 
-function _setupSupabaseChannel(currentUserId) {
+function _setupSupabaseChannel(userId) {
   if (supabaseChannel) return; // already subscribed
 
   try {
     const client = getSupabaseClient();
     if (!client) return;
 
+    console.log("[Realtime] Creating subscription");
     supabaseChannel = client
       .channel("admin_msg_state_global")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "report_messages" },
-        (payload) => _handleRealtimeInsert(payload, currentUserId)
+        (payload) => _handleRealtimeInsert(payload, userId)
       )
       .subscribe((status) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          // Channel failed — clear the reference so the next initialize() call
-          // will re-subscribe.
+        console.log("[Realtime] Subscription status:", status);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          // Channel failed — clear the reference so the next call will re-subscribe
           supabaseChannel = null;
         }
       });
   } catch (err) {
     console.warn("[adminMessageState] Failed to subscribe to Supabase Realtime:", err?.message);
+    supabaseChannel = null;
   }
 }
 
-function _setupSocketListener(currentUserId) {
+function _setupSocketListener(userId) {
   if (socketListenerAttached) return;
   try {
     const socket = getSocket();
     if (!socket) return;
 
-    socket.on("new_report_message", (data) => _handleSocketMessage(data, currentUserId));
+    socket.on("new_report_message", (data) => _handleSocketMessage(data, userId));
     socketListenerAttached = true;
   } catch (err) {
     console.warn("[adminMessageState] Failed to attach Socket.IO listener:", err?.message);
@@ -212,30 +254,32 @@ function _setupSocketListener(currentUserId) {
 /**
  * Initialize the singleton for the authenticated user.
  *
- * Should be called once after auth session is ready (in the root _layout.jsx).
- * Safe to call multiple times — re-initializes only if the user changed.
+ * Safe to call multiple times — re-initializes if the user changed or subscriptions dropped.
  *
  * @param {string | null} userId - The authenticated user's ID
  * @param {string[]} [reportIds] - Optional: known report IDs to seed initial state
  */
 export async function initializeAdminMessageState(userId, reportIds = []) {
-  if (isInitialized && initializedForUserId === String(userId)) {
-    return; // already initialized for this user
+  const targetUserId = userId ? String(userId) : getAuthUser()?.id ? String(getAuthUser().id) : null;
+
+  if (isInitialized && initializedForUserId === targetUserId && supabaseChannel) {
+    return; // already initialized & active for this user
   }
 
-  // Tear down any existing subscriptions from a previous session
-  _teardownSubscriptions();
+  if (targetUserId && initializedForUserId !== targetUserId) {
+    _teardownSubscriptions();
+  }
 
   isInitialized = true;
-  initializedForUserId = String(userId);
+  initializedForUserId = targetUserId;
 
   // Set up realtime listeners
-  _setupSupabaseChannel(userId);
-  _setupSocketListener(userId);
+  _setupSupabaseChannel(targetUserId);
+  _setupSocketListener(targetUserId);
 
   // Seed initial state if we have report IDs to check
   if (Array.isArray(reportIds) && reportIds.length > 0) {
-    _seedFromApi(reportIds, userId);
+    _seedFromApi(reportIds, targetUserId);
   }
 }
 
@@ -250,7 +294,7 @@ export async function initializeAdminMessageState(userId, reportIds = []) {
 export async function seedUnreadStateFromApi(reportIds, userId = null) {
   if (!Array.isArray(reportIds) || reportIds.length === 0) return;
 
-  const effectiveUserId = userId ?? getAuthUser()?.id ?? null;
+  const effectiveUserId = userId ?? getAuthUser()?.id ?? initializedForUserId ?? null;
 
   const results = await Promise.all(
     reportIds.map(async (reportId) => {
@@ -277,3 +321,4 @@ async function _seedFromApi(reportIds, userId) {
     console.warn("[adminMessageState] Failed to seed initial unread state:", err?.message);
   }
 }
+

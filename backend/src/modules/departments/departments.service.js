@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { randomUUID } from "node:crypto";
 import { AppError } from "../../shared/errors/appError.js";
 import { departmentsRepository } from "./departments.repository.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_MIME_TYPES = new Map([
@@ -9,6 +10,21 @@ const ALLOWED_LOGO_MIME_TYPES = new Map([
   ["image/jpeg", "jpg"],
   ["image/webp", "webp"],
 ]);
+
+const DEPARTMENTS_CACHE_PREFIX = "departments:";
+const DEPARTMENTS_CACHE_TTL_SECONDS = 300;
+
+function buildDepartmentsListCacheKey(includeInactive) {
+  return `${DEPARTMENTS_CACHE_PREFIX}list:${includeInactive ? "all" : "active"}`;
+}
+
+async function invalidateDepartmentCaches() {
+  try {
+    await cacheService.deleteByPrefix(DEPARTMENTS_CACHE_PREFIX);
+  } catch {
+    // Non-critical cache cleanup fallback
+  }
+}
 
 function normalizeSlug(value) {
   return String(value || "")
@@ -74,24 +90,49 @@ async function removeLogoObjectBestEffort({ accessToken, logoPath }) {
 
 export const departmentsService = {
   async listDepartments({ accessToken, includeInactive = false } = {}) {
-    return departmentsRepository.listDepartments({
+    const cacheKey = buildDepartmentsListCacheKey(includeInactive);
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
+
+    const data = await departmentsRepository.listDepartments({
       accessToken,
       includeInactive,
     });
+
+    if (Array.isArray(data)) {
+      await cacheService.setJSON(cacheKey, data, DEPARTMENTS_CACHE_TTL_SECONDS);
+    }
+
+    return data;
   },
 
   async getActiveDepartmentByValue({ accessToken, value }) {
+    const normalizedValue = String(value || "").trim().toLowerCase();
+    if (!normalizedValue) return null;
+
+    // Fast-path: check cached active departments list in memory
+    const activeDepartments = await this.listDepartments({
+      accessToken,
+      includeInactive: false,
+    });
+
+    if (Array.isArray(activeDepartments)) {
+      const match = activeDepartments.find(
+        (dept) =>
+          String(dept.slug || "").toLowerCase() === normalizedValue ||
+          String(dept.name || "").toLowerCase() === normalizedValue ||
+          String(dept.id || "").toLowerCase() === normalizedValue,
+      );
+      if (match) return match;
+    }
+
     const match = await departmentsRepository.findBySlugOrName({
       accessToken,
       value,
       includeInactive: false,
     });
 
-    if (!match) {
-      return null;
-    }
-
-    return match;
+    return match || null;
   },
 
   async createDepartment({ accessToken, payload }) {
@@ -108,7 +149,7 @@ export const departmentsService = {
     }
 
     try {
-      return await departmentsRepository.createDepartment({
+      const created = await departmentsRepository.createDepartment({
         accessToken,
         payload: {
           slug,
@@ -116,6 +157,9 @@ export const departmentsService = {
           description,
         },
       });
+
+      await invalidateDepartmentCaches();
+      return created;
     } catch (error) {
       if (isUniqueConflict(error)) {
         throw new AppError(
@@ -127,6 +171,7 @@ export const departmentsService = {
       throw error;
     }
   },
+
 
   async updateDepartment({ accessToken, departmentSlug, payload }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
@@ -166,6 +211,7 @@ export const departmentsService = {
       });
 
       assertDepartmentFound(updated);
+      await invalidateDepartmentCaches();
       return updated;
     } catch (error) {
       if (isUniqueConflict(error)) {
@@ -193,6 +239,7 @@ export const departmentsService = {
     });
 
     assertDepartmentFound(updated);
+    await invalidateDepartmentCaches();
     return updated;
   },
 
@@ -240,6 +287,7 @@ export const departmentsService = {
         });
       }
 
+      await invalidateDepartmentCaches();
       return updated;
     } catch (error) {
       await removeLogoObjectBestEffort({
@@ -271,6 +319,7 @@ export const departmentsService = {
     });
 
     assertDepartmentFound(updated);
+    await invalidateDepartmentCaches();
     return updated;
   },
 
@@ -385,6 +434,8 @@ export const departmentsService = {
       });
     }
 
+    await invalidateDepartmentCaches();
     return deleted;
   },
 };
+

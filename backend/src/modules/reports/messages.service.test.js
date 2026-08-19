@@ -129,11 +129,18 @@ test("getChatSuggestions blocks citizens from fetching suggestions", async () =>
   }
 });
 
+import { cacheService } from "../../shared/cache/cacheService.js";
+
 test("getChatSuggestions orchestrates call to sentiment client for suggestions", async () => {
   const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
   const originalGetConversation = reportMessagesRepository.getConversation;
   const originalGetChatSuggestions = reportsSentimentClient.getChatSuggestions;
+  const originalGetJSON = cacheService.getJSON;
+  const originalSetJSON = cacheService.setJSON;
   try {
+    cacheService.getJSON = async () => null;
+    cacheService.setJSON = async () => {};
+
     reportMessagesRepository.isParticipantForReport = async () => ({
       report: createReport({ description: "Citizen report description", issue_type: "Flooding", sentiment_label: "High", emotion_level: "Angry" }),
       allowed: true,
@@ -181,6 +188,9 @@ test("getChatSuggestions orchestrates call to sentiment client for suggestions",
     reportMessagesRepository.isParticipantForReport = originalIsParticipantForReport;
     reportMessagesRepository.getConversation = originalGetConversation;
     reportsSentimentClient.getChatSuggestions = originalGetChatSuggestions;
+    cacheService.getJSON = originalGetJSON;
+    cacheService.setJSON = originalSetJSON;
   }
 });
+
 

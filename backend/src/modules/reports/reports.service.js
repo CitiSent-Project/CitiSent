@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { logger } from "../../config/logger.js";
 import {
   buildReportsListCacheKey,
+  buildReportsCountsCacheKey,
   buildReportsUserCachePrefix,
 } from "./reports.cache.js";
 import {
@@ -161,9 +162,12 @@ export const reportsService = {
   },
 
   async getReportCounts({ userId, accessToken }) {
-    // For now, bypassing cache for accurate realtime counts
-    // Future improvement: cache the counts and invalidate on report create/update/delete
+    const cacheKey = buildReportsCountsCacheKey(userId);
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
+
     const counts = await reportsRepository.getCountsByStatus({ userId, accessToken });
+    await cacheService.setJSON(cacheKey, counts, 60);
     return counts;
   },
 

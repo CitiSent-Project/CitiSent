@@ -5,8 +5,14 @@ import {
   supabase,
 } from "../../config/supabase.js";
 import { AppError } from "../errors/appError.js";
+import { cacheService } from "../cache/cacheService.js";
 
 const PROFILES_TABLE = "profiles";
+const PROFILE_CACHE_TTL_SECONDS = 120;
+
+function buildProfileCacheKey(userId) {
+  return `profile:user:${userId}`;
+}
 
 function getUserDb(accessToken) {
   if (!accessToken) {
@@ -63,12 +69,27 @@ async function queryProfileByIdentifier(db, identifier) {
 
 export const profileRepository = {
   async getByUserId({ userId, accessToken, columns = "*", useAdmin = false }) {
+    if (!userId) return null;
+
+    // Cache full profile queries to eliminate redundant DB calls
+    const isFullSelect = columns === "*";
+    const cacheKey = buildProfileCacheKey(userId);
+
+    if (isFullSelect) {
+      const cached = await cacheService.getJSON(cacheKey);
+      if (cached) return cached;
+    }
+
     const primaryDb = useAdmin ? getAdminDb(accessToken) : getUserDb(accessToken);
     const { data, error } = await queryProfileByUserId(primaryDb, userId, columns);
 
     if (!error) {
+      if (isFullSelect && data) {
+        await cacheService.setJSON(cacheKey, data, PROFILE_CACHE_TTL_SECONDS);
+      }
       return data;
     }
+
 
     if (isMissingProfilesTable(error)) {
       return null;
@@ -166,6 +187,9 @@ export const profileRepository = {
       .maybeSingle();
 
     if (!error) {
+      if (userId) {
+        await cacheService.delete(buildProfileCacheKey(userId));
+      }
       return data;
     }
 

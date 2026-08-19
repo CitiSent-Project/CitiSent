@@ -24,7 +24,7 @@ function pickNotificationRecipient(participants = [], senderId) {
 }
 
 export const reportMessagesService = {
-  async getConversation({ actor, reportId, accessToken }) {
+  async getConversation({ actor, reportId, limit = 50, before = null, accessToken }) {
     const access = await reportMessagesRepository.isParticipantForReport({
       reportId,
       userId: actor.id,
@@ -39,11 +39,16 @@ export const reportMessagesService = {
       throw new AppError("Forbidden", StatusCodes.FORBIDDEN);
     }
 
-    const result = await reportMessagesRepository.getConversation({ reportId, accessToken });
+    const result = await reportMessagesRepository.getConversation({
+      reportId,
+      accessToken,
+      limit,
+      before,
+    });
 
     return {
       data: result.rows.map((row) => {
-        const senderProfile = result.senderProfilesByUserId[row.sender_id];
+        const senderProfile = result.senderProfilesByUserId?.[row.sender_id];
         return toReportMessageResponse(
           {
             ...row,
@@ -58,6 +63,12 @@ export const reportMessagesService = {
           actor.id,
         );
       }),
+      pagination: {
+        limit,
+        total: result.count,
+        hasMore: Boolean(result.hasMore),
+        nextCursor: result.nextCursor || null,
+      },
       conversation: {
         reportId,
         total: result.count,

@@ -18,8 +18,9 @@ import {
   seedUnreadState as _seedUnreadState,
   seedUnreadStateFromApi,
   initializeAdminMessageState,
+  resetAdminMessageState,
 } from "../services/adminMessageState";
-import { getAuthUser } from "../services/authSession";
+import { getAuthUser, onAuthStateChanged } from "../services/authSession";
 
 const AdminMessageContext = createContext(null);
 
@@ -33,6 +34,16 @@ export function AdminMessageProvider({ children }) {
     if (user?.id) {
       initializeAdminMessageState(user.id).catch(() => {});
     }
+
+    const unsubscribe = onAuthStateChanged((newUser) => {
+      if (newUser?.id) {
+        initializeAdminMessageState(newUser.id).catch(() => {});
+      } else {
+        resetAdminMessageState();
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   // useSyncExternalStore keeps this perfectly in sync with the singleton.

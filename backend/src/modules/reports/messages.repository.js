@@ -10,6 +10,8 @@ const PROFILES_TABLE = "profiles";
 const AGENCY_STAFF_USERS_TABLE = "agency_staff_users";
 const AGENCIES_TABLE = "agencies";
 
+import { cacheService } from "../../shared/cache/cacheService.js";
+
 function getDb(accessToken) {
   return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
@@ -18,6 +20,8 @@ function toGatewayError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
 
+const SENDER_PROFILE_CACHE_TTL_SECONDS = 300;
+
 async function loadSenderProfiles(db, rows = []) {
   const senderIds = Array.from(new Set(rows.map((row) => row.sender_id).filter(Boolean)));
 
@@ -25,20 +29,46 @@ async function loadSenderProfiles(db, rows = []) {
     return {};
   }
 
+  const profilesMap = {};
+  const missingIds = [];
+
+  // Check cache for each sender profile
+  await Promise.all(
+    senderIds.map(async (senderId) => {
+      const cached = await cacheService.getJSON(`profile:sender:${senderId}`);
+      if (cached) {
+        profilesMap[senderId] = cached;
+      } else {
+        missingIds.push(senderId);
+      }
+    }),
+  );
+
+  if (!missingIds.length) {
+    return profilesMap;
+  }
+
   const { data, error } = await db
     .from(PROFILES_TABLE)
     .select("user_id, email, username, fname, mname, lname, role, account_type")
-    .in("user_id", senderIds);
+    .in("user_id", missingIds);
 
   if (error) {
     throw toGatewayError("Failed to fetch message sender profiles", error);
   }
 
-  return (data || []).reduce((accumulator, profile) => {
-    accumulator[profile.user_id] = profile;
-    return accumulator;
-  }, {});
+  for (const profile of data || []) {
+    profilesMap[profile.user_id] = profile;
+    await cacheService.setJSON(
+      `profile:sender:${profile.user_id}`,
+      profile,
+      SENDER_PROFILE_CACHE_TTL_SECONDS,
+    );
+  }
+
+  return profilesMap;
 }
+
 
 export const reportMessagesRepository = {
   async getReportById({ reportId, accessToken }) {
@@ -127,6 +157,12 @@ export const reportMessagesRepository = {
       return report;
     }
 
+    const cacheKey = `agency:slug:${issueType.toLowerCase()}`;
+    const cachedAgencyId = await cacheService.getJSON(cacheKey);
+    if (cachedAgencyId) {
+      return { ...report, agency_id: cachedAgencyId };
+    }
+
     // Existing reports are assigned by issue_type (the agency slug), not agency_id.
     const { data, error } = await db
       .from(AGENCIES_TABLE)
@@ -138,7 +174,12 @@ export const reportMessagesRepository = {
       throw toGatewayError("Failed to resolve report agency", error);
     }
 
-    return data?.id ? { ...report, agency_id: data.id } : report;
+    if (data?.id) {
+      await cacheService.setJSON(cacheKey, data.id, 600);
+      return { ...report, agency_id: data.id };
+    }
+
+    return report;
   },
 
   async getAgencyParticipants({ agencyId, accessToken, excludeUserId = null }) {

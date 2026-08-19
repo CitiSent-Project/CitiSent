@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { departmentsRepository } from "./departments.repository.js";
 import { departmentsService } from "./departments.service.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 function createDepartment(overrides = {}) {
   return {
@@ -30,7 +31,10 @@ function stubDeleteDependencies(t) {
     countDepartmentReferences: departmentsRepository.countDepartmentReferences,
     deleteDepartmentBySlug: departmentsRepository.deleteDepartmentBySlug,
     removeLogoObject: departmentsRepository.removeLogoObject,
+    deleteByPrefix: cacheService.deleteByPrefix,
   };
+
+  cacheService.deleteByPrefix = async () => {};
 
   t.after(() => {
     departmentsRepository.getDepartmentBySlug = originals.getDepartmentBySlug;
@@ -41,8 +45,10 @@ function stubDeleteDependencies(t) {
     departmentsRepository.countDepartmentReferences = originals.countDepartmentReferences;
     departmentsRepository.deleteDepartmentBySlug = originals.deleteDepartmentBySlug;
     departmentsRepository.removeLogoObject = originals.removeLogoObject;
+    cacheService.deleteByPrefix = originals.deleteByPrefix;
   });
 }
+
 
 test("deleteDepartment cleanup clears inactive department references before deleting", async (t) => {
   stubDeleteDependencies(t);

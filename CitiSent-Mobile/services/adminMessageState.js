@@ -307,13 +307,20 @@ export async function initializeAdminMessageState(userId, reportIds = []) {
  * @param {string[]} reportIds
  * @param {string | null} userId
  */
-export async function seedUnreadStateFromApi(reportIds, userId = null) {
+export async function seedUnreadStateFromApi(reportIds, userId = null, force = false) {
   if (!Array.isArray(reportIds) || reportIds.length === 0) return;
 
   const effectiveUserId = userId ?? getAuthUser()?.id ?? initializedForUserId ?? null;
 
+  // Filter only report IDs that have not yet been evaluated, unless forced (e.g. on modal close)
+  const targetIds = force
+    ? reportIds
+    : reportIds.filter((id) => unreadByReport[String(id)] === undefined);
+
+  if (targetIds.length === 0) return;
+
   const results = await Promise.all(
-    reportIds.map(async (reportId) => {
+    targetIds.map(async (reportId) => {
       try {
         const hasUnread = await discussionService.hasUnreadAdminMessage(reportId, effectiveUserId);
         return { id: String(reportId), hasUnread };
@@ -329,6 +336,7 @@ export async function seedUnreadStateFromApi(reportIds, userId = null) {
   }
   seedUnreadState(map);
 }
+
 
 async function _seedFromApi(reportIds, userId) {
   try {

@@ -9,6 +9,8 @@ import {
   reportsSentimentClient,
 } from "./reports.sentiment.js";
 import { reportsService } from "./reports.service.js";
+import { departmentsService } from "../departments/departments.service.js";
+import { buildReportsUserCachePrefix } from "./reports.cache.js";
 
 function createReportRow(overrides = {}) {
   return {
@@ -34,7 +36,10 @@ function stubCommonDependencies(t) {
   const originalRepositoryGetById = reportsRepository.getById;
   const originalRepositoryUpdateById = reportsRepository.updateById;
   const originalDeleteByPrefix = cacheService.deleteByPrefix;
+  const originalGetActiveDepartment = departmentsService.getActiveDepartmentByValue;
   const originalLoggerWarn = logger.warn;
+
+  departmentsService.getActiveDepartmentByValue = async () => null;
 
   t.after(() => {
     reportsSentimentClient.analyzeReport = originalAnalyzeReport;
@@ -42,9 +47,11 @@ function stubCommonDependencies(t) {
     reportsRepository.getById = originalRepositoryGetById;
     reportsRepository.updateById = originalRepositoryUpdateById;
     cacheService.deleteByPrefix = originalDeleteByPrefix;
+    departmentsService.getActiveDepartmentByValue = originalGetActiveDepartment;
     logger.warn = originalLoggerWarn;
   });
 }
+
 
 test("createReport stores AI-generated urgency and ignores client sentimentLabel", async (t) => {
   stubCommonDependencies(t);
@@ -93,7 +100,7 @@ test("createReport stores AI-generated urgency and ignores client sentimentLabel
   assert.equal(capturedCreatePayload.attachment_url, "https://example.com/report.jpg");
   assert.ok(!("sentimentLabel" in capturedCreatePayload));
   assert.equal(result.sentimentLabel, "Critical");
-  assert.equal(deletedPrefix, "reports:list:user:user-1:");
+  assert.equal(deletedPrefix, buildReportsUserCachePrefix("user-1"));
 });
 
 test("createReport falls back to Moderate when sentiment analysis fails", async (t) => {
@@ -184,7 +191,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
   assert.equal(capturedUpdatePayload.sentiment_label, "Critical");
   assert.ok(!("sentimentLabel" in capturedUpdatePayload));
   assert.equal(result.sentimentLabel, "Critical");
-  assert.equal(deletedPrefix, "reports:list:user:user-1:");
+  assert.equal(deletedPrefix, buildReportsUserCachePrefix("user-1"));
 });
 
 test("updateReport keeps the existing urgency when only non-text fields change", async (t) => {

@@ -50,25 +50,27 @@ export default function ReportsMadePage() {
     loadMore,
   } = useMyReports(selectedStatus);
 
+  // Fetch all counts on load/refresh
+  const [counts, setCounts] = useState({ pending: 0, inProgress: 0, completed: 0, unresolved: 0 });
+
+  const fetchCounts = async () => {
+    try {
+      const result = await reportsApi.getMyReportCounts();
+      setCounts(result);
+    } catch (err) {
+      console.warn("Failed to fetch counts:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCounts();
+  }, []);
+
   // Pull to refresh uses the reload function from the hook
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setSelectedStatus("all");
-    await reloadMyReports();
+    await Promise.all([reloadMyReports(), fetchCounts()]);
   });
-
-  // Fetch all counts on load/refresh
-  const [counts, setCounts] = useState({ pending: 0, inProgress: 0, completed: 0, unresolved: 0 });
-  useEffect(() => {
-    async function fetchCounts() {
-      try {
-        const result = await reportsApi.getMyReportCounts();
-        setCounts(result);
-      } catch (err) {
-        console.warn("Failed to fetch counts:", err);
-      }
-    }
-    fetchCounts();
-  }, [reports]);
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
@@ -116,7 +118,7 @@ export default function ReportsMadePage() {
     try {
       await reportsApi.updateReport(editingReportId, updatedData);
       setEditingReportId(null);
-      await reloadMyReports();
+      await Promise.all([reloadMyReports(), fetchCounts()]);
       
       setFeedback({
         visible: true,

@@ -12,13 +12,15 @@ function getDbClient(accessToken) {
   return createUserSupabaseClient(accessToken);
 }
 
+const REPORT_SELECT_COLUMNS = "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id";
+
 export const reportsRepository = {
   async list({ userId, limit, offset, status, accessToken }) {
     const db = getDbClient(accessToken);
 
     let query = db
       .from(TABLE_NAME)
-      .select("*", { count: "exact" })
+      .select(REPORT_SELECT_COLUMNS, { count: "exact" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -45,25 +47,37 @@ export const reportsRepository = {
 
   async getCountsByStatus({ userId, accessToken }) {
     const db = getDbClient(accessToken);
-    const statuses = ["pending", "in_review", "resolved", "rejected"];
-    
-    const countPromises = statuses.map(status => 
-      db
-        .from(TABLE_NAME)
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("status", status)
-    );
 
-    const results = await Promise.all(countPromises);
-    
-    return {
-      pending: results[0].count || 0,
-      in_review: results[1].count || 0,
-      resolved: results[2].count || 0,
-      rejected: results[3].count || 0,
+    const { data, error } = await db
+      .from(TABLE_NAME)
+      .select("status")
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new AppError(
+        "Failed to fetch report counts",
+        StatusCodes.BAD_GATEWAY,
+        error,
+      );
+    }
+
+    const counts = {
+      pending: 0,
+      in_review: 0,
+      resolved: 0,
+      rejected: 0,
     };
+
+    for (const row of data || []) {
+      const status = String(row.status || "").toLowerCase();
+      if (counts[status] !== undefined) {
+        counts[status] += 1;
+      }
+    }
+
+    return counts;
   },
+
 
   async create(payload, accessToken) {
     const db = getDbClient(accessToken);

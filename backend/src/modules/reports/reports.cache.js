@@ -1,11 +1,16 @@
-const reportsCacheKeyPrefix = "reports:list:user:";
+const reportsUserPrefix = "reports:user:";
 
 export function buildReportsListCacheKey({ userId, limit, offset, status }) {
   const normalizedStatus = status ?? "all";
 
-  return `${reportsCacheKeyPrefix}${userId}:limit:${limit}:offset:${offset}:status:${normalizedStatus}`;
+  return `${reportsUserPrefix}${userId}:list:limit:${limit}:offset:${offset}:status:${normalizedStatus}`;
+}
+
+export function buildReportsCountsCacheKey(userId) {
+  return `${reportsUserPrefix}${userId}:counts`;
 }
 
 export function buildReportsUserCachePrefix(userId) {
-  return `${reportsCacheKeyPrefix}${userId}:`;
+  return `${reportsUserPrefix}${userId}:`;
 }
+

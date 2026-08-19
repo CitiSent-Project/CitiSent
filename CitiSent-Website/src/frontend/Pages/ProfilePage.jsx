@@ -5,6 +5,7 @@ import { formatDateTime } from '../../models/data'
 import { buildProfileSubmissionState } from '../../controllers/profileController'
 import { TRANSFER_REQUEST_STATUS } from '../../controllers/departmentTransferController'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
+import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 export function ProfileInformation({
   profile,
@@ -37,6 +38,7 @@ export function ProfileInformation({
 
   const [transferReason, setTransferReason] = useState('')
   const [submissionFeedback, setSubmissionFeedback] = useState(null)
+  const [inputError, setInputError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [showRelogin, setShowRelogin] = useState(false)
   const [draft, setDraft] = useState({
@@ -53,6 +55,22 @@ export function ProfileInformation({
   })
 
   function updateDraft(field, value) {
+    const ruleByField = {
+      fname: 'name',
+      mname: 'name',
+      lname: 'name',
+      username: 'username',
+      email: 'email',
+      barangay: 'location',
+    }
+    const error = getStructuredInputError(value, ruleByField[field])
+
+    if (error) {
+      setInputError(error)
+      return
+    }
+
+    setInputError('')
     setDraft((previous) => ({ ...previous, [field]: value }))
   }
 
@@ -63,6 +81,13 @@ export function ProfileInformation({
       : draft.phone || ''
 
   function handlePhoneChange(event) {
+    const inputError = getStructuredInputError(event.target.value, 'phone')
+    if (inputError) {
+      setInputError(inputError)
+      return
+    }
+
+    setInputError('')
     let cleanValue = event.target.value.replace(/\D/g, '')
     if (cleanValue.startsWith('0')) {
       cleanValue = cleanValue.slice(1)
@@ -206,6 +231,11 @@ export function ProfileInformation({
                 }`}
               >
                 {submissionFeedback.message}
+              </p>
+            ) : null}
+            {inputError ? (
+              <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                {inputError}
               </p>
             ) : null}
             <div className="mt-4 grid gap-4 md:grid-cols-2">

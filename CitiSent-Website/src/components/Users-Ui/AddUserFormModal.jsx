@@ -2,11 +2,13 @@ import { useCallback, useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 import { Spinner } from '../ui/Spinner'
+import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 const initialForm = {
   fname: '',
   mname: '',
   lname: '',
+  username: '',
   email: '',
   barangay: '',
   city: 'Sto. Tomas',
@@ -17,12 +19,14 @@ const initialForm = {
 export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   const [form, setForm] = useState(initialForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [inputError, setInputError] = useState('')
   const dialogRef = useRef(null)
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return
     onClose()
     setForm(initialForm)
+    setInputError('')
   }, [onClose, isSubmitting])
 
   useModalAccessibility({
@@ -36,6 +40,24 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   }
 
   function updateField(field, value) {
+    const ruleByField = {
+      fname: 'name',
+      mname: 'name',
+      lname: 'name',
+      username: 'username',
+      email: 'email',
+      barangay: 'location',
+      city: 'location',
+      province: 'location',
+    }
+    const error = getStructuredInputError(value, ruleByField[field])
+
+    if (error) {
+      setInputError(error)
+      return
+    }
+
+    setInputError('')
     setForm((previousForm) => ({ ...previousForm, [field]: value }))
   }
 
@@ -77,6 +99,11 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+          {inputError ? (
+            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+              {inputError}
+            </p>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm text-slate-700">First Name</label>
@@ -113,6 +140,31 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
                 disabled={isSubmitting}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-slate-700" htmlFor="new-user-username">
+              Username
+            </label>
+            <input
+              id="new-user-username"
+              type="text"
+              required
+              minLength={3}
+              maxLength={40}
+              pattern="[A-Za-z0-9_]+"
+              autoCapitalize="none"
+              autoComplete="username"
+              value={form.username}
+              onChange={(event) => updateField('username', event.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              placeholder="jane_doe"
+              title="Use 3 to 40 letters, numbers, or underscores."
+              disabled={isSubmitting}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              This is the username the person will use to sign in to the mobile app.
+            </p>
           </div>
 
           <div>

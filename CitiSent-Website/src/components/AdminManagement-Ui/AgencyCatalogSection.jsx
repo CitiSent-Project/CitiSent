@@ -9,6 +9,7 @@ import {
     FiXCircle,
 } from 'react-icons/fi'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -62,6 +63,7 @@ export function AgencyCatalogSection({
         name: '',
     })
     const [isCreating, setIsCreating] = useState(false)
+    const [formError, setFormError] = useState('')
     const [busyDepartmentSlug, setBusyDepartmentSlug] = useState('')
     const [renameModal, setRenameModal] = useState(null)
     const [renameName, setRenameName] = useState('')
@@ -100,6 +102,13 @@ export function AgencyCatalogSection({
     )
 
     function updateForm(field, value) {
+        const inputError = getStructuredInputError(value, 'location')
+        if (inputError) {
+            setFormError(inputError)
+            return
+        }
+
+        setFormError('')
         setForm((previous) => ({
             ...previous,
             [field]: value,
@@ -115,6 +124,7 @@ export function AgencyCatalogSection({
         }
 
         if (!payload.slug || !payload.name) {
+            setFormError('Agency name is required.')
             return
         }
 
@@ -126,6 +136,7 @@ export function AgencyCatalogSection({
             setForm({
                 name: '',
             })
+            setFormError('')
         }
     }
 
@@ -333,6 +344,7 @@ export function AgencyCatalogSection({
                         className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                     />
                 </label>
+                {formError ? <p role="alert" className="text-xs text-rose-600">{formError}</p> : null}
 
                 <div className="flex justify-end">
                     <button
@@ -632,7 +644,15 @@ export function AgencyCatalogSection({
                                 <input
                                     type="text"
                                     value={renameName}
-                                    onChange={(event) => setRenameName(event.target.value)}
+                                    onChange={(event) => {
+                                        const inputError = getStructuredInputError(event.target.value, 'location')
+                                        if (inputError) {
+                                            setRenameError(inputError)
+                                            return
+                                        }
+                                        setRenameError('')
+                                        setRenameName(event.target.value)
+                                    }}
                                     placeholder="City Treasury Office"
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                                 />
@@ -643,7 +663,15 @@ export function AgencyCatalogSection({
                                 <input
                                     type="text"
                                     value={renameSlug}
-                                    onChange={(event) => setRenameSlug(event.target.value)}
+                                    onChange={(event) => {
+                                        const nextSlug = event.target.value
+                                        if (!/^[a-z0-9-]*$/.test(nextSlug)) {
+                                            setRenameError('Slug may contain lowercase letters, numbers, and hyphens only.')
+                                            return
+                                        }
+                                        setRenameError('')
+                                        setRenameSlug(nextSlug)
+                                    }}
                                     placeholder="city-treasury-office"
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                                 />

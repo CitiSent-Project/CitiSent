@@ -136,6 +136,8 @@ export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, remem
 						}}
 						placeholder="Enter your registered email"
 						variant="admin-login"
+						inputRule="email"
+						onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 					/>
 				) : (
 					<>
@@ -146,7 +148,9 @@ export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, remem
 							value={form.identifier}
 							onChange={(value) => updateField('identifier', value)}
 							placeholder="Enter your username or email"
-							variant="admin-login"
+						variant="admin-login"
+						inputRule="loginIdentifier"
+						onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 						/>
 
 						<AuthPasswordField

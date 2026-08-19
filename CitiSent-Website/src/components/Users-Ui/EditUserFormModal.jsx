@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useModalAccessibility } from '../../hooks/useModalAccessibility'
 import { splitFullName } from '../../models/nameModel'
+import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
   const dialogRef = useRef(null)
@@ -17,6 +18,7 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
       province: user?.province ?? '',
     }
   })
+  const [inputError, setInputError] = useState('')
 
   useModalAccessibility({
     isOpen,
@@ -29,6 +31,22 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
   }
 
   function updateField(field, value) {
+    const ruleByField = {
+      fname: 'name',
+      mname: 'name',
+      lname: 'name',
+      barangay: 'location',
+      city: 'location',
+      province: 'location',
+    }
+    const error = getStructuredInputError(value, ruleByField[field])
+
+    if (error) {
+      setInputError(error)
+      return
+    }
+
+    setInputError('')
     setForm((previousForm) => ({ ...previousForm, [field]: value }))
   }
 
@@ -69,6 +87,11 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+          {inputError ? (
+            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+              {inputError}
+            </p>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="mb-1 block text-sm text-slate-700">First Name</label>

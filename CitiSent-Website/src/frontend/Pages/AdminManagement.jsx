@@ -104,10 +104,20 @@ export function AdminManagement({
     }
 
     const selectedDepartment = departmentOptions.find((dep) => dep.id === form.departmentId)
+    const username = form.username?.trim().toLowerCase()
+
+    if (!/^[a-z0-9_]{3,40}$/.test(username || '')) {
+      notifyError(
+        'Failed to create admin account.',
+        'Username must be 3–40 characters and contain only letters, numbers, or underscores.'
+      )
+      return false
+    }
 
     try {
       await usersApiService.createUser(token, {
         ...form,
+        username,
         accountType: 'admin',
         role: USER_ROLES.OFFICE_ADMIN,
         departmentLabel: selectedDepartment?.label,

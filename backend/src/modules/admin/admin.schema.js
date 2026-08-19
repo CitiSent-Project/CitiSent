@@ -66,7 +66,9 @@ export const createAdminUserSchema = z.object({
     fname: z.string().trim().min(1).max(120),
     mname: z.string().trim().min(1).max(120).nullable().optional(),
     lname: z.string().trim().min(1).max(120),
-    username: usernameSchema.optional(),
+    // A manual account needs a known mobile-login credential. Requiring this
+    // prevents silently generated usernames that neither admin nor user sees.
+    username: usernameSchema,
     phoneNumber: phoneNumberSchema.optional(),
     barangay: z.string().trim().min(1).max(160),
     city: citySchema.optional(),

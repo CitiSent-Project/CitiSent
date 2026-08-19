@@ -1,3 +1,5 @@
+import { getStructuredInputError } from '../../utils/structuredInputValidation'
+
 export function AuthInputField({
   id,
   label,
@@ -9,6 +11,8 @@ export function AuthInputField({
   disabled = false,
   variant = "default",
   className = "",
+  inputRule,
+  onInvalidInput,
 }) {
   const isAdminLogin = variant === "admin-login";
 
@@ -24,7 +28,18 @@ export function AuthInputField({
         id={id}
         type={type}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          const nextValue = event.target.value
+          const inputError = getStructuredInputError(nextValue, inputRule)
+
+          if (inputError) {
+            onInvalidInput?.(inputError)
+            return
+          }
+
+          onInvalidInput?.('')
+          onChange(nextValue)
+        }}
         placeholder={placeholder}
         disabled={disabled}
         className={`w-full rounded-xl border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${

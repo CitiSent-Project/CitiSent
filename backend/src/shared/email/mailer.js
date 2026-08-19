@@ -173,8 +173,14 @@ export async function sendOtpEmail({ toEmail, recipientName, otp }) {
   });
 }
 
-export async function sendAccountInvitationEmail({ toEmail, recipientName, setupUrl }) {
+export async function sendAccountInvitationEmail({
+  toEmail,
+  recipientName,
+  username,
+  setupUrl,
+}) {
   const safeName = escapeHtml(recipientName || "CitiSent user");
+  const safeUsername = escapeHtml(username);
 
   await getTransporter().sendMail({
     from: `"CitiSent" <${env.GMAIL_USER}>`,
@@ -184,6 +190,8 @@ export async function sendAccountInvitationEmail({ toEmail, recipientName, setup
       `Hello ${recipientName || "there"},`,
       "",
       "An administrator created a CitiSent account for you. Welcome to the platform!",
+      "",
+      `Your mobile-app username: ${username}`,
       "",
       "Use this secure link within 24 hours to choose your password:",
       setupUrl,
@@ -202,6 +210,9 @@ export async function sendAccountInvitationEmail({ toEmail, recipientName, setup
             <h2 style="margin-top: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Hello ${safeName},</h2>
             <p style="color: #4b5563; font-size: 16px; margin-bottom: 24px;">
               An administrator has created a new CitiSent account for you. Welcome to the platform!
+            </p>
+            <p style="color: #4b5563; font-size: 16px; margin-bottom: 24px;">
+              Your mobile-app username is <strong>${safeUsername}</strong>. Keep it to sign in after setting your password.
             </p>
             <p style="color: #4b5563; font-size: 16px; margin-bottom: 32px;">
               To get started, please choose a secure password by clicking the button below:

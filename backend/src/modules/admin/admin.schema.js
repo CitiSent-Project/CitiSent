@@ -58,6 +58,14 @@ export const getAdminUserByIdSchema = z.object({
   }),
 });
 
+export const deleteAdminUserSchema = z.object({
+  body: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  params: z.object({
+    userId: userIdSchema,
+  }),
+});
+
 export const createAdminUserSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),

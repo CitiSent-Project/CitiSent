@@ -58,6 +58,19 @@ export const adminController = {
     });
   },
 
+  async deleteUser(req, res) {
+    const result = await adminService.deleteUser({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userId: req.params.userId,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async banUser(req, res) {
     const result = await adminService.banUser({
       actor: req.actor,

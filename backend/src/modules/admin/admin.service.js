@@ -694,6 +694,36 @@ export const adminService = {
     });
   },
 
+  async deleteUser({ actor, accessToken, userId }) {
+    assertSuperadmin(actor);
+
+    const existingUser = await adminRepository.getUserById({
+      actor,
+      accessToken,
+      userId,
+    });
+
+    if (!existingUser) {
+      throw new AppError("User not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (normalizeAccountType(existingUser.profile?.account_type) !== "citizen") {
+      throw new AppError(
+        "Only citizen accounts can be deleted from user management.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    // This is the same Supabase account deletion mechanism used by the
+    // existing self-service account deletion endpoint.
+    await adminRepository.deleteManagedUserById({ userId });
+
+    return {
+      deleted: true,
+      userId,
+    };
+  },
+
   async banUser({ actor, accessToken, userId, reason }) {
     assertSuperadmin(actor);
 

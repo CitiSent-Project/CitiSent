@@ -10,6 +10,7 @@ import {
   banAdminUserSchema,
   assignOfficeDepartmentSchema,
   createAdminUserSchema,
+  deleteAdminUserSchema,
   createTransferRequestSchema,
   getDashboardRecentAdminsSchema,
   getDashboardRecentUsersSchema,
@@ -65,6 +66,13 @@ adminRouter.patch(
   requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
   validateRequest(updateAdminUserSchema),
   asyncHandler(adminController.updateUser),
+);
+
+adminRouter.delete(
+  "/users/:userId",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(deleteAdminUserSchema),
+  asyncHandler(adminController.deleteUser),
 );
 
 adminRouter.patch(

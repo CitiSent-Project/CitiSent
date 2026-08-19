@@ -47,6 +47,7 @@ function UsersTableRow({
   onViewUser,
   onEditUser,
   onToggleBanUser,
+  onDeleteUser,
   canToggleBan,
   isProcessing = false,
 }) {
@@ -61,7 +62,7 @@ function UsersTableRow({
 
     const triggerRect = triggerElement.getBoundingClientRect()
     const viewportPadding = 8
-    const estimatedMenuHeight = 130 // height of 3 menu items + padding
+    const estimatedMenuHeight = 168 // height of 4 menu items + padding
 
     const spaceBelow = window.innerHeight - triggerRect.bottom - viewportPadding
     const spaceAbove = triggerRect.top - viewportPadding
@@ -117,6 +118,7 @@ function UsersTableRow({
     if (action === 'view') onViewUser(user)
     if (action === 'edit') onEditUser(user)
     if (action === 'ban-toggle') onToggleBanUser(user)
+    if (action === 'delete') onDeleteUser(user)
     setIsActionMenuOpen(false)
   }
 
@@ -182,6 +184,15 @@ function UsersTableRow({
                     {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
                   </button>
                 ) : null}
+                {canToggleBan ? (
+                  <button
+                    type="button"
+                    onClick={() => handleAction('delete')}
+                    className="block w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-slate-100"
+                  >
+                    Delete User
+                  </button>
+                ) : null}
               </div>,
               document.body
             )
@@ -199,6 +210,7 @@ export function UsersTable({
   onViewUser,
   onEditUser,
   onToggleBanUser,
+  onDeleteUser,
   canToggleBan = false,
   isLoading = false,
   processingUserIds = new Set(),
@@ -235,6 +247,7 @@ export function UsersTable({
                 onViewUser={onViewUser}
                 onEditUser={onEditUser}
                 onToggleBanUser={onToggleBanUser}
+                onDeleteUser={onDeleteUser}
                 canToggleBan={canToggleBan}
                 isProcessing={processingUserIds.has(user.id)}
               />

@@ -7,7 +7,13 @@ export const listReportMessagesSchema = z.object({
   params: z.object({
     reportId: reportIdSchema,
   }),
-  query: z.object({}).optional().default({}),
+  query: z
+    .object({
+      limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+      before: z.string().optional(),
+    })
+    .optional()
+    .default({ limit: 50 }),
   body: z.object({}).optional().default({}),
 });
 

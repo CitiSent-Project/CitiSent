@@ -202,13 +202,18 @@ export const reportMessagesRepository = {
     return data || [];
   },
 
-  async getConversation({ reportId, accessToken }) {
+  async getConversation({ reportId, accessToken, limit = 50, before = null }) {
     const db = getDb(accessToken);
-    const { data, error, count } = await db
+    let query = db
       .from(REPORT_MESSAGES_TABLE)
       .select(
         `
-          *,
+          id,
+          report_id,
+          sender_id,
+          message,
+          created_at,
+          updated_at,
           report_message_reads!left (
             user_id,
             is_read,
@@ -217,20 +222,49 @@ export const reportMessagesRepository = {
         `,
         { count: "exact" },
       )
-      .eq("report_id", reportId)
-      .order("created_at", { ascending: true });
+      .eq("report_id", reportId);
+
+    if (before) {
+      query = query.lt("created_at", before);
+    }
+
+    query = query.order("created_at", { ascending: false }).limit(limit);
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw toGatewayError("Failed to fetch report messages", error);
     }
 
-    const senderProfilesByUserId = await loadSenderProfiles(db, data || []);
+    // Reverse descending slice to return in chronological order for UI rendering
+    const rawRows = data || [];
+    const rows = [...rawRows].reverse();
+    const senderProfilesByUserId = await loadSenderProfiles(db, rows);
 
     return {
-      rows: data || [],
+      rows,
       count: count || 0,
+      hasMore: rawRows.length === limit,
+      nextCursor: rows.length > 0 ? rows[0].created_at : null,
       senderProfilesByUserId,
     };
+  },
+
+  async getLatestMessage({ reportId, accessToken }) {
+    const db = getDb(accessToken);
+    const { data, error } = await db
+      .from(REPORT_MESSAGES_TABLE)
+      .select("id, report_id, sender_id, message, created_at")
+      .eq("report_id", reportId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw toGatewayError("Failed to fetch latest report message", error);
+    }
+
+    return data || null;
   },
 
   async createMessage({ reportId, senderId, message, accessToken }) {

@@ -6,6 +6,8 @@ export const reportMessagesController = {
     const result = await reportMessagesService.getConversation({
       actor: req.user,
       reportId: req.params.reportId,
+      limit: req.query.limit ? Number(req.query.limit) : 50,
+      before: req.query.before || null,
       accessToken: req.accessToken,
     });
 

@@ -126,23 +126,32 @@ function isAuthAvailable() {
  * Returns a Promise<rawMessages[]> and registers itself in _inflight so
  * concurrent callers can await the same in-flight request.
  */
-function ensureDiscussionFetched(reportId) {
-  if (!_inflight.has(reportId)) {
+function ensureDiscussionFetched(reportId, options = {}) {
+  const { limit = 50, before = null } = options;
+  const inflightKey = `${reportId}_${limit}_${before || "latest"}`;
+
+  if (!_inflight.has(inflightKey)) {
     const fetchPromise = (async () => {
-      const response = await api.get(`/reports/${reportId}/messages`);
+      const params = {};
+      if (limit) params.limit = limit;
+      if (before) params.before = before;
+
+      const response = await api.get(`/reports/${reportId}/messages`, { params });
       const rows = Array.isArray(response?.data) ? response.data : [];
       const rawMessages = rows.map(mapApiMessage);
-      // Fire-and-forget cache write — don't block the return value
-      setCache(cacheKey(reportId), rawMessages, CACHE_TTL).catch(() => {});
+
+      // Only cache latest page without before cursor
+      if (!before) {
+        setCache(cacheKey(reportId), rawMessages, CACHE_TTL).catch(() => {});
+      }
       return rawMessages;
     })();
 
-    _inflight.set(reportId, fetchPromise);
-    // Always clean up the in-flight entry when settled (success or failure)
-    fetchPromise.finally(() => _inflight.delete(reportId));
+    _inflight.set(inflightKey, fetchPromise);
+    fetchPromise.finally(() => _inflight.delete(inflightKey));
   }
 
-  return _inflight.get(reportId);
+  return _inflight.get(inflightKey);
 }
 
 export const discussionService = {
@@ -158,21 +167,23 @@ export const discussionService = {
    * This replaces the old "always hit the API first" approach that ignored the
    * cache entirely and caused excessive Supabase requests and 429 errors.
    */
-  getDiscussion: async (reportId, currentUserId = null) => {
-    // Step 1: Fresh cache hit — serve instantly, revalidate in background
-    const cached = await getCache(cacheKey(reportId));
-    if (Array.isArray(cached) && cached.length > 0) {
-      if (isAuthAvailable()) {
-        // Stale-while-revalidate: refresh cache in background without blocking UI
-        ensureDiscussionFetched(reportId).catch(() => {});
+  getDiscussion: async (reportId, currentUserId = null, options = {}) => {
+    // Step 1: Fresh cache hit (only for latest unpaginated page)
+    if (!options.before) {
+      const cached = await getCache(cacheKey(reportId));
+      if (Array.isArray(cached) && cached.length > 0) {
+        if (isAuthAvailable()) {
+          // Stale-while-revalidate: refresh cache in background without blocking UI
+          ensureDiscussionFetched(reportId, options).catch(() => {});
+        }
+        return classifyMessages(cached, currentUserId);
       }
-      return classifyMessages(cached, currentUserId);
     }
 
-    // Step 2: Cache miss — fetch from API with in-flight deduplication
+    // Step 2: Cache miss or paginated page — fetch from API with in-flight deduplication
     if (isAuthAvailable()) {
       try {
-        const rawMessages = await ensureDiscussionFetched(reportId);
+        const rawMessages = await ensureDiscussionFetched(reportId, options);
         return classifyMessages(rawMessages, currentUserId);
       } catch (err) {
         console.warn("Failed to fetch report messages from API, using cache:", err?.message);
@@ -255,11 +266,6 @@ export const discussionService = {
   /**
    * Check if at least one admin message is currently unread for the current user.
    * Short-circuits as a boolean state (hasUnreadAdminMessage = true / false).
-   *
-   * Always awaits fresh data from the API (via ensureDiscussionFetched) rather
-   * than the cache-first getDiscussion path, because the stale-while-revalidate
-   * cache can miss new admin messages that arrived while the component was
-   * unmounted. Falls back to cache-first if the API call fails.
    */
   hasUnreadAdminMessage: async (reportId, currentUserId = null) => {
     if (!reportId) return false;
@@ -267,7 +273,7 @@ export const discussionService = {
       let messages;
       if (isAuthAvailable()) {
         try {
-          const rawMessages = await ensureDiscussionFetched(reportId);
+          const rawMessages = await ensureDiscussionFetched(reportId, { limit: 10 });
           messages = classifyMessages(rawMessages, currentUserId);
         } catch {
           // API failed — fall back to cache-first approach

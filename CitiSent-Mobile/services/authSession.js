@@ -102,6 +102,24 @@ function normalizeUser(user, options = {}) {
   };
 }
 
+const authListeners = new Set();
+
+export function onAuthStateChanged(listener) {
+  if (typeof listener !== "function") return () => {};
+  authListeners.add(listener);
+  return () => authListeners.delete(listener);
+}
+
+function notifyAuthState(user) {
+  authListeners.forEach((listener) => {
+    try {
+      listener(user);
+    } catch (err) {
+      console.warn("[authSession] Error in auth listener:", err);
+    }
+  });
+}
+
 export async function initAuthSession() {
   if (isInitialized) return { token: sessionToken, user: sessionUser };
   try {
@@ -113,6 +131,7 @@ export async function initAuthSession() {
     console.warn("Failed to initialize auth session from storage:", err);
   } finally {
     isInitialized = true;
+    notifyAuthState(sessionUser);
   }
   return { token: sessionToken, user: sessionUser };
 }
@@ -140,6 +159,7 @@ export function setAuthUser(user, options = {}) {
   } else {
     removeCache("auth_user");
   }
+  notifyAuthState(sessionUser);
 }
 
 export function getAuthUser() {
@@ -168,4 +188,6 @@ export function clearAuthToken() {
   sessionToken = "";
   sessionUser = null;
   clearAllCache();
+  notifyAuthState(null);
 }
+

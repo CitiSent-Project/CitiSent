@@ -15,29 +15,42 @@ function createReport(overrides = {}) {
   };
 }
 
-test("getConversation allows the report owner", async () => {
+test("getConversation allows the report owner and returns paginated result", async () => {
   const originalGetReportById = reportMessagesRepository.getReportById;
   const originalGetConversation = reportMessagesRepository.getConversation;
   const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
   try {
+    let capturedParams = null;
     reportMessagesRepository.isParticipantForReport = async () => ({
       report: createReport(),
       allowed: true,
       participantType: "citizen",
     });
-    reportMessagesRepository.getConversation = async () => ({
-      rows: [{ id: "msg-1", report_id: "report-1", sender_id: "citizen-1", message: "Hello", created_at: "2026-07-24T00:00:00.000Z" }],
-      count: 1,
-      senderProfilesByUserId: {},
-    });
+    reportMessagesRepository.getConversation = async (params) => {
+      capturedParams = params;
+      return {
+        rows: [{ id: "msg-1", report_id: "report-1", sender_id: "citizen-1", message: "Hello", created_at: "2026-07-24T00:00:00.000Z" }],
+        count: 1,
+        hasMore: false,
+        nextCursor: "2026-07-24T00:00:00.000Z",
+        senderProfilesByUserId: {},
+      };
+    };
 
     const result = await reportMessagesService.getConversation({
       actor: { id: "citizen-1" },
       reportId: "report-1",
+      limit: 25,
+      before: "2026-07-24T12:00:00.000Z",
       accessToken: "token",
     });
 
     assert.equal(result.data.length, 1);
+    assert.equal(result.pagination.limit, 25);
+    assert.equal(result.pagination.total, 1);
+    assert.equal(result.pagination.hasMore, false);
+    assert.equal(capturedParams.limit, 25);
+    assert.equal(capturedParams.before, "2026-07-24T12:00:00.000Z");
   } finally {
     reportMessagesRepository.getReportById = originalGetReportById;
     reportMessagesRepository.getConversation = originalGetConversation;

@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createAdminUserSchema } from "./admin.schema.js";
+import {
+  createAdminUserSchema,
+  deleteAdminUserSchema,
+} from "./admin.schema.js";
 
 function createPayload(overrides = {}) {
   return {
@@ -29,4 +32,22 @@ test("createAdminUserSchema accepts a valid username", () => {
   const parsed = createAdminUserSchema.parse(createPayload());
 
   assert.equal(parsed.body.username, "jane_doe");
+});
+
+test("deleteAdminUserSchema requires a valid user id", () => {
+  assert.throws(() =>
+    deleteAdminUserSchema.parse({
+      params: { userId: "not-a-uuid" },
+      query: {},
+      body: {},
+    }),
+  );
+
+  const parsed = deleteAdminUserSchema.parse({
+    params: { userId: "bfbb6c4b-5e4c-4185-b0f1-7857944c2fed" },
+    query: {},
+    body: {},
+  });
+
+  assert.equal(parsed.params.userId, "bfbb6c4b-5e4c-4185-b0f1-7857944c2fed");
 });

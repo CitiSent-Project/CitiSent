@@ -264,6 +264,15 @@ export const adminRepository = {
     }
   },
 
+  async deleteManagedUserById({ userId }) {
+    const adminDb = getAdminDb();
+    const { error } = await adminDb.auth.admin.deleteUser(userId, false);
+
+    if (error) {
+      throw toGatewayError("Failed to delete user account", error);
+    }
+  },
+
   async createUserProfile({ accessToken, userId, payload }) {
     const db = getDb(accessToken);
     const { data, error } = await db

@@ -12,6 +12,7 @@ import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { isSuperadmin, normalizeUserRole } from '../../models/roleAccessModel'
 import {
   AddUserFormModal,
+  DeleteUserConfirmModal,
   EditUserFormModal,
   UserStatCard,
   UsersPagination,
@@ -85,6 +86,7 @@ export function Users({ onViewUserProfile, profile }) {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [userPendingDeletion, setUserPendingDeletion] = useState(null)
   const [selectedUserIds, setSelectedUserIds] = useState([])
   const resolvedRole = normalizeUserRole(profile?.role)
   const canCreateUsers = isSuperadmin(resolvedRole)
@@ -451,6 +453,36 @@ export function Users({ onViewUserProfile, profile }) {
     }
   }
 
+  async function handleDeleteUser() {
+    if (!userPendingDeletion || !canCreateUsers) return
+
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Delete user failed.', 'Your session has expired. Please sign in again.')
+      return
+    }
+
+    const userId = userPendingDeletion.id
+    setProcessingUserIds((previous) => new Set(previous).add(userId))
+
+    try {
+      await usersApiService.deleteUser(token, userId)
+      setUserPendingDeletion(null)
+      setSelectedUser(null)
+      setSelectedUserIds((previous) => previous.filter((id) => id !== userId))
+      await invalidateUsersData()
+      notifySuccess(`${userPendingDeletion.name} was deleted successfully.`)
+    } catch (error) {
+      notifyError('Delete user failed.', error.message)
+    } finally {
+      setProcessingUserIds((previous) => {
+        const next = new Set(previous)
+        next.delete(userId)
+        return next
+      })
+    }
+  }
+
   function handleToggleSelectUser(userId) {
     setSelectedUserIds((previous) =>
       previous.includes(userId)
@@ -634,6 +666,7 @@ export function Users({ onViewUserProfile, profile }) {
             onViewUser={handleViewUser}
             onEditUser={handleEditUser}
             onToggleBanUser={handleToggleBanUser}
+            onDeleteUser={setUserPendingDeletion}
             canToggleBan={canToggleBan}
             isLoading={isLoading}
             processingUserIds={processingUserIds}
@@ -663,6 +696,14 @@ export function Users({ onViewUserProfile, profile }) {
             setSelectedUser(null)
           }}
           onSubmit={handleEditUserSubmit}
+        />
+
+        <DeleteUserConfirmModal
+          user={userPendingDeletion}
+          isOpen={Boolean(userPendingDeletion)}
+          isDeleting={userPendingDeletion ? processingUserIds.has(userPendingDeletion.id) : false}
+          onCancel={() => setUserPendingDeletion(null)}
+          onConfirm={handleDeleteUser}
         />
       </div>
     </main>

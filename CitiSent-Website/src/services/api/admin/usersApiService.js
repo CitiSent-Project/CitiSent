@@ -31,6 +31,10 @@ export const usersApiService = {
     apiClient.patch(`/admin/users/${userId}`, payload, {
       token,
     }),
+  deleteUser: (token, userId) =>
+    apiClient.delete(`/admin/users/${userId}`, {
+      token,
+    }),
   banUser: (token, userId, payload = {}) =>
     apiClient.patch(`/admin/users/${userId}/ban`, payload, {
       token,

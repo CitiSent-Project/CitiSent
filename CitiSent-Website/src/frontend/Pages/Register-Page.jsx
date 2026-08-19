@@ -28,6 +28,7 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 	const resolvedDepartmentId = form.departmentId || availableDepartments[0]?.id || ''
 
 	function updateField(field, value) {
+		setFeedback({ type: '', message: '' })
 		setForm((previous) => ({ ...previous, [field]: value }))
 	}
 
@@ -122,6 +123,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 						onChange={(value) => updateField('fname', value)}
 						placeholder="Juan"
 						variant="admin-login"
+						inputRule="name"
+						onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 						className="flex flex-col justify-end h-full"
 					/>
 					<AuthInputField
@@ -131,6 +134,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 						onChange={(value) => updateField('mname', value)}
 						placeholder="(Optional)"
 						variant="admin-login"
+						inputRule="name"
+						onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 						className="flex flex-col justify-end h-full"
 					/>
 					<AuthInputField
@@ -140,6 +145,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 						onChange={(value) => updateField('lname', value)}
 						placeholder="Dela Cruz"
 						variant="admin-login"
+						inputRule="name"
+						onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 						className="flex flex-col justify-end h-full"
 					/>
 				</div>
@@ -152,6 +159,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					onChange={(value) => updateField('email', value)}
 					placeholder="admin@citisent.gov"
 					variant="admin-login"
+					inputRule="email"
+					onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 				/>
 
 				<div>
@@ -183,6 +192,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					onChange={(value) => updateField('phone', value)}
 					placeholder="+63 900 000 0000"
 					variant="admin-login"
+					inputRule="phone"
+					onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 				/>
 
 				<AuthInputField
@@ -192,6 +203,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					onChange={(value) => updateField('barangay', value)}
 					placeholder="San Isidro Norte"
 					variant="admin-login"
+					inputRule="location"
+					onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 				/>
 
 				<AuthInputField
@@ -201,6 +214,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					onChange={(value) => updateField('city', value)}
 					placeholder="Sto. Tomas"
 					variant="admin-login"
+					inputRule="location"
+					onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 				/>
 
 				<AuthInputField
@@ -210,6 +225,8 @@ export function RegisterPage({ onRegister, onSwitchToLogin, departmentOptions })
 					onChange={(value) => updateField('province', value)}
 					placeholder="Batangas"
 					variant="admin-login"
+					inputRule="location"
+					onInvalidInput={(message) => setFeedback({ type: 'error', message })}
 				/>
 
 				<AuthPasswordField

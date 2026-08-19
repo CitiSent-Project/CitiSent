@@ -519,6 +519,7 @@ export const adminService = {
             mname: normalizedMname,
             lname: normalizedLname,
           }) || username,
+        username,
         setupUrl,
       });
 

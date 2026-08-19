@@ -258,15 +258,24 @@ export function Users({ onViewUserProfile, profile }) {
     const fname = formData.fname?.trim()
     const mname = formData.mname?.trim()
     const lname = formData.lname?.trim()
+    const username = formData.username?.trim().toLowerCase()
     const email = formData.email?.trim().toLowerCase()
     const barangay = formData.barangay?.trim()
     const city = formData.city?.trim()
     const province = formData.province?.trim()
 
-    if (!fname || !lname || !email || !barangay) {
+    if (!fname || !lname || !username || !email || !barangay) {
       notifyError(
         'Add user failed.',
-        'Complete all required fields (first name, last name, email, barangay) before submitting.'
+        'Complete all required fields, including a username, before submitting.'
+      )
+      return false
+    }
+
+    if (!/^[a-z0-9_]{3,40}$/.test(username)) {
+      notifyError(
+        'Add user failed.',
+        'Username must be 3–40 characters and contain only letters, numbers, or underscores.'
       )
       return false
     }
@@ -282,6 +291,7 @@ export function Users({ onViewUserProfile, profile }) {
         fname,
         mname: mname || null,
         lname,
+        username,
         email,
         barangay,
         city: city || null,

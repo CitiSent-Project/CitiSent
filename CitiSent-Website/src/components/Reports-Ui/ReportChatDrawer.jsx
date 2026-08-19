@@ -218,10 +218,16 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
             <div className="flex items-center gap-2">
               <FiMessageCircle />
               <h2 className="font-semibold">{report.name || 'Talk to User'}</h2>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Online
-              </span>
+              {report.isOnline ?? report.is_online ? (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Online
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium text-blue-200">
+                  Offline
+                </span>
+              )}
             </div>
             <p className="mt-1 text-xs text-blue-100">
               Report {report.reportNum || report.id} · {report.category}

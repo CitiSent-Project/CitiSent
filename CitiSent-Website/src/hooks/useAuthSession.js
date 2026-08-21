@@ -9,6 +9,7 @@ import { DEFAULT_ADMIN_PROFILE } from '../models/data'
 import { APP_PAGES } from '../models/pageModel'
 import { composeFullName } from '../models/nameModel'
 import { USER_ROLES } from '../models/roleAccessModel'
+import { createLoginPerformance } from '../services/loginPerformance'
 
 function normalizeLoginIdentifier(payload = {}) {
   const candidate = String(payload.identifier || payload.email || '').trim()
@@ -100,8 +101,10 @@ export function useAuthSession({
   }
 
   async function handleLogin(payload) {
+    const performance = createLoginPerformance()
     try {
       const loginIdentifier = normalizeLoginIdentifier(payload)
+      performance.mark('requestStarted')
       const response = await authApiService.login({
         ...(loginIdentifier.includes('@') ? { email: loginIdentifier } : {}),
         identifier: loginIdentifier,
@@ -109,6 +112,8 @@ export function useAuthSession({
       })
       const nextProfile = mapBackendProfileToAdminProfile(response?.data?.user)
       const token = response?.data?.token || ''
+      performance.mark('authenticationCompleted')
+      performance.mark('sessionObtained')
 
       if (!token) {
         throw new Error('Login succeeded but no session token was returned.')
@@ -129,12 +134,15 @@ export function useAuthSession({
       }))
       setIsAuthenticated(transition.isAuthenticated)
       setActivePage(transition.nextActivePage)
+      performance.mark('navigationCompleted')
+      performance.finish()
       setRememberedEmail(payload.rememberMe ? loginIdentifier : '')
       addActivity('Login', `Signed in as ${loginIdentifier}`)
 
       notifySuccess('Login successful. Welcome back.')
       return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
     } catch (error) {
+      performance.finish()
       notifyError('Login failed.', error.message)
       return {
         ok: false,

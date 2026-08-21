@@ -13,6 +13,7 @@ import {
 } from "../../modules/auth";
 import { validateLoginFields, getLoginErrorMessage } from "../../utils/authValidation";
 import { AppKeyboardAvoidingView } from "../../modules/shared";
+import { createLoginPerformance } from "../../services/loginPerformance";
 
 export default function LoginFormScreen() {
   const router = useRouter();
@@ -66,6 +67,8 @@ export default function LoginFormScreen() {
 
     setErrorMessage("");
     setIsSubmitting(true);
+    const performance = createLoginPerformance();
+    performance.mark("requestStarted");
 
     try {
       const parsedIdentifier = parseLoginIdentifier(identifier.trim());
@@ -76,7 +79,11 @@ export default function LoginFormScreen() {
         phoneNumber: parsedIdentifier.phoneNumber,
         password,
       });
+      performance.mark("authenticationCompleted");
+      performance.mark("sessionObtained");
       router.replace("/(tabs)");
+      performance.mark("navigationCompleted");
+      performance.finish();
     } catch (error) {
       const apiMessage = error?.response?.data?.message || error?.message || "";
       const raw = getLoginErrorMessage(error);

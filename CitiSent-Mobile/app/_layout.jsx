@@ -5,8 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SystemUI from "expo-system-ui";
 import { AnimatedSplashLayout } from "../modules/shared";
-import { initAuthSession, getAuthUser } from "../services/authSession";
-import { initializeAdminMessageState } from "../services/adminMessageState";
+import { initAuthSession } from "../services/authSession";
 import { AdminMessageProvider } from "../contexts/AdminMessageContext";
 import "../globals.css";
 
@@ -15,12 +14,7 @@ export default function RootLayout() {
   const appState = useRef(AppState.currentState);
   
   useEffect(() => {
-    initAuthSession().then(() => {
-      const user = getAuthUser();
-      if (user?.id) {
-        initializeAdminMessageState(user.id).catch(() => {});
-      }
-    }).catch(() => {
+    initAuthSession().catch(() => {
       // Auth init failed — admin message state will initialize lazily
     });
     

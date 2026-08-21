@@ -24,7 +24,7 @@ The website lives in the `CitiSent-Website` folder.
    npm run dev
    ```
 
-   This starts the website with Vite and launches the backend from the sibling `backend` folder in a separate terminal window.
+   This starts Redis through Docker Compose, then starts the website with Vite and launches the backend from the sibling `backend` folder in a separate terminal window.
 
 4. **Optional commands:**
 

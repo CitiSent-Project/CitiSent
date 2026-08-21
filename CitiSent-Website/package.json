@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "start \"citisent-backend\" cmd /k \"cd /d ..\\backend && npm run dev\" && vite",
+    "dev": "npm run dev:redis && start \"citisent-backend\" cmd /k \"cd /d ..\\backend && npm run dev\" && vite",
+    "dev:redis": "docker compose -f ..\\docker-compose.yml up -d redis",
     "dev:web": "vite",
     "dev:backend": "npm --prefix ../backend run dev",
     "build": "vite build",

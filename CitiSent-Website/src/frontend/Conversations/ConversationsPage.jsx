@@ -564,7 +564,7 @@ export function ConversationsPage({ profile, onViewReport }) {
         </div>
 
         {/* RIGHT PANEL — Active Chat */}
-        <div className={`flex flex-1 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
+        <div className={`flex flex-1 min-w-0 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
           {activeConversation ? (
             <>
               {/* Chat Header with Presence */}
@@ -669,25 +669,25 @@ export function ConversationsPage({ profile, onViewReport }) {
                           Generating suggestions...
                         </div>
                       ) : suggestions.length > 0 ? (
-                        <div className="flex flex-col gap-1.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {suggestions.map((suggestion, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={() => !sending && handleSend(suggestion.text)}
                               disabled={sending}
-                              className={`text-left text-xs p-2 rounded-lg border border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 transition text-slate-700 font-normal ${
+                              className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal break-words [overflow-wrap:anywhere] shadow-2xs ${
                                 idx === 0
-                                  ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/5'
+                                  ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10'
                                   : ''
                               }`}
                             >
                               {idx === 0 && (
-                                <span className="text-[9px] text-blue-600 font-bold block mb-0.5 uppercase tracking-wide">
+                                <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">
                                   Recommended
                                 </span>
                               )}
-                              {suggestion.text}
+                              <span>{suggestion.text}</span>
                             </button>
                           ))}
                         </div>

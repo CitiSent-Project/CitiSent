@@ -212,7 +212,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-900/20" onClick={onClose} aria-hidden="true" />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Report chat">
+      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md min-w-0 flex-col bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Report chat">
         <header className="flex items-start justify-between border-b border-slate-200 bg-[#183b68] p-4 text-white">
           <div>
             <div className="flex items-center gap-2">
@@ -268,19 +268,19 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
             {suggestionsLoading ? (
               <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div>
             ) : suggestions.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 {suggestions.map((suggestion, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => !sending && send(suggestion.text)}
                     disabled={sending}
-                    className={`text-left text-xs p-2 rounded-lg border border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 transition text-slate-700 font-normal ${
-                      idx === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/5' : ''
+                    className={`flex flex-col justify-between text-left text-xs p-2 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal break-words [overflow-wrap:anywhere] shadow-2xs ${
+                      idx === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''
                     }`}
                   >
-                    {idx === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-0.5 uppercase tracking-wide">Recommended</span>}
-                    {suggestion.text}
+                    {idx === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
+                    <span>{suggestion.text}</span>
                   </button>
                 ))}
               </div>

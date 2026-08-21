@@ -304,11 +304,11 @@ export function Navbar({
 			</MotionAside>
 
 			<div
-				className={`min-w-0 flex-1 overflow-x-hidden transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
+				className={`min-w-0 flex-1 transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
 					expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
 				}`}
 			>
-				<header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/85 px-4 py-3 backdrop-blur md:px-6 lg:px-8">
+				<header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md px-4 py-3 md:px-6 lg:px-8">
 					<div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
 							<button

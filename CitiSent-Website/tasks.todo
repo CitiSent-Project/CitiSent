@@ -1,6 +1,0 @@
-Notifications:  
-✔ create a function that will send mobile users (citizens) notifications about the status of their reports (e.g., when a report is received, when it's being processed, and when it's resolved). This function should be integrated with the existing reporting system to ensure timely updates for users. @done (4/3/2026, 12:04:18 AM)
-☐ develop a user-friendly interface for citizens to view the status of their reports and receive notifications. This interface should be accessible via the mobile app and should provide clear and concise information about the progress of their reports.
-☐ implement a backend system that can handle the notification logic, including determining when to send notifications based on the status of reports and ensuring that notifications are sent in a timely manner.
-☐ test the notification system thoroughly to ensure that it works correctly and that users receive accurate and timely updates about their reports. This should include testing for various scenarios, such as different report statuses and potential edge cases.
-

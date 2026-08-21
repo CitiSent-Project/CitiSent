@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { Navbar } from './components/ui/Navbar'
 import { BackendUnavailablePanel } from './components/ui/BackendUnavailablePanel'
@@ -139,13 +139,15 @@ function AuthenticatedApp() {
           {appState.isPageLoading ? (
             <PageSkeleton pageKey={appState.activePage} />
           ) : (
-            renderActivePage({
-              appState,
-              appActions: {
-                ...appActions,
-                onConfirmLogout: appActions.onLogout,
-              },
-            })
+            <Suspense fallback={<PageSkeleton pageKey={appState.activePage} />}>
+              {renderActivePage({
+                appState,
+                appActions: {
+                  ...appActions,
+                  onConfirmLogout: appActions.onLogout,
+                },
+              })}
+            </Suspense>
           )}
         </Navbar>
       </ErrorBoundary>

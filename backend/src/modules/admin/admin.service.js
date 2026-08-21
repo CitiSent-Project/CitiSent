@@ -34,6 +34,7 @@ import {
   buildSetupPasswordUrl,
   sendAccountInvitationEmail,
 } from "../../shared/email/mailer.js";
+import { emitReportFeedChanged } from "../../realtime/reportFeedEvents.js";
 
 const MANILA_TIME_ZONE = "Asia/Manila";
 const REPORT_STATUS_KEYS = ["pending", "in_review", "resolved", "rejected"];
@@ -948,6 +949,14 @@ export const adminService = {
       includeInactive: true,
     });
     const departmentLookup = buildDepartmentLookup(departmentCatalog);
+
+    // Emit report feed event after successful status update.
+    emitReportFeedChanged({
+      reportId,
+      changeType: "updated",
+      userId: result.row?.user_id || null,
+      departmentId: result.row?.issue_type || null,
+    });
 
     return toAdminReportResponse({
       reportRow: applyDepartmentMetadataToReportRow(

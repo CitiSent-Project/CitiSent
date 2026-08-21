@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reportsApiService } from '../../../services/api/admin/reportsApiService'
 import { mapBackendReportToUiRow } from '../../../services/api/admin/reportsApiMappers'
@@ -7,6 +7,7 @@ import { ADMIN_STORAGE_KEYS } from '../../../models/data'
 import { getStorageSchemaRule } from '../../../models/storageSchemaModel'
 import { UrgencyFeedTable, UrgencyFilterChips, Pagination } from '../../../components/Reports-Ui'
 import { useReportPaginationState } from '../../../hooks/useReportPaginationState'
+import { useReportFeedRealtime } from '../../../hooks/useReportFeedRealtime'
 import { filterUserReportsByUrgency, ALL_URGENCY_FILTER } from '../../../controllers/userReportsController'
 
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
@@ -45,7 +46,13 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
   }, [searchTerm])
 
   // Fetch reports submitted by this specific user
-  const { data: reports = [], isLoading, isFetching, error: reportsError } = useQuery({
+  const {
+    data: reports = [],
+    isLoading,
+    isFetching,
+    error: reportsError,
+    refetch: refetchReports,
+  } = useQuery({
     queryKey: ['admin-user-reports', user?.id, accessToken],
     enabled: Boolean(accessToken) && Boolean(user?.id),
     queryFn: async () => {
@@ -56,9 +63,36 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
       })
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
-    refetchInterval: 10000, // keep list updated automatically every 10s
+    // Avoid a second report poller for every open user profile. The list is
+    // refreshed when the user explicitly retries or revisits the page.
+    retry: false,
   })
 
+  // Real-time report feed: invalidate user reports when the server signals
+  // a change that belongs to this specific user.
+  const handleFeedInvalidate = useCallback(() => {
+    if (user?.id) {
+      refetchReports()
+    }
+  }, [user?.id, refetchReports])
+
+  const shouldHandleEvent = useCallback(
+    (payload) => {
+      // Only react to events scoped to this user, or global/department events
+      // (which may include new reports from this user that admins updated).
+      if (!user?.id) return false
+      if (payload?.scope === 'user' && payload?.scopeId !== user.id) return false
+      return true
+    },
+    [user?.id],
+  )
+
+  useReportFeedRealtime({
+    accessToken,
+    onInvalidate: handleFeedInvalidate,
+    shouldHandle: shouldHandleEvent,
+    enabled: Boolean(accessToken) && Boolean(user?.id),
+  })
   // Filter fetched reports in memory
   const filteredReports = useMemo(() => {
     // 1. Filter by urgency level
@@ -136,7 +170,17 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
 
       {/* User Information Details Card */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-6 text-2xl font-semibold text-slate-900">User Profile</h1>
+        <div className="mb-6 flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-slate-900">User Profile</h1>
+          <button
+            type="button"
+            onClick={() => refetchReports()}
+            disabled={isFetching}
+            className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isFetching ? 'Refreshing…' : 'Refresh reports'}
+          </button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">User ID</p>

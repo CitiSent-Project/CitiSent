@@ -29,9 +29,14 @@ export function getSocket(token) {
     autoConnect: true,
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: Infinity,
+    // Cap reconnection attempts to avoid unbounded reconnect loops
+    // during extended outages. At 10s max delay, 50 attempts ≈ 4–5 min.
+    reconnectionAttempts: 50,
     reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
+    reconnectionDelayMax: 10000,
+    // Randomize delay to prevent thundering-herd reconnect storms
+    // when multiple admin tabs reconnect simultaneously.
+    randomizationFactor: 0.4,
   })
 
   socketInstance.on('connect_error', (error) => {

@@ -2,6 +2,9 @@ import { Server as SocketIOServer } from "socket.io";
 import { supabase } from "../config/supabase.js";
 import { logger } from "../config/logger.js";
 import { reportMessagesService } from "../modules/reports/messages.service.js";
+import { profileRepository } from "../shared/repositories/profileRepository.js";
+import { isSuperadmin, normalizeUserRole, USER_ROLES } from "../shared/auth/roleAccess.js";
+import { initReportFeedEvents } from "./reportFeedEvents.js";
 
 let io = null;
 /** Map<userId: string, Set<socketId: string>> */
@@ -54,6 +57,9 @@ export function initSocketIO(httpServer) {
     }
   });
 
+  // Initialize the report feed event publisher with a reference to getIO.
+  initReportFeedEvents(getIO);
+
   io.on("connection", (socket) => {
     const userId = socket.user.id;
 
@@ -67,6 +73,48 @@ export function initSocketIO(httpServer) {
     socket.join(`user:${userId}`);
 
     logger.info(`[Socket.IO] Client connected: socket.id=${socket.id}, userId=${userId}`);
+
+    // ---- Report Feed Room Membership ----
+    // Server-validated: the client requests to join the report feed,
+    // but the server decides which scoped rooms based on the user's
+    // profile role and department. The client cannot self-select rooms.
+    socket.on("join_report_feed", async (_, callback) => {
+      try {
+        const profile = await profileRepository.getByUserId({
+          userId,
+          accessToken: socket.accessToken,
+        });
+
+        // Always join the personal user feed room.
+        socket.join(`report_feed:user:${userId}`);
+
+        const appRole = normalizeUserRole(profile?.role);
+
+        if (isSuperadmin(appRole)) {
+          // Superadmins receive all report-feed changes.
+          socket.join("report_feed:global");
+          logger.info(`[Socket.IO] Socket ${socket.id} joined report_feed:global (superadmin)`);
+        } else if (appRole === USER_ROLES.OFFICE_ADMIN) {
+          // Office admins receive only their department's feed.
+          const deptId = profile?.department_id || "";
+          if (deptId) {
+            socket.join(`report_feed:department:${deptId}`);
+            logger.info(`[Socket.IO] Socket ${socket.id} joined report_feed:department:${deptId}`);
+          }
+        }
+
+        logger.info(`[Socket.IO] Socket ${socket.id} joined report_feed:user:${userId}`);
+
+        if (typeof callback === "function") {
+          callback({ success: true });
+        }
+      } catch (err) {
+        logger.error("[Socket.IO] Error handling join_report_feed:", err);
+        if (typeof callback === "function") {
+          callback({ success: false, error: err.message || "Failed to join report feed" });
+        }
+      }
+    });
 
     // Join specific report room
     socket.on("join_report", (data) => {

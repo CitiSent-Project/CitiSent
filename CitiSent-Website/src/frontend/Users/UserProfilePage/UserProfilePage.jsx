@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reportsApiService } from '../../../services/api/admin/reportsApiService'
 import { mapBackendReportToUiRow } from '../../../services/api/admin/reportsApiMappers'
@@ -7,6 +7,7 @@ import { ADMIN_STORAGE_KEYS } from '../../../models/data'
 import { getStorageSchemaRule } from '../../../models/storageSchemaModel'
 import { UrgencyFeedTable, UrgencyFilterChips, Pagination } from '../../../components/Reports-Ui'
 import { useReportPaginationState } from '../../../hooks/useReportPaginationState'
+import { useReportFeedRealtime } from '../../../hooks/useReportFeedRealtime'
 import { filterUserReportsByUrgency, ALL_URGENCY_FILTER } from '../../../controllers/userReportsController'
 
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
@@ -67,6 +68,31 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
     retry: false,
   })
 
+  // Real-time report feed: invalidate user reports when the server signals
+  // a change that belongs to this specific user.
+  const handleFeedInvalidate = useCallback(() => {
+    if (user?.id) {
+      refetchReports()
+    }
+  }, [user?.id, refetchReports])
+
+  const shouldHandleEvent = useCallback(
+    (payload) => {
+      // Only react to events scoped to this user, or global/department events
+      // (which may include new reports from this user that admins updated).
+      if (!user?.id) return false
+      if (payload?.scope === 'user' && payload?.scopeId !== user.id) return false
+      return true
+    },
+    [user?.id],
+  )
+
+  useReportFeedRealtime({
+    accessToken,
+    onInvalidate: handleFeedInvalidate,
+    shouldHandle: shouldHandleEvent,
+    enabled: Boolean(accessToken) && Boolean(user?.id),
+  })
   // Filter fetched reports in memory
   const filteredReports = useMemo(() => {
     // 1. Filter by urgency level

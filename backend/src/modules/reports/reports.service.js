@@ -15,6 +15,7 @@ import {
   REPORT_EMOTION_FALLBACK,
 } from "./reports.sentiment.js";
 import { departmentsService } from "../departments/departments.service.js";
+import { emitReportFeedChanged } from "../../realtime/reportFeedEvents.js";
 
 const ST_LAT_MIN = 13.9796305;
 const ST_LAT_MAX = 14.1473362;
@@ -217,7 +218,17 @@ export const reportsService = {
 
     await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
 
-    return toReportResponse(created);
+    const response = toReportResponse(created);
+
+    // Emit report feed event after successful persistence.
+    emitReportFeedChanged({
+      reportId: response.id,
+      changeType: "created",
+      userId,
+      departmentId: department?.slug || issueType,
+    });
+
+    return response;
   },
 
   async getReportById({ userId, reportId, accessToken }) {
@@ -305,7 +316,17 @@ export const reportsService = {
 
     await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
 
-    return toReportResponse(updated);
+    const response = toReportResponse(updated);
+
+    // Emit report feed event after successful persistence.
+    emitReportFeedChanged({
+      reportId: response.id,
+      changeType: "updated",
+      userId,
+      departmentId: updated.issue_type || null,
+    });
+
+    return response;
   },
 
   async deleteReport({ userId, reportId, accessToken }) {
@@ -320,5 +341,13 @@ export const reportsService = {
     }
 
     await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
+
+    // Emit report feed event after successful deletion.
+    emitReportFeedChanged({
+      reportId,
+      changeType: "deleted",
+      userId,
+      departmentId: deleted.issue_type || null,
+    });
   },
 };

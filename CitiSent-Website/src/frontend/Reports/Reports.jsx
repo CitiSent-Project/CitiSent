@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ByCategory } from './ByCategory'
 import { ByUrgencyLevels } from './ByUrgencyLevels'
@@ -10,6 +10,7 @@ import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMapp
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS, DEFAULT_PREFERENCES } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
+import { useReportFeedRealtime } from '../../hooks/useReportFeedRealtime'
 
 export function Reports({
   section = 'category',
@@ -45,6 +46,18 @@ export function Reports({
   })
   const reportsError = reportsQuery.error
   const refetchReports = reportsQuery.refetch
+
+  // Real-time report feed: invalidate the admin-reports query when the
+  // server signals a report has been created, updated, or deleted.
+  const handleFeedInvalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['admin-reports', accessToken] })
+  }, [queryClient, accessToken])
+
+  useReportFeedRealtime({
+    accessToken,
+    onInvalidate: handleFeedInvalidate,
+    enabled: Boolean(accessToken),
+  })
 
   const updateReportMutation = useMutation({
     mutationFn: async ({ reportId, newStatus }) => {

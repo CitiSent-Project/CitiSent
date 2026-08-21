@@ -48,11 +48,11 @@ async function resolveProfileEmailFromCandidates(candidates) {
     const profileEmail = normalizeEmail(profile?.email);
 
     if (profileEmail) {
-      return profileEmail;
+      return { email: profileEmail, profile };
     }
   }
 
-  return "";
+  return { email: "", profile: null };
 }
 
 function normalizeUsername(value) {
@@ -119,15 +119,15 @@ function toUserResponse({ user, session, profile }) {
   };
 }
 
-async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
+async function resolveLoginContext({ identifier, email, username, phoneNumber }) {
   const normalizedEmail = normalizeEmail(email);
   if (normalizedEmail) {
-    return normalizedEmail;
+    return { email: normalizedEmail, profile: null };
   }
 
   const normalizedIdentifier = String(identifier || "").trim();
   if (normalizedIdentifier.includes("@")) {
-    return normalizeEmail(normalizedIdentifier);
+    return { email: normalizeEmail(normalizedIdentifier), profile: null };
   }
 
   const normalizedUsername = String(username || "").trim();
@@ -141,18 +141,18 @@ async function resolveLoginEmail({ identifier, email, username, phoneNumber }) {
     throw new AppError("Login identifier is required", StatusCodes.BAD_REQUEST);
   }
 
-  const profileEmail = await resolveProfileEmailFromCandidates([
+  const profileContext = await resolveProfileEmailFromCandidates([
     candidateIdentifier,
     normalizedUsername,
     normalizedPhone,
     normalizedIdentifierPhone,
   ]);
 
-  if (!profileEmail) {
+  if (!profileContext.email) {
     throw new AppError("Incorrect username or phone number.", StatusCodes.UNAUTHORIZED);
   }
 
-  return profileEmail;
+  return profileContext;
 }
 
 export const authService = {
@@ -413,16 +413,27 @@ export const authService = {
     });
   },
 
-  async login(payload) {
-    const resolvedEmail = await resolveLoginEmail(payload);
+  async login(payload, perf) {
+    const track = (name, operation) =>
+      perf?.trackStage ? perf.trackStage(name, operation) : operation();
+    const loginContext = await track("identifierLookup", () =>
+      resolveLoginContext(payload),
+    );
+    const resolvedEmail = loginContext.email;
 
     // Check for an active ban BEFORE attempting Supabase authentication.
     // When account_status is 'banned', Supabase may reject the credentials
     // with a generic 'Invalid credentials' error. We intercept early
     // so the user gets the correct 'banned' message.
-    const preProfile = await authRepository.getProfileByIdentifier(resolvedEmail);
+    const preProfile =
+      loginContext.profile ||
+      (await track("preAuthProfileLookup", () =>
+        authRepository.getProfileByIdentifier(resolvedEmail),
+      ));
     if (preProfile?.user_id) {
-      const isBanned = await authRepository.checkActiveBanByUserId(preProfile.user_id);
+      const isBanned = await track("banLookup", () =>
+        authRepository.checkActiveBanByUserId(preProfile.user_id),
+      );
       if (isBanned) {
         throw new AppError(
           "Your account has been banned.",
@@ -431,18 +442,25 @@ export const authService = {
       }
     }
 
-    const signInData = await authRepository.loginWithEmailPassword({
-      email: resolvedEmail,
-      password: payload.password,
-    });
+    const signInData = await track("supabaseAuth", () =>
+      authRepository.loginWithEmailPassword({
+        email: resolvedEmail,
+        password: payload.password,
+      }),
+    );
 
     const userId = signInData?.user?.id;
-    const profile = userId
-      ? await authRepository.getProfileByUserId(
-        userId,
-        signInData?.session?.access_token,
-      )
-      : null;
+    const profile =
+      userId && preProfile?.user_id === userId
+        ? preProfile
+        : userId
+          ? await track("postAuthProfileLookup", () =>
+            authRepository.getProfileByUserId(
+              userId,
+              signInData?.session?.access_token,
+            ),
+          )
+          : null;
 
     assertAccountIsActive(profile);
 

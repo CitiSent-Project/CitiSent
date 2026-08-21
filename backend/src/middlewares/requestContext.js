@@ -12,6 +12,7 @@ export function requestContext(req, res, next) {
     ext: 0,
     ser: 0,
   };
+  const stages = {};
 
   req.requestId = requestId;
   req.requestStartTimeMs = startTimeMs;
@@ -33,6 +34,14 @@ export function requestContext(req, res, next) {
         }
       }
     },
+    async trackStage(name, asyncFn) {
+      const start = Date.now();
+      try {
+        return await asyncFn();
+      } finally {
+        stages[name] = (stages[name] || 0) + Math.max(0, Date.now() - start);
+      }
+    },
   };
 
   res.setHeader("x-request-id", requestId);
@@ -47,6 +56,9 @@ export function requestContext(req, res, next) {
         timings.db > 0 ? `db;dur=${timings.db}` : null,
         timings.cache > 0 ? `cache;dur=${timings.cache}` : null,
         timings.ext > 0 ? `ext;dur=${timings.ext}` : null,
+        ...Object.entries(stages).map(([name, durationMs]) =>
+          `login-${name};dur=${durationMs}`,
+        ),
       ]
         .filter(Boolean)
         .join(", ");
@@ -71,6 +83,7 @@ export function requestContext(req, res, next) {
       databaseDurationMs: timings.db,
       cacheDurationMs: timings.cache,
       externalApiDurationMs: timings.ext,
+      ...(Object.keys(stages).length > 0 ? { stageDurationsMs: stages } : {}),
     });
   });
 

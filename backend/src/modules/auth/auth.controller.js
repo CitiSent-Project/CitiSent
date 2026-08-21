@@ -12,7 +12,7 @@ export const authController = {
   },
 
   async login(req, res) {
-    const result = await authService.login(req.body);
+    const result = await authService.login(req.body, req.perf);
 
     return res.status(StatusCodes.OK).json({
       success: true,

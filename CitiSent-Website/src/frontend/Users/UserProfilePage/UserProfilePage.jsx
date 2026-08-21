@@ -45,7 +45,13 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
   }, [searchTerm])
 
   // Fetch reports submitted by this specific user
-  const { data: reports = [], isLoading, isFetching, error: reportsError } = useQuery({
+  const {
+    data: reports = [],
+    isLoading,
+    isFetching,
+    error: reportsError,
+    refetch: refetchReports,
+  } = useQuery({
     queryKey: ['admin-user-reports', user?.id, accessToken],
     enabled: Boolean(accessToken) && Boolean(user?.id),
     queryFn: async () => {
@@ -56,7 +62,9 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
       })
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
-    refetchInterval: 10000, // keep list updated automatically every 10s
+    // Avoid a second report poller for every open user profile. The list is
+    // refreshed when the user explicitly retries or revisits the page.
+    retry: false,
   })
 
   // Filter fetched reports in memory
@@ -136,7 +144,17 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
 
       {/* User Information Details Card */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-6 text-2xl font-semibold text-slate-900">User Profile</h1>
+        <div className="mb-6 flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-slate-900">User Profile</h1>
+          <button
+            type="button"
+            onClick={() => refetchReports()}
+            disabled={isFetching}
+            className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isFetching ? 'Refreshing…' : 'Refresh reports'}
+          </button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">User ID</p>

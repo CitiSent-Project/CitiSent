@@ -38,7 +38,10 @@ export function Reports({
       const response = await reportsApiService.listReports(accessToken, { limit: 1000, offset: 0 })
       return (response?.data || []).map(mapBackendReportToUiRow)
     },
-    refetchInterval: 10000,
+    // Reports are refreshed by explicit user action or after a mutation.
+    // Continuous polling caused every open Reports tab to make six requests
+    // per minute and amplified traffic during backend failures.
+    retry: false,
   })
   const reportsError = reportsQuery.error
   const refetchReports = reportsQuery.refetch
@@ -128,6 +131,7 @@ export function Reports({
         rows={scopedRows}
         departmentOptions={departmentOptions}
         onViewReport={onViewReport}
+        onRefresh={refetchReports}
         isLoading={loading}
       />
     )
@@ -142,21 +146,23 @@ export function Reports({
         defaultSorting={defaultSorting}
         onViewReport={onViewReport}
         onUpdateStatus={handleUpdateStatus}
+        onRefresh={refetchReports}
         isLoading={loading}
       />
     )
   }
 
   return (
-    <ByCategory
+      <ByCategory
       rows={scopedRows}
       profile={profile}
       reportsPerPage={reportsPerPage}
       defaultSorting={defaultSorting}
       departmentOptions={departmentOptions}
       onViewReport={onViewReport}
-      onUpdateStatus={handleUpdateStatus}
-      isLoading={loading}
+        onUpdateStatus={handleUpdateStatus}
+        onRefresh={refetchReports}
+        isLoading={loading}
     />
   )
 }

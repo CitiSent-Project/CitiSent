@@ -28,6 +28,7 @@ export function ByUrgencyLevels({
   defaultSorting = 'Latest first',
   onViewReport,
   onUpdateStatus,
+  onRefresh,
   isLoading = false,
 }) {
   const [selectedUrgency, setSelectedUrgency] = useState(URGENCY_FILTER_CHIPS[0])
@@ -184,6 +185,14 @@ export function ByUrgencyLevels({
         <header className="flex items-center gap-3">
           <h1 className="text-4xl font-bold text-slate-900">Reports</h1>
           <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700">!</span>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? 'Refreshing…' : 'Refresh'}
+          </button>
         </header>
 
         <section className="rounded-2xl bg-[#5f82bd] p-4 md:p-6">

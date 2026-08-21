@@ -1,17 +1,22 @@
+import { lazy } from 'react'
 import { Dashboard } from '../frontend/Pages/Dashboard'
 import { Users } from '../frontend/Users/Users'
-import { Reports } from '../frontend/Reports/Reports'
 import { LoginPage } from '../frontend/Pages/Login-Page'
 import { RegisterPage } from '../frontend/Pages/Register-Page'
-import { Notifications } from '../frontend/Pages/Notifications'
 import { Logout } from '../frontend/Pages/Logout'
-import { ProfileInformation } from '../frontend/Pages/ProfilePage'
-import { Settings } from '../frontend/Pages/Settings'
-import { UserProfilePage } from '../frontend/Users/UserProfilePage/UserProfilePage'
-import { ReportDetailPage } from '../components/Reports-Ui/ReportDetailPage'
-import { AdminManagement } from '../frontend/Pages/AdminManagement'
-import { ConversationsPage } from '../frontend/Conversations/ConversationsPage'
 import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
+
+// Low-frequency pages are split into separate chunks. The named-export
+// adapters keep existing component modules unchanged while allowing Vite to
+// load each page only when it is first visited.
+const Reports = lazy(() => import('../frontend/Reports/Reports').then((module) => ({ default: module.Reports })))
+const Notifications = lazy(() => import('../frontend/Pages/Notifications').then((module) => ({ default: module.Notifications })))
+const ProfileInformation = lazy(() => import('../frontend/Pages/ProfilePage').then((module) => ({ default: module.ProfileInformation })))
+const Settings = lazy(() => import('../frontend/Pages/Settings').then((module) => ({ default: module.Settings })))
+const UserProfilePage = lazy(() => import('../frontend/Users/UserProfilePage/UserProfilePage').then((module) => ({ default: module.UserProfilePage })))
+const ReportDetailPage = lazy(() => import('../components/Reports-Ui/ReportDetailPage').then((module) => ({ default: module.ReportDetailPage })))
+const AdminManagement = lazy(() => import('../frontend/Pages/AdminManagement').then((module) => ({ default: module.AdminManagement })))
+const ConversationsPage = lazy(() => import('../frontend/Conversations/ConversationsPage').then((module) => ({ default: module.ConversationsPage })))
 
 export function renderAuthPage({
     authPage,

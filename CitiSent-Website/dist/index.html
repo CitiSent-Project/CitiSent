@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/CitiSentLogo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>citisent-website</title>
+    <script>
+      (function () {
+        try {
+          const root = document.documentElement
+          const rawPreferences = window.localStorage.getItem('citisent.admin.preferences')
+          const parsedPreferences = rawPreferences ? JSON.parse(rawPreferences) : null
+          const preferences =
+            parsedPreferences &&
+            typeof parsedPreferences === 'object' &&
+            !Array.isArray(parsedPreferences) &&
+            typeof parsedPreferences.schemaVersion === 'number' &&
+            'payload' in parsedPreferences
+              ? parsedPreferences.payload
+              : parsedPreferences
+
+          const themePreference = preferences?.theme || 'System'
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const effectiveTheme =
+            themePreference === 'Dark'
+              ? 'dark'
+              : themePreference === 'Light'
+                ? 'light'
+                : systemPrefersDark
+                  ? 'dark'
+                  : 'light'
+
+          root.dataset.theme = effectiveTheme
+
+          const fontSizeMap = { Small: 14, Medium: 16, Large: 18 }
+          root.style.fontSize = `${fontSizeMap[preferences?.fontSize] || 16}px`
+
+          if (preferences?.animationsEnabled === false) {
+            root.classList.add('reduced-motion')
+          }
+        } catch {
+          // Keep first paint resilient even if localStorage is malformed.
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-FRUwJw2q.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-BTspgDj9.js">
+    <link rel="modulepreload" crossorigin href="/assets/charts-vendor-DhOJ9XdZ.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-ppgCOaRp.js">
+    <link rel="modulepreload" crossorigin href="/assets/motion-vendor-W6NkfSuO.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-ChjSkLXP.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

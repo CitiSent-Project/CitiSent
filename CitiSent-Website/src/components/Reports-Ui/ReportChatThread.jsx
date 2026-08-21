@@ -86,12 +86,12 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
   }
 
   return (
-    <div className="relative flex flex-1 flex-col overflow-hidden">
+    <div className="relative flex flex-1 min-w-0 flex-col overflow-hidden">
       {/* Scrollable Message List */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4"
+        className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4 min-w-0"
       >
         {messages.map((message) => (
           <ReportChatMessageItem

@@ -68,30 +68,32 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
     retry: false,
   })
 
+  const userId = user?.id
+
   // Real-time report feed: invalidate user reports when the server signals
   // a change that belongs to this specific user.
   const handleFeedInvalidate = useCallback(() => {
-    if (user?.id) {
+    if (userId) {
       refetchReports()
     }
-  }, [user?.id, refetchReports])
+  }, [userId, refetchReports])
 
   const shouldHandleEvent = useCallback(
     (payload) => {
       // Only react to events scoped to this user, or global/department events
       // (which may include new reports from this user that admins updated).
-      if (!user?.id) return false
-      if (payload?.scope === 'user' && payload?.scopeId !== user.id) return false
+      if (!userId) return false
+      if (payload?.scope === 'user' && payload?.scopeId !== userId) return false
       return true
     },
-    [user?.id],
+    [userId],
   )
 
   useReportFeedRealtime({
     accessToken,
     onInvalidate: handleFeedInvalidate,
     shouldHandle: shouldHandleEvent,
-    enabled: Boolean(accessToken) && Boolean(user?.id),
+    enabled: Boolean(accessToken) && Boolean(userId),
   })
   // Filter fetched reports in memory
   const filteredReports = useMemo(() => {

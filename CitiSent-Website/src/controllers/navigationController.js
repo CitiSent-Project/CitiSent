@@ -33,7 +33,7 @@ export function getPageFromPath(pathname = '/') {
   }
 
   // Exact path matches (excluding parametrized routes containing :id)
-  const exactRouteMatch = Object.entries(PAGE_ROUTES).find(([key, routePath]) => {
+  const exactRouteMatch = Object.entries(PAGE_ROUTES).find(([, routePath]) => {
     return !routePath.includes(':id') && routePath === normalizedPath
   })
 

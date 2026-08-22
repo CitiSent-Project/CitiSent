@@ -32,7 +32,7 @@ export function ProfileInformation({
 
   useEffect(() => {
     if (editing && editFormRef.current) {
-      editFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      editFormRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
     }
   }, [editing])
 

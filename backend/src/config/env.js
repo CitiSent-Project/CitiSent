@@ -105,7 +105,7 @@ const envSchema = z.object({
   API_PREFIX: z.string().default("/api/v1"),
   CORS_ORIGINS: z
     .string()
-    .default("http://localhost:5173,http://localhost:8081"),
+    .default(process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:8081"),
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z
     .string()
@@ -123,7 +123,19 @@ const envSchema = z.object({
   CACHE_DRIVER: z.enum(["auto", "memory", "redis"]).default("auto"),
   CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   CACHE_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
-  REDIS_URL: optionalString(z.string().url()),
+  REDIS_URL: optionalString(
+    z.string().refine(
+      (val) => {
+        try {
+          const parsedUrl = new URL(val);
+          return parsedUrl.protocol === "redis:" || parsedUrl.protocol === "rediss:";
+        } catch {
+          return false;
+        }
+      },
+      { message: "REDIS_URL must be a valid redis:// or rediss:// URL" },
+    ),
+  ),
   RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()

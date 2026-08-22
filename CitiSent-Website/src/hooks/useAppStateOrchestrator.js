@@ -29,7 +29,6 @@ import {
   getReportsCategoryPage,
   getUsersPage,
   getPageFromPath,
-  getPathFromPage,
   syncBrowserHistory,
 } from '../controllers/navigationController'
 import { useAuthSession } from './useAuthSession'

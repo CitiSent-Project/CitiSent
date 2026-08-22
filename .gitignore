@@ -1,0 +1,41 @@
+# Monorepo root gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+
+# Vite / React build outputs
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

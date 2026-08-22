@@ -177,8 +177,6 @@ export function ByUrgencyLevels({
     }
   }, [rows])
 
-  const [activeTab, setActiveTab] = useState('workqueue') // 'workqueue' | 'history'
-
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">

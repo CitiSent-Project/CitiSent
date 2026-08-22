@@ -1,84 +1,229 @@
+import asyncio
+import json
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 
 import ai
 
 
-def test_build_analysis_text_is_deterministic():
-    analysis_text = ai.build_analysis_text(
-        issue_type="Road Repair",
-        location="Barangay San Miguel",
-        description="A large pothole is blocking one lane.",
-    )
-
-    assert analysis_text == (
-        "Issue Type: Road Repair\n"
-        "Location: Barangay San Miguel\n"
-        "Report: A large pothole is blocking one lane."
-    )
+class FakeResponse:
+    def __init__(self, text: str):
+        self.text = text
 
 
-def test_get_classifier_builds_the_model_once(monkeypatch):
-    created_instances = []
-
-    def fake_build_classifier():
-        instance = object()
-        created_instances.append(instance)
-        return instance
-
-    monkeypatch.setattr(ai, "_classifier", None)
-    monkeypatch.setattr(ai, "_build_classifier", fake_build_classifier)
-
-    first_classifier = ai.get_classifier()
-    second_classifier = ai.get_classifier()
-
-    assert first_classifier is second_classifier
-    assert created_instances == [first_classifier]
+def make_mock_client(response_text: str = None, side_effect=None):
+    mock_client = MagicMock()
+    if side_effect:
+        mock_client.aio.models.generate_content = AsyncMock(side_effect=side_effect)
+    else:
+        mock_client.aio.models.generate_content = AsyncMock(return_value=FakeResponse(response_text))
+    return mock_client
 
 
-def test_normalize_urgency_label_handles_candidate_and_final_values():
-    assert ai.normalize_urgency_label("life-threatening emergency") == "Emergency"
-    assert ai.normalize_urgency_label("urgent") == "Urgent"
-    assert ai.normalize_urgency_label("Moderate") == "Moderate"
-    assert ai.normalize_urgency_label("not-supported") is None
+def test_analyze_report_success(monkeypatch):
+    async def _test():
+        expected_data = {
+            "urgency": "Critical",
+            "emotion": "Frustrated",
+            "confidence": 0.9542,
+            "summary": "Citizen is expressing urgency regarding power lines.",
+        }
+        fake_client = make_mock_client(json.dumps(expected_data))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
 
-
-def test_analyze_report_normalizes_model_output():
-    class FakeClassifier:
-        def __call__(self, text, candidate_labels):
-            assert "Issue Type: Flooding" in text
-            assert "Location: Riverside" in text
-            assert "Report: Water level is rising quickly." in text
-            assert candidate_labels
-            return {
-                "labels": ["life-threatening emergency"],
-                "scores": [0.9812],
-            }
-
-    result = ai.analyze_report(
-        issue_type="Flooding",
-        location="Riverside",
-        description="Water level is rising quickly.",
-        classifier=FakeClassifier(),
-    )
-
-    assert result == {
-        "urgency": "Emergency",
-        "confidence": 0.9812,
-    }
-
-
-def test_analyze_report_rejects_unsupported_model_labels():
-    class FakeClassifier:
-        def __call__(self, _text, _candidate_labels):
-            return {
-                "labels": ["unsupported label"],
-                "scores": [0.45],
-            }
-
-    with pytest.raises(ValueError, match="unsupported urgency label"):
-        ai.analyze_report(
-            issue_type="Streetlight",
-            location="Main Avenue",
-            description="The streetlight has been out for three days.",
-            classifier=FakeClassifier(),
+        result = await ai.analyze_report(
+            office="City Engineering Office",
+            location="Barangay 1",
+            description="Fallen power line across the main street.",
         )
+
+        assert result["urgency"] == "Critical"
+        assert result["emotion"] == "Frustrated"
+        assert result["confidence"] == 0.9542
+        assert result["summary"] == "Citizen is expressing urgency regarding power lines."
+
+    asyncio.run(_test())
+
+
+def test_analyze_report_fallback_emotion_and_non_numeric_confidence(monkeypatch):
+    async def _test():
+        data = {
+            "urgency": "Low",
+            "emotion": "UnknownEmotion",
+            "confidence": "not-a-number",
+            "summary": "Inquiry about permits.",
+        }
+        fake_client = make_mock_client(json.dumps(data))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+
+        result = await ai.analyze_report(
+            office="BPLO",
+            location="City Hall",
+            description="Asking about business permit renewal steps.",
+        )
+
+        assert result["urgency"] == "Low"
+        assert result["emotion"] == "Neutral"  # fallback to Neutral
+        assert result["confidence"] == 0.0
+
+    asyncio.run(_test())
+
+
+def test_analyze_report_rejects_unsupported_urgency(monkeypatch):
+    async def _test():
+        data = {
+            "urgency": "SevereDanger",  # not in VALID_URGENCY
+            "emotion": "Angry",
+            "confidence": 0.9,
+            "summary": "Emergency.",
+        }
+        fake_client = make_mock_client(json.dumps(data))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+
+        with pytest.raises(ValueError, match="Unsupported urgency label"):
+            await ai.analyze_report(
+                office="BFP",
+                location="Barangay 2",
+                description="Fire spreading rapidly to adjacent houses.",
+            )
+
+    asyncio.run(_test())
+
+
+def test_analyze_report_empty_or_malformed_response(monkeypatch):
+    async def _test():
+        # Empty response
+        fake_client_empty = make_mock_client("")
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client_empty)
+        with pytest.raises(ValueError, match="empty response"):
+            await ai.analyze_report("Office", "Location", "Valid description here.")
+
+        # Malformed JSON
+        fake_client_bad_json = make_mock_client("not-a-valid-json")
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client_bad_json)
+        with pytest.raises(ValueError, match="malformed JSON"):
+            await ai.analyze_report("Office", "Location", "Valid description here.")
+
+    asyncio.run(_test())
+
+
+def test_analyze_report_timeout(monkeypatch):
+    async def _test():
+        async def delayed_generate(*args, **kwargs):
+            await asyncio.sleep(2)
+            return FakeResponse("{}")
+
+        fake_client = MagicMock()
+        fake_client.aio.models.generate_content = delayed_generate
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+        monkeypatch.setattr(ai, "GEMINI_TIMEOUT_SECONDS", 0.05)
+
+        with pytest.raises(TimeoutError, match="Gemini API did not respond"):
+            await ai.analyze_report("Office", "Location", "Valid description here.")
+
+    asyncio.run(_test())
+
+
+def test_get_default_suggestions():
+    defaults = ai.get_default_suggestions("Test reason")
+    assert len(defaults["suggestedReplies"]) == 4
+    assert defaults["reason"] == "Test reason"
+    assert defaults["suggestedReplies"][0]["rank"] == 1
+
+
+def test_get_default_admin_note_suggestions_by_status():
+    for status in ["pending", "in_review", "resolved", "rejected"]:
+        notes = ai.get_default_admin_note_suggestions(status, f"Default for {status}")
+        assert len(notes["suggestedNotes"]) == 4
+        assert notes["reason"] == f"Default for {status}"
+        assert notes["suggestedNotes"][0]["rank"] == 1
+
+
+def test_generate_suggestions_success(monkeypatch):
+    async def _test():
+        response_payload = {
+            "suggestedReplies": [
+                {"text": "We are dispatching a team immediately.", "rank": 1},
+                {"text": "Could you provide a photo of the incident?", "rank": 2},
+                {"text": "We are verifying with the local barangay.", "rank": 3},
+                {"text": "For emergencies call 911.", "rank": 4},
+            ],
+            "tone": "urgent",
+            "confidence": 0.95,
+            "reason": "Critical infrastructure issue.",
+            "triggerEmotion": "Angry",
+            "fallbackMessage": "We are looking into this.",
+        }
+        fake_client = make_mock_client(json.dumps(response_payload))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+
+        result = await ai.generate_suggestions(
+            latest_message="When will the team arrive?",
+            conversation_context=[{"sender": "citizen", "text": "Water pipe burst."}],
+            report_category="Water Works",
+            urgency="High",
+            detected_emotion="Frustrated",
+        )
+
+        assert len(result["suggestedReplies"]) == 4
+        assert result["suggestedReplies"][0]["text"] == "We are dispatching a team immediately."
+        assert result["tone"] == "urgent"
+
+    asyncio.run(_test())
+
+
+def test_generate_suggestions_fallback_on_invalid_output(monkeypatch):
+    async def _test():
+        # Missing required reply items (returns only 1 instead of 4)
+        bad_payload = {
+            "suggestedReplies": [
+                {"text": "Reply 1", "rank": 1},
+            ],
+        }
+        fake_client = make_mock_client(json.dumps(bad_payload))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+
+        result = await ai.generate_suggestions(
+            latest_message="Hello",
+            conversation_context=[],
+            report_category="General",
+            urgency="Low",
+            detected_emotion="Neutral",
+        )
+
+        # Should safely return fallback suggestions
+        assert len(result["suggestedReplies"]) == 4
+
+    asyncio.run(_test())
+
+
+def test_generate_admin_note_suggestions_success(monkeypatch):
+    async def _test():
+        response_payload = {
+            "suggestedNotes": [
+                {"text": "Assigned to road maintenance unit.", "rank": 1},
+                {"text": "Pothole patch scheduled for tomorrow.", "rank": 2},
+                {"text": "Awaiting asphalt delivery.", "rank": 3},
+                {"text": "Site inspection completed.", "rank": 4},
+            ],
+            "tone": "professional",
+            "confidence": 0.9,
+            "reason": "Status change to in_review.",
+            "triggerEmotion": "Neutral",
+        }
+        fake_client = make_mock_client(json.dumps(response_payload))
+        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
+
+        result = await ai.generate_admin_note_suggestions(
+            report_status="in_review",
+            conversation_context=[],
+            report_category="Roads",
+            urgency="Medium",
+            detected_emotion="Neutral",
+            report_description="Deep pothole in front of market.",
+        )
+
+        assert len(result["suggestedNotes"]) == 4
+        assert result["suggestedNotes"][0]["text"] == "Assigned to road maintenance unit."
+
+    asyncio.run(_test())

@@ -1,4 +1,5 @@
 import { Server as SocketIOServer } from "socket.io";
+import { env } from "../config/env.js";
 import { supabase } from "../config/supabase.js";
 import { logger } from "../config/logger.js";
 import { reportMessagesService } from "../modules/reports/messages.service.js";
@@ -24,7 +25,8 @@ export function initSocketIO(httpServer) {
 
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: "*",
+      origin: env.corsOrigins,
+      credentials: true,
       methods: ["GET", "POST"],
     },
     pingTimeout: 60000,

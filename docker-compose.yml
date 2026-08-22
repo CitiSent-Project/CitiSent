@@ -7,3 +7,41 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  ai-sentiment:
+    build:
+      context: ./ai-sentiment
+      dockerfile: Dockerfile
+    container_name: citisent-ai-sentiment
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8081}
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: citisent-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+      - ai-sentiment
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=4000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - SENTIMENT_API_URL=http://ai-sentiment:8000/analyze
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
+
+volumes:
+  redis-data:

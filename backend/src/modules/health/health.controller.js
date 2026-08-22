@@ -10,6 +10,29 @@ export function getHealth(_req, res) {
   });
 }
 
+export function getLiveness(_req, res) {
+  return res.status(StatusCodes.OK).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+}
+
+export async function getReadiness(_req, res) {
+  const supabaseReadiness = await healthService.getSupabaseReadiness();
+
+  const isReady = supabaseReadiness.connected;
+  const statusCode = isReady ? StatusCodes.OK : StatusCodes.SERVICE_UNAVAILABLE;
+
+  return res.status(statusCode).json({
+    status: isReady ? "ready" : "not_ready",
+    timestamp: new Date().toISOString(),
+    dependencies: {
+      supabase: supabaseReadiness,
+    },
+  });
+}
+
 export async function getSupabaseHealth(_req, res) {
   const readiness = await healthService.getSupabaseReadiness();
 

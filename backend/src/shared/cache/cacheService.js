@@ -84,13 +84,13 @@ class CacheService {
 
         return client;
       })().catch((error) => {
-        if (env.isProduction) {
-          logger.error("Redis connection failed in production", { message: error.message });
+        if (env.CACHE_DRIVER === "redis") {
+          logger.error("Redis connection failed (CACHE_DRIVER=redis)", { message: error.message });
           this.redisClient = null;
           this.redisInitPromise = null;
           throw error;
         }
-        logger.warn("Redis unavailable, using memory cache", {
+        logger.warn("Redis unavailable, using memory cache fallback", {
           message: error.message,
         });
         this.redisClient = null;
@@ -114,15 +114,15 @@ class CacheService {
         logger.info("Redis connection established");
         logger.info("Cache backend: Redis");
       } else {
-        logger.error("Redis connection failed");
-        if (env.isProduction) {
-          throw new Error("Failed to connect to Redis on startup in production");
+        logger.warn("Redis connection unavailable, running on Memory cache");
+        if (env.CACHE_DRIVER === "redis") {
+          throw new Error("Failed to connect to Redis on startup with CACHE_DRIVER=redis");
         }
       }
     } catch (error) {
-      logger.error("Redis connection failed", { message: error.message });
-      if (env.isProduction) {
-        throw new Error(`Failed to connect to Redis on startup in production: ${error.message}`);
+      logger.error("Redis initialization failed", { message: error.message });
+      if (env.CACHE_DRIVER === "redis") {
+        throw new Error(`Failed to connect to Redis on startup with CACHE_DRIVER=redis: ${error.message}`);
       }
     }
   }

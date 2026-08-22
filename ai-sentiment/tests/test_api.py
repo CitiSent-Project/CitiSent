@@ -1,20 +1,24 @@
+import pytest
 from fastapi.testclient import TestClient
 
 import api.get_report as get_report_module
 import api.post_report as post_report_module
+import api.get_suggestions as get_suggestions_module
 from main import app
 
 client = TestClient(app)
 
 
 def test_analyze_endpoint_returns_normalized_urgency(monkeypatch):
-    def fake_analyze_report(issue_type, location, description):
-        assert issue_type == "Flooding"
+    async def fake_analyze_report(office, location, description):
+        assert office == "BFP"
         assert location == "Riverside"
         assert description == "Water level is rising quickly."
         return {
-            "urgency": "Emergency",
+            "urgency": "Critical",
+            "emotion": "Frustrated",
             "confidence": 0.9731,
+            "summary": "Flooding reported in Riverside area.",
         }
 
     monkeypatch.setattr(post_report_module, "analyze_report", fake_analyze_report)
@@ -22,7 +26,7 @@ def test_analyze_endpoint_returns_normalized_urgency(monkeypatch):
     response = client.post(
         "/analyze",
         json={
-            "issueType": "Flooding",
+            "office": "BFP",
             "location": "Riverside",
             "description": "Water level is rising quickly.",
         },
@@ -30,8 +34,10 @@ def test_analyze_endpoint_returns_normalized_urgency(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == {
-        "urgency": "Emergency",
+        "urgency": "Critical",
+        "emotion": "Frustrated",
         "confidence": 0.9731,
+        "summary": "Flooding reported in Riverside area.",
     }
 
 
@@ -39,21 +45,31 @@ def test_analyze_endpoint_rejects_trimmed_empty_fields():
     response = client.post(
         "/analyze",
         json={
-            "issueType": "   ",
+            "office": "   ",
             "location": "Riverside",
             "description": "Water level is rising quickly.",
         },
     )
-
     assert response.status_code == 400
-    assert response.json()["detail"] == "Issue type cannot be empty."
+    assert "Office cannot be empty" in response.json()["detail"]
+
+    response = client.post(
+        "/analyze",
+        json={
+            "office": "BFP",
+            "location": "   ",
+            "description": "Water level is rising quickly.",
+        },
+    )
+    assert response.status_code == 400
+    assert "Location cannot be empty" in response.json()["detail"]
 
 
 def test_analyze_endpoint_rejects_short_descriptions():
     response = client.post(
         "/analyze",
         json={
-            "issueType": "Flooding",
+            "office": "Flooding",
             "location": "Riverside",
             "description": "Too short",
         },
@@ -62,37 +78,108 @@ def test_analyze_endpoint_rejects_short_descriptions():
     assert response.status_code == 422
 
 
-def test_status_endpoint_returns_readiness_metadata(monkeypatch):
-    monkeypatch.setattr(
-        get_report_module,
-        "get_model_status",
-        lambda: {
-            "status": "ready",
-            "model": "stub-model",
-            "supportedUrgencyLevels": ["Emergency", "Urgent", "Moderate", "Calm"],
-            "candidateLabels": ["life-threatening emergency"],
-            "classifierType": "FakeClassifier",
+def test_analyze_endpoint_handles_value_error(monkeypatch):
+    async def fake_analyze_report(office, location, description):
+        raise ValueError("Unsupported urgency label returned by model")
+
+    monkeypatch.setattr(post_report_module, "analyze_report", fake_analyze_report)
+
+    response = client.post(
+        "/analyze",
+        json={
+            "office": "BFP",
+            "location": "Riverside",
+            "description": "Water level is rising quickly.",
         },
     )
 
+    assert response.status_code == 422
+    assert "Unsupported urgency label" in response.json()["detail"]
+
+
+def test_status_endpoint_returns_readiness_metadata(monkeypatch):
     response = client.get("/status")
 
     assert response.status_code == 200
-    assert response.json()["supportedUrgencyLevels"] == [
-        "Emergency",
-        "Urgent",
-        "Moderate",
-        "Calm",
-    ]
+    data = response.json()
+    assert data["status"] == "ready"
+    assert "model" in data
+    assert data["supportedUrgencyLevels"] == ["Emergency", "Urgent", "Moderate", "Calm"]
 
 
-def test_status_endpoint_returns_503_when_model_is_unavailable(monkeypatch):
-    def fake_get_model_status():
-        raise RuntimeError("model unavailable")
+def test_status_endpoint_returns_503_when_client_fails(monkeypatch):
+    def fake_get_client():
+        raise RuntimeError("Failed to configure client")
 
-    monkeypatch.setattr(get_report_module, "get_model_status", fake_get_model_status)
+    import ai
+    monkeypatch.setattr(ai, "_get_client", fake_get_client)
 
     response = client.get("/status")
-
     assert response.status_code == 503
     assert response.json()["detail"] == "Sentiment analysis model is unavailable."
+
+
+def test_chat_suggestions_endpoint(monkeypatch):
+    async def fake_generate_suggestions(**kwargs):
+        return {
+            "suggestedReplies": [
+                {"text": "Suggestion 1", "rank": 1},
+                {"text": "Suggestion 2", "rank": 2},
+                {"text": "Suggestion 3", "rank": 3},
+                {"text": "Suggestion 4", "rank": 4},
+            ],
+            "tone": "neutral",
+            "confidence": 0.9,
+            "reason": "Test reason",
+            "triggerEmotion": "Neutral",
+            "fallbackMessage": "Fallback",
+        }
+
+    monkeypatch.setattr(get_suggestions_module, "generate_suggestions", fake_generate_suggestions)
+
+    response = client.post(
+        "/chat/suggestions",
+        json={
+            "latestUserMessage": "Need help with road repair",
+            "conversationContext": [{"sender": "user", "text": "Hello"}],
+            "reportCategory": "Roads",
+            "urgency": "Medium",
+            "detectedEmotion": "Neutral",
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()["suggestedReplies"]) == 4
+
+
+def test_admin_note_suggestions_endpoint(monkeypatch):
+    async def fake_generate_admin_note_suggestions(**kwargs):
+        return {
+            "suggestedNotes": [
+                {"text": "Note 1", "rank": 1},
+                {"text": "Note 2", "rank": 2},
+                {"text": "Note 3", "rank": 3},
+                {"text": "Note 4", "rank": 4},
+            ],
+            "tone": "professional",
+            "confidence": 0.9,
+            "reason": "Status update",
+            "triggerEmotion": "Neutral",
+        }
+
+    monkeypatch.setattr(get_suggestions_module, "generate_admin_note_suggestions", fake_generate_admin_note_suggestions)
+
+    response = client.post(
+        "/admin-notes/suggestions",
+        json={
+            "reportStatus": "in_review",
+            "conversationContext": [],
+            "reportCategory": "Roads",
+            "urgency": "Medium",
+            "detectedEmotion": "Neutral",
+            "reportDescription": "Pothole in road",
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()["suggestedNotes"]) == 4

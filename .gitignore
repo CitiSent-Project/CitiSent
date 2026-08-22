@@ -29,7 +29,6 @@ dist/
 web-build/
 
 # Vite / React build outputs
-.vite/
 dist-ssr/
 *.local
 

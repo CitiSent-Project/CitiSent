@@ -15,6 +15,7 @@ import {
   TransferRequestQueueSection,
   TransferReviewModal,
   AddAdminFormModal,
+  DeleteAdminConfirmModal,
 } from '../../components/AdminManagement-Ui'
 
 function getStoredAccessToken() {
@@ -52,6 +53,8 @@ export function AdminManagement({
   )
 
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false)
+  const [adminToDelete, setAdminToDelete] = useState(null)
+  const [isDeletingAdmin, setIsDeletingAdmin] = useState(false)
 
   const {
     reviewModal,
@@ -137,6 +140,32 @@ export function AdminManagement({
     }
   }
 
+  async function handleConfirmDeleteAdmin() {
+    if (!adminToDelete) return
+    const token = getStoredAccessToken()
+    if (!token) {
+      notifyError('Action failed.', 'Your session has expired. Please sign in again.')
+      return
+    }
+
+    setIsDeletingAdmin(true)
+    try {
+      await usersApiService.deleteUser(token, adminToDelete.id)
+      notifySuccess(
+        'Office admin deleted.',
+        `${adminToDelete.fullName || adminToDelete.email} was successfully deleted.`
+      )
+      setAdminToDelete(null)
+      if (onRefreshAdminAccounts) {
+        onRefreshAdminAccounts()
+      }
+    } catch (error) {
+      notifyError('Failed to delete office admin.', error.message)
+    } finally {
+      setIsDeletingAdmin(false)
+    }
+  }
+
   if (profile?.role !== USER_ROLES.SUPERADMIN) {
     return (
       <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
@@ -182,6 +211,7 @@ export function AdminManagement({
           getSelectedDepartmentId={getSelectedDepartmentId}
           onDraftDepartmentChange={handleDraftDepartmentChange}
           onSaveAssignment={handleSaveAssignment}
+          onDeleteAdmin={setAdminToDelete}
           processingAdminIds={processingAdminIds}
         />
 
@@ -219,6 +249,14 @@ export function AdminManagement({
         onClose={() => setIsAddAdminModalOpen(false)}
         onSubmit={handleAddAdminSubmit}
         departmentOptions={departmentOptions}
+      />
+
+      <DeleteAdminConfirmModal
+        admin={adminToDelete}
+        isOpen={Boolean(adminToDelete)}
+        isDeleting={isDeletingAdmin}
+        onCancel={() => setAdminToDelete(null)}
+        onConfirm={handleConfirmDeleteAdmin}
       />
     </main>
   )

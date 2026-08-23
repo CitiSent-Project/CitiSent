@@ -698,25 +698,34 @@ export const adminService = {
   async deleteUser({ actor, accessToken, userId }) {
     assertSuperadmin(actor);
 
+    if (userId === actor.id) {
+      throw new AppError(
+        "You cannot delete your own account.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
     const existingUser = await adminRepository.getUserById({
       actor,
       accessToken,
       userId,
     });
 
-    if (!existingUser) {
+    if (!existingUser || !existingUser.profile) {
       throw new AppError("User not found", StatusCodes.NOT_FOUND);
     }
 
-    if (normalizeAccountType(existingUser.profile?.account_type) !== "citizen") {
+    if (
+      existingUser.profile.role === USER_ROLES.SUPERADMIN ||
+      isSuperadmin(existingUser.profile.role)
+    ) {
       throw new AppError(
-        "Only citizen accounts can be deleted from user management.",
+        "Superadmin accounts cannot be deleted.",
         StatusCodes.FORBIDDEN,
       );
     }
 
-    // This is the same Supabase account deletion mechanism used by the
-    // existing self-service account deletion endpoint.
+    // Deletes the user account from Supabase auth and cascades profile data.
     await adminRepository.deleteManagedUserById({ userId });
 
     return {

@@ -287,7 +287,7 @@ async function registerWithAdminFallback({ email, password, userMetadata }) {
 async function queryProfileByIdentifier(db, identifier) {
   const { data, error } = await db
     .from(PROFILES_TABLE)
-    .select("user_id, email, username, phone_number")
+    .select("*")
     .or(
       `email.eq.${identifier},username.eq.${identifier},phone_number.eq.${identifier}`,
     )
@@ -300,7 +300,7 @@ async function queryProfileByIdentifier(db, identifier) {
 
   const fallback = await db
     .from(PROFILES_TABLE)
-    .select("user_id, email, username, phone_number")
+    .select("*")
     .or(`email.ilike.${identifier},username.ilike.${identifier}`)
     .limit(1)
     .maybeSingle();
@@ -311,7 +311,7 @@ async function queryProfileByIdentifier(db, identifier) {
 async function queryProfileByEmail(db, email) {
   const { data, error } = await db
     .from(PROFILES_TABLE)
-    .select("user_id, email, fname, lname")
+    .select("*")
     .eq("email", email)
     .limit(1)
     .maybeSingle();

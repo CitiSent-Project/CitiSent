@@ -3,10 +3,9 @@ import { mapBackendProfileToAdminProfile } from '../services/api/admin/accountsA
 import {
   buildPostLoginTransition,
   buildPostLogoutTransition,
-  buildPostRegistrationTransition,
 } from '../controllers/navigationController'
 import { DEFAULT_ADMIN_PROFILE } from '../models/data'
-import { APP_PAGES } from '../models/pageModel'
+import { APP_PAGES, AUTH_PAGES } from '../models/pageModel'
 import { composeFullName } from '../models/nameModel'
 import { USER_ROLES } from '../models/roleAccessModel'
 import { createLoginPerformance } from '../services/loginPerformance'
@@ -86,7 +85,7 @@ export function useAuthSession({
         accountType: 'admin',
       })
 
-      setAuthPage(buildPostRegistrationTransition().nextAuthPage)
+      setAuthPage(AUTH_PAGES.LOGIN)
       setRememberedEmail(payload.email)
       addActivity('Registration', `Admin account created for ${payload.email}`)
       notifySuccess('Registration successful. You can now sign in.')

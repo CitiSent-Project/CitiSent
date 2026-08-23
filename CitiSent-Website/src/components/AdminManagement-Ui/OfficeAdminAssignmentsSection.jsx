@@ -12,6 +12,7 @@ export function OfficeAdminAssignmentsSection({
   getSelectedDepartmentId,
   onDraftDepartmentChange,
   onSaveAssignment,
+  onDeleteAdmin,
   processingAdminIds = new Set(),
 }) {
   const departmentFilterOptions = [
@@ -92,14 +93,24 @@ export function OfficeAdminAssignmentsSection({
                 onChange={(nextDepartmentId) => onDraftDepartmentChange(admin.id, nextDepartmentId)}
                 options={departmentAssignmentOptions}
               />
-              <button
-                type="button"
-                disabled={processingAdminIds.has(admin.id)}
-                onClick={() => onSaveAssignment(admin)}
-                className="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {processingAdminIds.has(admin.id) ? 'Saving...' : 'Save'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={processingAdminIds.has(admin.id)}
+                  onClick={() => onSaveAssignment(admin)}
+                  className="flex-1 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {processingAdminIds.has(admin.id) ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  disabled={processingAdminIds.has(admin.id)}
+                  onClick={() => onDeleteAdmin?.(admin)}
+                  className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </article>
         ))}
@@ -115,11 +126,11 @@ export function OfficeAdminAssignmentsSection({
         <table className="w-full min-w-[980px] table-fixed text-left text-sm">
           <colgroup>
             <col className="w-[13%]" />
-            <col className="w-[20%]" />
-            <col className="w-[17%]" />
+            <col className="w-[18%]" />
+            <col className="w-[15%]" />
             <col className="w-[12%]" />
-            <col className="w-[29%]" />
-            <col className="w-[9%]" />
+            <col className="w-[26%]" />
+            <col className="w-[16%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
@@ -158,14 +169,26 @@ export function OfficeAdminAssignmentsSection({
                   />
                 </td>
                 <td className="px-3 py-3 text-center">
-                  <button
-                    type="button"
-                    disabled={processingAdminIds.has(admin.id)}
-                    onClick={() => onSaveAssignment(admin)}
-                    className="w-full rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {processingAdminIds.has(admin.id) ? 'Saving...' : 'Save'}
-                  </button>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={processingAdminIds.has(admin.id)}
+                      onClick={() => onSaveAssignment(admin)}
+                      className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {processingAdminIds.has(admin.id) ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={processingAdminIds.has(admin.id)}
+                      onClick={() => onDeleteAdmin?.(admin)}
+                      title={`Delete ${admin.fullName}`}
+                      aria-label={`Delete ${admin.fullName}`}
+                      className="rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

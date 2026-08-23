@@ -73,9 +73,11 @@ export function AgencyCatalogSection({
     const [deleteModal, setDeleteModal] = useState(null)
     const [deleteError, setDeleteError] = useState('')
     const [deleteWithCleanup, setDeleteWithCleanup] = useState(false)
+    const [removeLogoModal, setRemoveLogoModal] = useState(null)
     const [logoErrorBySlug, setLogoErrorBySlug] = useState({})
     const renameModalRef = useRef(null)
     const deleteModalRef = useRef(null)
+    const removeLogoModalRef = useRef(null)
 
     useModalAccessibility({
         isOpen: Boolean(renameModal),
@@ -92,6 +94,12 @@ export function AgencyCatalogSection({
         isOpen: Boolean(deleteModal),
         onClose: handleCloseDeleteModal,
         containerRef: deleteModalRef,
+    })
+
+    useModalAccessibility({
+        isOpen: Boolean(removeLogoModal),
+        onClose: handleCloseRemoveLogoModal,
+        containerRef: removeLogoModalRef,
     })
 
     const sortedCatalog = useMemo(
@@ -165,6 +173,18 @@ export function AgencyCatalogSection({
         setDeleteModal(null)
         setDeleteError('')
         setDeleteWithCleanup(false)
+    }
+
+    function handleOpenRemoveLogoModal(department) {
+        if (!department.logoPath && !department.logoUrl) {
+            return
+        }
+        clearLogoError(department.id)
+        setRemoveLogoModal(department)
+    }
+
+    function handleCloseRemoveLogoModal() {
+        setRemoveLogoModal(null)
     }
 
     function clearLogoError(departmentSlug) {
@@ -276,11 +296,12 @@ export function AgencyCatalogSection({
         }
     }
 
-    async function handleDeleteDepartmentLogo(department) {
-        if (!department.logoPath && !department.logoUrl) {
+    async function handleConfirmDeleteDepartmentLogo() {
+        if (!removeLogoModal) {
             return
         }
 
+        const department = removeLogoModal
         clearLogoError(department.id)
         setBusyDepartmentSlug(department.id)
         const result = await onDeleteDepartmentLogo({
@@ -289,7 +310,9 @@ export function AgencyCatalogSection({
         })
         setBusyDepartmentSlug('')
 
-        if (!result?.ok) {
+        if (result?.ok) {
+            handleCloseRemoveLogoModal()
+        } else {
             setLogoError(department.id, result?.message || 'Unable to remove agency logo.')
         }
     }
@@ -419,10 +442,10 @@ export function AgencyCatalogSection({
                                         <button
                                             type="button"
                                             disabled={isBusy}
-                                            onClick={() => handleDeleteDepartmentLogo(department)}
+                                            onClick={() => handleOpenRemoveLogoModal(department)}
                                             title="Remove logo"
                                             aria-label={`Remove ${department.label} logo`}
-                                            className="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                                         >
                                             <FiXCircle className="text-xs" />
                                         </button>
@@ -545,10 +568,10 @@ export function AgencyCatalogSection({
                                                         <button
                                                             type="button"
                                                             disabled={isBusy}
-                                                            onClick={() => handleDeleteDepartmentLogo(department)}
+                                                            onClick={() => handleOpenRemoveLogoModal(department)}
                                                             title="Remove logo"
                                                             aria-label={`Remove ${department.label} logo`}
-                                                            className="grid h-7 w-7 place-items-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            className="grid h-7 w-7 place-items-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                                                         >
                                                             <FiXCircle className="text-xs" />
                                                         </button>
@@ -785,6 +808,77 @@ export function AgencyCatalogSection({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            ) : null}
+
+            {removeLogoModal ? (
+                <div
+                    className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 backdrop-blur-xs sm:p-4"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            handleCloseRemoveLogoModal()
+                        }
+                    }}
+                >
+                    <div
+                        ref={removeLogoModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Remove agency logo modal"
+                        tabIndex={-1}
+                        className="max-h-[calc(100vh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100"
+                    >
+                        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <h3 className="text-base font-bold tracking-tight text-slate-900">Remove Agency Logo</h3>
+                        </div>
+                        <div className="px-5 py-4 sm:px-6">
+                            <div className="flex items-center gap-3.5 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 mb-4">
+                                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200/80 bg-white overflow-hidden shadow-2xs">
+                                    {removeLogoModal.logoUrl ? (
+                                        <img
+                                            src={removeLogoModal.logoUrl}
+                                            alt={`${removeLogoModal.label} logo preview`}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <FiUploadCloud className="text-slate-400 text-lg" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-amber-900">{removeLogoModal.label}</p>
+                                    <p className="text-[11px] text-amber-800/80">Are you sure you want to remove this logo image?</p>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-600">
+                                Removing the logo will reset the agency icon to the default system placeholder for all administrative views.
+                            </p>
+
+                            {logoErrorBySlug[removeLogoModal.id] ? (
+                                <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800">
+                                    {logoErrorBySlug[removeLogoModal.id]}
+                                </p>
+                            ) : null}
+
+                            <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseRemoveLogoModal}
+                                    disabled={busyDepartmentSlug === removeLogoModal.id}
+                                    className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer disabled:opacity-60"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmDeleteDepartmentLogo}
+                                    disabled={busyDepartmentSlug === removeLogoModal.id}
+                                    className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 active:scale-[0.98] shadow-xs shadow-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                                >
+                                    {busyDepartmentSlug === removeLogoModal.id ? 'Removing...' : 'Remove Logo'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             ) : null}

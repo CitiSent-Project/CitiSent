@@ -28,6 +28,10 @@ export function VerticalChart({ title, labels, values }) {
     ],
   };
 
+  const isDark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark'
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb'
+  const tickColor = isDark ? '#94a3b8' : '#6b7280'
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -45,16 +49,16 @@ export function VerticalChart({ title, labels, values }) {
           display: false,
         },
         ticks: {
-          color: "#6b7280",
+          color: tickColor,
           font: { size: 11 },
         },
       },
       y: {
         grid: {
-          color: "#e5e7eb",
+          color: gridColor,
         },
         ticks: {
-          color: "#6b7280",
+          color: tickColor,
           font: { size: 11 },
           stepSize: 20,
         },

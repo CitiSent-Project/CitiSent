@@ -181,19 +181,21 @@ export function AdminManagement({
 
   return (
     <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
-      <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Admin Management</h1>
-            <p className="text-sm text-slate-600">
-              Assign office admins by department and process transfer queue approvals.
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Admin Management</h1>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              Assign office admins by department, manage agency catalog, and process transfer queue approvals.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setIsAddAdminModalOpen(true)}
-            className="inline-flex w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 sm:w-auto sm:py-2"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-[0.98] shadow-xs shadow-blue-500/20 sm:w-auto cursor-pointer"
           >
-            Add Admin
+            <span className="text-sm font-bold">+</span>
+            <span>Add Admin</span>
           </button>
         </header>
 

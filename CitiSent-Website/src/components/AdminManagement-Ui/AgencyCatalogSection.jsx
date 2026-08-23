@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import {
     FiEdit2,
     FiImage,
+    FiPlus,
     FiToggleLeft,
     FiToggleRight,
     FiTrash2,
@@ -324,35 +325,36 @@ export function AgencyCatalogSection({
     }
 
     return (
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg font-semibold text-slate-900">Agency catalog</h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900">Agency Catalog</h2>
+                    <p className="mt-0.5 text-xs text-slate-500">
                         Manage agency names, availability, and official logos shown across CitiSent.
                     </p>
                 </div>
             </div>
 
-            <form className="mt-4 grid gap-3" onSubmit={handleCreateDepartment}>
-                <label className="flex flex-col gap-1 text-sm text-slate-700">
+            <form className="mt-4 grid gap-3 bg-slate-50/70 p-4.5 rounded-xl border border-slate-100" onSubmit={handleCreateDepartment}>
+                <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">
                     Agency Name
                     <input
                         value={form.name}
                         onChange={(event) => updateForm('name', event.target.value)}
-                        placeholder="City Treasury Office"
-                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                        placeholder="e.g. City Treasury Office"
+                        className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-2xs transition hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                 </label>
-                {formError ? <p role="alert" className="text-xs text-rose-600">{formError}</p> : null}
+                {formError ? <p role="alert" className="text-xs text-rose-600 font-medium">{formError}</p> : null}
 
                 <div className="flex justify-end">
                     <button
                         type="submit"
                         disabled={isCreating}
-                        className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:py-2"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-[0.98] shadow-xs shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto cursor-pointer"
                     >
-                        {isCreating ? 'Adding agency...' : 'Add agency'}
+                        <FiPlus className="text-xs text-white" />
+                        <span>{isCreating ? 'Adding agency...' : 'Add Agency'}</span>
                     </button>
                 </div>
             </form>

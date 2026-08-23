@@ -97,6 +97,12 @@ export function useAdminManagementState({
         departmentId: selectedDepartment.id,
         departmentLabel: selectedDepartment.label,
       })
+      setDraftDepartments((previous) => {
+        if (!(admin.id in previous)) return previous
+        const next = { ...previous }
+        delete next[admin.id]
+        return next
+      })
     } finally {
       setProcessingAdminIds((prev) => {
         const next = new Set(prev)

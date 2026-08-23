@@ -137,16 +137,6 @@ export function getLoginAuthPage() {
   return AUTH_PAGES.LOGIN
 }
 
-export function getRegisterAuthPage() {
-  return AUTH_PAGES.REGISTER
-}
-
-export function buildPostRegistrationTransition() {
-  return {
-    nextAuthPage: AUTH_PAGES.LOGIN,
-  }
-}
-
 export function buildPostLoginTransition({ nextActivePage }) {
   return {
     isAuthenticated: true,

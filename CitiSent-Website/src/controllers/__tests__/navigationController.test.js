@@ -4,7 +4,6 @@ import {
   buildPageNavigationTransition,
   buildPostLoginTransition,
   buildPostLogoutTransition,
-  buildPostRegistrationTransition,
   buildReportDetailTransition,
   buildUserProfileTransition,
   getDashboardPage,
@@ -12,7 +11,6 @@ import {
   getLogoutPage,
   getPageFromPath,
   getPathFromPage,
-  getRegisterAuthPage,
   getReportsCategoryPage,
   getUsersPage,
   syncBrowserHistory,
@@ -65,9 +63,7 @@ describe('navigationController', () => {
     expect(getLogoutPage()).toBe(APP_PAGES.LOGOUT)
     expect(getDashboardPage()).toBe(APP_PAGES.DASHBOARD)
     expect(getLoginAuthPage()).toBe(AUTH_PAGES.LOGIN)
-    expect(getRegisterAuthPage()).toBe(AUTH_PAGES.REGISTER)
 
-    expect(buildPostRegistrationTransition()).toEqual({ nextAuthPage: AUTH_PAGES.LOGIN })
     expect(buildPostLoginTransition({ nextActivePage: APP_PAGES.DASHBOARD })).toEqual({
       isAuthenticated: true,
       nextActivePage: APP_PAGES.DASHBOARD,

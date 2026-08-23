@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AuthInputField, AuthPageShell, AuthPasswordField } from '../../components/Auth-Ui'
 
-export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, rememberedEmail }) {
+export function LoginPage({ onLogin, onForgotPassword, rememberedEmail }) {
 	const [form, setForm] = useState({
 		identifier: rememberedEmail,
 		password: '',
@@ -103,16 +103,8 @@ export function LoginPage({ onLogin, onForgotPassword, onSwitchToRegister, remem
 			.
 		</p>
 	) : (
-		<p>
-			Need an account?{' '}
-			<button
-				type="button"
-				onClick={onSwitchToRegister}
-				className="font-semibold text-white underline decoration-cyan-200 underline-offset-4"
-			>
-				Register here
-			</button>
-			.
+		<p className="text-xs text-white/70">
+			Admin accounts are provisioned internally by system administrators.
 		</p>
 	)
 

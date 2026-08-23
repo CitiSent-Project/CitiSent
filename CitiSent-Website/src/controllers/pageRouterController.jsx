@@ -2,9 +2,8 @@ import { lazy } from 'react'
 import { Dashboard } from '../frontend/Pages/Dashboard'
 import { Users } from '../frontend/Users/Users'
 import { LoginPage } from '../frontend/Pages/Login-Page'
-import { RegisterPage } from '../frontend/Pages/Register-Page'
 import { Logout } from '../frontend/Pages/Logout'
-import { APP_PAGES, AUTH_PAGES, REPORT_SECTIONS } from '../models/pageModel'
+import { APP_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 
 // Low-frequency pages are split into separate chunks. The named-export
 // adapters keep existing component modules unchanged while allowing Vite to
@@ -19,30 +18,14 @@ const AdminManagement = lazy(() => import('../frontend/Pages/AdminManagement').t
 const ConversationsPage = lazy(() => import('../frontend/Conversations/ConversationsPage').then((module) => ({ default: module.ConversationsPage })))
 
 export function renderAuthPage({
-    authPage,
-    onRegister,
-    onSwitchToLogin,
     onLogin,
     onForgotPassword,
-    onSwitchToRegister,
     rememberedEmail,
-    departmentOptions,
 }) {
-    if (authPage === AUTH_PAGES.REGISTER) {
-        return (
-            <RegisterPage
-                onRegister={onRegister}
-                onSwitchToLogin={onSwitchToLogin}
-                departmentOptions={departmentOptions}
-            />
-        )
-    }
-
     return (
         <LoginPage
             onLogin={onLogin}
             onForgotPassword={onForgotPassword}
-            onSwitchToRegister={onSwitchToRegister}
             rememberedEmail={rememberedEmail}
         />
     )

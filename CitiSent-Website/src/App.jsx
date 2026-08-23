@@ -6,7 +6,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import Toasters from './components/ui/Toasters'
 import { renderActivePage, renderAuthPage } from './controllers/pageRouterController'
-import { getLoginAuthPage, getRegisterAuthPage } from './controllers/navigationController'
+import { getLoginAuthPage } from './controllers/navigationController'
 import { useAppStateOrchestrator } from './hooks/useAppStateOrchestrator'
 import { SetupPasswordPage } from './frontend/Pages/SetupPassword'
 
@@ -111,14 +111,9 @@ function AuthenticatedApp() {
         <Toasters />
         <ErrorBoundary resetKeys={[appState.authPage]}>
           {renderAuthPage({
-            authPage: appState.authPage,
-            onRegister: appActions.onRegister,
-            onSwitchToLogin: () => appActions.setAuthPage(getLoginAuthPage()),
             onLogin: appActions.onLogin,
             onForgotPassword: appActions.onForgotPassword,
-            onSwitchToRegister: () => appActions.setAuthPage(getRegisterAuthPage()),
             rememberedEmail: appState.rememberedEmail,
-            departmentOptions: appState.departmentOptions,
           })}
         </ErrorBoundary>
       </>

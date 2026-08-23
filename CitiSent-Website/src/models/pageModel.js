@@ -17,7 +17,6 @@ export const APP_PAGES = {
 
 export const AUTH_PAGES = {
   LOGIN: 'Login',
-  REGISTER: 'Register',
 }
 
 export const REPORT_SECTIONS = {

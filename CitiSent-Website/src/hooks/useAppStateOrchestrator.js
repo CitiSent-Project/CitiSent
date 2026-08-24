@@ -828,6 +828,7 @@ export function useAppStateOrchestrator() {
   const {
     notifications,
     unreadNotifications,
+    isClearing: isClearingNotifications,
     handleToggleNotification,
     handleClearNotifications,
   } = useNotificationsState({
@@ -1504,6 +1505,7 @@ export function useAppStateOrchestrator() {
     notificationsByAdmin,
     notifications,
     unreadNotifications,
+    isClearingNotifications,
     preferences,
     transferRequests,
     departmentOptions,

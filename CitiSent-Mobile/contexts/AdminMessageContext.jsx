@@ -65,8 +65,8 @@ export function AdminMessageProvider({ children }) {
     _seedUnreadState(map);
   }, []);
 
-  const refreshFromApi = useCallback(async (reportIds, userId) => {
-    await seedUnreadStateFromApi(reportIds, userId);
+  const refreshFromApi = useCallback(async (reportIds, userId, force = true) => {
+    await seedUnreadStateFromApi(reportIds, userId, force);
   }, []);
 
   const value = {

@@ -124,10 +124,6 @@ export function seedUnreadState(map) {
 
   for (const [key, value] of Object.entries(map)) {
     const boolVal = Boolean(value);
-    // If currently true from a realtime event, preserve it unless API confirms true
-    if (next[key] === true && !boolVal) {
-      continue;
-    }
     if (next[key] !== boolVal) {
       next[key] = boolVal;
       changed = true;

@@ -67,6 +67,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
 
@@ -104,6 +105,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
     } else {
       setMessages([]);
       setInputText("");
+      setError(null);
       setIsAdminTyping(false);
     }
   }, [visible, report?.id]);
@@ -251,11 +253,13 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
 
   const loadMessages = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await discussionService.getDiscussion(report.id, currentUserId);
-      setMessages(data);
+      setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
       console.warn("Failed to load messages:", err);
+      setError(err?.message || "Failed to load conversation. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -405,6 +409,38 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
             <View className="flex-1 items-center justify-center" style={{ backgroundColor: Colors.screen.profileSubpage }}>
               <ActivityIndicator size="large" color={Colors.primary} />
               <Text className="mt-2 text-xs font-semibold" style={{ color: Colors.text.secondary }}>Loading conversation...</Text>
+            </View>
+          ) : error ? (
+            <View className="flex-1 items-center justify-center p-6" style={{ backgroundColor: Colors.screen.profileSubpage }}>
+              <Ionicons name="alert-circle-outline" size={36} color={Colors.icon.danger || "#EF4444"} />
+              <Text className="mt-2 text-sm font-bold text-center" style={{ color: Colors.text.primary }}>
+                Unable to load messages
+              </Text>
+              <Text className="mt-1 text-xs text-center" style={{ color: Colors.text.secondary }}>
+                {error}
+              </Text>
+              <Pressable
+                onPress={loadMessages}
+                className="mt-4 px-5 py-2.5 rounded-full active:opacity-80"
+                style={{ backgroundColor: Colors.primaryStrong }}
+              >
+                <Text className="text-xs font-bold text-white">Retry</Text>
+              </Pressable>
+            </View>
+          ) : messages.length === 0 ? (
+            <View className="flex-1 items-center justify-center p-6" style={{ backgroundColor: Colors.screen.profileSubpage }}>
+              <View
+                className="w-14 h-14 rounded-full items-center justify-center mb-3.5"
+                style={{ backgroundColor: Colors.ui.neutralSoft }}
+              >
+                <Ionicons name="chatbubbles-outline" size={28} color={Colors.primary} />
+              </View>
+              <Text className="text-base font-bold text-center mb-1" style={{ color: Colors.text.primary }}>
+                Start chatting with Admin
+              </Text>
+              <Text className="text-xs text-center" style={{ color: Colors.text.secondary }}>
+                Send a message to get started.
+              </Text>
             </View>
           ) : (
             <ScrollView

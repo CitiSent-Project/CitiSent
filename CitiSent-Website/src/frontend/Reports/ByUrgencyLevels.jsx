@@ -17,7 +17,7 @@ import {
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
 const URGENCY_COLORS = ['#ef4444', '#f97316', '#eab308', '#10b981']
-const WEEK_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const DAY_MS = 24 * 60 * 60 * 1000
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
 const EMOTION_FILTER_CHIPS = ['All Emotions', ...REPORT_EMOTION_OPTIONS]
 
@@ -160,20 +160,35 @@ export function ByUrgencyLevels({
   }, [rows])
 
   const reportsThisWeekData = useMemo(() => {
-    const values = WEEK_LABELS.map(() => 0)
+    const now = Date.now()
 
+    // Build rolling 7-day buckets (oldest → today), matching the Dashboard API
+    const points = []
+    const countsByDateKey = {}
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const pointTime = now - offset * DAY_MS
+      const d = new Date(pointTime)
+      const dateKey = d.toISOString().slice(0, 10) // 'YYYY-MM-DD'
+      const label = d.toLocaleDateString('en-US', { weekday: 'long' })
+      countsByDateKey[dateKey] = 0
+      points.push({ dateKey, label })
+    }
+
+    // Only count reports created within the last 7 days
+    const sevenDaysAgo = now - 7 * DAY_MS
     rows.forEach((row) => {
-      const parsedDate = new Date(row.createdAt || row.dateValue || 0)
-      const dayIndex = parsedDate.getDay()
-      if (!Number.isNaN(dayIndex)) {
-        values[dayIndex] += 1
+      const ts = Date.parse(row.createdAt || '')
+      if (Number.isNaN(ts) || ts < sevenDaysAgo) return
+      const dateKey = new Date(ts).toISOString().slice(0, 10)
+      if (countsByDateKey[dateKey] !== undefined) {
+        countsByDateKey[dateKey] += 1
       }
     })
 
     return {
       title: 'Total Reports This Week',
-      labels: WEEK_LABELS,
-      values,
+      labels: points.map((p) => p.label),
+      values: points.map((p) => countsByDateKey[p.dateKey]),
     }
   }, [rows])
 

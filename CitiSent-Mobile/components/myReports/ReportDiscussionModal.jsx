@@ -433,9 +433,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
                 className="w-14 h-14 rounded-full items-center justify-center mb-3.5"
                 style={{ backgroundColor: Colors.ui.neutralSoft }}
               >
-                <Ionicons name="chatbubbles-outline" size={28} color={Colors.primary} />
+                <Ionicons name="chatbubbles-outline" size={28} color={Colors.icon.muted} />
               </View>
-              <Text className="text-base font-bold text-center mb-1" style={{ color: Colors.text.primary }}>
+              <Text className="text-base font-bold text-center mb-1" style={{ color: Colors.text.secondary }}>
                 Start chatting with Admin
               </Text>
               <Text className="text-xs text-center" style={{ color: Colors.text.secondary }}>

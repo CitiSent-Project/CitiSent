@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import {
   buildClearAdminNotificationsTransition,
   countUnreadNotifications,
@@ -18,7 +18,7 @@ export function useNotificationsState({
 }) {
   const notifications = getAdminNotifications({ notificationsByAdmin, adminId: activeAdminId })
   const processingToggleIds = useRef(new Set())
-  const isClearingRef = useRef(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   async function handleToggleNotification(notificationId) {
     if (processingToggleIds.current.has(notificationId)) {
@@ -88,10 +88,10 @@ export function useNotificationsState({
   }
 
   async function handleClearNotifications() {
-    if (isClearingRef.current) {
+    if (isClearing) {
       return
     }
-    isClearingRef.current = true
+    setIsClearing(true)
 
     try {
       if (persistClearAll) {
@@ -111,7 +111,7 @@ export function useNotificationsState({
         notifyError('Notification cleanup failed.', error?.message || 'Unable to clear notifications.')
       }
     } finally {
-      isClearingRef.current = false
+      setIsClearing(false)
     }
   }
 
@@ -120,6 +120,7 @@ export function useNotificationsState({
   return {
     notifications,
     unreadNotifications,
+    isClearing,
     handleToggleNotification,
     handleClearNotifications,
   }

@@ -42,6 +42,8 @@ export function renderActivePage({
         adminAccounts,
         notificationsByAdmin,
         notifications,
+        isPageLoading,
+        isClearingNotifications,
         preferences,
         selectedUserProfile,
         selectedReport,
@@ -169,6 +171,8 @@ export function renderActivePage({
                     notifications={notifications}
                     onToggleRead={onToggleRead}
                     onClearAll={onClearAll}
+                    isLoading={isPageLoading}
+                    isClearing={isClearingNotifications}
                 />
             )
         case APP_PAGES.SETTINGS:

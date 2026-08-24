@@ -97,6 +97,11 @@ export function ReportHistoryTable({
       }
 
       return true;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.resolvedAt || a.createdAt || a.date || 0).getTime();
+      const dateB = new Date(b.resolvedAt || b.createdAt || b.date || 0).getTime();
+      return dateB - dateA; // latest first
     });
   }, [rows, selectedMonth, statusFilter, departmentFilter, urgencyFilter, emotionFilter]);
 

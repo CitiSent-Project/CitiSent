@@ -80,8 +80,9 @@ test("createReport stores AI-generated urgency and ignores client sentimentLabel
     });
   };
 
+  const deletedPrefixes = [];
   cacheService.deleteByPrefix = async (prefix) => {
-    deletedPrefix = prefix;
+    deletedPrefixes.push(prefix);
   };
 
   const result = await reportsService.createReport({
@@ -100,7 +101,7 @@ test("createReport stores AI-generated urgency and ignores client sentimentLabel
   assert.equal(capturedCreatePayload.attachment_url, "https://example.com/report.jpg");
   assert.ok(!("sentimentLabel" in capturedCreatePayload));
   assert.equal(result.sentimentLabel, "Critical");
-  assert.equal(deletedPrefix, buildReportsUserCachePrefix("user-1"));
+  assert.ok(deletedPrefixes.includes(buildReportsUserCachePrefix("user-1")));
 });
 
 test("createReport falls back to Moderate when sentiment analysis fails", async (t) => {
@@ -145,7 +146,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
   stubCommonDependencies(t);
 
   let capturedUpdatePayload = null;
-  let deletedPrefix = null;
+  const deletedPrefixes = [];
 
   reportsRepository.getById = async () => createReportRow();
 
@@ -171,7 +172,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
   };
 
   cacheService.deleteByPrefix = async (prefix) => {
-    deletedPrefix = prefix;
+    deletedPrefixes.push(prefix);
   };
 
   const result = await reportsService.updateReport({
@@ -191,7 +192,7 @@ test("updateReport reclassifies urgency when report text changes", async (t) => 
   assert.equal(capturedUpdatePayload.sentiment_label, "Critical");
   assert.ok(!("sentimentLabel" in capturedUpdatePayload));
   assert.equal(result.sentimentLabel, "Critical");
-  assert.equal(deletedPrefix, buildReportsUserCachePrefix("user-1"));
+  assert.ok(deletedPrefixes.includes(buildReportsUserCachePrefix("user-1")));
 });
 
 test("updateReport keeps the existing urgency when only non-text fields change", async (t) => {

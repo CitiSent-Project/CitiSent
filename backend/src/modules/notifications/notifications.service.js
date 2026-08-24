@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { AppError } from "../../shared/errors/appError.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
 import { toNotificationResponse } from "./notifications.mapper.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 function normalizeReadFilter(value) {
   const normalizedValue = String(value || "")
@@ -27,17 +28,22 @@ export const notificationsService = {
   async listNotifications({ userId, accessToken, limit, offset, read, reportId }) {
     const normalizedLimit = Number.isFinite(Number(limit)) ? Number(limit) : 20;
     const normalizedOffset = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+    const readFilter = normalizeReadFilter(read);
+    const cacheKey = `notifications:user:${userId}:r:${readFilter ?? "all"}:rep:${reportId || "all"}:l:${normalizedLimit}:o:${normalizedOffset}`;
+
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
 
     const result = await notificationsRepository.listNotifications({
       accessToken,
       userId,
       limit: normalizedLimit,
       offset: normalizedOffset,
-      isRead: normalizeReadFilter(read),
+      isRead: readFilter,
       reportId,
     });
 
-    return {
+    const response = {
       data: result.rows.map(toNotificationResponse),
       pagination: {
         total: result.count,
@@ -45,6 +51,9 @@ export const notificationsService = {
         offset: normalizedOffset,
       },
     };
+
+    await cacheService.setJSON(cacheKey, response, 60);
+    return response;
   },
 
   async updateNotificationReadState({ userId, accessToken, notificationId, isRead }) {

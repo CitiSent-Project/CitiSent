@@ -5,6 +5,7 @@ import {
   supabase,
 } from "../../../config/supabase.js";
 import { AppError } from "../../../shared/errors/appError.js";
+import { cacheService } from "../../../shared/cache/cacheService.js";
 
 const NOTIFICATIONS_TABLE = "notifications";
 
@@ -94,6 +95,12 @@ export const notificationsRepository = {
       throw toGatewayError("Failed to update notification", error);
     }
 
+    try {
+      await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
+    } catch {
+      // Non-critical cache invalidation fallback
+    }
+
     return data;
   },
 
@@ -126,6 +133,12 @@ export const notificationsRepository = {
       throw toGatewayError("Failed to update notifications", error);
     }
 
+    try {
+      await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
+    } catch {
+      // Non-critical cache invalidation fallback
+    }
+
     return data || [];
   },
 
@@ -149,6 +162,12 @@ export const notificationsRepository = {
 
     if (error) {
       throw toGatewayError("Failed to clear notifications", error);
+    }
+
+    try {
+      await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
+    } catch {
+      // Non-critical cache invalidation fallback
     }
 
     return data || [];
@@ -181,6 +200,12 @@ export const notificationsRepository = {
 
     if (error) {
       throw toGatewayError("Failed to create notification", error);
+    }
+
+    try {
+      await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
+    } catch {
+      // Non-critical cache invalidation fallback
     }
 
     return data;

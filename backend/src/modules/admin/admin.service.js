@@ -798,6 +798,14 @@ export const adminService = {
   },
 
   async listReports({ actor, accessToken, limit, offset, status, userId }) {
+    const role = actor?.role || "unknown";
+    const dept = actor?.departmentId || "all";
+    const actorId = isSuperadmin(role) ? "super" : (actor?.id || "anon");
+    const cacheKey = `admin:reports:r:${role}:d:${dept}:a:${actorId}:l:${limit || 50}:o:${offset || 0}:s:${status || "all"}:u:${userId || "all"}`;
+
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
+
     const [result, departmentCatalog] = await Promise.all([
       adminRepository.listReports({
         actor,
@@ -817,7 +825,7 @@ export const adminService = {
       applyDepartmentMetadataToReportRow(row, departmentLookup),
     );
 
-    return {
+    const response = {
       data: rowsWithDepartmentMeta.map((row) =>
         toAdminReportResponse({
           reportRow: row,
@@ -830,6 +838,9 @@ export const adminService = {
         offset,
       },
     };
+
+    await cacheService.setJSON(cacheKey, response, 60);
+    return response;
   },
 
   async listConversations({ actor, accessToken }) {
@@ -966,6 +977,18 @@ export const adminService = {
       userId: result.row?.user_id || null,
       departmentId: result.row?.issue_type || null,
     });
+
+    // Invalidate report feed caches
+    try {
+      await Promise.all([
+        cacheService.deleteByPrefix("admin:reports:"),
+        result.row?.user_id
+          ? cacheService.deleteByPrefix(`reports:user:${result.row.user_id}`)
+          : null,
+      ]);
+    } catch {
+      // Non-critical cache invalidation fallback
+    }
 
     return toAdminReportResponse({
       reportRow: applyDepartmentMetadataToReportRow(

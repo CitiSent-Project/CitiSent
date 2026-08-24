@@ -121,14 +121,21 @@ export const reportMessagesRepository = {
     }
 
     // Support existing admin assignments while the mapping table is populated.
-    const { data: profile, error: profileError } = await db
-      .from(PROFILES_TABLE)
-      .select("user_id, department_id, department_label, role, account_type")
-      .eq("user_id", userId)
-      .maybeSingle();
+    let profile = await cacheService.getJSON(`profile:user:${userId}`);
+    if (!profile) {
+      const { data, error: profileError } = await db
+        .from(PROFILES_TABLE)
+        .select("user_id, department_id, department_label, role, account_type")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (profileError) {
-      throw toGatewayError("Failed to verify report participant", profileError);
+      if (profileError) {
+        throw toGatewayError("Failed to verify report participant", profileError);
+      }
+      profile = data;
+      if (profile) {
+        await cacheService.setJSON(`profile:user:${userId}`, profile, 120);
+      }
     }
 
     const profileAssignedToAgency =

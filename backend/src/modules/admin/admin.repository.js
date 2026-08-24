@@ -7,6 +7,7 @@ import {
 import { AppError } from "../../shared/errors/appError.js";
 import { USER_ROLES, isSuperadmin } from "../../shared/auth/roleAccess.js";
 import { buildDepartmentCandidates } from "../../shared/data/departments.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 const PROFILES_TABLE = "profiles";
 const BANNED_USERS_TABLE = "banned_users";
@@ -106,19 +107,39 @@ async function loadReporterProfiles(db, rows = []) {
     return {};
   }
 
+  const profilesMap = {};
+  const missingIds = [];
+
+  await Promise.all(
+    reporterIds.map(async (userId) => {
+      const cached = await cacheService.getJSON(`profile:user:${userId}`);
+      if (cached) {
+        profilesMap[userId] = cached;
+      } else {
+        missingIds.push(userId);
+      }
+    }),
+  );
+
+  if (!missingIds.length) {
+    return profilesMap;
+  }
+
   const { data, error } = await db
     .from(PROFILES_TABLE)
     .select("user_id, email, username, fname, mname, lname")
-    .in("user_id", reporterIds);
+    .in("user_id", missingIds);
 
   if (error) {
     throw toGatewayError("Failed to fetch report owners", error);
   }
 
-  return (data || []).reduce((accumulator, profile) => {
-    accumulator[profile.user_id] = profile;
-    return accumulator;
-  }, {});
+  for (const profile of data || []) {
+    profilesMap[profile.user_id] = profile;
+    await cacheService.setJSON(`profile:user:${profile.user_id}`, profile, 120);
+  }
+
+  return profilesMap;
 }
 
 function applyDepartmentScope(query, actor) {

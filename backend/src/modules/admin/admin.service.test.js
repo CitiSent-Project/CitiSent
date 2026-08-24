@@ -91,3 +91,45 @@ test("getAdminNoteSuggestions falls back to the report sentiment without a conve
     cacheService.setJSON = originals.setJSON;
   }
 });
+
+test("adminService.listReports uses Redis cache when present", async () => {
+  const originals = {
+    listReports: adminRepository.listReports,
+    getJSON: cacheService.getJSON,
+    setJSON: cacheService.setJSON,
+  };
+
+  try {
+    const cachedResponse = {
+      data: [{ id: "cached-report-1", reportNumber: "REP-001" }],
+      pagination: { total: 1, limit: 50, offset: 0 },
+    };
+
+    cacheService.getJSON = async (key) => {
+      if (key.includes("admin:reports:")) {
+        return cachedResponse;
+      }
+      return null;
+    };
+
+    let repoCalled = false;
+    adminRepository.listReports = async () => {
+      repoCalled = true;
+      return { rows: [], count: 0, reporterProfilesByUserId: {} };
+    };
+
+    const result = await adminService.listReports({
+      actor: { role: "superadmin" },
+      accessToken: "token",
+      limit: 50,
+      offset: 0,
+    });
+
+    assert.equal(repoCalled, false);
+    assert.deepEqual(result, cachedResponse);
+  } finally {
+    adminRepository.listReports = originals.listReports;
+    cacheService.getJSON = originals.getJSON;
+    cacheService.setJSON = originals.setJSON;
+  }
+});

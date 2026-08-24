@@ -5,6 +5,7 @@ import {
   supabase,
 } from "../../config/supabase.js";
 import { AppError } from "../../shared/errors/appError.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 
 const AGENCIES_TABLE = "agencies";
 const PROFILES_TABLE = "profiles";
@@ -66,18 +67,37 @@ async function attachSignedLogoUrl({ accessToken, department }) {
     return department;
   }
 
+  const cacheKey = `agency:logo:${department.logoPath}`;
+  try {
+    const cachedUrl = await cacheService.getJSON(cacheKey);
+    if (cachedUrl) {
+      return {
+        ...department,
+        logoUrl: cachedUrl,
+      };
+    }
+  } catch {
+    // Non-critical cache read fallback
+  }
+
   const db = getStorageDb(accessToken);
   const { data, error } = await db.storage
     .from(AGENCY_LOGOS_BUCKET)
     .createSignedUrl(department.logoPath, LOGO_SIGNED_URL_TTL_SECONDS);
 
-  if (error) {
+  if (error || !data?.signedUrl) {
     return department;
+  }
+
+  try {
+    await cacheService.setJSON(cacheKey, data.signedUrl, 23 * 60 * 60);
+  } catch {
+    // Non-critical cache write fallback
   }
 
   return {
     ...department,
-    logoUrl: data?.signedUrl || null,
+    logoUrl: data.signedUrl,
   };
 }
 

@@ -285,27 +285,19 @@ async function registerWithAdminFallback({ email, password, userMetadata }) {
 }
 
 async function queryProfileByIdentifier(db, identifier) {
+  const normalized = String(identifier || "").trim();
+  if (!normalized) return { data: null, error: null };
+
   const { data, error } = await db
     .from(PROFILES_TABLE)
     .select("*")
     .or(
-      `email.eq.${identifier},username.eq.${identifier},phone_number.eq.${identifier}`,
+      `email.eq.${normalized},username.eq.${normalized},phone_number.eq.${normalized},email.ilike.${normalized},username.ilike.${normalized}`,
     )
     .limit(1)
     .maybeSingle();
 
-  if (error || data) {
-    return { data, error };
-  }
-
-  const fallback = await db
-    .from(PROFILES_TABLE)
-    .select("*")
-    .or(`email.ilike.${identifier},username.ilike.${identifier}`)
-    .limit(1)
-    .maybeSingle();
-
-  return fallback;
+  return { data, error };
 }
 
 async function queryProfileByEmail(db, email) {
@@ -460,58 +452,18 @@ export const authRepository = {
       return null;
     }
 
-    const { data, error } = await queryProfileByEmail(
-      getDbClient(),
-      normalizedEmail,
-    );
-
     const adminDb = createAdminSupabaseClient();
+    const db = adminDb || getDbClient();
+    const { data, error } = await queryProfileByEmail(db, normalizedEmail);
 
-    if (!error) {
-      if (data || !adminDb) {
-        return data;
+    if (error) {
+      if (isMissingProfilesTable(error)) {
+        return null;
       }
-
-      const { data: adminData, error: adminError } = await queryProfileByEmail(
-        adminDb,
-        normalizedEmail,
-      );
-
-      if (adminError) {
-        if (isMissingProfilesTable(adminError)) {
-          return null;
-        }
-        throw toGatewayError("Failed to fetch profile by email", adminError);
-      }
-
-      return adminData;
-    }
-
-    if (isMissingProfilesTable(error)) {
-      return null;
-    }
-
-    if (!isAccessDenied(error)) {
       throw toGatewayError("Failed to fetch profile by email", error);
     }
 
-    if (!adminDb) {
-      return null;
-    }
-
-    const { data: adminData, error: adminError } = await queryProfileByEmail(
-      adminDb,
-      normalizedEmail,
-    );
-
-    if (adminError) {
-      if (isMissingProfilesTable(adminError)) {
-        return null;
-      }
-      throw toGatewayError("Failed to fetch profile by email", adminError);
-    }
-
-    return adminData;
+    return data || null;
   },
 
   async updateAuthUserPassword(userId, newPassword) {
@@ -766,54 +718,18 @@ export const authRepository = {
   },
 
   async getProfileByIdentifier(identifier) {
-    const db = getDbClient();
+    const adminDb = createAdminSupabaseClient();
+    const db = adminDb || getDbClient();
     const { data, error } = await queryProfileByIdentifier(db, identifier);
 
-    const adminDb = createAdminSupabaseClient();
-
-    if (!error) {
-      if (data || !adminDb) {
-        return data;
+    if (error) {
+      if (isMissingProfilesTable(error)) {
+        return null;
       }
-
-      const { data: adminData, error: adminError } =
-        await queryProfileByIdentifier(adminDb, identifier);
-
-      if (adminError) {
-        if (isMissingProfilesTable(adminError)) {
-          return null;
-        }
-
-        throw toGatewayError("Failed to resolve login identifier", adminError);
-      }
-
-      return adminData;
-    }
-
-    if (isMissingProfilesTable(error)) {
-      return null;
-    }
-
-    if (!isAccessDenied(error)) {
       throw toGatewayError("Failed to resolve login identifier", error);
     }
 
-    if (!adminDb) {
-      return null;
-    }
-
-    const { data: adminData, error: adminError } =
-      await queryProfileByIdentifier(adminDb, identifier);
-
-    if (adminError) {
-      if (isMissingProfilesTable(adminError)) {
-        return null;
-      }
-
-      throw toGatewayError("Failed to resolve login identifier", adminError);
-    }
-
-    return adminData;
+    return data || null;
   },
 
   async upsertProfileByUserId(userId, payload, accessToken) {

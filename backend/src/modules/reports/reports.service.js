@@ -216,7 +216,10 @@ export const reportsService = {
       accessToken,
     );
 
-    await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
+    await Promise.all([
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId)),
+      cacheService.deleteByPrefix("admin:reports:"),
+    ]);
 
     const response = toReportResponse(created);
 
@@ -314,7 +317,10 @@ export const reportsService = {
       throw new AppError("Report not found", StatusCodes.NOT_FOUND);
     }
 
-    await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
+    await Promise.all([
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId)),
+      cacheService.deleteByPrefix("admin:reports:"),
+    ]);
 
     const response = toReportResponse(updated);
 
@@ -340,7 +346,10 @@ export const reportsService = {
       throw new AppError("Report not found", StatusCodes.NOT_FOUND);
     }
 
-    await cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId));
+    await Promise.all([
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId)),
+      cacheService.deleteByPrefix("admin:reports:"),
+    ]);
 
     // Emit report feed event after successful deletion.
     emitReportFeedChanged({

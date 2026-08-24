@@ -22,6 +22,7 @@ import {
   sendOtpEmail,
 } from "../../shared/email/mailer.js";
 import { otpStore_ } from "../../shared/security/otp.store.js";
+import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
 
@@ -421,19 +422,38 @@ export const authService = {
     );
     const resolvedEmail = loginContext.email;
 
-    // Check for an active ban BEFORE attempting Supabase authentication.
-    // When account_status is 'banned', Supabase may reject the credentials
-    // with a generic 'Invalid credentials' error. We intercept early
-    // so the user gets the correct 'banned' message.
-    const preProfile =
-      loginContext.profile ||
-      (await track("preAuthProfileLookup", () =>
-        authRepository.getProfileByIdentifier(resolvedEmail),
-      ));
+    // Concurrently run profile resolution and Supabase authentication.
+    // If identifier was username/phone, profile is already in loginContext.
+    // If identifier was email, profile fetch and auth request run in parallel.
+    const profilePromise = loginContext.profile
+      ? Promise.resolve(loginContext.profile)
+      : track("preAuthProfileLookup", () =>
+          authRepository.getProfileByIdentifier(resolvedEmail),
+        );
+
+    const authPromise = track("supabaseAuth", () =>
+      authRepository.loginWithEmailPassword({
+        email: resolvedEmail,
+        password: payload.password,
+      }),
+    ).then(
+      (data) => ({ ok: true, data }),
+      (err) => ({ ok: false, err }),
+    );
+
+    const [preProfile, authResult] = await Promise.all([
+      profilePromise,
+      authPromise,
+    ]);
+
+    // Check for active ban before handling any auth errors
     if (preProfile?.user_id) {
-      const isBanned = await track("banLookup", () =>
-        authRepository.checkActiveBanByUserId(preProfile.user_id),
-      );
+      const isBanned =
+        String(preProfile.account_status || "").trim().toLowerCase() === "banned" ||
+        (await track("banLookup", () =>
+          authRepository.checkActiveBanByUserId(preProfile.user_id),
+        ));
+
       if (isBanned) {
         throw new AppError(
           "Your account has been banned.",
@@ -442,13 +462,11 @@ export const authService = {
       }
     }
 
-    const signInData = await track("supabaseAuth", () =>
-      authRepository.loginWithEmailPassword({
-        email: resolvedEmail,
-        password: payload.password,
-      }),
-    );
+    if (!authResult.ok) {
+      throw authResult.err;
+    }
 
+    const signInData = authResult.data;
     const userId = signInData?.user?.id;
     const profile =
       userId && preProfile?.user_id === userId
@@ -463,6 +481,15 @@ export const authService = {
           : null;
 
     assertAccountIsActive(profile);
+
+    // Warm user profile cache for subsequent requests
+    if (userId && profile) {
+      try {
+        await cacheService.setJSON(`profile:user:${userId}`, profile, 120);
+      } catch {
+        // Non-critical cache priming
+      }
+    }
 
     return toUserResponse({
       user: signInData?.user,

@@ -102,6 +102,48 @@ function normalizeUser(user, options = {}) {
   };
 }
 
+function decodeBase64(input) {
+  if (typeof globalThis.atob === "function") {
+    try {
+      return globalThis.atob(input);
+    } catch {}
+  }
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  let str = String(input || "").replace(/=+$/, "");
+  let output = "";
+  if (str.length % 4 === 1) return "";
+  for (
+    let bc = 0, bs = 0, buffer, idx = 0;
+    (buffer = str.charAt(idx++));
+    ~buffer && ((bs = bc % 4 ? bs * 64 + buffer : buffer), bc++ % 4)
+      ? (output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6))))
+      : 0
+  ) {
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+
+export function isJwtExpired(token) {
+  if (!token || typeof token !== "string") return true;
+  const parts = token.trim().split(".");
+  if (parts.length !== 3) return false;
+
+  try {
+    let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) base64 += "=";
+    const jsonStr = decodeBase64(base64);
+    const payload = JSON.parse(jsonStr);
+    if (payload && typeof payload.exp === "number") {
+      // 10-second skew buffer
+      return payload.exp * 1000 <= Date.now() + 10000;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 const authListeners = new Set();
 
 export function onAuthStateChanged(listener) {
@@ -125,8 +167,17 @@ export async function initAuthSession() {
   try {
     const token = await getCache("auth_token", { ignoreExpiry: true });
     const user = await getCache("auth_user", { ignoreExpiry: true });
-    if (token) sessionToken = token;
-    if (user) sessionUser = user;
+
+    if (token && isJwtExpired(token)) {
+      // Token is expired; clear stale cached session
+      await removeCache("auth_token");
+      await removeCache("auth_user");
+      sessionToken = "";
+      sessionUser = null;
+    } else {
+      if (token) sessionToken = token;
+      if (user) sessionUser = user;
+    }
   } catch (err) {
     console.warn("Failed to initialize auth session from storage:", err);
   } finally {
@@ -139,10 +190,23 @@ export async function initAuthSession() {
 export function setAuthToken(token, expiresInSeconds = 7 * 86400) {
   sessionToken = normalizeToken(token);
   if (sessionToken) {
-    // Store with a TTL matching your JWT expiry (default 7 days).
-    // This prevents the client from sending a server-expired token on every
-    // request until a 401 finally clears it. Fix for Issue #6.
-    setCache("auth_token", sessionToken, expiresInSeconds);
+    let calculatedTtl = expiresInSeconds;
+    try {
+      const parts = sessionToken.split(".");
+      if (parts.length === 3) {
+        let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) base64 += "=";
+        const payload = JSON.parse(decodeBase64(base64));
+        if (payload?.exp) {
+          const diffSeconds = Math.floor((payload.exp * 1000 - Date.now()) / 1000);
+          if (diffSeconds > 0) {
+            calculatedTtl = diffSeconds;
+          }
+        }
+      }
+    } catch {}
+
+    setCache("auth_token", sessionToken, calculatedTtl);
   } else {
     removeCache("auth_token");
   }

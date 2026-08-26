@@ -1,7 +1,9 @@
+import crypto from "node:crypto";
 import { Server as SocketIOServer } from "socket.io";
 import { env } from "../config/env.js";
 import { supabase } from "../config/supabase.js";
 import { logger } from "../config/logger.js";
+import { cacheService } from "../shared/cache/cacheService.js";
 import { reportMessagesService } from "../modules/reports/messages.service.js";
 import { profileRepository } from "../shared/repositories/profileRepository.js";
 import { isSuperadmin, normalizeUserRole, USER_ROLES } from "../shared/auth/roleAccess.js";
@@ -18,6 +20,10 @@ function extractToken(handshake) {
     return authHeader.slice("Bearer ".length).trim();
   }
   return String(authHeader).trim();
+}
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 export function initSocketIO(httpServer) {
@@ -41,6 +47,17 @@ export function initSocketIO(httpServer) {
         return next(new Error("Authentication token required"));
       }
 
+      const tokenHash = hashToken(token);
+      const cacheKey = `auth:token:${tokenHash}`;
+
+      // Fast-path: Check cache for verified user session
+      const cachedUser = await cacheService.getJSON(cacheKey);
+      if (cachedUser?.id) {
+        socket.user = cachedUser;
+        socket.accessToken = token;
+        return next();
+      }
+
       const { data, error } = await supabase.auth.getUser(token);
       if (error || !data?.user) {
         return next(new Error("Invalid or expired authentication token"));
@@ -52,6 +69,10 @@ export function initSocketIO(httpServer) {
         role: data.user.role,
       };
       socket.accessToken = token;
+
+      // Cache valid auth session for 60s
+      await cacheService.setJSON(cacheKey, socket.user, 60);
+
       return next();
     } catch (err) {
       logger.error("Socket authentication error:", err);

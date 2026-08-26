@@ -1,6 +1,6 @@
 import { io } from "socket.io-client/dist/socket.io.js";
 import { resolveApiBaseUrl } from "./apiConfig";
-import { getAuthToken } from "./authSession";
+import { getAuthToken, clearAuthToken, isJwtExpired, onAuthStateChanged } from "./authSession";
 
 let socketInstance = null;
 
@@ -12,9 +12,17 @@ export function resolveSocketBaseUrl() {
 /**
  * Initialize or retrieve the singleton Socket.IO connection.
  * Connects automatically using the user's authentication token.
+ * Returns null if no valid authentication token is available.
  */
 export function getSocket(options = {}) {
   const token = options.token || getAuthToken();
+
+  if (!token || isJwtExpired(token)) {
+    if (socketInstance) {
+      disconnectSocket();
+    }
+    return null;
+  }
 
   if (socketInstance) {
     if (token && socketInstance.auth?.token !== token) {
@@ -33,7 +41,7 @@ export function getSocket(options = {}) {
     autoConnect: true,
     transports: ["websocket", "polling"],
     reconnection: true,
-    reconnectionAttempts: Infinity,
+    reconnectionAttempts: 20,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
   });
@@ -43,13 +51,26 @@ export function getSocket(options = {}) {
   });
 
   socketInstance.on("connect_error", (error) => {
-    console.warn("[Socket.IO Client Error]:", error?.message);
+    const errorMsg = error?.message || "";
+    console.warn("[Socket.IO Client Error]:", errorMsg);
+
+    // If server rejected authentication (expired or invalid token),
+    // disconnect immediately to prevent infinite reconnect loop and clear stale session
+    if (
+      errorMsg.includes("Invalid or expired") ||
+      errorMsg.includes("Authentication token required") ||
+      errorMsg.includes("Authentication failed")
+    ) {
+      disconnectSocket();
+      clearAuthToken();
+    }
   });
 
   socketInstance.on("disconnect", (reason) => {
     if (reason === "io server disconnect") {
       // Server forcibly disconnected socket; attempt manual reconnect if token valid
-      if (getAuthToken()) {
+      const currentToken = getAuthToken();
+      if (currentToken && !isJwtExpired(currentToken)) {
         socketInstance.connect();
       }
     }
@@ -67,6 +88,14 @@ export function disconnectSocket() {
     socketInstance = null;
   }
 }
+
+// Automatically react to auth changes (logout or token clear)
+onAuthStateChanged((user) => {
+  const token = getAuthToken();
+  if (!user || !token || isJwtExpired(token)) {
+    disconnectSocket();
+  }
+});
 
 /**
  * Join a report conversation room to receive real-time updates

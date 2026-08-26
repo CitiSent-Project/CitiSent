@@ -2,21 +2,23 @@ import { View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors } from "../../modules/shared";
+import { Colors, useNotifications } from "../../modules/shared";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 /**
  * Profile tab icon with a shared real-time red notification dot.
- * Reads hasUnreadAdminMessage from the singleton-backed context so it updates
- * immediately on Supabase Realtime events regardless of which screen is active.
+ * Reads hasUnreadAdminMessage and unread notifications from the singleton-backed store
+ * so it updates immediately on Realtime events regardless of which screen is active.
  */
 function ProfileTabIcon({ color, size }) {
   const { hasUnreadAdminMessage } = useAdminMessageState();
+  const { unreadCount } = useNotifications();
+  const hasBadge = Boolean(hasUnreadAdminMessage || unreadCount > 0);
 
   return (
     <View style={{ position: "relative" }}>
       <Ionicons name="person-outline" size={size} color={color} />
-      {hasUnreadAdminMessage && (
+      {hasBadge && (
         <View
           style={{
             position: "absolute",

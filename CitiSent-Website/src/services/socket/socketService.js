@@ -12,8 +12,15 @@ export function resolveSocketBaseUrl() {
  * Initialize or retrieve the singleton Socket.IO connection for Website Admin.
  */
 export function getSocket(token) {
+  if (!token) {
+    if (socketInstance) {
+      disconnectSocket()
+    }
+    return null
+  }
+
   if (socketInstance) {
-    if (token && socketInstance.auth?.token !== token) {
+    if (socketInstance.auth?.token !== token) {
       socketInstance.auth = { token }
       if (!socketInstance.connected) {
         socketInstance.connect()
@@ -40,7 +47,16 @@ export function getSocket(token) {
   })
 
   socketInstance.on('connect_error', (error) => {
-    console.warn('[Socket.IO Admin Client Error]:', error?.message)
+    const msg = error?.message || ''
+    console.warn('[Socket.IO Admin Client Error]:', msg)
+
+    if (
+      msg.includes('Invalid or expired') ||
+      msg.includes('Authentication token required') ||
+      msg.includes('Authentication failed')
+    ) {
+      disconnectSocket()
+    }
   })
 
   return socketInstance

@@ -167,7 +167,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
 
     // Socket.IO room & listeners
     const socket = getSocket();
-    joinReportRoom(report.id);
+    if (socket) {
+      joinReportRoom(report.id);
+    }
 
     const handleReceiveMessage = (data) => {
       if (String(data?.reportId) !== String(report.id) || !data?.message) return;
@@ -231,10 +233,12 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       }
     };
 
-    socket.on("receive_message", handleReceiveMessage);
-    socket.on("messages_read", handleMessagesRead);
-    socket.on("typing", handleTyping);
-    socket.on("stop_typing", handleStopTyping);
+    if (socket) {
+      socket.on("receive_message", handleReceiveMessage);
+      socket.on("messages_read", handleMessagesRead);
+      socket.on("typing", handleTyping);
+      socket.on("stop_typing", handleStopTyping);
+    }
 
     return () => {
       if (supabaseChannel) {
@@ -243,11 +247,13 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
           supabase.removeChannel(supabaseChannel);
         } catch {}
       }
-      socket.off("receive_message", handleReceiveMessage);
-      socket.off("messages_read", handleMessagesRead);
-      socket.off("typing", handleTyping);
-      socket.off("stop_typing", handleStopTyping);
-      leaveReportRoom(report.id);
+      if (socket) {
+        socket.off("receive_message", handleReceiveMessage);
+        socket.off("messages_read", handleMessagesRead);
+        socket.off("typing", handleTyping);
+        socket.off("stop_typing", handleStopTyping);
+        leaveReportRoom(report.id);
+      }
     };
   }, [visible, report?.id, currentUserId]);
 

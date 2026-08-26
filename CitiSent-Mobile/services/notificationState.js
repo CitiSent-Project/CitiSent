@@ -27,9 +27,10 @@ let isSocketInitialized = false;
 
 function initSocketNotificationListener() {
   if (isSocketInitialized) return;
-  isSocketInitialized = true;
   try {
     const socket = getSocket();
+    if (!socket) return;
+    isSocketInitialized = true;
     socket.on("receive_message", () => {
       refreshNotifications().catch(() => {});
     });

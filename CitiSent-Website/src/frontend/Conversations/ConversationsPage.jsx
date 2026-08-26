@@ -52,9 +52,9 @@ export function ConversationsPage({ profile, onViewReport }) {
   } = useConversationsState({ profile })
 
   return (
-    <main className="mx-auto max-w-[1600px] flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
+    <main className="mx-auto max-w-400 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
       <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className={`flex w-full flex-col border-r border-slate-200 md:w-[360px] md:shrink-0 lg:w-[380px] ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`flex w-full flex-col border-r border-slate-200 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
           <header className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export function ConversationsPage({ profile, onViewReport }) {
                       {suggestionsLoading ? <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div> : suggestions.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {suggestions.map((suggestion, index) => (
-                            <button key={index} type="button" onClick={() => !sending && handleSend(suggestion.text)} disabled={sending} className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal break-words [overflow-wrap:anywhere] shadow-2xs ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''}`}>
+                            <button key={index} type="button" onClick={() => !sending && handleSend(suggestion.text)} disabled={sending} className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal wrap-anywhere shadow-2xs ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''}`}>
                               {index === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
                               <span>{suggestion.text}</span>
                             </button>

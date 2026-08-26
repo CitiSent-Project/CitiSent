@@ -1,24 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle, FiRefreshCw } from 'react-icons/fi'
-import { notifySuccess, notifyError } from '../ui/toastHelpers'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
   REPORT_URGENCY_BADGE_CLASSES,
   REPORT_EMOTION_BADGE_CLASSES,
-  normalizeReportStatus,
 } from '../../models/reportStatusModel'
-import {
-  createReportTimelineEntry,
-  validateReportStatusChange,
-} from '../../controllers/reportStatusController'
-import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import { ReportChatDrawer } from './ReportChatDrawer'
-import { reportsApiService } from '../../services/api/admin/reportsApiService'
-import { mapBackendAdminNoteSuggestionsToUi, mapBackendMessagesResponse, mapUiStatusToBackendStatus } from '../../services/api/admin/reportsApiMappers'
-import { loadFromStorageWithSchema } from '../../services/storageService'
-import { ADMIN_STORAGE_KEYS } from '../../models/data'
-import { getStorageSchemaRule } from '../../models/storageSchemaModel'
+import { useReportDetailState } from '../../hooks/useReportDetailState'
 
 const STATUS_ICONS = {
   Pending: FiClock,
@@ -27,80 +15,60 @@ const STATUS_ICONS = {
   Unresolved: FiAlertCircle,
 }
 
+/**
+ * ReportDetailPage
+ *
+ * Presentation component for an individual report. All stateful side
+ * effects (API calls, timers, storage reads, admin-note suggestions)
+ * live in the `useReportDetailState` hook — this component handles
+ * rendering and event wiring only.
+ *
+ * Props are intentionally unchanged from the original contract:
+ * @param {object}   report          - Report data (or null when missing).
+ * @param {object}   profile         - Current admin profile.
+ * @param {Function} onBackToReports - Navigate back to the reports list.
+ * @param {Function} onUpdateStatus  - Persist a status change through the orchestrator.
+ */
 export function ReportDetailPage({ report, profile, onBackToReports, onUpdateStatus }) {
-  const [adminNotes, setAdminNotes] = useState('')
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false)
-  const [pendingValidation, setPendingValidation] = useState(null)
-  const [selectedStatus, setSelectedStatus] = useState(() => normalizeReportStatus(report?.status))
-  const [isSaving, setIsSaving] = useState(false)
-  const [isCooldown, setIsCooldown] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
-  const [adminNoteSuggestions, setAdminNoteSuggestions] = useState([])
-  const [isAdminNoteSuggestionsLoading, setIsAdminNoteSuggestionsLoading] = useState(false)
-  const cooldownTimerRef = useRef(null)
-  const [timeline, setTimeline] = useState(() => [
-    {
-      id: 1,
-      action: 'Report Submitted',
-      status: 'Pending',
-      note: 'Report was submitted by the citizen.',
-      date: report?.date || 'N/A',
-      actor: report?.name || 'Citizen',
-    },
-  ])
+  const {
+    // State values
+    accessToken,
+    adminNotes,
+    selectedStatus,
+    isSaving,
+    isImageModalOpen,
+    isVerificationModalOpen,
+    pendingValidation,
+    isChatOpen,
+    adminNoteSuggestions,
+    isAdminNoteSuggestionsLoading,
+    timeline,
+    unreadChatCount,
 
-  const [unreadChatCount, setUnreadChatCount] = useState(0)
-  const accessTokenRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
-  const accessToken = loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.accessToken, '', accessTokenRule)
+    // Derived values
+    currentStatus,
+    isPermanentlyLocked,
+    canProcessReport,
+    canChat,
+    isSaveDisabled,
 
-  useEffect(() => {
-    if (!report?.id || !accessToken) return
-    let isMounted = true
-    reportsApiService.listReportMessages(accessToken, report.id)
-      .then((res) => {
-        const msgs = mapBackendMessagesResponse(res)
-        const unread = msgs.filter((m) => m.senderRole !== 'admin' && !m.isRead).length
-        if (isMounted) setUnreadChatCount(unread)
-      })
-      .catch(() => {})
-    return () => { isMounted = false }
-  }, [report?.id, accessToken])
+    // Setters
+    setAdminNotes,
+    setSelectedStatus,
+    setIsImageModalOpen,
 
-  const loadAdminNoteSuggestions = useCallback(async (forceRegenerate = false) => {
-    if (!report?.id || !accessToken) return
+    // Actions
+    handleStatusSave,
+    executeStatusSave,
+    handleOpenChat,
+    handleCloseChat,
+    handleCloseVerification,
+    loadAdminNoteSuggestions,
+  } = useReportDetailState({ report, profile, onUpdateStatus })
 
-    setIsAdminNoteSuggestionsLoading(true)
-    try {
-      const response = await reportsApiService.getReportAdminNoteSuggestions(
-        accessToken,
-        report.id,
-        mapUiStatusToBackendStatus(selectedStatus),
-        forceRegenerate,
-      )
-      const mapped = mapBackendAdminNoteSuggestionsToUi(response)
-      setAdminNoteSuggestions(mapped.suggestedNotes || [])
-    } catch {
-      // The backend normally returns status-specific fallbacks. Keep the note field usable if it is unavailable.
-      setAdminNoteSuggestions([])
-    } finally {
-      setIsAdminNoteSuggestionsLoading(false)
-    }
-  }, [accessToken, report?.id, selectedStatus])
-
-  useEffect(() => {
-    loadAdminNoteSuggestions()
-  }, [loadAdminNoteSuggestions])
-
-  useEffect(() => {
-    return () => {
-      if (cooldownTimerRef.current) {
-        window.clearTimeout(cooldownTimerRef.current)
-        cooldownTimerRef.current = null
-      }
-    }
-  }, [])
-
+  // ---------------------------------------------------------------------------
+  // "Not found" fallback when the report is null/undefined.
+  // ---------------------------------------------------------------------------
   if (!report) {
     return (
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -118,96 +86,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
     )
   }
 
-  const currentStatus = normalizeReportStatus(report.status)
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
-
-  // A report marked as Unresolved or Resolved is permanently locked.
-  const isPermanentlyLocked = currentStatus === 'Unresolved' || currentStatus === 'Resolved'
-  const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
-  const canChat = canAdminUpdateReport({ profile, report })
-  const isSaveDisabled =
-    !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
-
-  function startCooldown() {
-    if (cooldownTimerRef.current) {
-      window.clearTimeout(cooldownTimerRef.current)
-    }
-
-    setIsCooldown(true)
-    cooldownTimerRef.current = window.setTimeout(() => {
-      setIsCooldown(false)
-      cooldownTimerRef.current = null
-    }, 1000)
-  }
-
-  async function handleStatusSave() {
-    if (isSaving || isCooldown || isPermanentlyLocked) {
-      return
-    }
-
-    if (!canProcessReport) {
-      notifyError('Status update denied.', 'You can only process reports assigned to your department.')
-      return
-    }
-
-    if (selectedStatus === currentStatus) {
-      return
-    }
-
-    const validation = validateReportStatusChange({
-      currentStatus,
-      nextStatus: selectedStatus,
-      adminNotes,
-    })
-
-    if (!validation.ok) {
-      notifyError(validation.title, validation.message)
-      return
-    }
-
-    // Intercept if marking as Unresolved or Resolved to show verification modal
-    if (validation.nextStatus === 'Unresolved' || validation.nextStatus === 'Resolved') {
-      setPendingValidation(validation)
-      setIsVerificationModalOpen(true)
-      return
-    }
-
-    // Otherwise, proceed to save immediately
-    await executeStatusSave(validation)
-  }
-
-  async function executeStatusSave(validation) {
-    startCooldown()
-    setIsSaving(true)
-
-    try {
-      const result = await onUpdateStatus(report.id, validation.nextStatus, adminNotes)
-      if (!result?.ok) {
-        return
-      }
-
-      setTimeline((previous) => [
-        ...previous,
-        {
-          id: previous.length + 1,
-          ...createReportTimelineEntry({
-            nextStatus: validation.nextStatus,
-            adminNotes,
-          }),
-        },
-      ])
-
-      notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
-      setAdminNotes('')
-      setSelectedStatus(validation.nextStatus)
-
-      // Clear modal state on success
-      setIsVerificationModalOpen(false)
-      setPendingValidation(null)
-    } finally {
-      setIsSaving(false)
-    }
-  }
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
@@ -461,10 +340,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             {canChat ? (
               <button
                 type="button"
-                onClick={() => {
-                  setIsChatOpen(true)
-                  setUnreadChatCount(0)
-                }}
+                onClick={handleOpenChat}
                 className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a]"
               >
                 <FiMessageCircle />
@@ -569,10 +445,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <button
                 type="button"
-                onClick={() => {
-                  setIsVerificationModalOpen(false)
-                  setPendingValidation(null)
-                }}
+                onClick={handleCloseVerification}
                 disabled={isSaving}
                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -593,7 +466,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           </div>
         </div>
       ) : null}
-      {isChatOpen ? <ReportChatDrawer report={report} profile={profile} token={accessToken} onClose={() => setIsChatOpen(false)} /> : null}
+      {isChatOpen ? <ReportChatDrawer report={report} profile={profile} token={accessToken} onClose={handleCloseChat} /> : null}
     </main>
   )
 }

@@ -1,7 +1,8 @@
 import { notificationsApi } from "./notifications";
 import { setCache, getCache } from "./cache";
 import { getSocket } from "./socketService";
-import { getAuthUser } from "./authSession";
+import { getAuthUser, onAuthStateChanged } from "./authSession";
+import { getSupabaseClient } from "./supabase";
 
 const listeners = new Set();
 
@@ -24,6 +25,43 @@ let lastError = null;
 let offset = 0;
 const LIMIT = 10;
 let isSocketInitialized = false;
+let supabaseChannel = null;
+
+function initSupabaseNotificationListener() {
+  if (supabaseChannel) return;
+  try {
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    const user = getAuthUser();
+    const userId = user?.id;
+
+    supabaseChannel = client
+      .channel("notifications_realtime_global")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+        },
+        (payload) => {
+          const rowUserId = payload.new?.user_id || payload.old?.user_id;
+          if (!userId || !rowUserId || String(rowUserId) === String(userId)) {
+            refreshNotifications().catch(() => {});
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          supabaseChannel = null;
+        }
+      });
+  } catch (err) {
+    console.warn("[notificationState] Failed to subscribe to Supabase Realtime:", err?.message);
+    supabaseChannel = null;
+  }
+}
 
 function initSocketNotificationListener() {
   if (isSocketInitialized) return;
@@ -34,8 +72,33 @@ function initSocketNotificationListener() {
     socket.on("receive_message", () => {
       refreshNotifications().catch(() => {});
     });
+    socket.on("new_report_message", () => {
+      refreshNotifications().catch(() => {});
+    });
+    socket.on("new_notification", () => {
+      refreshNotifications().catch(() => {});
+    });
+    socket.on("report_feed_changed", () => {
+      refreshNotifications().catch(() => {});
+    });
   } catch {}
 }
+
+onAuthStateChanged((user) => {
+  if (!user) {
+    if (supabaseChannel) {
+      try {
+        const client = getSupabaseClient();
+        if (client) client.removeChannel(supabaseChannel);
+      } catch {}
+      supabaseChannel = null;
+    }
+    isSocketInitialized = false;
+  } else {
+    initSupabaseNotificationListener();
+    initSocketNotificationListener();
+  }
+});
 
 function getUnreadCount(items = []) {
   return items.filter((item) => !item.read).length;
@@ -97,6 +160,7 @@ function setLastError(error) {
 }
 
 export function subscribeToNotifications(listener) {
+  initSupabaseNotificationListener();
   initSocketNotificationListener();
   listeners.add(listener);
 

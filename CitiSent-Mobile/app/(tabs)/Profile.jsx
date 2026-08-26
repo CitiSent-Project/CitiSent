@@ -8,7 +8,7 @@ import {
   LogoutConfirmSheet,
   ProfileMenuItem,
 } from "../../modules/profile";
-import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
+import { RefreshableScrollView, usePullToRefresh, useNotifications, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
 import { getAuthPhoneNumber, getAuthUsername, getAuthGender, getAuthProfileImage } from "../../services/authSession";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
@@ -20,6 +20,7 @@ export default function Profile() {
 
   // Shared real-time notification state from the global singleton
   const { hasUnreadAdminMessage } = useAdminMessageState();
+  const { unreadCount, refreshNotifications } = useNotifications();
 
   // Fix 2: store session-derived values in state so they update when the
   // screen regains focus (e.g. after returning from Edit Profile).
@@ -46,6 +47,7 @@ export default function Profile() {
     setDisplayPhoneNumber(getAuthPhoneNumber(""));
     setDisplayGender(getAuthGender());
     setDisplayProfileImage(getAuthProfileImage());
+    refreshNotifications().catch(() => {});
   });
 
   const profileActions = [
@@ -102,7 +104,10 @@ export default function Profile() {
               icon={item.icon}
               label={item.label}
               onPress={() => router.push(item.route)}
-              showBadge={item.id === "reports" && hasUnreadAdminMessage}
+              showBadge={
+                (item.id === "reports" && hasUnreadAdminMessage) ||
+                (item.id === "notifications" && unreadCount > 0)
+              }
             />
           ))}
 

@@ -33,6 +33,12 @@ import {
 } from '../controllers/navigationController'
 import { useAuthSession } from './useAuthSession'
 import { useNotificationsState } from './useNotificationsState'
+import {
+  normalizeDepartmentOption,
+  normalizeDepartmentOptions,
+  useDepartmentState,
+} from './useDepartmentState'
+import { useAdminAccountsState } from './useAdminAccountsState'
 import { APP_PAGES, AUTH_PAGES } from '../models/pageModel'
 import {
   appendNotificationForAdmin,
@@ -87,39 +93,6 @@ function findDepartmentOption(value, departmentOptions) {
   )
 }
 
-function normalizeDepartmentOption(department) {
-  if (!department || typeof department !== 'object') {
-    return null
-  }
-
-  const id = String(department.id || department.slug || '').trim()
-  const label = String(department.label || department.name || '').trim()
-
-  if (!id || !label) {
-    return null
-  }
-
-  return {
-    id,
-    agencyId: String(department.agencyId || department.agency_id || '').trim(),
-    label,
-    slug: String(department.slug || id).trim(),
-    name: String(department.name || label).trim(),
-    description: String(department.description || '').trim(),
-    isActive: department.isActive !== false,
-    logoPath: department.logoPath || department.logo_path || null,
-    logoUrl: department.logoUrl || department.logo_url || null,
-    createdAt: department.createdAt || null,
-    updatedAt: department.updatedAt || null,
-  }
-}
-
-function normalizeDepartmentOptions(departments) {
-  return (Array.isArray(departments) ? departments : [])
-    .map(normalizeDepartmentOption)
-    .filter((department) => department !== null)
-}
-
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
   const message = String(error?.message || '').toLowerCase()
@@ -152,8 +125,6 @@ function buildDeleteDepartmentOptions({ cleanup, reassignTo } = {}) {
 }
 
 export function useAppStateOrchestrator() {
-  const [departmentOptions, setDepartmentOptions] = useState([])
-  const [departmentCatalog, setDepartmentCatalog] = useState([])
   const navigateThrottleRef = useRef(0)
   const storedProfile = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.profile, DEFAULT_ADMIN_PROFILE)
   const storedAccessToken = loadSchemaBackedValue(ADMIN_STORAGE_KEYS.accessToken, '')
@@ -505,41 +476,23 @@ export function useAppStateOrchestrator() {
     setSessionBootstrapAttempt((previous) => previous + 1)
   }
 
-  async function refreshDepartmentsState() {
-    if (!accessToken) {
-      setDepartmentOptions([])
-      setDepartmentCatalog([])
-      return
-    }
+  const {
+    departmentOptions,
+    departmentCatalog,
+    refreshDepartmentsState,
+    setDepartmentOptions,
+    setDepartmentCatalog,
+  } = useDepartmentState({
+    accessToken,
+    role: profile.role,
+  })
 
-    const activeResponse = await departmentsApiService.getDepartments(accessToken)
-    const normalizedOptions = normalizeDepartmentOptions(activeResponse?.departments)
-    setDepartmentOptions(normalizedOptions.filter((department) => department.isActive))
-
-    if (normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN || !accessToken) {
-      setDepartmentCatalog([])
-      return
-    }
-
-    const catalogResponse = await departmentsApiService.getDepartmentsCatalog(accessToken, {
-      includeInactive: true,
-    })
-    setDepartmentCatalog(normalizeDepartmentOptions(catalogResponse?.departments))
-  }
-
-  async function handleRefreshAdminAccounts() {
-    if (!accessToken || normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN) {
-      return
-    }
-
-    try {
-      const response = await officeAdminsApiService.listOfficeAdmins(accessToken)
-      const mappedOfficeAdmins = (response?.data || []).map(mapBackendOfficeAdmin)
-      setAdminAccounts(mappedOfficeAdmins)
-    } catch (error) {
-      notifyError('Failed to refresh admin accounts.', error.message)
-    }
-  }
+  const { handleRefreshAdminAccounts } = useAdminAccountsState({
+    accessToken,
+    role: profile.role,
+    setAdminAccounts,
+    notifyError,
+  })
 
   async function refreshProfileForAccessCheck() {
     if (!accessToken) {

@@ -1,4 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
+import {
+  FiEdit3,
+  FiCheck,
+  FiX,
+  FiUser,
+  FiMail,
+  FiBriefcase,
+  FiPhone,
+  FiMapPin,
+  FiLock,
+  FiActivity,
+  FiClock,
+  FiLoader,
+  FiAlertCircle,
+  FiCheckCircle,
+} from 'react-icons/fi'
 import { ProfileSummaryCard } from '../../components/Account-Ui'
 import { ReloginModal } from '../../components/Account-Ui/ReloginModal'
 import { formatDateTime } from '../../models/data'
@@ -180,38 +196,51 @@ export function ProfileInformation({
   return (
     <>
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
-      <div className="flex flex-col gap-5">
-        <header className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-6">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Admin Profile</h1>
-            <p className="text-sm text-slate-600">Profile data is powered by your registration details.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin Profile</h1>
+            <p className="mt-0.5 text-sm text-slate-600">Profile data is powered by your registration details.</p>
           </div>
           {!editing ? (
             <button
               type="button"
               onClick={startEditing}
-              className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition duration-150 active:scale-95"
             >
+              <FiEdit3 className="h-4 w-4" />
               Edit profile
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => {
                   setEditing(false)
                   setSubmissionFeedback(null)
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95"
               >
+                <FiX className="h-4 w-4 text-slate-500" />
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveProfile}
-                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 active:scale-95"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <FiLoader className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="h-4 w-4" />
+                    Save changes
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -220,137 +249,183 @@ export function ProfileInformation({
         <ProfileSummaryCard profile={profile} />
 
         {editing ? (
-          <section ref={editFormRef} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Editable details</h2>
+          <section ref={editFormRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700">
+                <FiEdit3 className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Editable details</h2>
+                <p className="text-xs text-slate-500">Update your account information below.</p>
+              </div>
+            </div>
+
             {submissionFeedback ? (
-              <p
-                className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
+              <div
+                className={`mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm font-medium ${
                   submissionFeedback.type === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-red-900'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    ? 'border-rose-200 bg-rose-50 text-rose-900'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
                 }`}
               >
-                {submissionFeedback.message}
-              </p>
+                {submissionFeedback.type === 'error' ? (
+                  <FiAlertCircle className="h-5 w-5 shrink-0 text-rose-600 mt-0.5" />
+                ) : (
+                  <FiCheckCircle className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+                )}
+                <span>{submissionFeedback.message}</span>
+              </div>
             ) : null}
+
             {inputError ? (
-              <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                {inputError}
-              </p>
+              <div role="alert" className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-sm font-medium text-rose-800">
+                <FiAlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{inputError}</span>
+              </div>
             ) : null}
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+
+            <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="mb-1 block text-sm text-slate-700">First name</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">First name</label>
                 <input
                   value={draft.fname}
                   onChange={(event) => updateDraft('fname', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Middle name (optional)</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Middle name (optional)</label>
                 <input
                   value={draft.mname}
                   onChange={(event) => updateDraft('mname', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Last name</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Last name</label>
                 <input
                   value={draft.lname}
                   onChange={(event) => updateDraft('lname', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Email</label>
-                <input
-                  value={draft.email}
-                  onChange={(event) => updateDraft('email', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                />
-              </div>
-              {isSuperAdmin ? (
-                <div>
-                  <label className="mb-1 block text-sm text-slate-700">Username</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  Username
+                </label>
+                {isSuperAdmin ? (
                   <input
                     value={draft.username}
                     onChange={(event) => updateDraft('username', event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                   />
-                </div>
-              ) : (
-                <div>
-                  <label className="mb-1 block text-sm text-slate-700">Department</label>
-                  <select
-                    value={draft.department}
-                    onChange={(event) => updateDraft('department', event.target.value)}
-                    disabled={isOfficeAdmin && hasPendingTransferRequest}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
-                  >
-                    {!departmentLabels.includes(draft.department) ? (
-                      <option value={draft.department}>{draft.department}</option>
-                    ) : null}
-                    {departmentLabels.map((department) => (
-                      <option key={department} value={department}>
-                        {department}
-                      </option>
-                    ))}
-                  </select>
-                  {isOfficeAdmin ? (
-                    <p className="mt-1 text-xs text-slate-500">
-                      Department changes are processed as transfer requests and require superadmin approval.
-                    </p>
-                  ) : null}
-                  {isOfficeAdmin && hasPendingTransferRequest ? (
-                    <p className="mt-1 text-xs text-amber-700">
-                      You already have a pending transfer request. Department edits are temporarily locked.
-                    </p>
-                  ) : null}
-                </div>
-              )}
+                ) : (
+                  <div className="relative">
+                    <input
+                      value={draft.username ? `@${draft.username.replace(/^@/, '')}` : ''}
+                      disabled
+                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed select-none"
+                    />
+                    <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
+                  </div>
+                )}
+                {!isSuperAdmin ? (
+                  <p className="mt-1 text-xs text-slate-400">Username is permanent and managed by system admins.</p>
+                ) : null}
+              </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Phone</label>
-                <div className="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-slate-400">
-                  <span className="bg-slate-100 px-3 py-2 text-sm text-slate-500 border-r border-slate-200 select-none flex items-center">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Email</label>
+                <input
+                  value={draft.email}
+                  onChange={(event) => updateDraft('email', event.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Department</label>
+                <select
+                  value={draft.department}
+                  onChange={(event) => updateDraft('department', event.target.value)}
+                  disabled={isOfficeAdmin && hasPendingTransferRequest}
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-all"
+                >
+                  {!departmentLabels.includes(draft.department) ? (
+                    <option value={draft.department}>{draft.department}</option>
+                  ) : null}
+                  {departmentLabels.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
+                </select>
+                {isOfficeAdmin ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Department changes are processed as transfer requests requiring superadmin approval.
+                  </p>
+                ) : null}
+                {isOfficeAdmin && hasPendingTransferRequest ? (
+                  <p className="mt-1 text-xs font-medium text-amber-700">
+                    Pending transfer request exists. Department edits are locked.
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Phone</label>
+                <div className="flex rounded-xl border border-slate-300 overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all">
+                  <span className="bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 border-r border-slate-200 select-none flex items-center">
                     +63
                   </span>
                   <input
                     type="text"
                     value={displayPhone}
                     onChange={handlePhoneChange}
-                    className="w-full bg-transparent px-3 py-2 text-sm text-slate-700 focus:outline-none"
+                    className="w-full bg-transparent px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none"
                   />
                 </div>
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Barangay</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Barangay</label>
                 <input
                   value={draft.barangay}
                   onChange={(event) => updateDraft('barangay', event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">City</label>
-                <input
-                  value={draft.city}
-                  disabled
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 cursor-not-allowed focus:outline-none"
-                />
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">City</label>
+                <div className="relative">
+                  <input
+                    value={draft.city}
+                    disabled
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed"
+                  />
+                  <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
+                </div>
               </div>
+
               <div>
-                <label className="mb-1 block text-sm text-slate-700">Province</label>
-                <input
-                  value={draft.province}
-                  disabled
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 cursor-not-allowed focus:outline-none"
-                />
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Province</label>
+                <div className="relative">
+                  <input
+                    value={draft.province}
+                    disabled
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed"
+                  />
+                  <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
+                </div>
               </div>
+
               {isOfficeAdmin && draft.department !== profile.department ? (
-                <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm text-slate-700">
+                <div className="md:col-span-2 lg:col-span-3">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Transfer request reason
                   </label>
                   <textarea
@@ -358,52 +433,78 @@ export function ProfileInformation({
                     value={transferReason}
                     onChange={(event) => setTransferReason(event.target.value)}
                     placeholder="Explain why you are requesting a department change."
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                   />
                 </div>
               ) : null}
             </div>
-            <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
               <button
                 type="button"
                 onClick={() => {
                   setEditing(false)
                   setSubmissionFeedback(null)
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95"
               >
+                <FiX className="h-4 w-4 text-slate-500" />
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveProfile}
                 disabled={isSaving}
-                className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-95"
               >
-                {isSaving ? 'Saving...' : 'Save'}
+                {isSaving ? (
+                  <>
+                    <FiLoader className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="h-4 w-4" />
+                    Save changes
+                  </>
+                )}
               </button>
             </div>
           </section>
         ) : null}
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Recent activity</h2>
-          <div className="mt-4 space-y-2">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700">
+              <FiActivity className="h-4 w-4" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">Recent activity</h2>
+          </div>
+
+          <div className="mt-5 space-y-2.5">
             {activityLog.length > 0 ? (
               activityLog.slice(0, 6).map((entry) => (
                 <article
                   key={entry.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{entry.action}</p>
-                    <p className="text-xs text-slate-500">{entry.detail}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-white text-blue-700 border border-slate-200">
+                      <FiActivity className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{entry.action}</p>
+                      <p className="text-xs text-slate-500">{entry.detail}</p>
+                    </div>
                   </div>
-                  <span className="text-xs text-slate-500">{formatDateTime(entry.createdAt)}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+                    <FiClock className="h-3 w-3" />
+                    {formatDateTime(entry.createdAt)}
+                  </span>
                 </article>
               ))
             ) : (
-              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-5 text-sm text-slate-500">
+              <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
                 Activity will appear here as you use the admin portal.
               </p>
             )}

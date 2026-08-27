@@ -26,6 +26,9 @@ const listeners = new Set();
 /** @type {{ [reportId: string]: boolean }} */
 let unreadByReport = {};
 
+/** @type {{ [reportId: string]: string }} */
+let statusByReport = {};
+
 /**
  * Latest raw message row per report, populated from Supabase Realtime INSERTs.
  * Allows consumers to show a message preview without opening the modal.
@@ -54,6 +57,7 @@ function computeHasUnread() {
 function buildSnapshot() {
   return {
     unreadByReport: { ...unreadByReport },
+    statusByReport: { ...statusByReport },
     hasUnreadAdminMessage: computeHasUnread(),
     latestMessageByReport: { ...latestMessageByReport },
   };
@@ -110,20 +114,51 @@ export function setReportUnread(reportId) {
 }
 
 /**
+ * Register report statuses into the singleton store.
+ * @param {Array<{ id: string | number, status: string }>} reports
+ */
+export function registerReportStatuses(reports) {
+  if (!Array.isArray(reports) || reports.length === 0) return;
+  let changed = false;
+  const next = { ...statusByReport };
+
+  for (const report of reports) {
+    if (!report || !report.id) continue;
+    const key = String(report.id);
+    const status = report.status || "";
+    if (next[key] !== status) {
+      next[key] = status;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    statusByReport = next;
+    emitChange();
+  }
+}
+
+/**
  * Seed the initial per-report unread state from a map of { reportId: boolean }.
  * Called by the Manage Reports screen after it fetches its report list.
  *
  * NOTE: Realtime events take precedence over stale false API/cache data.
  * If a report was marked true via Realtime event, seedUnreadState will NOT
- * overwrite it to false unless setReportRead was explicitly called.
+ * overwrite it to false unless force is explicitly true (or setReportRead was called).
  */
-export function seedUnreadState(map) {
+export function seedUnreadState(map, force = false) {
   if (!map || typeof map !== "object") return;
   let changed = false;
   const next = { ...unreadByReport };
 
   for (const [key, value] of Object.entries(map)) {
     const boolVal = Boolean(value);
+    // Protect against race condition:
+    // If a realtime event already set unreadByReport[key] to true, do not overwrite
+    // with stale false from initial API loading unless force is true (e.g. on modal close).
+    if (!force && next[key] === true && boolVal === false) {
+      continue;
+    }
     if (next[key] !== boolVal) {
       next[key] = boolVal;
       changed = true;
@@ -141,6 +176,7 @@ export function seedUnreadState(map) {
  */
 export function resetAdminMessageState() {
   unreadByReport = {};
+  statusByReport = {};
   latestMessageByReport = {};
   isInitialized = false;
   initializedForUserId = null;
@@ -190,6 +226,21 @@ function _handleRealtimeInsert(payload, fallbackUserId) {
   latestMessageByReport = { ...latestMessageByReport, [reportId]: newMsg };
   changed = true;
 
+  // If the report status is not yet registered, attempt to fetch it in background
+  // to ensure filter-specific badges light up accurately.
+  if (!statusByReport[reportId]) {
+    import("./api")
+      .then(({ api }) => api.get(`/reports/${reportId}`))
+      .then((res) => {
+        const reportData = res?.data || res;
+        if (reportData?.status) {
+          statusByReport = { ...statusByReport, [reportId]: reportData.status };
+          emitChange();
+        }
+      })
+      .catch(() => {});
+  }
+
   if (changed) emitChange();
 
   // Patch the discussion cache so the next modal open shows the new message
@@ -219,6 +270,19 @@ function _handleSocketMessage(data, fallbackUserId) {
     changed = true;
     // Patch discussion cache via socket payload message shape
     appendMessageToCache(key, data.message).catch(() => {});
+  }
+
+  if (!statusByReport[key]) {
+    import("./api")
+      .then(({ api }) => api.get(`/reports/${key}`))
+      .then((res) => {
+        const reportData = res?.data || res;
+        if (reportData?.status) {
+          statusByReport = { ...statusByReport, [key]: reportData.status };
+          emitChange();
+        }
+      })
+      .catch(() => {});
   }
 
   if (changed) emitChange();
@@ -302,6 +366,7 @@ export async function initializeAdminMessageState(userId, reportIds = []) {
  *
  * @param {string[]} reportIds
  * @param {string | null} userId
+ * @param {boolean} force
  */
 export async function seedUnreadStateFromApi(reportIds, userId = null, force = false) {
   if (!Array.isArray(reportIds) || reportIds.length === 0) return;
@@ -330,7 +395,7 @@ export async function seedUnreadStateFromApi(reportIds, userId = null, force = f
   for (const r of results) {
     map[r.id] = r.hasUnread;
   }
-  seedUnreadState(map);
+  seedUnreadState(map, force);
 }
 
 

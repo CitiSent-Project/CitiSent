@@ -16,6 +16,7 @@ import {
   setReportRead as _setReportRead,
   setReportUnread as _setReportUnread,
   seedUnreadState as _seedUnreadState,
+  registerReportStatuses as _registerReportStatuses,
   seedUnreadStateFromApi,
   initializeAdminMessageState,
   resetAdminMessageState,
@@ -61,8 +62,12 @@ export function AdminMessageProvider({ children }) {
     _setReportUnread(reportId);
   }, []);
 
-  const seedUnreadState = useCallback((map) => {
-    _seedUnreadState(map);
+  const seedUnreadState = useCallback((map, force = false) => {
+    _seedUnreadState(map, force);
+  }, []);
+
+  const registerReportStatuses = useCallback((reports) => {
+    _registerReportStatuses(reports);
   }, []);
 
   const refreshFromApi = useCallback(async (reportIds, userId, force = true) => {
@@ -72,10 +77,12 @@ export function AdminMessageProvider({ children }) {
   const value = {
     hasUnreadAdminMessage: snapshot.hasUnreadAdminMessage,
     unreadByReport: snapshot.unreadByReport,
+    statusByReport: snapshot.statusByReport,
     latestMessageByReport: snapshot.latestMessageByReport,
     setReportRead,
     setReportUnread,
     seedUnreadState,
+    registerReportStatuses,
     refreshFromApi,
   };
 
@@ -92,11 +99,13 @@ export function AdminMessageProvider({ children }) {
  * @returns {{
  *   hasUnreadAdminMessage: boolean,
  *   unreadByReport: Record<string, boolean>,
+ *   statusByReport: Record<string, string>,
  *   latestMessageByReport: Record<string, object>,
  *   setReportRead: (reportId: string) => void,
  *   setReportUnread: (reportId: string) => void,
- *   seedUnreadState: (map: Record<string, boolean>) => void,
- *   refreshFromApi: (reportIds: string[], userId?: string) => Promise<void>,
+ *   seedUnreadState: (map: Record<string, boolean>, force?: boolean) => void,
+ *   registerReportStatuses: (reports: Array<{ id: string | number, status: string }>) => void,
+ *   refreshFromApi: (reportIds: string[], userId?: string, force?: boolean) => Promise<void>,
  * }}
  */
 export function useAdminMessageState() {

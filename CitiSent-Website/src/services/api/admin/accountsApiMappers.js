@@ -36,6 +36,11 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
   const lname = payload.lname || derivedParts.lname || ''
   const derivedFullName = composeFullName({ fname, mname, lname })
 
+  let formattedPhone = payload.phoneNumber || payload.phone_number || payload.phone || ''
+  if (formattedPhone && !formattedPhone.startsWith('+')) {
+    formattedPhone = `+${formattedPhone}`
+  }
+
   return {
     id: payload.id || '',
     fname,
@@ -47,7 +52,7 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
     departmentId: payload.departmentId || '',
     department: payload.departmentLabel || '',
     role: payload.role || '',
-    phone: payload.phoneNumber || '',
+    phone: formattedPhone,
     barangay: payload.barangay || '',
     city: payload.city || '',
     province: payload.province || '',

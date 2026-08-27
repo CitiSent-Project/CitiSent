@@ -13,7 +13,7 @@ export function BackendUnavailablePanel({
         <h1 className="mt-3 text-2xl font-semibold text-slate-900">{title}</h1>
         <p className="mt-3 text-sm text-slate-600">{message}</p>
         <p className="mt-2 text-sm text-slate-500">
-          You can retry session bootstrap now or sign out and re-authenticate later.
+          You can try reconnecting now, or sign out and sign in again later.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">

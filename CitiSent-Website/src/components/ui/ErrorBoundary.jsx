@@ -65,9 +65,9 @@ export class ErrorBoundary extends Component {
           <p className="mt-3 text-sm text-slate-600">
             Please retry this view. If the issue continues, refresh your session.
           </p>
-          {this.state.error?.message ? (
+          {this.state.hasError ? (
             <p className="mt-3 rounded-xl bg-slate-100 p-3 text-sm text-slate-700">
-              {this.state.error.message}
+              An unexpected error occurred while loading this view. Our team has been notified.
             </p>
           ) : null}
           <div className="mt-6 flex flex-wrap gap-3">

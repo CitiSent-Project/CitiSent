@@ -1,7 +1,7 @@
 import { toast } from 'react-hot-toast'
 import { createElement } from 'react'
 
-const DEFAULT_ERROR_GUIDANCE = 'Please verify your input, check your connection, and try again.'
+const DEFAULT_ERROR_GUIDANCE = 'Something went wrong. Please try again.'
 
 const FRIENDLY_FIELD_LABELS = {
   barangay: 'barangay',
@@ -174,7 +174,8 @@ export const notifyError = (
   message = 'Action failed.',
   guideline = DEFAULT_ERROR_GUIDANCE
 ) => {
-  toast.error(`${message}\nWhat to do: ${getFriendlyErrorGuidance(guideline)}`)
+  const guidance = getFriendlyErrorGuidance(guideline)
+  toast.error(guidance === message || !guidance ? message : `${message} ${guidance}`)
 }
 
 /**
@@ -219,7 +220,7 @@ export const notifyErrorWithRetry = (
           {
             style: { margin: '6px 0 10px 0', fontSize: '12px', opacity: 0.95, lineHeight: 1.4 },
           },
-          `What to do: ${getFriendlyErrorGuidance(guideline)}`
+          getFriendlyErrorGuidance(guideline)
         ),
         createElement(
           'button',

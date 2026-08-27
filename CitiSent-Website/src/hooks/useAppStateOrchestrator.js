@@ -789,6 +789,12 @@ export function useAppStateOrchestrator() {
     notifySuccess,
     notifyError,
     persistToggleRead: async ({ notificationId, isRead }) => {
+      if (String(notificationId).startsWith('notif-')) {
+        return {
+          notification: { id: notificationId, read: isRead },
+        }
+      }
+
       if (!accessToken) {
         throw new Error('Your session has expired. Please sign in again.')
       }

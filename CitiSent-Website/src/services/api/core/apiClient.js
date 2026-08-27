@@ -186,7 +186,7 @@ function isAbortError(error) {
 }
 
 function buildTimeoutMessage(endpoint, timeoutMs) {
-  return `Request timed out after ${timeoutMs}ms while calling ${endpoint}. Please retry.`
+  return 'The server took too long to respond. Please try again.'
 }
 
 function getRetryDelayMs(attempt) {
@@ -266,7 +266,7 @@ async function request(endpoint, options = {}) {
 
       if (isNetworkError(error)) {
         throw new Error(
-          `Unable to reach the API server at ${BASE_URL}. Ensure the backend is running and reachable.`
+          'Unable to connect to the CitiSent server. Please check your internet connection or try again shortly.'
         )
       }
 

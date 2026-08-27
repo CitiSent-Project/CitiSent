@@ -27,7 +27,7 @@ describe('toastHelpers', () => {
     notifyError('Profile update failed.', 'Request validation failed (phoneNumber) - body.phoneNumber: Invalid')
 
     expect(toast.error).toHaveBeenCalledWith(
-      'Profile update failed.\nWhat to do: Please check the phone number and try again.'
+      'Profile update failed. Please check the phone number and try again.'
     )
   })
 })

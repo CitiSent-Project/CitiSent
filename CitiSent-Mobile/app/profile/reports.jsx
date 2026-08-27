@@ -22,6 +22,15 @@ function normalizeStatus(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeFilterStatus(status) {
+  const s = String(status || "").trim().toLowerCase();
+  if (s === "pending") return "pending";
+  if (s === "in progress" || s === "in_review") return "in progress";
+  if (s === "completed" || s === "resolved") return "completed";
+  if (s === "unresolved" || s === "rejected") return "unresolved";
+  return s;
+}
+
 export default function ReportsMadePage() {
 
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -29,7 +38,14 @@ export default function ReportsMadePage() {
   const [discussionReport, setDiscussionReport] = useState(null);
 
   // Shared real-time notification state — single source of truth
-  const { unreadByReport, setReportRead, refreshFromApi } = useAdminMessageState();
+  const {
+    hasUnreadAdminMessage,
+    unreadByReport,
+    statusByReport,
+    setReportRead,
+    registerReportStatuses,
+    refreshFromApi,
+  } = useAdminMessageState();
 
   const discussionReportRef = useRef(discussionReport);
   useEffect(() => {
@@ -74,16 +90,54 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // Seed shared state from API when report list changes.
-  // Uses refreshFromApi so the singleton store (and all three badge locations)
-  // are updated atomically — no local state copy.
+  // On initial mount of Manage Reports, fetch user reports overview to register
+  // their statuses and seed unread state from backend/database (Requirement 9 & 10)
+  useEffect(() => {
+    let isMounted = true;
+    const loadOverview = async () => {
+      try {
+        const res = await reportsApi.getMyReports(100, 0, "all");
+        const allReports = res?.data || [];
+        if (isMounted && allReports.length > 0) {
+          registerReportStatuses(allReports);
+          const currentUser = getAuthUser();
+          const currentUserId = currentUser?.id ?? null;
+          await refreshFromApi(allReports.map((r) => String(r.id)), currentUserId, false);
+        }
+      } catch (err) {
+        console.warn("Failed to load initial reports overview:", err);
+      }
+    };
+    loadOverview();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Seed shared state from API and register statuses when current report list changes.
   useEffect(() => {
     if (!reports.length) return;
+    registerReportStatuses(reports);
     const currentUser = getAuthUser();
     const currentUserId = currentUser?.id ?? null;
     const reportIds = reports.map((r) => String(r.id));
-    refreshFromApi(reportIds, currentUserId).catch(() => {});
+    refreshFromApi(reportIds, currentUserId, false).catch(() => {});
   }, [reports]);
+
+  /**
+   * Determine whether a specific filter category has unread admin messages.
+   */
+  const isFilterUnread = (filterKey) => {
+    if (filterKey === "all") {
+      return Boolean(hasUnreadAdminMessage);
+    }
+    const targetKey = normalizeFilterStatus(filterKey);
+    return Object.entries(unreadByReport).some(([repId, isUnread]) => {
+      if (!isUnread) return false;
+      const status = statusByReport[repId] || reports.find((r) => String(r.id) === String(repId))?.status;
+      return normalizeFilterStatus(status) === targetKey;
+    });
+  };
 
   /**
    * Immediately clear the badge for a specific report in the shared store.
@@ -104,7 +158,7 @@ export default function ReportsMadePage() {
       try {
         const currentUser = getAuthUser();
         const currentUserId = currentUser?.id ?? null;
-        await refreshFromApi([String(reportId)], currentUserId);
+        await refreshFromApi([String(reportId)], currentUserId, true);
       } catch {
         // Non-critical; badge will update on next full refresh
       }
@@ -169,19 +223,37 @@ export default function ReportsMadePage() {
       <View className="mb-4 flex-row flex-wrap gap-2">
         {STATUS_FILTERS.map((filter) => {
           const active = selectedStatus === filter.key;
+          const hasUnread = isFilterUnread(filter.key);
 
           return (
-            <Pressable
-              key={filter.key}
-              onPress={() => setSelectedStatus(filter.key)}
-              className="rounded-full border px-4 py-2"
-              style={{
-                borderColor: active ? Colors.primaryStrong : Colors.borderMuted,
-                backgroundColor: active ? Colors.primaryStrong : Colors.background,
-              }}
-            >
-              <Text className="text-xs font-bold" style={{ color: active ? Colors.text.inverse : Colors.text.body }}>{filter.label}</Text>
-            </Pressable>
+            <View key={filter.key} className="relative">
+              <Pressable
+                onPress={() => setSelectedStatus(filter.key)}
+                className="rounded-full border px-4 py-2"
+                style={{
+                  borderColor: active ? Colors.primaryStrong : Colors.borderMuted,
+                  backgroundColor: active ? Colors.primaryStrong : Colors.background,
+                }}
+              >
+                <Text className="text-xs font-bold" style={{ color: active ? Colors.text.inverse : Colors.text.body }}>{filter.label}</Text>
+              </Pressable>
+              {hasUnread && (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: "absolute",
+                    top: -2,
+                    right: -2,
+                    width: 9,
+                    height: 9,
+                    borderRadius: 4.5,
+                    backgroundColor: Colors.error ?? "#ef4444",
+                    borderWidth: 1.5,
+                    borderColor: Colors.background ?? "#ffffff",
+                  }}
+                />
+              )}
+            </View>
           );
         })}
       </View>

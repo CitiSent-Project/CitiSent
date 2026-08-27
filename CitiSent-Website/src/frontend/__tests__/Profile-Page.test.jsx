@@ -92,6 +92,6 @@ describe('ProfileInformation', () => {
     expect((html.match(/>Barangay</g) || []).length).toBe(1)
     expect((html.match(/>City</g) || []).length).toBe(1)
     expect((html.match(/>Province</g) || []).length).toBe(1)
-    expect((html.match(/>Username</g) || []).length).toBe(0)
+    expect((html.match(/>Username</g) || []).length).toBe(1)
   })
 })

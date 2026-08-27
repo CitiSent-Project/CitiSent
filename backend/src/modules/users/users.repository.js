@@ -182,22 +182,14 @@ export const usersRepository = {
       }
     }
 
-    const { data, error } = await db
+    const { data, error } = await adminDb
       .from(PROFILES_TABLE)
-      .upsert(
-        {
-          user_id: userId,
-          ...payload,
-        },
-        { onConflict: "user_id" },
-      )
+      .update(payload)
+      .eq("user_id", userId)
       .select("*")
       .maybeSingle();
 
     if (error) {
-      if (isMissingProfilesTable(error)) {
-        return null;
-      }
       if (isDuplicateProfileError(error)) {
         // Fallback: DB constraint fired despite our pre-checks (race condition).
         const msg = String(error.message || "").toLowerCase();
@@ -212,7 +204,8 @@ export const usersRepository = {
         );
       }
 
-      throw toGatewayError("Failed to update user profile", error);
+      console.error("[DEBUG] upsertProfileByUserId error:", error);
+      throw toGatewayError(`Failed to update user profile: ${error.message || 'Database error'}`, error);
     }
 
     return data;

@@ -76,6 +76,7 @@ export function buildProfileSubmissionState({
     fname: normalizedFname,
     mname: normalizedMname || null,
     lname: normalizedLname,
+    username: draft.username,
     email: draft.email,
     phone: draft.phone,
     barangay: draft.barangay,

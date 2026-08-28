@@ -44,6 +44,7 @@ export default function ReportsMadePage() {
     statusByReport,
     setReportRead,
     registerReportStatuses,
+    seedUnreadState,
     refreshUnreadSummary,
   } = useAdminMessageState();
 
@@ -91,10 +92,19 @@ export default function ReportsMadePage() {
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // Register report statuses in shared store for instant filter badge correlation
+  // Register report statuses & unread flags in shared store for instant filter badge correlation
   useEffect(() => {
     if (reports.length > 0) {
       registerReportStatuses(reports);
+      const unreadMap = {};
+      for (const r of reports) {
+        if (r.hasUnreadAdminMessage !== undefined) {
+          unreadMap[String(r.id)] = Boolean(r.hasUnreadAdminMessage);
+        }
+      }
+      if (Object.keys(unreadMap).length > 0) {
+        seedUnreadState(unreadMap, false);
+      }
     }
   }, [reports]);
 

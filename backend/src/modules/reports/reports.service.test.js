@@ -306,3 +306,39 @@ test("getUnreadSummary delegates to repository and caches result on cache miss",
   assert.equal(cachedPayload.val.hasUnread, true);
 });
 
+test("listReports includes hasUnreadAdminMessage on mapped report items", async (t) => {
+  const originalGetJSON = cacheService.getJSON;
+  const originalSetJSON = cacheService.setJSON;
+  const originalRepositoryList = reportsRepository.list;
+
+  cacheService.getJSON = async () => null;
+  cacheService.setJSON = async () => {};
+
+  reportsRepository.list = async () => ({
+    rows: [
+      createReportRow({ id: "rep-1", has_unread_admin_message: true }),
+      createReportRow({ id: "rep-2", has_unread_admin_message: false }),
+    ],
+    count: 2,
+  });
+
+  t.after(() => {
+    cacheService.getJSON = originalGetJSON;
+    cacheService.setJSON = originalSetJSON;
+    reportsRepository.list = originalRepositoryList;
+  });
+
+  const response = await reportsService.listReports({
+    userId: "user-1",
+    limit: 10,
+    offset: 0,
+    status: "all",
+    accessToken: "token-123",
+  });
+
+  assert.equal(response.data.length, 2);
+  assert.equal(response.data[0].hasUnreadAdminMessage, true);
+  assert.equal(response.data[1].hasUnreadAdminMessage, false);
+});
+
+

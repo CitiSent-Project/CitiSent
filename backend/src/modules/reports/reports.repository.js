@@ -39,8 +39,66 @@ export const reportsRepository = {
       );
     }
 
+    const rows = data ?? [];
+    if (!rows.length) {
+      return {
+        rows: [],
+        count: count ?? 0,
+      };
+    }
+
+    const reportIds = rows.map((r) => r.id);
+
+    // Batch query messages in user's reports where sender is not the user
+    const { data: messages, error: messagesError } = await db
+      .from("report_messages")
+      .select("id, report_id")
+      .in("report_id", reportIds)
+      .neq("sender_id", userId);
+
+    if (messagesError || !messages?.length) {
+      const enrichedRows = rows.map((r) => ({
+        ...r,
+        has_unread_admin_message: false,
+      }));
+      return {
+        rows: enrichedRows,
+        count: count ?? 0,
+      };
+    }
+
+    const messageIds = messages.map((m) => m.id);
+    const { data: reads, error: readsError } = await db
+      .from("report_message_reads")
+      .select("message_id")
+      .eq("user_id", userId)
+      .eq("is_read", true)
+      .in("message_id", messageIds);
+
+    if (readsError) {
+      throw new AppError(
+        "Failed to fetch read state for reports",
+        StatusCodes.BAD_GATEWAY,
+        readsError,
+      );
+    }
+
+    const readSet = new Set((reads || []).map((r) => String(r.message_id)));
+    const unreadByReportId = new Set();
+
+    for (const msg of messages) {
+      if (!readSet.has(String(msg.id))) {
+        unreadByReportId.add(String(msg.report_id));
+      }
+    }
+
+    const enrichedRows = rows.map((r) => ({
+      ...r,
+      has_unread_admin_message: unreadByReportId.has(String(r.id)),
+    }));
+
     return {
-      rows: data ?? [],
+      rows: enrichedRows,
       count: count ?? 0,
     };
   },

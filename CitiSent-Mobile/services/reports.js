@@ -101,6 +101,11 @@ function mapBackendReportToMyReport(report, index, departments = []) {
       report.createdAt || report.created_at || new Date().toISOString(),
     status: normalizeStatus(report.status),
     attachment: resolveAttachment(report),
+    hasUnreadAdminMessage: Boolean(
+      report.hasUnreadAdminMessage ??
+      report.has_unread_admin_message ??
+      false
+    ),
   };
 }
 

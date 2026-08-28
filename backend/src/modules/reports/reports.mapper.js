@@ -15,5 +15,11 @@ export function toReportResponse(reportRow) {
     createdAt: reportRow.created_at,
     updatedAt: reportRow.updated_at,
     userId: reportRow.user_id,
+    hasUnreadAdminMessage: Boolean(
+      reportRow.has_unread_admin_message ??
+      reportRow.hasUnreadAdminMessage ??
+      false
+    ),
   };
 }
+

@@ -7,7 +7,7 @@
  * request rejection, notification synchronization, and audit activity
  * for all four public actions.
  */
-import { act } from 'react'
+import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAdminTransferState } from '../useAdminTransferState'
@@ -62,7 +62,6 @@ vi.mock('../../services/api/admin/transferRequestsApiMappers', () => ({
 }))
 
 import { transferRequestsApiService } from '../../services/api/admin/transferRequestsApiService'
-import { officeAdminsApiService } from '../../services/api/admin/officeAdminsApiService'
 
 // ---------------------------------------------------------------------------
 // Shared fixture data
@@ -127,7 +126,10 @@ function createHarness(overrides = {}) {
   let latest = null
 
   function HookHarness() {
-    latest = useAdminTransferState(deps)
+    const state = useAdminTransferState(deps)
+    useEffect(() => {
+      latest = state
+    }, [state])
     return null
   }
 
@@ -171,9 +173,10 @@ describe('useAdminTransferState', () => {
   })
 
   function mount(harness) {
+    const Component = harness.HookHarness
     root = createRoot(container)
     act(() => {
-      root.render(<harness.HookHarness />)
+      root.render(<Component />)
     })
   }
 

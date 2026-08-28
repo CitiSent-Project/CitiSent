@@ -27,7 +27,6 @@ export default defineConfig({
 
           if (
             id.includes('react-hot-toast') ||
-            id.includes('react-toastify') ||
             id.includes('react-icons')
           ) {
             return 'ui-vendor'

@@ -3,6 +3,6 @@ export function mapBackendActivityLogEntry(payload = {}) {
     id: payload.id || '',
     action: payload.action || 'Activity',
     detail: payload.detail || '',
-    createdAt: payload.createdAt || new Date().toISOString(),
+    createdAt: payload.createdAt || payload.created_at || new Date().toISOString(),
   }
 }

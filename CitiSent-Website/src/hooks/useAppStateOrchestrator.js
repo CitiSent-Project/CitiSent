@@ -177,6 +177,18 @@ export function useAppStateOrchestrator() {
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.authSession, false)
   )
   const [profile, setProfile] = useState(() => storedProfile)
+
+  const {
+    departmentOptions,
+    departmentCatalog,
+    refreshDepartmentsState,
+    setDepartmentOptions,
+    setDepartmentCatalog,
+  } = useDepartmentState({
+    accessToken,
+    role: profile.role,
+  })
+
   // Fetch active department options for all users and full catalog for superadmins.
   // The public /departments list is fetched eagerly (no auth required).
   // The /departments/catalog endpoint requires a superadmin token and is only
@@ -225,7 +237,7 @@ export function useAppStateOrchestrator() {
     return () => {
       isMounted = false
     }
-  }, [accessToken, profile.role, authReady])
+  }, [accessToken, profile.role, authReady, setDepartmentCatalog, setDepartmentOptions])
   const [adminAccounts, setAdminAccounts] = useState(() =>
     loadSchemaBackedValue(ADMIN_STORAGE_KEYS.adminAccounts, DEFAULT_ADMIN_ACCOUNTS)
   )
@@ -472,17 +484,6 @@ export function useAppStateOrchestrator() {
     setSessionBootstrapError(null)
     setSessionBootstrapAttempt((previous) => previous + 1)
   }
-
-  const {
-    departmentOptions,
-    departmentCatalog,
-    refreshDepartmentsState,
-    setDepartmentOptions,
-    setDepartmentCatalog,
-  } = useDepartmentState({
-    accessToken,
-    role: profile.role,
-  })
 
   const { handleRefreshAdminAccounts } = useAdminAccountsState({
     accessToken,

@@ -36,7 +36,8 @@ export function mapBackendReportToUiRow(payload = {}) {
     payload.departmentLabel,
     payload.issueType
   )
-  const dateValue = Date.parse(payload.createdAt || '')
+  const createdAtVal = payload.createdAt || payload.created_at || ''
+  const dateValue = Date.parse(createdAtVal)
   const reporter = payload.reporter || {}
   const reporterName =
     composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
@@ -51,7 +52,7 @@ export function mapBackendReportToUiRow(payload = {}) {
     name: reporterName || 'Unknown Reporter',
     email: reporter.email || 'unknown@citisent.gov',
     location: payload.location || 'Not specified',
-    date: formatDate(payload.createdAt),
+    date: formatDate(createdAtVal),
     dateValue: Number.isNaN(dateValue) ? Date.now() : dateValue,
     categoryId: department.id,
     category: department.label,
@@ -66,9 +67,9 @@ export function mapBackendReportToUiRow(payload = {}) {
     issueType: payload.issueType || department.label,
     attachmentUrl: payload.attachmentUrl || null,
     backendStatus: payload.status || 'pending',
-    createdAt: payload.createdAt || '',
+    createdAt: createdAtVal,
     resolvedAt: payload.resolvedAt || payload.resolved_at || null,
-    updatedAt: payload.updatedAt || '',
+    updatedAt: payload.updatedAt || payload.updated_at || '',
   }
 }
 
@@ -94,13 +95,13 @@ export function mapBackendMessageToUi(payload = {}) {
   const sender = payload.sender || {}
   return {
     id: payload.id || '',
-    senderId: payload.senderId || sender.id || '',
+    senderId: payload.senderId || payload.sender_id || sender.id || '',
     senderName: payload.senderName || sender.fullName || sender.name || 'User',
     senderRole: String(payload.senderRole || payload.role || 'citizen').toLowerCase(),
     content: payload.content || payload.message || '',
-    createdAt: payload.createdAt || payload.timestamp || '',
+    createdAt: payload.createdAt || payload.created_at || payload.timestamp || '',
     isRead: Boolean(payload.isRead ?? payload.read),
-    readAt: payload.readAt || null,
+    readAt: payload.readAt || payload.read_at || null,
   }
 }
 

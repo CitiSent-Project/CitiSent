@@ -1,15 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { createUserSupabaseClient, supabase } from "../../config/supabase.js";
+import { createAdminSupabaseClient, createUserSupabaseClient, supabase } from "../../config/supabase.js";
 import { AppError } from "../../shared/errors/appError.js";
 
 const TABLE_NAME = "reports";
 
 function getDbClient(accessToken) {
-  if (!accessToken) {
-    return supabase;
-  }
-
-  return createUserSupabaseClient(accessToken);
+  return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
 
 const REPORT_SELECT_COLUMNS = "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id";

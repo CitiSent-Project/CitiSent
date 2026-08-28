@@ -4,7 +4,7 @@ import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips, EmotionFilterChips } from '../../components/Reports-Ui'
 import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
-import { filterUserReportsByCategory } from '../../controllers/userReportsController'
+import { filterUserReportsByCategory, buildWeeklyReportTrend } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
 
@@ -187,38 +187,7 @@ export function ByCategory({
       })),
     }
   }, [categoryAgencyCards, rows])
-  const reportsThisWeekData = useMemo(() => {
-    const now = Date.now()
-
-    // Build rolling 7-day buckets (oldest → today), matching the Dashboard API
-    const points = []
-    const countsByDateKey = {}
-    for (let offset = 6; offset >= 0; offset -= 1) {
-      const pointTime = now - offset * DAY_MS
-      const d = new Date(pointTime)
-      const dateKey = d.toISOString().slice(0, 10) // 'YYYY-MM-DD'
-      const label = d.toLocaleDateString('en-US', { weekday: 'long' })
-      countsByDateKey[dateKey] = 0
-      points.push({ dateKey, label })
-    }
-
-    // Only count reports created within the last 7 days
-    const sevenDaysAgo = now - 7 * DAY_MS
-    rows.forEach((row) => {
-      const ts = Date.parse(row.createdAt || '')
-      if (Number.isNaN(ts) || ts < sevenDaysAgo) return
-      const dateKey = new Date(ts).toISOString().slice(0, 10)
-      if (countsByDateKey[dateKey] !== undefined) {
-        countsByDateKey[dateKey] += 1
-      }
-    })
-
-    return {
-      title: 'Total Reports This Week',
-      labels: points.map((p) => p.label),
-      values: points.map((p) => countsByDateKey[p.dateKey]),
-    }
-  }, [rows])
+  const reportsThisWeekData = useMemo(() => buildWeeklyReportTrend(rows), [rows])
 
   const {
     totalPages,

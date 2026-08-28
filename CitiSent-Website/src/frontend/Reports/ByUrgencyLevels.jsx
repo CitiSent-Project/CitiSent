@@ -13,6 +13,7 @@ import { canAdminUpdateReport } from '../../controllers/reportAccessController'
 import {
   ALL_URGENCY_FILTER,
   filterUserReportsByUrgency,
+  buildWeeklyReportTrend,
 } from '../../controllers/userReportsController'
 import { useReportPaginationState } from '../../hooks/useReportPaginationState'
 
@@ -159,38 +160,7 @@ export function ByUrgencyLevels({
     }
   }, [rows])
 
-  const reportsThisWeekData = useMemo(() => {
-    const now = Date.now()
-
-    // Build rolling 7-day buckets (oldest → today), matching the Dashboard API
-    const points = []
-    const countsByDateKey = {}
-    for (let offset = 6; offset >= 0; offset -= 1) {
-      const pointTime = now - offset * DAY_MS
-      const d = new Date(pointTime)
-      const dateKey = d.toISOString().slice(0, 10) // 'YYYY-MM-DD'
-      const label = d.toLocaleDateString('en-US', { weekday: 'long' })
-      countsByDateKey[dateKey] = 0
-      points.push({ dateKey, label })
-    }
-
-    // Only count reports created within the last 7 days
-    const sevenDaysAgo = now - 7 * DAY_MS
-    rows.forEach((row) => {
-      const ts = Date.parse(row.createdAt || '')
-      if (Number.isNaN(ts) || ts < sevenDaysAgo) return
-      const dateKey = new Date(ts).toISOString().slice(0, 10)
-      if (countsByDateKey[dateKey] !== undefined) {
-        countsByDateKey[dateKey] += 1
-      }
-    })
-
-    return {
-      title: 'Total Reports This Week',
-      labels: points.map((p) => p.label),
-      values: points.map((p) => countsByDateKey[p.dateKey]),
-    }
-  }, [rows])
+  const reportsThisWeekData = useMemo(() => buildWeeklyReportTrend(rows), [rows])
 
   return (
     <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">

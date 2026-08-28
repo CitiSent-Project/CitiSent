@@ -148,3 +148,36 @@ export function paginateReports({ rows = [], currentPage = 1, pageSize = 6 }) {
     visiblePages,
   }
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export function buildWeeklyReportTrend(rows = []) {
+  const now = Date.now()
+  const points = []
+  const countsByDateKey = {}
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const pointTime = now - offset * DAY_MS
+    const d = new Date(pointTime)
+    const dateKey = d.toISOString().slice(0, 10)
+    const label = d.toLocaleDateString('en-US', { weekday: 'long' })
+    countsByDateKey[dateKey] = 0
+    points.push({ dateKey, label })
+  }
+
+  const sevenDaysAgo = now - 7 * DAY_MS
+  rows.forEach((row) => {
+    const ts = Date.parse(row.createdAt || '')
+    if (Number.isNaN(ts) || ts < sevenDaysAgo) return
+    const dateKey = new Date(ts).toISOString().slice(0, 10)
+    if (countsByDateKey[dateKey] !== undefined) {
+      countsByDateKey[dateKey] += 1
+    }
+  })
+
+  return {
+    title: 'Total Reports This Week',
+    labels: points.map((p) => p.label),
+    values: points.map((p) => countsByDateKey[p.dateKey]),
+  }
+}
+

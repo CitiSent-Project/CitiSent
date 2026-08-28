@@ -69,18 +69,23 @@ export function useUsersState({ profile, onViewUserProfile }) {
     },
   })
 
+  const usersError = usersQuery.error
+  const refetchUsers = usersQuery.refetch
   useEffect(() => {
-    if (usersQuery.error) notifyErrorWithRetry('Unable to load users.', usersQuery.error.message, () => usersQuery.refetch())
-  }, [usersQuery.error, usersQuery.refetch])
+    if (usersError) notifyErrorWithRetry('Unable to load users.', usersError.message, () => refetchUsers())
+  }, [usersError, refetchUsers])
+
+  const userStatsError = userStatsQuery.error
+  const refetchUserStats = userStatsQuery.refetch
   useEffect(() => {
-    if (userStatsQuery.error) notifyErrorWithRetry('Unable to load user statistics.', userStatsQuery.error.message, () => userStatsQuery.refetch())
-  }, [userStatsQuery.error, userStatsQuery.refetch])
+    if (userStatsError) notifyErrorWithRetry('Unable to load user statistics.', userStatsError.message, () => refetchUserStats())
+  }, [userStatsError, refetchUserStats])
 
   async function invalidateUsersData() {
     await Promise.all([queryClient.invalidateQueries({ queryKey: ['admin-users'] }), queryClient.invalidateQueries({ queryKey: ['admin-users-stats'] })])
   }
 
-  const users = usersQuery.data?.users || []
+  const users = useMemo(() => usersQuery.data?.users || [], [usersQuery.data?.users])
   const totalUsers = usersQuery.data?.totalUsers || 0
   const visibleUsers = useMemo(() => [...users].sort((a, b) => sortBy === 'Name' ? a.name.localeCompare(b.name) : sortBy === 'Oldest' ? a.registeredAtValue - b.registeredAtValue : b.registeredAtValue - a.registeredAtValue), [users, sortBy])
   const selectedVisibleUserIds = useMemo(() => selectedUserIds.filter((id) => visibleUsers.some((user) => user.id === id)), [selectedUserIds, visibleUsers])

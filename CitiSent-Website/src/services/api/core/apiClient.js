@@ -185,7 +185,7 @@ function isAbortError(error) {
   return error?.name === 'AbortError'
 }
 
-function buildTimeoutMessage(endpoint, timeoutMs) {
+function buildTimeoutMessage() {
   return 'The server took too long to respond. Please try again.'
 }
 
@@ -256,7 +256,7 @@ async function request(endpoint, options = {}) {
       break
     } catch (error) {
       if (isAbortError(error)) {
-        throw new Error(buildTimeoutMessage(endpoint, timedSignal.timeoutMs))
+        throw new Error(buildTimeoutMessage())
       }
 
       if (isNetworkError(error) && attempt < maxAttempts) {

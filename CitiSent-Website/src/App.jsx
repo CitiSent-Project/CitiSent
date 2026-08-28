@@ -6,7 +6,6 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { PageSkeleton } from './components/ui/PageSkeleton'
 import Toasters from './components/ui/Toasters'
 import { renderActivePage, renderAuthPage } from './controllers/pageRouterController'
-import { getLoginAuthPage } from './controllers/navigationController'
 import { useAppStateOrchestrator } from './hooks/useAppStateOrchestrator'
 import { SetupPasswordPage } from './frontend/Pages/SetupPassword'
 

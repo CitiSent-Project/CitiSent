@@ -59,39 +59,17 @@ export function buildUserReportRows({ userReports = [], users = [], agencies = [
   })
 }
 
-export function getStatusRank(status) {
-  const norm = String(status || '').toLowerCase()
-  if (norm === 'pending') return 2
-  if (norm === 'in progress') return 1
-  return 0
-}
-
 export function sortReportsByLatest(rows = []) {
   return [...rows].sort((a, b) => Number(b?.dateValue || 0) - Number(a?.dateValue || 0))
-  return [...rows].sort((a, b) => {
-    const statusDiff = getStatusRank(b?.status) - getStatusRank(a?.status)
-    if (statusDiff !== 0) return statusDiff
-    
-    return Number(b?.dateValue || 0) - Number(a?.dateValue || 0)
-  })
 }
 
 export function sortReports(rows = [], sorting = REPORT_SORTING_OPTIONS.LATEST_FIRST) {
   if (sorting === REPORT_SORTING_OPTIONS.OLDEST_FIRST) {
     return [...rows].sort((a, b) => Number(a?.dateValue || 0) - Number(b?.dateValue || 0))
-    return [...rows].sort((a, b) => {
-      const statusDiff = getStatusRank(b?.status) - getStatusRank(a?.status)
-      if (statusDiff !== 0) return statusDiff
-      
-      return Number(a?.dateValue || 0) - Number(b?.dateValue || 0)
-    })
   }
 
   if (sorting === REPORT_SORTING_OPTIONS.HIGHEST_URGENCY) {
     return [...rows].sort((a, b) => {
-      const statusDiff = getStatusRank(b?.status) - getStatusRank(a?.status)
-      if (statusDiff !== 0) return statusDiff
-
       const urgencyDifference =
         Number(URGENCY_RANKS[b?.urgency] || 0) - Number(URGENCY_RANKS[a?.urgency] || 0)
 

@@ -7,6 +7,7 @@ import { logger } from "../../config/logger.js";
 import {
   buildReportsListCacheKey,
   buildReportsCountsCacheKey,
+  buildReportsUnreadSummaryCacheKey,
   buildReportsUserCachePrefix,
 } from "./reports.cache.js";
 import {
@@ -170,6 +171,16 @@ export const reportsService = {
     const counts = await reportsRepository.getCountsByStatus({ userId, accessToken });
     await cacheService.setJSON(cacheKey, counts, 60);
     return counts;
+  },
+
+  async getUnreadSummary({ userId, accessToken }) {
+    const cacheKey = buildReportsUnreadSummaryCacheKey(userId);
+    const cached = await cacheService.getJSON(cacheKey);
+    if (cached) return cached;
+
+    const summary = await reportsRepository.getUnreadSummary({ userId, accessToken });
+    await cacheService.setJSON(cacheKey, summary, 30);
+    return summary;
   },
 
   async createReport({

@@ -18,6 +18,7 @@ import {
   seedUnreadState as _seedUnreadState,
   registerReportStatuses as _registerReportStatuses,
   seedUnreadStateFromApi,
+  refreshUnreadSummary as _refreshUnreadSummary,
   initializeAdminMessageState,
   resetAdminMessageState,
 } from "../services/adminMessageState";
@@ -70,6 +71,10 @@ export function AdminMessageProvider({ children }) {
     _registerReportStatuses(reports);
   }, []);
 
+  const refreshUnreadSummary = useCallback(async () => {
+    await _refreshUnreadSummary();
+  }, []);
+
   const refreshFromApi = useCallback(async (reportIds, userId, force = true) => {
     await seedUnreadStateFromApi(reportIds, userId, force);
   }, []);
@@ -83,6 +88,7 @@ export function AdminMessageProvider({ children }) {
     setReportUnread,
     seedUnreadState,
     registerReportStatuses,
+    refreshUnreadSummary,
     refreshFromApi,
   };
 
@@ -105,6 +111,7 @@ export function AdminMessageProvider({ children }) {
  *   setReportUnread: (reportId: string) => void,
  *   seedUnreadState: (map: Record<string, boolean>, force?: boolean) => void,
  *   registerReportStatuses: (reports: Array<{ id: string | number, status: string }>) => void,
+ *   refreshUnreadSummary: () => Promise<void>,
  *   refreshFromApi: (reportIds: string[], userId?: string, force?: boolean) => Promise<void>,
  * }}
  */

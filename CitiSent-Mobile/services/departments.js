@@ -1,4 +1,9 @@
 import { api } from "./api";
+import { getCache, setCache } from "./cache";
+
+const DEPARTMENTS_CACHE_KEY = "departments_list";
+const DEPARTMENTS_CACHE_TTL = 3600; // 1 hour
+let memoryDepartments = null;
 
 function readDepartmentsPayload(payload) {
   if (Array.isArray(payload)) {
@@ -58,7 +63,32 @@ function normalizeDepartments(rows) {
 
 export const departmentsApi = {
   getDepartments: async () => {
-    const response = await api.get("/departments");
-    return normalizeDepartments(readDepartmentsPayload(response));
+    if (Array.isArray(memoryDepartments) && memoryDepartments.length > 0) {
+      return memoryDepartments;
+    }
+
+    try {
+      const cached = await getCache(DEPARTMENTS_CACHE_KEY);
+      if (Array.isArray(cached) && cached.length > 0) {
+        memoryDepartments = cached;
+        return cached;
+      }
+    } catch {}
+
+    try {
+      const response = await api.get("/departments");
+      const normalized = normalizeDepartments(readDepartmentsPayload(response));
+      memoryDepartments = normalized;
+      await setCache(DEPARTMENTS_CACHE_KEY, normalized, DEPARTMENTS_CACHE_TTL);
+      return normalized;
+    } catch (err) {
+      const stale = await getCache(DEPARTMENTS_CACHE_KEY, { ignoreExpiry: true });
+      if (Array.isArray(stale) && stale.length > 0) {
+        memoryDepartments = stale;
+        return stale;
+      }
+      return [];
+    }
   },
 };
+

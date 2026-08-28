@@ -238,3 +238,71 @@ test("updateReport keeps the existing urgency when only non-text fields change",
   assert.ok(!("sentiment_label" in capturedUpdatePayload));
   assert.equal(result.sentimentLabel, "High");
 });
+
+test("getUnreadSummary returns cached summary if available", async (t) => {
+  const originalGetJSON = cacheService.getJSON;
+  const originalGetUnreadSummary = reportsRepository.getUnreadSummary;
+
+  cacheService.getJSON = async () => ({
+    hasUnread: true,
+    unreadByReport: { "rep-1": true },
+    statusByReport: { "rep-1": "pending" },
+  });
+
+  let repositoryCalled = false;
+  reportsRepository.getUnreadSummary = async () => {
+    repositoryCalled = true;
+    return { hasUnread: false, unreadByReport: {}, statusByReport: {} };
+  };
+
+  t.after(() => {
+    cacheService.getJSON = originalGetJSON;
+    reportsRepository.getUnreadSummary = originalGetUnreadSummary;
+  });
+
+  const summary = await reportsService.getUnreadSummary({
+    userId: "user-1",
+    accessToken: "token-123",
+  });
+
+  assert.equal(summary.hasUnread, true);
+  assert.equal(summary.unreadByReport["rep-1"], true);
+  assert.equal(repositoryCalled, false);
+});
+
+test("getUnreadSummary delegates to repository and caches result on cache miss", async (t) => {
+  const originalGetJSON = cacheService.getJSON;
+  const originalSetJSON = cacheService.setJSON;
+  const originalGetUnreadSummary = reportsRepository.getUnreadSummary;
+
+  cacheService.getJSON = async () => null;
+
+  let cachedPayload = null;
+  cacheService.setJSON = async (key, val, ttl) => {
+    cachedPayload = { key, val, ttl };
+  };
+
+  reportsRepository.getUnreadSummary = async () => ({
+    hasUnread: true,
+    unreadByReport: { "rep-2": true },
+    statusByReport: { "rep-2": "in_review" },
+  });
+
+  t.after(() => {
+    cacheService.getJSON = originalGetJSON;
+    cacheService.setJSON = originalSetJSON;
+    reportsRepository.getUnreadSummary = originalGetUnreadSummary;
+  });
+
+  const summary = await reportsService.getUnreadSummary({
+    userId: "user-1",
+    accessToken: "token-123",
+  });
+
+  assert.equal(summary.hasUnread, true);
+  assert.equal(summary.unreadByReport["rep-2"], true);
+  assert.equal(summary.statusByReport["rep-2"], "in_review");
+  assert.ok(cachedPayload);
+  assert.equal(cachedPayload.val.hasUnread, true);
+});
+

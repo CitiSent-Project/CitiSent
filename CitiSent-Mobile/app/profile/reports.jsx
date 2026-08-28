@@ -44,7 +44,7 @@ export default function ReportsMadePage() {
     statusByReport,
     setReportRead,
     registerReportStatuses,
-    refreshFromApi,
+    refreshUnreadSummary,
   } = useAdminMessageState();
 
   const discussionReportRef = useRef(discussionReport);
@@ -80,48 +80,22 @@ export default function ReportsMadePage() {
 
   useEffect(() => {
     fetchCounts();
+    refreshUnreadSummary?.().catch(() => {});
   }, []);
 
   // Pull to refresh uses the reload function from the hook
   const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setSelectedStatus("all");
-    await Promise.all([reloadMyReports(), fetchCounts()]);
+    await Promise.all([reloadMyReports(), fetchCounts(), refreshUnreadSummary?.().catch(() => {})]);
   });
 
   const editingReport = reports.find((item) => item.id === editingReportId) || null;
 
-  // On initial mount of Manage Reports, fetch user reports overview to register
-  // their statuses and seed unread state from backend/database (Requirement 9 & 10)
+  // Register report statuses in shared store for instant filter badge correlation
   useEffect(() => {
-    let isMounted = true;
-    const loadOverview = async () => {
-      try {
-        const res = await reportsApi.getMyReports(100, 0, "all");
-        const allReports = res?.data || [];
-        if (isMounted && allReports.length > 0) {
-          registerReportStatuses(allReports);
-          const currentUser = getAuthUser();
-          const currentUserId = currentUser?.id ?? null;
-          await refreshFromApi(allReports.map((r) => String(r.id)), currentUserId, false);
-        }
-      } catch (err) {
-        console.warn("Failed to load initial reports overview:", err);
-      }
-    };
-    loadOverview();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Seed shared state from API and register statuses when current report list changes.
-  useEffect(() => {
-    if (!reports.length) return;
-    registerReportStatuses(reports);
-    const currentUser = getAuthUser();
-    const currentUserId = currentUser?.id ?? null;
-    const reportIds = reports.map((r) => String(r.id));
-    refreshFromApi(reportIds, currentUserId, false).catch(() => {});
+    if (reports.length > 0) {
+      registerReportStatuses(reports);
+    }
   }, [reports]);
 
   /**
@@ -148,21 +122,10 @@ export default function ReportsMadePage() {
   };
 
   /**
-   * When the discussion modal closes, re-fetch the unread state for that
-   * specific report so the badge always reflects the true server state.
+   * Discussion modal close handler.
    */
-  const handleDiscussionClose = async () => {
-    const reportId = discussionReport?.id;
+  const handleDiscussionClose = () => {
     setDiscussionReport(null);
-    if (reportId) {
-      try {
-        const currentUser = getAuthUser();
-        const currentUserId = currentUser?.id ?? null;
-        await refreshFromApi([String(reportId)], currentUserId, true);
-      } catch {
-        // Non-critical; badge will update on next full refresh
-      }
-    }
   };
 
   // When saving, close the edit modal and perform api call

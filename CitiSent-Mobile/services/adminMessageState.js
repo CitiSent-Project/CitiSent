@@ -328,6 +328,27 @@ function _setupSocketListener(userId) {
 }
 
 /**
+ * Fetch initial unread summary for all user reports in one lightweight call.
+ */
+export async function refreshUnreadSummary() {
+  try {
+    const { reportsApi } = await import("./reports");
+    const summary = await reportsApi.getUnreadSummary();
+    if (summary) {
+      if (summary.statusByReport && typeof summary.statusByReport === "object") {
+        const statusEntries = Object.entries(summary.statusByReport).map(([id, status]) => ({ id, status }));
+        registerReportStatuses(statusEntries);
+      }
+      if (summary.unreadByReport && typeof summary.unreadByReport === "object") {
+        seedUnreadState(summary.unreadByReport, false);
+      }
+    }
+  } catch (err) {
+    console.warn("[adminMessageState] Failed to fetch unread summary:", err?.message);
+  }
+}
+
+/**
  * Initialize the singleton for the authenticated user.
  *
  * Safe to call multiple times — re-initializes if the user changed or subscriptions dropped.
@@ -353,10 +374,8 @@ export async function initializeAdminMessageState(userId, reportIds = []) {
   _setupSupabaseChannel(targetUserId);
   _setupSocketListener(targetUserId);
 
-  // Seed initial state if we have report IDs to check
-  if (Array.isArray(reportIds) && reportIds.length > 0) {
-    _seedFromApi(reportIds, targetUserId);
-  }
+  // Fetch unread summary in one single efficient endpoint call
+  refreshUnreadSummary().catch(() => {});
 }
 
 /**
@@ -398,12 +417,12 @@ export async function seedUnreadStateFromApi(reportIds, userId = null, force = f
   seedUnreadState(map, force);
 }
 
-
 async function _seedFromApi(reportIds, userId) {
   try {
-    await seedUnreadStateFromApi(reportIds, userId);
+    await refreshUnreadSummary();
   } catch (err) {
     console.warn("[adminMessageState] Failed to seed initial unread state:", err?.message);
   }
 }
+
 

@@ -341,11 +341,12 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <button
                 type="button"
                 onClick={handleOpenChat}
-                className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a]"
+                disabled={isPermanentlyLocked}
+                className="ml-auto inline-flex min-w-30 items-center justify-center gap-2 rounded-lg bg-[#183b68] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#24528a] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiMessageCircle />
                 <span>Talk to User</span>
-                {unreadChatCount > 0 && (
+                {unreadChatCount > 0 && !isPermanentlyLocked && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-blue-500 px-1.5 py-0.5 text-[10px] font-bold text-white font-numeric">
                     <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                     {unreadChatCount > 1 ? unreadChatCount : ''}

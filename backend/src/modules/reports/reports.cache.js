@@ -10,7 +10,12 @@ export function buildReportsCountsCacheKey(userId) {
   return `${reportsUserPrefix}${userId}:counts`;
 }
 
+export function buildReportsUnreadSummaryCacheKey(userId) {
+  return `${reportsUserPrefix}${userId}:unread_summary`;
+}
+
 export function buildReportsUserCachePrefix(userId) {
   return `${reportsUserPrefix}${userId}:`;
 }
+
 

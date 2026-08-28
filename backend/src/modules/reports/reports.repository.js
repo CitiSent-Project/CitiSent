@@ -78,6 +78,97 @@ export const reportsRepository = {
     return counts;
   },
 
+  async getUnreadSummary({ userId, accessToken }) {
+    const db = getDbClient(accessToken);
+
+    // 1. Fetch report IDs and statuses for this user
+    const { data: reports, error: reportsError } = await db
+      .from(TABLE_NAME)
+      .select("id, status")
+      .eq("user_id", userId);
+
+    if (reportsError) {
+      throw new AppError(
+        "Failed to fetch report unread summary",
+        StatusCodes.BAD_GATEWAY,
+        reportsError,
+      );
+    }
+
+    const statusByReport = {};
+    const reportIds = [];
+    for (const r of reports || []) {
+      const repId = String(r.id);
+      statusByReport[repId] = r.status || "pending";
+      reportIds.push(r.id);
+    }
+
+    if (!reportIds.length) {
+      return {
+        hasUnread: false,
+        unreadByReport: {},
+        statusByReport: {},
+      };
+    }
+
+    // 2. Fetch messages in user's reports where sender is not the user
+    const { data: messages, error: messagesError } = await db
+      .from("report_messages")
+      .select("id, report_id")
+      .in("report_id", reportIds)
+      .neq("sender_id", userId);
+
+    if (messagesError) {
+      throw new AppError(
+        "Failed to fetch messages for unread summary",
+        StatusCodes.BAD_GATEWAY,
+        messagesError,
+      );
+    }
+
+    const messageRows = messages || [];
+    if (!messageRows.length) {
+      return {
+        hasUnread: false,
+        unreadByReport: {},
+        statusByReport,
+      };
+    }
+
+    // 3. Fetch reads for these message IDs by this user
+    const messageIds = messageRows.map((m) => m.id);
+    const { data: reads, error: readsError } = await db
+      .from("report_message_reads")
+      .select("message_id")
+      .eq("user_id", userId)
+      .eq("is_read", true)
+      .in("message_id", messageIds);
+
+    if (readsError) {
+      throw new AppError(
+        "Failed to fetch read state for unread summary",
+        StatusCodes.BAD_GATEWAY,
+        readsError,
+      );
+    }
+
+    const readSet = new Set((reads || []).map((r) => String(r.message_id)));
+    const unreadByReport = {};
+    let hasUnread = false;
+
+    for (const msg of messageRows) {
+      if (!readSet.has(String(msg.id))) {
+        unreadByReport[String(msg.report_id)] = true;
+        hasUnread = true;
+      }
+    }
+
+    return {
+      hasUnread,
+      unreadByReport,
+      statusByReport,
+    };
+  },
 
   async create(payload, accessToken) {
     const db = getDbClient(accessToken);

@@ -31,6 +31,18 @@ export const reportsController = {
     });
   },
 
+  async getUnreadSummary(req, res) {
+    const summary = await reportsService.getUnreadSummary({
+      userId: req.user.id,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: summary,
+    });
+  },
+
   async create(req, res) {
     const created = await reportsService.createReport({
       userId: req.user.id,

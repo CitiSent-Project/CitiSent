@@ -6,6 +6,8 @@ import { notificationsRepository } from "../admin/notifications/notifications.re
 import { emitToReportRoom, emitToUser } from "../../realtime/socket.js";
 import { reportsSentimentClient } from "./reports.sentiment.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
+import { buildReportsUserCachePrefix } from "./reports.cache.js";
+
 
 function normalizeMessageInput(message) {
   return String(message || "").trim();
@@ -158,6 +160,12 @@ export const reportMessagesService = {
       });
     }
 
+    // Invalidate unread summary cache for report owner and recipient
+    const invalidateUserIds = new Set([access.report.user_id, recipient?.user_id].filter(Boolean));
+    for (const uId of invalidateUserIds) {
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(uId)).catch(() => {});
+    }
+
     return formattedMessage;
   },
 
@@ -184,6 +192,9 @@ export const reportMessagesService = {
     });
 
     const formattedRows = updatedRows.map((row) => toReportMessageResponse(row, actor.id));
+
+    // Invalidate reader's unread summary cache
+    cacheService.deleteByPrefix(buildReportsUserCachePrefix(actor.id)).catch(() => {});
 
     // Broadcast messages_read event via Socket.IO
     try {

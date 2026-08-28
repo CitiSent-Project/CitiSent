@@ -35,6 +35,12 @@ reportsRouter.get(
 );
 
 reportsRouter.get(
+  "/unread-summary",
+  requireAuth,
+  asyncHandler(reportsController.getUnreadSummary),
+);
+
+reportsRouter.get(
   "/:reportId",
   requireAuth,
   validateRequest(getReportByIdSchema),

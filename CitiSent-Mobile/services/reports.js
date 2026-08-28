@@ -324,6 +324,29 @@ export const reportsApi = {
     }
   },
 
+  getUnreadSummary: async () => {
+    const uid = getAuthUser()?.id ?? "anon";
+    const cacheKey = `my_report_unread_summary_${uid}`;
+
+    if (shouldUseLocalReportsData()) {
+      return { hasUnread: false, unreadByReport: {}, statusByReport: {} };
+    }
+
+    try {
+      const response = await api.get("/reports/unread-summary");
+      const result = response.data || { hasUnread: false, unreadByReport: {}, statusByReport: {} };
+      await setCache(cacheKey, result, 60);
+      return result;
+    } catch (error) {
+      warnFallbackOnce("Falling back to cached unread summary data:", error);
+      const cached = await getCache(cacheKey, { ignoreExpiry: true });
+      if (cached) {
+        return cached;
+      }
+      return { hasUnread: false, unreadByReport: {}, statusByReport: {} };
+    }
+  },
+
   getLatestHomeReport: async () => {
     // Namespace cache key by user ID. Fix for Issue #3.
     const uid = getAuthUser()?.id ?? "anon";

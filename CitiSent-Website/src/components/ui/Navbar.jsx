@@ -313,14 +313,14 @@ export function Navbar({
 						<div className="flex items-center gap-3">
 							<button
 								type="button"
-								className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100 lg:hidden"
+								className="grid h-10 w-10 place-items-center rounded-lg border border-[#2f4f80]/20 bg-[#345383] text-cyan-100 transition hover:bg-[#3b5f97] lg:hidden"
 								onClick={() => setMobileOpen((prev) => !prev)}
 								aria-label="Open navigation menu"
 							>
 								<span className="space-y-1">
-									<span className="block h-0.5 w-4 bg-slate-700" />
-									<span className="block h-0.5 w-4 bg-slate-700" />
-									<span className="block h-0.5 w-4 bg-slate-700" />
+									<span className="block h-0.5 w-4 bg-cyan-100" />
+									<span className="block h-0.5 w-4 bg-cyan-100" />
+									<span className="block h-0.5 w-4 bg-cyan-100" />
 								</span>
 							</button>
 						</div>

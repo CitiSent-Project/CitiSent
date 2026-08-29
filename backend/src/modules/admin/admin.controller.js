@@ -98,6 +98,33 @@ export const adminController = {
     });
   },
 
+  async bulkBanUsers(req, res) {
+    const result = await adminService.bulkBanUsers({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userIds: req.body.userIds,
+      reason: req.body.reason,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async bulkUnbanUsers(req, res) {
+    const result = await adminService.bulkUnbanUsers({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      userIds: req.body.userIds,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async listReports(req, res) {
     const result = await adminService.listReports({
       actor: req.actor,

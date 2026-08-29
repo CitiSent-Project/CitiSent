@@ -797,6 +797,31 @@ export const adminService = {
     });
   },
 
+  async bulkBanUsers({ actor, accessToken, userIds, reason }) {
+    assertSuperadmin(actor);
+
+    await adminRepository.bulkBanUsers({
+      accessToken,
+      actorId: actor.id,
+      userIds,
+      reason,
+    });
+
+    return { success: true };
+  },
+
+  async bulkUnbanUsers({ actor, accessToken, userIds }) {
+    assertSuperadmin(actor);
+
+    await adminRepository.bulkUnbanUsers({
+      accessToken,
+      actorId: actor.id,
+      userIds,
+    });
+
+    return { success: true };
+  },
+
   async listReports({ actor, accessToken, limit, offset, status, userId }) {
     const role = actor?.role || "unknown";
     const dept = actor?.departmentId || "all";

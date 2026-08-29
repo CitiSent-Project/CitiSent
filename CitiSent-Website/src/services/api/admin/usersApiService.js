@@ -43,4 +43,12 @@ export const usersApiService = {
     apiClient.patch(`/admin/users/${userId}/unban`, {}, {
       token,
     }),
+  bulkBanUsers: (token, payload) =>
+    apiClient.patch(`/admin/users/bulk-ban`, payload, {
+      token,
+    }),
+  bulkUnbanUsers: (token, payload) =>
+    apiClient.patch(`/admin/users/bulk-unban`, payload, {
+      token,
+    }),
 }

@@ -138,6 +138,24 @@ export const unbanAdminUserSchema = z.object({
   body: z.object({}).optional().default({}),
 });
 
+export const bulkBanUsersSchema = z.object({
+  query: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  body: z.object({
+    userIds: z.array(userIdSchema).min(1).max(100),
+    reason: z.string().trim().min(3).max(500).optional(),
+  }),
+});
+
+export const bulkUnbanUsersSchema = z.object({
+  query: z.object({}).optional().default({}),
+  params: z.object({}).optional().default({}),
+  body: z.object({
+    userIds: z.array(userIdSchema).min(1).max(100),
+  }),
+});
+
+
 export const listAdminReportsSchema = z.object({
   body: z.object({}).optional().default({}),
   params: z.object({}).optional().default({}),

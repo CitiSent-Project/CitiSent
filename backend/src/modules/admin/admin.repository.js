@@ -413,6 +413,64 @@ export const adminRepository = {
     }
   },
 
+  async bulkBanUsers({ accessToken, actorId, userIds, reason }) {
+    const db = getDb(accessToken);
+    const now = new Date().toISOString();
+    
+    const rows = userIds.map((userId) => ({
+      user_id: userId,
+      reason: reason || null,
+      is_active: true,
+      banned_at: now,
+      banned_by_user_id: actorId,
+      unbanned_at: null,
+      unbanned_by_user_id: null,
+    }));
+
+    const { error } = await db
+      .from(BANNED_USERS_TABLE)
+      .upsert(rows, { onConflict: "user_id" });
+
+    if (error) {
+      throw toGatewayError("Failed to bulk ban users", error);
+    }
+
+    const { error: profileError } = await db
+      .from(PROFILES_TABLE)
+      .update({ account_status: "banned" })
+      .in("user_id", userIds);
+
+    if (profileError) {
+      throw toGatewayError("Failed to bulk update user account status", profileError);
+    }
+  },
+
+  async bulkUnbanUsers({ accessToken, actorId, userIds }) {
+    const db = getDb(accessToken);
+    const { error } = await db
+      .from(BANNED_USERS_TABLE)
+      .update({
+        is_active: false,
+        unbanned_at: new Date().toISOString(),
+        unbanned_by_user_id: actorId,
+      })
+      .in("user_id", userIds)
+      .eq("is_active", true);
+
+    if (error) {
+      throw toGatewayError("Failed to bulk unban users", error);
+    }
+
+    const { error: profileError } = await db
+      .from(PROFILES_TABLE)
+      .update({ account_status: "active" })
+      .in("user_id", userIds);
+
+    if (profileError) {
+      throw toGatewayError("Failed to bulk update user account status", profileError);
+    }
+  },
+
   async listReports({ actor, accessToken, limit, offset, status, userId }) {
     const db = getDb(accessToken);
 

@@ -59,11 +59,9 @@ import {
 } from '../services/api/admin/accountsApiMappers'
 import { mapBackendActivityLogEntry } from '../services/api/admin/activityLogApiMappers'
 import { mapBackendNotification } from '../services/api/admin/notificationsApiMappers'
-import {
-  mapBackendReportToUiRow,
-  mapUiStatusToBackendStatus,
-} from '../services/api/admin/reportsApiMappers'
+import { mapBackendReportToUiRow, mapUiStatusToBackendStatus } from '../services/api/admin/reportsApiMappers'
 import { mapBackendTransferRequest } from '../services/api/admin/transferRequestsApiMappers'
+import { runWithConcurrencyLimit } from '../utils/concurrencyLimiter'
 
 function loadSchemaBackedValue(key, fallbackValue, overrides = {}) {
   const schemaRule = getStorageSchemaRule(key)
@@ -584,15 +582,11 @@ export function useAppStateOrchestrator() {
               limit: 200,
               offset: 0,
             }),
-            Promise.allSettled(
-              notificationAdminIds.map((adminId) =>
-                notificationsApiService.listNotifications(
-                  accessToken,
-                  normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
-                    ? { adminId, limit: 200, offset: 0 }
-                    : { limit: 200, offset: 0 }
-                )
-            )
+            notificationsApiService.listNotifications(
+              accessToken,
+              normalizeUserRole(nextProfile.role) === USER_ROLES.SUPERADMIN
+                ? { adminId: nextProfile.id, limit: 200, offset: 0 }
+                : { limit: 200, offset: 0 }
             ),
           ])
 
@@ -601,19 +595,14 @@ export function useAppStateOrchestrator() {
               ? (activityResult.value?.data || []).map(mapBackendActivityLogEntry)
               : null
 
-          const notificationResponses =
-            notificationsResult.status === 'fulfilled'
-              ? notificationsResult.value
-              : notificationAdminIds.map(() => ({ status: 'rejected' }))
-
-        const hydratedNotificationsByAdmin = notificationAdminIds.reduce((accumulator, adminId, index) => {
-          const response = notificationResponses[index]
-          accumulator[adminId] =
-            response?.status === 'fulfilled'
-              ? (response.value?.data || []).map(mapBackendNotification)
-              : []
+        const hydratedNotificationsByAdmin = notificationAdminIds.reduce((accumulator, adminId) => {
+          accumulator[adminId] = []
           return accumulator
         }, {})
+        
+        if (notificationsResult.status === 'fulfilled') {
+          hydratedNotificationsByAdmin[nextProfile.id] = (notificationsResult.value?.data || []).map(mapBackendNotification)
+        }
 
         if (isCancelled) {
           return
@@ -710,6 +699,64 @@ export function useAppStateOrchestrator() {
       return didChange ? next : previous
     })
   }, [adminAccounts, profile.id])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function hydrateOfficeAdminNotifications() {
+      if (
+        !accessToken ||
+        activePage !== APP_PAGES.ADMIN_MANAGEMENT ||
+        normalizeUserRole(profile.role) !== USER_ROLES.SUPERADMIN
+      ) {
+        return
+      }
+
+      const otherAdminIds = adminAccounts
+        .map((admin) => admin.id)
+        .filter((id) => id !== profile.id)
+
+      if (otherAdminIds.length === 0) {
+        return
+      }
+
+      const tasks = otherAdminIds.map(
+        (adminId) => () =>
+          notificationsApiService.listNotifications(accessToken, {
+            adminId,
+            limit: 200,
+            offset: 0,
+          })
+      )
+
+      const results = await runWithConcurrencyLimit(tasks, 3)
+
+      if (!isMounted) {
+        return
+      }
+
+      setNotificationsByAdmin((prev) => {
+        const next = { ...prev }
+        let changed = false
+
+        otherAdminIds.forEach((adminId, index) => {
+          const result = results[index]
+          if (result.status === 'fulfilled') {
+            next[adminId] = (result.value?.data || []).map(mapBackendNotification)
+            changed = true
+          }
+        })
+
+        return changed ? next : prev
+      })
+    }
+
+    hydrateOfficeAdminNotifications()
+
+    return () => {
+      isMounted = false
+    }
+  }, [accessToken, activePage, profile.role, profile.id, adminAccounts])
 
   async function handleProfileUpdate(updates) {
     if (!accessToken) {

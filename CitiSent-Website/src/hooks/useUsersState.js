@@ -151,18 +151,45 @@ export function useUsersState({ profile, onViewUserProfile }) {
     try { await usersApiService.deleteUser(token, id); setUserPendingDeletion(null); setSelectedUser(null); setSelectedUserIds((ids) => ids.filter((userId) => userId !== id)); await invalidateUsersData(); notifySuccess(`${name} was deleted successfully.`) } catch (error) { notifyError('Delete user failed.', error.message) } finally { setProcessingUserIds((ids) => { const next = new Set(ids); next.delete(id); return next }) }
   }
 
-  async function runBulkAction(action, verb) {
-    if (!canToggleBan) return notifyError('Bulk action denied.', `Only superadmins can ${verb} users.`)
-    if (!selectedVisibleUserIds.length) return notifyError(`Bulk ${verb} failed.`, 'Select one or more users first.')
-    const token = getStoredAccessToken(); if (!token) return notifyError(`Bulk ${verb} failed.`, 'Your session has expired. Please sign in again.')
-    const operations = await Promise.allSettled(selectedVisibleUserIds.map((id) => action(token, id)))
-    const successfulCount = operations.filter((result) => result.status === 'fulfilled').length; const failedCount = operations.length - successfulCount
-    setSelectedUserIds([]); await invalidateUsersData()
-    if (failedCount) return notifyError(`Bulk ${verb} partially failed.`, `${successfulCount} user(s) ${verb === 'ban' ? 'banned' : 'unbanned'}, ${failedCount} user(s) failed.`)
-    notifySuccess(`${verb === 'ban' ? 'Banned' : 'Unbanned'} ${successfulCount} user(s) successfully.`)
+  async function handleBulkBanUsers() {
+    setIsBulkBanning(true)
+    try {
+      if (!canToggleBan) return notifyError('Bulk action denied.', 'Only superadmins can ban users.')
+      if (!selectedVisibleUserIds.length) return notifyError('Bulk ban failed.', 'Select one or more users first.')
+      const token = getStoredAccessToken()
+      if (!token) return notifyError('Bulk ban failed.', 'Your session has expired. Please sign in again.')
+      
+      await usersApiService.bulkBanUsers(token, { userIds: selectedVisibleUserIds, reason: 'Bulk ban from Users page' })
+      const successfulCount = selectedVisibleUserIds.length
+      setSelectedUserIds([])
+      await invalidateUsersData()
+      notifySuccess(`Banned ${successfulCount} user(s) successfully.`)
+    } catch (error) {
+      notifyError('Bulk ban failed.', error.message)
+    } finally {
+      setIsBulkBanning(false)
+    }
   }
-  async function handleBulkBanUsers() { setIsBulkBanning(true); try { await runBulkAction((token, id) => usersApiService.banUser(token, id, { reason: 'Bulk ban from Users page' }), 'ban') } finally { setIsBulkBanning(false) } }
-  async function handleBulkUnbanUsers() { setIsBulkUnbanning(true); try { await runBulkAction((token, id) => usersApiService.unbanUser(token, id), 'unban') } finally { setIsBulkUnbanning(false) } }
+
+  async function handleBulkUnbanUsers() {
+    setIsBulkUnbanning(true)
+    try {
+      if (!canToggleBan) return notifyError('Bulk action denied.', 'Only superadmins can unban users.')
+      if (!selectedVisibleUserIds.length) return notifyError('Bulk unban failed.', 'Select one or more users first.')
+      const token = getStoredAccessToken()
+      if (!token) return notifyError('Bulk unban failed.', 'Your session has expired. Please sign in again.')
+      
+      await usersApiService.bulkUnbanUsers(token, { userIds: selectedVisibleUserIds })
+      const successfulCount = selectedVisibleUserIds.length
+      setSelectedUserIds([])
+      await invalidateUsersData()
+      notifySuccess(`Unbanned ${successfulCount} user(s) successfully.`)
+    } catch (error) {
+      notifyError('Bulk unban failed.', error.message)
+    } finally {
+      setIsBulkUnbanning(false)
+    }
+  }
 
   return { searchTerm, sortBy, filterBy, visibleUsers, selectedVisibleUserIds, totalPages, activePage, visiblePages, stats: userStatsQuery.data || { active: 0, pending: 0, banned: 0 }, isLoading: usersQuery.isLoading || usersQuery.isFetching, canCreateUsers, canToggleBan, isAddUserModalOpen, setIsAddUserModalOpen, selectedUser, isEditUserOpen, setIsEditUserOpen, userPendingDeletion, setUserPendingDeletion, processingUserIds, isBulkBanning, isBulkUnbanning, handleSortChange, handleFilterChange, handleSearchChange, handlePageChange, handleNextPage, handlePreviousPage, handleAddUserSubmit, handleViewUser, handleEditUser, handleEditUserSubmit, handleToggleBanUser, handleDeleteUser, handleToggleSelectUser, handleToggleSelectAllVisibleUsers, handleBulkBanUsers, handleBulkUnbanUsers, closeEditModal: () => { setIsEditUserOpen(false); setSelectedUser(null) } }
 }

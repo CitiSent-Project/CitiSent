@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { USER_ROLES, normalizeUserRole } from '../models/roleAccessModel'
 import { departmentsApiService } from '../services/api/admin/departmentsApiService'
 
@@ -51,6 +51,10 @@ export function useDepartmentState({ accessToken, role }) {
     const catalogResponse = await departmentsApiService.getDepartmentsCatalog(accessToken, { includeInactive: true })
     setDepartmentCatalog(normalizeDepartmentOptions(catalogResponse?.departments))
   }, [accessToken, role])
+
+  useEffect(() => {
+    refreshDepartmentsState()
+  }, [refreshDepartmentsState])
 
   return {
     departmentOptions,

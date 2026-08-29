@@ -14,23 +14,23 @@ const accentMap = {
 
 export function ReportsStatCards({ stats }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full min-w-0">
       {stats.map((stat) => {
         const Icon = iconMap[stat.icon] ?? FiFolder;
 
         return (
           <div
             key={stat.id}
-            className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
+            className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4 shadow-sm min-w-0"
           >
             <div
-              className={`grid h-12 w-12 place-items-center rounded-xl ${accentMap[stat.accent]}`}
+              className={`grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-xl ${accentMap[stat.accent]}`}
             >
-              <Icon className="text-xl" />
+              <Icon className="text-lg sm:text-xl" />
             </div>
-            <div>
-              <p className="text-sm text-slate-500">{stat.label}</p>
-              <p className="text-4xl font-bold leading-none text-slate-900 font-numeric">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-slate-500 truncate">{stat.label}</p>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-slate-900 font-numeric">
                 {stat.value}
               </p>
             </div>

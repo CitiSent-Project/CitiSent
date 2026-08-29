@@ -3,7 +3,7 @@ import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export function PieChart({ title, total, labels, values, colors, legend }) {
+export function PieChart({ title, total, labels, values, colors, legend = [] }) {
   const data = {
     labels,
     datasets: [
@@ -30,37 +30,32 @@ export function PieChart({ title, total, labels, values, colors, legend }) {
   };
 
   return (
-    <div className="h-full rounded-lg bg-white p-6 shadow-sm border border-slate-200 flex flex-col">
-      <h3 className="mb-4 font-semibold text-slate-900">{title}</h3>
-      <div className="flex flex-1 min-h-0 flex-col items-center gap-4">
-        <div className="relative w-full max-w-[320px] flex-1 min-h-55">
+    <div className="h-full rounded-2xl bg-white p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col min-w-0 w-full">
+      <h3 className="mb-4 font-semibold text-slate-900 text-base md:text-lg">{title}</h3>
+      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-4 w-full min-w-0">
+        <div className="relative w-full max-w-[200px] sm:max-w-[240px] aspect-square flex-shrink-0 mx-auto">
           <Doughnut data={data} options={options} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-semibold text-slate-800 font-numeric">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-xl sm:text-2xl font-bold text-slate-800 font-numeric">
               {total}
             </span>
           </div>
         </div>
-        <div className="grid max-h-40 w-full grid-cols-1 gap-2 overflow-y-auto pr-1 text-xs text-slate-600 md:grid-cols-2">
-          {legend.map((item, index) => {
-            const isLastOdd =
-              legend.length % 2 === 1 && index === legend.length - 1;
-
-            return (
-              <div
-                key={item.label}
-                className={`flex items-start gap-2 ${isLastOdd ? "md:col-span-2 md:justify-center" : ""}`}
-              >
-                <span
-                  className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="wrap-break-word leading-tight">
-                  {item.label}
-                </span>
-              </div>
-            );
-          })}
+        <div className="grid max-h-44 w-full grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-1 text-xs text-slate-600">
+          {legend.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-start gap-2"
+            >
+              <span
+                className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="break-words leading-tight flex-1">
+                {item.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

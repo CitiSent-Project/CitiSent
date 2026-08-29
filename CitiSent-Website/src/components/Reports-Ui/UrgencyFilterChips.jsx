@@ -17,13 +17,13 @@ export function UrgencyFilterChips({
   }));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-3 sm:gap-4 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full min-w-0">
         {/* Search Input */}
-        <div className="flex flex-1 min-w-50 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-blue-400 transition-colors">
-          <FiSearch className="text-slate-400" />
+        <div className="flex flex-1 min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:border-blue-400 transition-colors">
+          <FiSearch className="text-slate-400 shrink-0" />
           <input
-            className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+            className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none min-w-0"
             placeholder="Search reports by ID, user, or issue..."
             type="text"
             value={searchTerm}
@@ -38,7 +38,7 @@ export function UrgencyFilterChips({
           icon={FiSliders}
           placeholder="All Status"
           ariaLabel="Filter reports by status"
-          className="min-w-52"
+          className="w-full sm:w-auto sm:min-w-48"
         />
       </div>
 

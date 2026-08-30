@@ -214,15 +214,15 @@ export function Dashboard() {
     )
 
     return (
-        <div className="min-h-screen bg-slate-50 p-8">
+        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-4 py-6 sm:px-6 lg:px-8">
             <MotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-8"
+                className="mb-6 sm:mb-8"
             >
-                <h1 className="text-3xl font-bold text-slate-900">
-                    Hi, Welcome back<span className="text-3xl">👋</span>
+                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                    Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
                     {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
@@ -230,14 +230,14 @@ export function Dashboard() {
             </MotionDiv>
 
             {/* Stats Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((card) => (
                     <DashboardStatCard key={card.id} {...card} />
                 ))}
             </div>
 
             {/* Charts Grid */}
-            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
                 <div className="lg:col-span-5 h-125">
                     <PieChart
                         title={categoryData.title}
@@ -272,6 +272,6 @@ export function Dashboard() {
                     isLoading={isLoadingDashboard}
                 />
             </div>
-        </div>
+        </main>
     )
 }

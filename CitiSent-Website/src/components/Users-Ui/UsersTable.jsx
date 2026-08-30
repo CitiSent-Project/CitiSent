@@ -227,7 +227,7 @@ export function UsersTable({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-190">
+      <div className="min-w-[680px]">
         <UsersTableHeader allSelected={allSelected} onToggleAll={onToggleSelectAllUsers} />
 
         <div className="divide-y divide-slate-200">

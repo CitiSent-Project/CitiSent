@@ -46,13 +46,13 @@ function DonutChartSkeleton({ className = '' }) {
     <CardSkeleton className={`p-5 flex flex-col ${className}`}>
       <SkeletonBlock className="mb-8 h-5 w-40" />
       <div className="mb-8 flex flex-1 items-center justify-center">
-        <div className="relative h-56 w-56 sm:h-64 sm:w-64 animate-pulse rounded-full border-[24px] sm:border-[32px] border-slate-200/80 dark:border-slate-700/80" />
+        <div className="relative h-56 w-56 sm:h-64 sm:w-64 animate-pulse rounded-full border-24 sm:border-32 border-slate-200/80 dark:border-slate-700/80" />
       </div>
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {renderRepeated(6, (i) => (
           <div key={i} className="flex items-center gap-2">
             <SkeletonBlock className="h-2 w-2 rounded-full" />
-            <SkeletonBlock className="h-3 w-full max-w-[160px]" />
+            <SkeletonBlock className="h-3 w-full max-w-40" />
           </div>
         ))}
       </div>
@@ -64,10 +64,10 @@ function BarChartSkeleton({ className = '' }) {
   return (
     <CardSkeleton className={`p-5 flex flex-col ${className}`}>
       <SkeletonBlock className="mb-8 h-5 w-48" />
-      <div className="mt-6 flex flex-1 min-h-[250px] items-end justify-between gap-2 sm:gap-4 border-b border-l border-slate-100 dark:border-slate-700/50 px-2 pb-1">
+      <div className="mt-6 flex flex-1 min-h-62.5 items-end justify-between gap-2 sm:gap-4 border-b border-l border-slate-100 dark:border-slate-700/50 px-2 pb-1">
         {[20, 40, 30, 80, 50, 60, 40].map((height, i) => (
           <div key={i} className="flex w-full flex-col items-center gap-2">
-            <SkeletonBlock className="w-full max-w-[32px] sm:max-w-[48px] rounded-t-sm" style={{ height: `${height}%` }} />
+            <SkeletonBlock className="w-full max-w-8 sm:max-w-12 rounded-t-sm" style={{ height: `${height}%` }} />
             <SkeletonBlock className="h-2 w-6 sm:w-8" />
           </div>
         ))}
@@ -86,7 +86,7 @@ function TableCardSkeleton({ titleWidth = 'w-32', columns = [], rows = 4, classN
         <div className="mb-4 flex gap-4">
           {columns.map((col, i) => (
             <div key={i} className={col}>
-               <SkeletonBlock className="h-3 w-full max-w-[100px]" />
+               <SkeletonBlock className="h-3 w-full max-w-25" />
             </div>
           ))}
         </div>
@@ -96,7 +96,7 @@ function TableCardSkeleton({ titleWidth = 'w-32', columns = [], rows = 4, classN
               {columns.map((col, colIndex) => (
                 <div key={colIndex} className={`flex items-center gap-3 ${col}`}>
                   {colIndex === 0 && <SkeletonBlock className="h-8 w-8 shrink-0 rounded-full" />}
-                  <SkeletonBlock className="h-3 w-full max-w-[140px]" />
+                  <SkeletonBlock className="h-3 w-full max-w-35" />
                 </div>
               ))}
             </div>
@@ -158,9 +158,9 @@ function ConversationsSkeleton() {
     <div className="space-y-4">
       <HeaderSkeleton titleWidth="w-44" actionWidth="" />
 
-      <CardSkeleton className="flex h-[calc(100vh-10rem)] min-h-[520px] overflow-hidden p-0">
+      <CardSkeleton className="flex h-[calc(100vh-10rem)] min-h-130 overflow-hidden p-0">
         {/* Left Sidebar */}
-        <div className="flex w-full flex-col border-r border-slate-200 p-4 md:w-[340px] md:shrink-0 lg:w-[360px] dark:border-slate-700/50">
+        <div className="flex w-full flex-col border-r border-slate-200 p-4 md:w-85 md:shrink-0 lg:w-90 dark:border-slate-700/50">
           <SkeletonBlock className="h-10 w-full rounded-xl" />
           <div className="mt-4 space-y-3">
             {renderRepeated(6, (index) => (

@@ -89,15 +89,8 @@ function truncateId(id) {
 }
 
 export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false }) {
-  const shouldShowLoader = isLoading && rows.length > 0
-
-  if (!shouldShowLoader && rows.length === 0) {
-    return (
-      <div className="px-4 py-10 text-center text-sm text-slate-400">
-        No reports to display.
-      </div>
-    );
-  }
+  const isInitialLoading = isLoading && rows.length === 0;
+  const isRefreshing = isLoading && rows.length > 0;
 
   return (
     <div>
@@ -117,7 +110,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             </tr>
           </thead>
           <TableLoader
-            isLoading={shouldShowLoader}
+            isLoading={isRefreshing}
             delayMs={0}
             variant="refreshing"
             label="Refreshing reports..."
@@ -126,9 +119,27 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             columns={8}
             cellClassName="h-4 w-24"
           />
-          <tbody>
-            {rows.map((row) => {
-              const normalizedStatus = normalizeReportStatus(row.status);
+          <TableLoader
+            isLoading={isInitialLoading}
+            delayMs={0}
+            minDisplayMs={0}
+            variant="skeleton"
+            label="Loading reports..."
+            rows={5}
+            columns={8}
+            cellClassName="h-4 w-24"
+          />
+          {!isInitialLoading && (
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
+                    No reports to display.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => {
+                  const normalizedStatus = normalizeReportStatus(row.status);
 
               return (
                 <tr
@@ -174,8 +185,10 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                   </td>
                 </tr>
               );
-            })}
+            })
+          )}
           </tbody>
+          )}
         </table>
       </div>
     </div>

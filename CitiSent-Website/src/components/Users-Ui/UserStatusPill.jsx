@@ -1,9 +1,12 @@
 import { FiCheckCircle, FiClock, FiXCircle } from 'react-icons/fi'
 
 const statusStyles = {
-  Active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  Pending: 'bg-slate-100 text-slate-600 border-slate-200',
-  Banned: 'bg-slate-200 text-slate-700 border-slate-300',
+  Active:
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20',
+  Pending:
+    'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20',
+  Banned:
+    'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20',
 }
 
 const statusIcons = {
@@ -18,11 +21,9 @@ export function UserStatusPill({ status }) {
 
   return (
     <span
-      className={`inline-flex justify-items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
-        statusStyles[label]
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide ${statusStyles[label]}`}
     >
-      <Icon className="text-sm" />
+      <Icon className="text-[14px]" />
       {label}
     </span>
   )

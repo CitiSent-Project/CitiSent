@@ -146,7 +146,8 @@ export function ReportHistoryTable({
     document.body.removeChild(link);
   };
 
-  const shouldShowLoader = isLoading && rows.length > 0;
+  const isInitialLoading = isLoading && rows.length === 0;
+  const isRefreshing = isLoading && rows.length > 0;
 
   return (
     <div className="space-y-4">
@@ -298,7 +299,7 @@ export function ReportHistoryTable({
             </tr>
           </thead>
           <TableLoader
-            isLoading={shouldShowLoader}
+            isLoading={isRefreshing}
             delayMs={0}
             variant="refreshing"
             label="Loading history logs..."
@@ -307,6 +308,17 @@ export function ReportHistoryTable({
             columns={7}
             cellClassName="h-4 w-24"
           />
+          <TableLoader
+            isLoading={isInitialLoading}
+            delayMs={0}
+            minDisplayMs={0}
+            variant="skeleton"
+            label="Loading history logs..."
+            rows={5}
+            columns={7}
+            cellClassName="h-4 w-24"
+          />
+          {!isInitialLoading && (
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
@@ -366,6 +378,7 @@ export function ReportHistoryTable({
               })
             )}
           </tbody>
+          )}
         </table>
       </div>
 

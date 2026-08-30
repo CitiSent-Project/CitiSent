@@ -5,7 +5,8 @@ import { TableLoader } from '../ui/TableLoader'
 const MotionDiv = motion.div
 
 export function DashboardTableCard({ title, columns, rows, isLoading = false }) {
-  const shouldShowLoader = isLoading && rows.length > 0
+  const isInitialLoading = isLoading && rows.length === 0;
+  const isRefreshing = isLoading && rows.length > 0;
 
   return (
     <MotionDiv
@@ -32,7 +33,7 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
             </tr>
           </thead>
           <TableLoader
-            isLoading={shouldShowLoader}
+            isLoading={isRefreshing}
             delayMs={0}
             variant="refreshing"
             label="Refreshing table..."
@@ -41,8 +42,26 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
             columns={columns.length}
             cellClassName="h-4 w-24"
           />
+          <TableLoader
+            isLoading={isInitialLoading}
+            delayMs={0}
+            minDisplayMs={0}
+            variant="skeleton"
+            label="Loading table..."
+            rows={5}
+            columns={columns.length}
+            cellClassName="h-4 w-24"
+          />
+          {!isInitialLoading && (
           <tbody>
-            {rows.map((row, idx) => (
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-slate-400">
+                  No data available.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, idx) => (
               <tr key={idx} className="border-b border-slate-100 transition hover:bg-slate-50">
                 {Object.values(row).map((cell, cellIdx) => (
                   <td
@@ -55,8 +74,9 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
                   </td>
                 ))}
               </tr>
-            ))}
+            )))}
           </tbody>
+          )}
         </table>
       </div>
     </MotionDiv>

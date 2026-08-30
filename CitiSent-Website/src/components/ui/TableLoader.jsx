@@ -4,7 +4,7 @@ function SkeletonBlock({ className = '' }) {
 	return (
 		<div
 			aria-hidden="true"
-			className={`animate-pulse motion-reduce:animate-none rounded-xl bg-slate-200/80 ${className}`.trim()}
+			className={`animate-pulse motion-reduce:animate-none rounded-xl bg-slate-200/80 dark:bg-slate-700/80 ${className}`.trim()}
 		/>
 	)
 }
@@ -23,7 +23,7 @@ function RefreshingBanner({ text, className = '' }) {
 
 function TableBodyLoader({ rows, columns, rowClassName = '', cellClassName = '' }) {
 	return Array.from({ length: rows }).map((_, rowIndex) => (
-		<tr key={rowIndex} className={`border-b border-slate-100 ${rowClassName}`.trim()}>
+		<tr key={rowIndex} className={`border-b border-slate-100 dark:border-slate-700/50 ${rowClassName}`.trim()}>
 			{Array.from({ length: columns }).map((__, columnIndex) => (
 				<td
 					key={columnIndex}
@@ -49,7 +49,7 @@ function UsersGridLoader({ rows, gridTemplateColumnsClass, rowClassName = '' }) 
 	return Array.from({ length: rows }).map((_, rowIndex) => (
 		<div
 			key={rowIndex}
-			className={`grid items-center gap-3 border-b border-slate-200 px-4 py-3 ${gridTemplateColumnsClass} ${rowClassName}`.trim()}
+			className={`grid items-center gap-3 border-b border-slate-200 dark:border-slate-700/50 px-4 py-3 ${gridTemplateColumnsClass} ${rowClassName}`.trim()}
 		>
 			<div className="flex justify-center">
 				<SkeletonBlock className="h-4 w-4 rounded-sm" />
@@ -161,7 +161,7 @@ export function TableLoader({
 			<div aria-busy="true" aria-live="polite" role="status" className={className}>
 				<span className="sr-only">{label}</span>
 				{variant === 'refreshing' ? (
-					<RefreshingBanner text={refreshText} className="border-b border-slate-200 bg-slate-50" />
+					<RefreshingBanner text={refreshText} className="border-b border-slate-200 bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50" />
 				) : null}
 				<UsersGridLoader
 					rows={resolvedRows}
@@ -178,7 +178,7 @@ export function TableLoader({
 				<td colSpan={columns}>{label}</td>
 			</tr>
 			{variant === 'refreshing' ? (
-				<tr className="border-b border-slate-100 bg-slate-50">
+				<tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50">
 					<td colSpan={columns} className="p-0">
 						<RefreshingBanner text={refreshText} />
 					</td>

@@ -66,7 +66,7 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity dark:bg-slate-900/60"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose()
@@ -79,103 +79,103 @@ export function EditUserFormModal({ user, isOpen, onClose, onSubmit }) {
         aria-modal="true"
         aria-label="Edit user form"
         tabIndex={-1}
-        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+        className="animate-in fade-in zoom-in-95 w-full max-w-xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 dark:shadow-slate-900/50"
       >
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Edit User</h2>
-          <p className="mt-1 text-sm text-slate-500">Update user profile details.</p>
+        <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-700/80">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Edit User</h2>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Update user profile details.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+        <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
           {inputError ? (
-            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
               {inputError}
             </p>
           ) : null}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm text-slate-700">First Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
               <input
                 type="text"
                 required
                 value={form.fname}
                 onChange={(event) => updateField('fname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Middle Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Middle Name</label>
               <input
                 type="text"
                 value={form.mname}
                 onChange={(event) => updateField('mname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Last Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
               <input
                 type="text"
                 required
                 value={form.lname}
                 onChange={(event) => updateField('lname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-slate-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
             <input
               type="email"
               value={form.email}
               readOnly
-              className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Barangay</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Barangay</label>
               <input
                 type="text"
                 required
                 value={form.barangay}
                 onChange={(event) => updateField('barangay', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">City</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
               <input
                 type="text"
                 value={form.city}
                 onChange={(event) => updateField('city', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Province</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Province</label>
               <input
                 type="text"
                 value={form.province}
                 onChange={(event) => updateField('province', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-700/80">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700"
+              className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-blue-600"
             >
               Save Changes
             </button>

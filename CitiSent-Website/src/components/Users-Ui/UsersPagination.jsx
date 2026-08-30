@@ -16,7 +16,7 @@ export function UsersPagination({
       onPageChange={onPageChange}
       onNext={onNextPage}
       onPrevious={onPreviousPage}
-      className="border-t border-slate-200 px-4 py-4"
+      className="border-t border-slate-100 bg-slate-50/30 px-5 py-4 dark:border-slate-700/50 dark:bg-slate-800/20"
     />
   )
 }

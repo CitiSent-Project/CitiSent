@@ -78,7 +78,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity dark:bg-slate-900/60"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           handleClose()
@@ -91,51 +91,51 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
         aria-modal="true"
         aria-label="Add user form"
         tabIndex={-1}
-        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+        className="animate-in fade-in zoom-in-95 w-full max-w-xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 dark:shadow-slate-900/50"
       >
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Add New User</h2>
-          <p className="mt-1 text-sm text-slate-500">Fill in the required user details below.</p>
+        <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-700/80">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Add New User</h2>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Fill in the required user details below.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+        <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
           {inputError ? (
-            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
               {inputError}
             </p>
           ) : null}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm text-slate-700">First Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">First Name</label>
               <input
                 type="text"
                 required
                 value={form.fname}
                 onChange={(event) => updateField('fname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="Jane"
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Middle Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Middle Name</label>
               <input
                 type="text"
                 value={form.mname}
                 onChange={(event) => updateField('mname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="Santos"
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Last Name</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</label>
               <input
                 type="text"
                 required
                 value={form.lname}
                 onChange={(event) => updateField('lname', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="Doe"
                 disabled={isSubmitting}
               />
@@ -143,7 +143,7 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-slate-700" htmlFor="new-user-username">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="new-user-username">
               Username
             </label>
             <input
@@ -157,79 +157,79 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
               autoComplete="username"
               value={form.username}
               onChange={(event) => updateField('username', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               placeholder="jane_doe"
               title="Use 3 to 40 letters, numbers, or underscores."
               disabled={isSubmitting}
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
               This is the username the person will use to sign in to the mobile app.
             </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-slate-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
             <input
               type="email"
               required
               value={form.email}
               onChange={(event) => updateField('email', event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
               placeholder="janedoe@gmail.com"
               disabled={isSubmitting}
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Barangay</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Barangay</label>
               <input
                 type="text"
                 required
                 value={form.barangay}
                 onChange={(event) => updateField('barangay', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="San Isidro Norte"
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">City</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
               <input
                 type="text"
                 value={form.city}
                 onChange={(event) => updateField('city', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="Sto. Tomas"
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700">Province</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Province</label>
               <input
                 type="text"
                 value={form.province}
                 onChange={(event) => updateField('province', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
                 placeholder="Batangas"
                 disabled={isSubmitting}
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-700/80">
             <button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="rounded-lg border border-slate-300 hover:bg-blue-100 transition duration-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-lg hover:bg-blue-900 transition duration-300 bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-blue-600"
             >
               {isSubmitting ? (
                 <>

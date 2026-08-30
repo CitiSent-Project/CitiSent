@@ -160,7 +160,7 @@ function ConversationsSkeleton() {
 
       <CardSkeleton className="flex h-[calc(100vh-10rem)] min-h-[520px] overflow-hidden p-0">
         {/* Left Sidebar */}
-        <div className="flex w-full flex-col border-r border-slate-200 p-4 md:w-[340px] md:shrink-0 lg:w-[360px]">
+        <div className="flex w-full flex-col border-r border-slate-200 p-4 md:w-[340px] md:shrink-0 lg:w-[360px] dark:border-slate-700/50">
           <SkeletonBlock className="h-10 w-full rounded-xl" />
           <div className="mt-4 space-y-3">
             {renderRepeated(6, (index) => (
@@ -180,7 +180,7 @@ function ConversationsSkeleton() {
 
         {/* Right Chat Panel */}
         <div className="hidden flex-1 flex-col md:flex">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-900/90 p-4">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-900/90 p-4 dark:border-slate-700/50 dark:bg-slate-900">
             <div className="flex items-center gap-3">
               <SkeletonBlock className="h-9 w-9 rounded-full bg-slate-700" />
               <div className="space-y-1.5">
@@ -191,19 +191,19 @@ function ConversationsSkeleton() {
             <SkeletonBlock className="h-8 w-24 rounded-lg bg-slate-700" />
           </div>
 
-          <div className="flex-1 space-y-4 bg-slate-50/50 p-5">
+          <div className="flex-1 space-y-4 bg-slate-50/50 p-5 dark:bg-slate-800/50">
             <div className="flex justify-start">
               <SkeletonBlock className="h-12 w-64 rounded-2xl rounded-tl-xs" />
             </div>
             <div className="flex justify-end">
-              <SkeletonBlock className="h-14 w-72 rounded-2xl rounded-tr-xs bg-blue-200/80" />
+              <SkeletonBlock className="h-14 w-72 rounded-2xl rounded-tr-xs bg-blue-200/80 dark:bg-blue-900/40" />
             </div>
             <div className="flex justify-start">
               <SkeletonBlock className="h-10 w-48 rounded-2xl rounded-tl-xs" />
             </div>
           </div>
 
-          <div className="border-t border-slate-200 p-4">
+          <div className="border-t border-slate-200 p-4 dark:border-slate-700/50">
             <SkeletonBlock className="h-12 w-full rounded-xl" />
           </div>
         </div>
@@ -226,7 +226,7 @@ function ReportDetailSkeleton() {
         {/* Left 2 Columns: Main Details */}
         <div className="space-y-5 lg:col-span-2">
           <CardSkeleton className="p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-700/50">
               <div className="space-y-2">
                 <SkeletonBlock className="h-6 w-64" />
                 <SkeletonBlock className="h-4 w-36" />
@@ -357,7 +357,7 @@ function GridReportsSkeleton() {
               <SkeletonBlock className="h-4 w-3/4" />
             </div>
             <SkeletonBlock className="mt-4 h-3.5 w-40" />
-            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
+            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
               <div className="flex items-center gap-2">
                 <SkeletonBlock className="h-7 w-7 rounded-full" />
                 <SkeletonBlock className="h-3 w-20" />
@@ -388,7 +388,7 @@ function ListHeavySkeleton() {
 
         <div aria-hidden="true" className="space-y-3">
           {/* Table Header row */}
-          <div className="flex items-center gap-4 border-b border-slate-100 px-3 py-2">
+          <div className="flex items-center gap-4 border-b border-slate-100 px-3 py-2 dark:border-slate-700/50">
             <SkeletonBlock className="h-4 w-4 rounded-sm" />
             <SkeletonBlock className="h-4 w-32" />
             <SkeletonBlock className="ml-auto h-4 w-24" />
@@ -398,7 +398,7 @@ function ListHeavySkeleton() {
 
           {/* Table Body rows */}
           {renderRepeated(7, (index) => (
-            <div key={index} className="flex items-center gap-4 rounded-xl bg-slate-50/50 p-3">
+            <div key={index} className="flex items-center gap-4 rounded-xl bg-slate-50/50 p-3 dark:bg-slate-800/50">
               <SkeletonBlock className="h-4 w-4 shrink-0 rounded-sm" />
               <SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
               <div className="min-w-0 flex-1 space-y-1.5">
@@ -444,7 +444,7 @@ function FormPageSkeleton() {
             </div>
           ))}
         </div>
-        <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-4">
+        <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-700/50">
           <SkeletonBlock className="h-10 w-24 rounded-xl" />
           <SkeletonBlock className="h-10 w-32 rounded-xl" />
         </div>

@@ -217,7 +217,9 @@ export function UsersTable({
 }) {
   const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
   const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
-  const shouldShowLoader = isLoading && users.length > 0
+  
+  const isInitialLoading = isLoading && users.length === 0
+  const isRefreshing = isLoading && users.length > 0
 
   return (
     <div className="overflow-x-auto">
@@ -226,7 +228,7 @@ export function UsersTable({
 
         <div className="divide-y divide-slate-200">
           <TableLoader
-            isLoading={shouldShowLoader}
+            isLoading={isRefreshing}
             delayMs={0}
             layout="users-grid"
             variant="refreshing"
@@ -237,7 +239,19 @@ export function UsersTable({
             className="bg-white"
           />
 
-          {users.length ? (
+          <TableLoader
+            isLoading={isInitialLoading}
+            delayMs={0}
+            minDisplayMs={0}
+            layout="users-grid"
+            variant="skeleton"
+            label="Loading users..."
+            rows={5}
+            gridTemplateColumnsClass="grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr]"
+            className="bg-white"
+          />
+
+          {!isInitialLoading && (users.length > 0 ? (
             users.map((user) => (
               <UsersTableRow
                 key={user.id}
@@ -254,7 +268,7 @@ export function UsersTable({
             ))
           ) : (
             <div className="px-4 py-8 text-center text-sm text-slate-500">No users found.</div>
-          )}
+          ))}
         </div>
       </div>
     </div>

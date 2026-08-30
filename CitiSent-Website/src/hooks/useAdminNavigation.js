@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { APP_PAGES } from '../models/pageModel'
-import { ADMIN_STORAGE_KEYS } from '../models/data'
 import {
   buildPageNavigationTransition,
   buildReportDetailTransition,
@@ -13,19 +12,8 @@ import {
   syncBrowserHistory,
 } from '../controllers/navigationController'
 import { buildPageAccessDecision } from '../controllers/accessControlController'
-import { getStorageSchemaRule } from '../models/storageSchemaModel'
-import { loadFromStorageWithSchema } from '../services/storageService'
 import { usePageLoadingState } from './usePageLoadingState'
 
-function loadSchemaBackedValue(key, fallbackValue, overrides = {}) {
-  const schemaRule = getStorageSchemaRule(key)
-
-  return loadFromStorageWithSchema(key, fallbackValue, {
-    schemaVersion: schemaRule.schemaVersion,
-    migrate: overrides.migrate || schemaRule.migrate,
-    validate: overrides.validate || schemaRule.validate,
-  })
-}
 
 /**
  * Custom hook to manage navigation, routing, browser history, and active page state.
@@ -34,7 +22,6 @@ export function useAdminNavigation({
   profile,
   activePage,
   setActivePage,
-  selectedReportId,
   setSelectedReportId,
   isAuthenticated,
   reportStatusMap,
@@ -43,9 +30,7 @@ export function useAdminNavigation({
   notifyError,
   isPageLoading,
   setIsPageLoading,
-  selectedUserProfile,
   setSelectedUserProfile,
-  selectedReport,
   setSelectedReport,
 }) {
   const navigateThrottleRef = useRef(0)
@@ -53,7 +38,7 @@ export function useAdminNavigation({
   useEffect(() => {
     function handlePopState() {
       const { pageKey, params } = getPageFromPath(window.location.pathname)
-      
+
       const accessDecision = buildPageAccessDecision({
         role: profile.role,
         requestedPage: pageKey,
@@ -67,7 +52,7 @@ export function useAdminNavigation({
       }
 
       setActivePage(pageKey)
-      
+
       if (pageKey === APP_PAGES.REPORT_DETAIL && params.reportId) {
         setSelectedReportId(params.reportId)
       } else if (pageKey !== APP_PAGES.REPORT_DETAIL) {
@@ -133,7 +118,7 @@ export function useAdminNavigation({
   function handleViewUserProfile(user) {
     const transition = buildUserProfileTransition({ user })
     setSelectedUserProfile(transition.selectedUserProfile)
-    
+
     syncBrowserHistory({ pageKey: transition.nextActivePage, params: { id: user.id } })
     setActivePage(transition.nextActivePage)
   }
@@ -143,7 +128,7 @@ export function useAdminNavigation({
     setSelectedReportId(report.id)
     setSelectedReport(transition.selectedReport)
     setIsPageLoading(transition.shouldShowLoading)
-    
+
     syncBrowserHistory({ pageKey: transition.nextActivePage, params: { id: report.id } })
     setActivePage(transition.nextActivePage)
   }

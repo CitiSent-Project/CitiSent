@@ -14,4 +14,10 @@ export const authApiService = {
     apiClient.patch('/users/me', payload, {
       token,
     }),
+  requestOtp: (payload) => apiClient.post('/auth/request-otp', payload),
+  verifyOtp: (payload) => apiClient.post('/auth/verify-otp', payload),
+  changePassword: (token, payload) =>
+    apiClient.post('/auth/change-password', payload, {
+      token,
+    }),
 }

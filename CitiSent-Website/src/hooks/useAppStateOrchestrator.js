@@ -423,6 +423,7 @@ export function useAppStateOrchestrator() {
     rememberedEmail,
     selectedUserProfile,
     selectedReport,
+    accessToken,
   }
 
   const appActions = {

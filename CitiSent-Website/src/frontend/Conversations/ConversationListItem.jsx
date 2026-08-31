@@ -132,7 +132,7 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
 
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p
-            className={`truncate text-xs leading-relaxed break-words [overflow-wrap:anywhere] ${
+            className={`truncate text-xs leading-relaxed  ${
               hasUnread ? 'font-medium text-slate-900' : 'text-slate-500'
             }`}
           >

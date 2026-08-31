@@ -28,26 +28,28 @@ let isSocketInitialized = false;
 let supabaseChannel = null;
 
 function initSupabaseNotificationListener() {
+  const user = getAuthUser();
+  const userId = user?.id;
+  if (!userId) return;
+
   if (supabaseChannel) return;
   try {
     const client = getSupabaseClient();
     if (!client) return;
 
-    const user = getAuthUser();
-    const userId = user?.id;
-
     supabaseChannel = client
-      .channel("notifications_realtime_global")
+      .channel(`notifications_realtime_user_${userId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           const rowUserId = payload.new?.user_id || payload.old?.user_id;
-          if (!userId || !rowUserId || String(rowUserId) === String(userId)) {
+          if (rowUserId && String(rowUserId) === String(userId)) {
             refreshNotifications().catch(() => {});
           }
         }
@@ -85,18 +87,28 @@ function initSocketNotificationListener() {
 }
 
 onAuthStateChanged((user) => {
+  if (supabaseChannel) {
+    try {
+      const client = getSupabaseClient();
+      if (client) client.removeChannel(supabaseChannel);
+    } catch {}
+    supabaseChannel = null;
+  }
+
+  // Reset in-memory notification state when user logs out or switches
+  notifications = [];
+  totalCount = 0;
+  offset = 0;
+  isHydrated = false;
+  lastError = null;
+  emitChange();
+
   if (!user) {
-    if (supabaseChannel) {
-      try {
-        const client = getSupabaseClient();
-        if (client) client.removeChannel(supabaseChannel);
-      } catch {}
-      supabaseChannel = null;
-    }
     isSocketInitialized = false;
   } else {
     initSupabaseNotificationListener();
     initSocketNotificationListener();
+    ensureNotificationsLoaded({ force: true }).catch(() => {});
   }
 });
 
@@ -236,7 +248,9 @@ export async function loadMoreNotifications() {
       ? res.data.map((item) => ({ ...item }))
       : [];
 
-    notifications = [...notifications, ...nextNotifications];
+    const existingIds = new Set(notifications.map((n) => String(n.id)));
+    const uniqueNew = nextNotifications.filter((item) => !existingIds.has(String(item.id)));
+    notifications = [...notifications, ...uniqueNew];
     totalCount = res?.total ?? notifications.length;
     offset = nextOffset;
     lastError = null;

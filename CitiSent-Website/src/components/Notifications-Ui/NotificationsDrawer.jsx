@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { FiBell, FiLoader, FiTrash2 } from 'react-icons/fi'
+import { motion } from 'framer-motion'
+import { FiBell, FiLoader, FiTrash2, FiX } from 'react-icons/fi'
 import {
   NotificationFilterChips,
   NotificationItem,
@@ -40,12 +41,13 @@ function InvitationStatusLog({ metadata }) {
   )
 }
 
-export function Notifications({
+export function NotificationsDrawer({
   notifications = [],
   onToggleRead,
   onClearAll,
   isLoading = false,
   isClearing = false,
+  onClose,
 }) {
   const [filter, setFilter] = useState('All')
 
@@ -83,65 +85,83 @@ export function Notifications({
       : 'Clear all notifications'
 
   return (
-    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
-      <div className="flex flex-col gap-6">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-          <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <FiBell className="text-xl" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Notifications</h1>
-                {counts.unread > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800 font-numeric">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-                    {counts.unread} unread
-                  </span>
-                )}
-              </div>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Keep track of reports, account updates, and administrative activities in real time.
-              </p>
-            </div>
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]"
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <header className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">Notifications</h1>
+            {counts.unread > 0 && (
+              <span className="inline-flex h-5 items-center justify-center rounded-full bg-blue-100 px-2 text-[10px] font-bold text-blue-700">
+                {counts.unread} new
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center gap-2.5 self-start sm:self-center">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClearAll}
               disabled={isClearDisabled}
               title={clearButtonTooltip}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-200 shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isClearing ? (
                 <>
-                  <FiLoader className="animate-spin text-xs shrink-0 text-slate-500" />
+                  <FiLoader className="animate-spin text-xs shrink-0" />
                   <span>Clearing...</span>
                 </>
               ) : (
                 <>
-                  <FiTrash2 className="text-xs shrink-0 text-slate-500" />
+                  <FiTrash2 className="text-xs shrink-0" />
                   <span>Clear all</span>
                 </>
               )}
             </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+              title="Close notifications"
+            >
+              <FiX className="text-lg" />
+            </button>
           </div>
         </header>
 
-        <section className="flex flex-col gap-4">
+        {/* Tabs */}
+        <div className="bg-white">
           <NotificationFilterChips
             activeFilter={filter}
             onFilterChange={setFilter}
             counts={counts}
             disabled={isLoading}
           />
+        </div>
 
-          <div className="space-y-3">
-            {isLoading ? (
-              <NotificationSkeleton />
-            ) : visibleNotifications.length > 0 ? (
-              visibleNotifications.map((notification) => {
+        {/* Content List */}
+        <section className="flex-1 overflow-y-auto bg-white">
+          {isLoading ? (
+            <NotificationSkeleton />
+          ) : visibleNotifications.length > 0 ? (
+            <div className="flex flex-col">
+              {visibleNotifications.map((notification) => {
                 const invitationMetadata = getInvitationMetadata(notification)
 
                 return (
@@ -155,13 +175,19 @@ export function Notifications({
                     ) : null}
                   </NotificationItem>
                 )
-              })
-            ) : (
-              <NotificationsEmptyState activeFilter={filter} />
-            )}
-          </div>
+              })}
+            </div>
+          ) : (
+            <div className="p-8">
+              <NotificationsEmptyState 
+                activeFilter={filter} 
+                onDismiss={() => setFilter('All')} 
+              />
+            </div>
+          )}
         </section>
-      </div>
-    </main>
+
+      </motion.div>
+    </div>
   )
 }

@@ -9,7 +9,6 @@ import { APP_PAGES, REPORT_SECTIONS } from '../models/pageModel'
 // adapters keep existing component modules unchanged while allowing Vite to
 // load each page only when it is first visited.
 const Reports = lazy(() => import('../frontend/Reports/Reports').then((module) => ({ default: module.Reports })))
-const Notifications = lazy(() => import('../frontend/Pages/Notifications').then((module) => ({ default: module.Notifications })))
 const ProfileInformation = lazy(() => import('../frontend/Pages/ProfilePage').then((module) => ({ default: module.ProfileInformation })))
 const Settings = lazy(() => import('../frontend/Pages/Settings').then((module) => ({ default: module.Settings })))
 const UserProfilePage = lazy(() => import('../frontend/Users/UserProfilePage/UserProfilePage').then((module) => ({ default: module.UserProfilePage })))
@@ -163,16 +162,6 @@ export function renderActivePage({
                     onSubmitTransferRequest={onSubmitTransferRequest}
                     onLogout={onConfirmLogout}
                     departmentOptions={departmentOptions}
-                />
-            )
-        case APP_PAGES.NOTIFICATIONS:
-            return (
-                <Notifications
-                    notifications={notifications}
-                    onToggleRead={onToggleRead}
-                    onClearAll={onClearAll}
-                    isLoading={isPageLoading}
-                    isClearing={isClearingNotifications}
                 />
             )
         case APP_PAGES.SETTINGS:

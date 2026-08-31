@@ -16,6 +16,7 @@ import {
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../../models/pageModel'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
+import { NotificationsDrawer } from '../Notifications-Ui/NotificationsDrawer'
 
 const navItems = [
 	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
@@ -222,9 +223,15 @@ export function Navbar({
 	unreadNotifications = 0,
 	unreadChatCount = 0,
 	connectionStatus = 'connected',
+	// New Drawer Props
+	notifications = [],
+	onToggleRead,
+	onClearAll,
+	isClearingNotifications = false,
 }) {
 	const [mobileOpen, setMobileOpen] = useState(false)
 	const [expanded, setExpanded] = useState(true)
+	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 	const resolvedRole = normalizeUserRole(profileRole)
 
 	const visibleNavItems = navItems
@@ -329,9 +336,9 @@ export function Navbar({
 							<ConnectionStatusBadge status={connectionStatus} />
 							<button
 								type="button"
-								onClick={() => handleNavigate(APP_PAGES.NOTIFICATIONS)}
+								onClick={() => setIsNotificationsOpen(true)}
 								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
-									activePage === APP_PAGES.NOTIFICATIONS
+									isNotificationsOpen
 										? 'border-blue-800 bg-blue-50 text-blue-900'
 										: 'border-slate-400 text-slate-600 hover:border-blue-300 hover:bg-blue-200 transition duration-300'
 								}`}
@@ -361,6 +368,18 @@ export function Navbar({
 				</header>
 				<MainContentSlot>{children}</MainContentSlot>
 			</div>
+
+			<AnimatePresence>
+				{isNotificationsOpen && (
+					<NotificationsDrawer
+						notifications={notifications}
+						onToggleRead={onToggleRead}
+						onClearAll={onClearAll}
+						isClearing={isClearingNotifications}
+						onClose={() => setIsNotificationsOpen(false)}
+					/>
+				)}
+			</AnimatePresence>
 		</div>
 	)
 }

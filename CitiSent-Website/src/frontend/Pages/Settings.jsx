@@ -25,6 +25,8 @@ const tabs = [
 ]
 
 export function Settings({
+  profile,
+  accessToken,
   preferences,
   activityLog = [],
   onUpdatePreferences,
@@ -50,6 +52,8 @@ export function Settings({
     Appearance: <AppearanceSettingsTab preferences={preferences} onUpdatePreference={updatePreference} />,
     Security: (
       <SecuritySettingsTab
+        profile={profile}
+        accessToken={accessToken}
         preferences={preferences}
         onUpdatePreference={updatePreference}
         onRequestLogout={onRequestLogout}

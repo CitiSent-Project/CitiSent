@@ -167,6 +167,8 @@ export function renderActivePage({
         case APP_PAGES.SETTINGS:
             return (
                 <Settings
+                    profile={profile}
+                    accessToken={appState.accessToken}
                     preferences={preferences}
                     activityLog={activityLog}
                     onUpdatePreferences={onUpdatePreferences}

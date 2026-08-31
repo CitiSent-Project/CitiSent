@@ -268,6 +268,42 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                 </div>
               ) : null}
 
+              <div className="mb-6 flex flex-col gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {REPORT_STATUS_OPTIONS.map((status) => {
+                    const isCurrent = status === currentStatus
+                    const isSelected = status === selectedStatus
+
+                    return (
+                      <label
+                        key={status}
+                        className={`group relative flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all ${!canProcessReport
+                            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-800/50'
+                            : isSelected
+                              ? 'border-blue-600 bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-600 dark:border-blue-500 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500'
+                              : 'border-slate-200 bg-white font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700'
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name="report-status"
+                          value={status}
+                          checked={isSelected}
+                          onChange={(event) => setSelectedStatus(event.target.value)}
+                          disabled={!canProcessReport}
+                          className="sr-only"
+                        />
+                        <span className="flex flex-col items-center gap-1 text-center">
+                          {isCurrent && <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm dark:bg-slate-100 dark:text-slate-900">Current</span>}
+                          {status}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="mb-5">
                 <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Admin Notes</span>
                 <textarea
@@ -324,42 +360,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                   )}
                 </div>
               ) : null}
-
-              <div className="mb-6 flex flex-col gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {REPORT_STATUS_OPTIONS.map((status) => {
-                    const isCurrent = status === currentStatus
-                    const isSelected = status === selectedStatus
-
-                    return (
-                      <label
-                        key={status}
-                        className={`group relative flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all ${!canProcessReport
-                            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-800/50'
-                            : isSelected
-                              ? 'border-blue-600 bg-blue-50 font-semibold text-blue-700 ring-1 ring-blue-600 dark:border-blue-500 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500'
-                              : 'border-slate-200 bg-white font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700'
-                          }`}
-                      >
-                        <input
-                          type="radio"
-                          name="report-status"
-                          value={status}
-                          checked={isSelected}
-                          onChange={(event) => setSelectedStatus(event.target.value)}
-                          disabled={!canProcessReport}
-                          className="sr-only"
-                        />
-                        <span className="flex flex-col items-center gap-1 text-center">
-                          {isCurrent && <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-800 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm dark:bg-slate-100 dark:text-slate-900">Current</span>}
-                          {status}
-                        </span>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
 
               <div className="flex flex-col gap-3">
                 <button

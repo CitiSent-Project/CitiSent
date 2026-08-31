@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiArrowLeft, FiFileText, FiRefreshCw, FiSearch } from 'react-icons/fi'
+import { FiArrowLeft, FiFileText, FiRefreshCw, FiSearch, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 import { ReportChatComposer } from '../../components/Reports-Ui/ReportChatComposer'
 import { ReportChatThread } from '../../components/Reports-Ui/ReportChatThread'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
@@ -50,6 +51,8 @@ export function ConversationsPage({ profile, onViewReport }) {
     suggestionsLoading,
     totalUnread,
   } = useConversationsState({ profile })
+
+  const [isSuggestionsMinimized, setIsSuggestionsMinimized] = useState(false)
 
   return (
     <main className="mx-auto max-w-400 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
@@ -130,19 +133,33 @@ export function ConversationsPage({ profile, onViewReport }) {
                   <MotionDiv initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                     <div className="flex flex-col gap-2 p-3 bg-slate-50 border-t border-slate-200">
                       <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold tracking-wider">
-                        <span>AI-ASSISTED REPLY SUGGESTIONS</span>
-                        <button type="button" onClick={() => fetchSuggestions(activeConversation.reportId, true)} disabled={suggestionsLoading} className="flex items-center gap-1 hover:text-blue-600 transition disabled:opacity-50 text-[10px] text-slate-500 font-bold"><FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE</button>
+                        <button 
+                          type="button" 
+                          onClick={() => setIsSuggestionsMinimized(prev => !prev)}
+                          className="flex items-center gap-1.5 hover:text-slate-700 transition"
+                          aria-label={isSuggestionsMinimized ? "Expand suggestions" : "Minimize suggestions"}
+                        >
+                          {isSuggestionsMinimized ? <FiChevronUp className="text-sm" /> : <FiChevronDown className="text-sm" />}
+                          <span>AI-ASSISTED REPLY SUGGESTIONS</span>
+                        </button>
+                        
+                        {!isSuggestionsMinimized && (
+                          <button type="button" onClick={() => fetchSuggestions(activeConversation.reportId, true)} disabled={suggestionsLoading} className="flex items-center gap-1 hover:text-blue-600 transition disabled:opacity-50 text-[10px] text-slate-500 font-bold"><FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE</button>
+                        )}
                       </div>
-                      {suggestionsLoading ? <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div> : suggestions.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {suggestions.map((suggestion, index) => (
-                            <button key={index} type="button" onClick={() => !sending && handleSend(suggestion.text)} disabled={sending} className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal wrap-anywhere shadow-2xs ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''}`}>
-                              {index === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
-                              <span>{suggestion.text}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : <div className="py-2 text-center text-xs text-slate-400">No suggestions available.</div>}
+                      
+                      {!isSuggestionsMinimized && (
+                        suggestionsLoading ? <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div> : suggestions.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {suggestions.map((suggestion, index) => (
+                              <button key={index} type="button" onClick={() => !sending && handleSend(suggestion.text)} disabled={sending} className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal wrap-anywhere shadow-2xs ${index === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''}`}>
+                                {index === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
+                                <span>{suggestion.text}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : <div className="py-2 text-center text-xs text-slate-400">No suggestions available.</div>
+                      )}
                     </div>
                   </MotionDiv>
                 )}

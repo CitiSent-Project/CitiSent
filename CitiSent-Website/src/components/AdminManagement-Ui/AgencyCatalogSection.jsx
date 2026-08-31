@@ -775,6 +775,7 @@ export function AgencyCatalogSection({
                             <label className="flex items-start gap-2.5 rounded-xl border border-rose-200/80 bg-rose-50/70 p-3 text-xs text-rose-900">
                                 <input
                                     type="checkbox"
+                                    required
                                     checked={deleteWithCleanup}
                                     disabled={busyDepartmentSlug === deleteModal.id}
                                     onChange={(event) => setDeleteWithCleanup(event.target.checked)}
@@ -801,7 +802,7 @@ export function AgencyCatalogSection({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={busyDepartmentSlug === deleteModal.id}
+                                    disabled={busyDepartmentSlug === deleteModal.id || !deleteWithCleanup}
                                     className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 active:scale-[0.98] shadow-xs shadow-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
                                 >
                                     {busyDepartmentSlug === deleteModal.id ? 'Deleting...' : 'Delete Agency'}

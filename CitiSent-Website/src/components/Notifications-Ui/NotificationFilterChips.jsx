@@ -15,7 +15,7 @@ export function NotificationFilterChips({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-6 border-b border-slate-200 px-4">
       {filters.map((filter) => {
         const isActive = activeFilter === filter
         const count = getBadgeCount(filter)
@@ -26,22 +26,24 @@ export function NotificationFilterChips({
             type="button"
             disabled={disabled}
             onClick={() => onFilterChange(filter)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`relative flex items-center gap-2 pb-3 pt-2 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
               isActive
-                ? 'bg-blue-600 text-white shadow-xs shadow-blue-600/20'
-                : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
+                ? 'text-slate-900 border-b-2 border-blue-600'
+                : 'text-slate-500 border-b-2 border-transparent hover:text-slate-700'
             }`}
           >
             <span>{filter}</span>
-            <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                isActive
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {count}
-            </span>
+            {count > 0 && (
+              <span
+                className={`flex h-5 items-center justify-center rounded-full px-2 text-[10px] font-bold ${
+                  isActive
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {count}
+              </span>
+            )}
           </button>
         )
       })}

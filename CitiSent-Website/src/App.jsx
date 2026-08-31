@@ -129,6 +129,10 @@ function AuthenticatedApp() {
           profileRole={appState.profile.role}
           unreadNotifications={appState.unreadNotifications}
           connectionStatus={connectionStatus}
+          notifications={appState.notifications}
+          onToggleRead={appActions.onToggleRead}
+          onClearAll={appActions.onClearAll}
+          isClearingNotifications={appState.isClearingNotifications}
         >
           {appState.isPageLoading ? (
             <PageSkeleton pageKey={appState.activePage} />

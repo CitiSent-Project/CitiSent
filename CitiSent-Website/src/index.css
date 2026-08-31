@@ -249,9 +249,9 @@ body {
   background-color: #294774 !important;
 }
 
-:root[data-theme='dark'] input,
-:root[data-theme='dark'] textarea,
-:root[data-theme='dark'] select {
+:root[data-theme='dark'] input:not(.bg-transparent),
+:root[data-theme='dark'] textarea:not(.bg-transparent),
+:root[data-theme='dark'] select:not(.bg-transparent) {
   background-color: #111827 !important;
   color: #e2e8f0 !important;
   border-color: #334155 !important;

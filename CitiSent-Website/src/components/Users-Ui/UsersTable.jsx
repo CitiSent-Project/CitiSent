@@ -25,7 +25,7 @@ function formatLocation({ barangay, city, province }) {
 
 function UsersTableHeader({ allSelected, onToggleAll }) {
   return (
-    <div className="grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700/80 dark:bg-slate-800/50 dark:text-slate-400">
+    <div className="hidden lg:grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700/80 dark:bg-slate-800/50 dark:text-slate-400">
       <input
         type="checkbox"
         className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900"
@@ -125,25 +125,40 @@ function UsersTableRow({
   }
 
   return (
-    <div className="group grid grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] items-center gap-3 border-b border-slate-100 px-5 py-4 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-800/50">
-      <input
-        type="checkbox"
-        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900"
-        checked={isSelected}
-        onChange={() => onToggleSelected(user.id)}
-        aria-label={`Select ${user.name || 'user'}`}
-      />
-      <div className="flex items-center gap-3">
+    <div className="group relative border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-800/50 lg:grid lg:grid-cols-[32px_2.2fr_1.4fr_1.2fr_1.2fr_0.6fr] lg:items-center lg:gap-3 lg:px-5">
+      <div className="absolute left-4 top-5 lg:static lg:block">
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900"
+          checked={isSelected}
+          onChange={() => onToggleSelected(user.id)}
+          aria-label={`Select ${user.name || 'user'}`}
+        />
+      </div>
+      <div className="flex items-center gap-3 ml-8 lg:ml-0">
         <UserInitialsAvatar name={user.name} />
-        <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{user.name}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+        <div className="min-w-0 flex-1 pr-8 lg:pr-0">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user.name}</p>
+          <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
         </div>
       </div>
-      <p className="text-sm text-slate-700 dark:text-slate-300">{formatLocation(user)}</p>
-      <UserStatusPill status={user.status} />
-      <p className="font-numeric text-sm text-slate-700 dark:text-slate-300">{user.registeredAt}</p>
-      <div className="relative">
+      <div className="mt-3 ml-11 lg:mt-0 lg:ml-0">
+        <p className="text-[11px] lg:text-sm text-slate-600 dark:text-slate-300 truncate">
+          <span className="lg:hidden font-semibold uppercase tracking-wider text-slate-400 mr-1">Location:</span>
+          {formatLocation(user)}
+        </p>
+      </div>
+      <div className="mt-2 ml-11 lg:mt-0 lg:ml-0 flex items-center">
+        <span className="lg:hidden font-semibold uppercase tracking-wider text-slate-400 mr-2 text-[11px]">Status:</span>
+        <UserStatusPill status={user.status} />
+      </div>
+      <div className="mt-2 ml-11 lg:mt-0 lg:ml-0">
+        <p className="font-numeric text-[11px] lg:text-sm text-slate-500 dark:text-slate-400">
+          <span className="lg:hidden font-semibold uppercase tracking-wider text-slate-400 mr-1">Registered:</span>
+          {user.registeredAt}
+        </p>
+      </div>
+      <div className="absolute right-4 top-4 lg:static">
         <button
           type="button"
           ref={triggerRef}
@@ -226,8 +241,8 @@ export function UsersTable({
   const isRefreshing = isLoading && users.length > 0
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[680px]">
+    <div className="overflow-x-hidden lg:overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-700/50 dark:bg-slate-800">
+      <div className="min-w-full lg:min-w-170">
         <UsersTableHeader allSelected={allSelected} onToggleAll={onToggleSelectAllUsers} />
 
         <div className="divide-y divide-slate-200">

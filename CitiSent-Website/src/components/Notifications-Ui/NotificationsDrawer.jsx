@@ -48,6 +48,7 @@ export function NotificationsDrawer({
   isLoading = false,
   isClearing = false,
   onClose,
+  onNavigate,
 }) {
   const [filter, setFilter] = useState('All')
 
@@ -181,7 +182,11 @@ export function NotificationsDrawer({
             <div className="p-8">
               <NotificationsEmptyState 
                 activeFilter={filter} 
-                onDismiss={() => setFilter('All')} 
+                onDismiss={() => setFilter('All')}
+                onNavigate={() => {
+                  onNavigate()
+                  onClose()
+                }}
               />
             </div>
           )}

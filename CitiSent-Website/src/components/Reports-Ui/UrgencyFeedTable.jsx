@@ -95,7 +95,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
   return (
     <div>
       <TableLegend />
-      <div className="overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
@@ -190,6 +190,62 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
           </tbody>
           )}
         </table>
+      </div>
+
+      {/* Mobile Card List View */}
+      <div className="block md:hidden space-y-3 mt-4">
+        {isInitialLoading && (
+          [1, 2, 3].map((i) => (
+            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm" />
+          ))
+        )}
+        {!isInitialLoading && rows.length === 0 && (
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs">
+            <p className="text-sm text-slate-500">No reports to display.</p>
+          </div>
+        )}
+        {!isInitialLoading && rows.length > 0 && (
+          rows.map((row) => {
+            const normalizedStatus = normalizeReportStatus(row.status);
+
+            return (
+              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60">
+                      {row.reportNum || truncateId(row.id)}
+                    </span>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate">{row.name}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 truncate">{row.location}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}>
+                      {normalizedStatus}
+                    </span>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}>
+                      {row.urgency}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_EMOTION_BADGE_CLASSES[row.emotionLevel] || "bg-slate-500/20 text-slate-400 border border-slate-500/30"}`}>
+                      {row.emotionLevel || 'Neutral'}
+                    </span>
+                    <p className="text-[11px] text-slate-400 font-numeric">
+                      {row.date}
+                    </p>
+                  </div>
+                  <ActionMenu
+                    report={row}
+                    onViewReport={onViewReport}
+                  />
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   );

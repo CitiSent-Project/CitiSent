@@ -285,7 +285,7 @@ export function ReportHistoryTable({
       </div>
 
       {/* History Feed Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -380,6 +380,64 @@ export function ReportHistoryTable({
           </tbody>
           )}
         </table>
+      </div>
+
+      {/* Mobile Card List View */}
+      <div className="block md:hidden space-y-3">
+        {isInitialLoading && (
+          [1, 2, 3].map((i) => (
+            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm" />
+          ))
+        )}
+        {!isInitialLoading && visibleRows.length === 0 && (
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs">
+            <p className="text-sm text-slate-500">
+              {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
+            </p>
+          </div>
+        )}
+        {!isInitialLoading && visibleRows.length > 0 && (
+          visibleRows.map((row) => {
+            const normalizedStatus = normalizeReportStatus(row.status);
+            const displayId = formatReportId(row.reportNum, row.id);
+
+            return (
+              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60">
+                      {displayId}
+                    </span>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate">{row.name || 'Citizen'}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 truncate">{row.location}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}>
+                      {normalizedStatus}
+                    </span>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}>
+                      {row.urgency}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <p className="text-[11px] text-slate-400 font-numeric">
+                    {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : (row.date || 'N/A')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onViewReport?.(row)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+                  >
+                    <FiEye className="text-xs" />
+                    Details
+                  </button>
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
 
       {/* Integrated Pagination Component */}

@@ -1,7 +1,7 @@
 import React from 'react'
 import { FiBell, FiCheckCircle, FiInbox } from 'react-icons/fi'
 
-export function NotificationsEmptyState({ activeFilter = 'All', onDismiss }) {
+export function NotificationsEmptyState({ activeFilter = 'All', onDismiss, onNavigate }) {
   const isUnread = activeFilter === 'Unread'
   const isRead = activeFilter === 'Read'
 
@@ -48,6 +48,7 @@ export function NotificationsEmptyState({ activeFilter = 'All', onDismiss }) {
             )}
             <button
               type="button"
+              onClick={onNavigate}
               className="rounded-md bg-yellow-400 px-4 py-1.5 text-xs font-semibold text-slate-900 transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1"
             >
               Go to Dashboard

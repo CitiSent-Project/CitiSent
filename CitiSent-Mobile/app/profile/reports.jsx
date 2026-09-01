@@ -1,11 +1,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Pressable, Text, View, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { MyReportCard, useMyReports, ReportsFeedSkeleton } from "../../modules/myReports";
 import { EditReportSheet, ProfileSubpageLayout } from "../../modules/profile";
 import { usePullToRefresh, Colors } from "../../modules/shared";
 import { reportsApi } from "../../services/reports";
 import FeedbackModal from "../../components/ui/FeedbackModal";
+import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
 import { getAuthUser } from "../../services/authSession";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
@@ -36,6 +38,10 @@ export default function ReportsMadePage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
   const [discussionReport, setDiscussionReport] = useState(null);
+
+  // Delete state
+  const [confirmDeleteReport, setConfirmDeleteReport] = useState(null);
+  const [deletingReportId, setDeletingReportId] = useState(null);
 
   // Shared real-time notification state — single source of truth
   const {
@@ -164,6 +170,48 @@ export default function ReportsMadePage() {
     }
   };
 
+  /**
+   * Opens the delete confirmation modal for the given report.
+   */
+  const handleDeleteRequest = (report) => {
+    setConfirmDeleteReport(report);
+  };
+
+  /**
+   * Cancels the delete — dismisses the confirmation modal without any change.
+   */
+  const handleDeleteCancel = () => {
+    setConfirmDeleteReport(null);
+  };
+
+  /**
+   * Confirmed delete: calls the API, optimistically removes the report from
+   * the local list, then refreshes counts. Shows an error modal on failure.
+   * The button is disabled while deletingReportId is set to prevent double-taps.
+   */
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteReport) return;
+    const reportId = confirmDeleteReport.id;
+    setDeletingReportId(reportId);
+    setConfirmDeleteReport(null);
+
+    try {
+      await reportsApi.deleteReport(reportId);
+      // Optimistically remove from list immediately
+      await reloadMyReports();
+      await fetchCounts();
+    } catch (err) {
+      setFeedback({
+        visible: true,
+        type: "error",
+        title: "Delete Failed",
+        message: err?.message || "Report was not deleted. Please try again.",
+      });
+    } finally {
+      setDeletingReportId(null);
+    }
+  };
+
   return (
     <ProfileSubpageLayout title="Manage Reports" refreshing={refreshing} onRefresh={onRefresh}>
       <View
@@ -236,31 +284,52 @@ export default function ReportsMadePage() {
       ) : reports.length > 0 ? (
         <>
           {reports.map((report) => (
-            <View key={report.id}>
-              <MyReportCard
-                report={report}
-                containerClassName="mb-2"
-                hasUnreadAdminMessage={Boolean(unreadByReport[String(report.id)])}
-                onOpenDiscussion={(rep) => {
-                  setDiscussionReport(rep);
-                }}
-              />
-              <View className="mb-4 flex-row justify-end">
-                {normalizeStatus(report.status) === "pending" ? (
+              <View key={report.id} className="mb-4">
+                <MyReportCard
+                  report={report}
+                  containerClassName="mb-2"
+                  hasUnreadAdminMessage={Boolean(unreadByReport[String(report.id)])}
+                  onOpenDiscussion={(rep) => {
+                    setDiscussionReport(rep);
+                  }}
+                />
+                <View className="mb-0 flex-row justify-between items-center gap-2">
+                  {normalizeStatus(report.status) === "pending" ? (
+                    <Pressable
+                      onPress={() => setEditingReportId(report.id)}
+                      className="rounded-lg border px-3 py-2"
+                      style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
+                    >
+                      <Text className="text-xs font-bold" style={{ color: Colors.primaryStrong }}>Edit Report</Text>
+                    </Pressable>
+                  ) : (
+                    <Text className="flex-1 text-xs italic" style={{ color: Colors.text.secondary }}>
+                      This report can no longer be edited because it has already been reviewed by an administrator.
+                    </Text>
+                  )}
+
                   <Pressable
-                    onPress={() => setEditingReportId(report.id)}
-                    className="rounded-lg border px-3 py-2"
-                    style={{ borderColor: Colors.ui.infoSurfaceBorderStrong, backgroundColor: Colors.ui.infoSurface }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete report"
+                    onPress={() => handleDeleteRequest(report)}
+                    disabled={deletingReportId === report.id}
+                    className="flex-row items-center rounded-lg px-3 py-2"
+                    style={{
+                      backgroundColor: Colors.ui.errorSurface,
+                      opacity: deletingReportId === report.id ? 0.5 : 1,
+                    }}
                   >
-                    <Text className="text-xs font-bold" style={{ color: Colors.primaryStrong }}>Edit Report</Text>
+                    {deletingReportId === report.id ? (
+                      <ActivityIndicator size="small" color={Colors.error} />
+                    ) : (
+                      <Ionicons name="trash-outline" size={14} color={Colors.error} />
+                    )}
+                    <Text className="ml-1 text-xs font-semibold" style={{ color: Colors.error }}>
+                      {deletingReportId === report.id ? "Deleting..." : "Delete"}
+                    </Text>
                   </Pressable>
-                ) : (
-                  <Text className="text-xs italic" style={{ color: Colors.text.secondary }}>
-                    This report can no longer be edited because it has already been reviewed by an administrator.
-                  </Text>
-                )}
+                </View>
               </View>
-            </View>
           ))}
 
           {hasMore && (
@@ -309,6 +378,17 @@ export default function ReportsMadePage() {
         report={discussionReport}
         onClose={handleDiscussionClose}
         onMarkRead={handleMarkRead}
+      />
+
+      <ConfirmationModal
+        visible={Boolean(confirmDeleteReport)}
+        type="danger"
+        title="Delete Report?"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        cancelText="Cancel"
+        confirmText="Delete"
+        onCancel={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
       />
 
       <FeedbackModal

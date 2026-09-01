@@ -37,7 +37,7 @@ function sortConversations(list) {
   )
 }
 
-export function useConversationsState({ profile }) {
+export function useConversationsState({ profile, onSyncConversations }) {
   const token = useMemo(readAccessToken, [])
   const [conversations, setConversations] = useState([])
   const [conversationsLoading, setConversationsLoading] = useState(true)
@@ -58,6 +58,12 @@ export function useConversationsState({ profile }) {
   useEffect(() => {
     activeConversationRef.current = activeConversation
   }, [activeConversation])
+
+  useEffect(() => {
+    if (typeof onSyncConversations === 'function') {
+      onSyncConversations(conversations)
+    }
+  }, [conversations, onSyncConversations])
 
   const loadConversations = useCallback(async () => {
     if (!token) return

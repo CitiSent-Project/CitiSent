@@ -75,6 +75,7 @@ export function renderActivePage({
         onApproveTransfer,
         onRejectTransfer,
         onRefreshAdminAccounts,
+        onSyncConversations,
     } = appActions
 
     switch (activePage) {
@@ -189,7 +190,7 @@ export function renderActivePage({
                 />
             )
         case APP_PAGES.CONVERSATIONS:
-            return <ConversationsPage profile={profile} onViewReport={onViewReport} />
+            return <ConversationsPage profile={profile} onViewReport={onViewReport} onSyncConversations={onSyncConversations} />
         default:
             return <Dashboard />
     }

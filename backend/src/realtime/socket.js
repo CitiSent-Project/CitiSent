@@ -293,3 +293,12 @@ export function emitToReportRoom(reportId, event, payload) {
     io.to(`report:${reportId}`).emit(event, payload);
   }
 }
+
+export function emitToAdminFeedRooms(agencyId, event, payload) {
+  if (io) {
+    io.to("report_feed:global").emit(event, payload);
+    if (agencyId) {
+      io.to(`report_feed:department:${agencyId}`).emit(event, payload);
+    }
+  }
+}

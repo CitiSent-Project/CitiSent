@@ -80,6 +80,58 @@ export function countUnreadNotifications(notifications = []) {
   return notifications.filter((notification) => !notification.read).length
 }
 
+/**
+ * Builds a 'Message'-type notification for the admin notification drawer
+ * when a citizen sends a new message in a report conversation.
+ *
+ * @param {object} options
+ * @param {string} options.senderName   - Display name of the message sender (citizen).
+ * @param {string} options.messageText  - Raw content of the incoming message.
+ * @param {string} options.reportId     - ID of the associated report.
+ * @param {string} options.reportNumber - Human-readable report reference (e.g. "RPT-001").
+ */
+export function buildMessageNotification({ senderName, messageText, reportId, reportNumber }) {
+  const truncatedMessage =
+    String(messageText || '').length > 120
+      ? String(messageText).slice(0, 120) + '…'
+      : String(messageText || '')
+
+  return buildNotification({
+    title: `New message from ${senderName || 'Citizen'}`,
+    message: truncatedMessage,
+    type: 'Message',
+    metadata: {
+      reportId: reportId || null,
+      reportNumber: reportNumber || null,
+      senderName: senderName || 'Citizen',
+    },
+  })
+}
+
+/**
+ * Deduplication guard for message notifications.
+ *
+ * Returns true when the admin already has at least one unread 'Message'-type
+ * notification for the given report, meaning another notification for the same
+ * conversation thread should NOT be created (only the unread count should grow).
+ *
+ * @param {object} options
+ * @param {object} options.notificationsByAdmin - The full notifications-by-admin map.
+ * @param {string} options.adminId              - The admin whose notifications to check.
+ * @param {string} options.reportId             - The report conversation ID.
+ */
+export function hasUnreadMessageNotificationForReport({ notificationsByAdmin = {}, adminId, reportId }) {
+  const adminNotifications = notificationsByAdmin[adminId] || []
+  const normalizedReportId = String(reportId || '')
+
+  return adminNotifications.some(
+    (notification) =>
+      !notification.read &&
+      String(notification.type || '').toLowerCase() === 'message' &&
+      String(notification.metadata?.reportId || '') === normalizedReportId
+  )
+}
+
 export function buildClearNotificationsTransition() {
   return {
     nextNotifications: [],

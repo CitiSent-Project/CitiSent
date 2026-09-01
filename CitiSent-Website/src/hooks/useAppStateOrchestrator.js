@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { notifyError, notifySuccess, notifyErrorWithRetry } from '../components/ui/toastHelpers'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { notifyError, notifySuccess, notifyErrorWithRetry, notifyChatMessage } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_ADMIN_ACCOUNTS,
@@ -21,8 +21,15 @@ import { getStorageSchemaRule } from '../models/storageSchemaModel'
 import { activityLogApiService } from '../services/api/admin/activityLogApiService'
 import { notificationsApiService } from '../services/api/admin/notificationsApiService'
 import { mapBackendNotification } from '../services/api/admin/notificationsApiMappers'
+import {
+  appendNotificationForAdmin,
+  buildMessageNotification,
+  hasUnreadMessageNotificationForReport,
+} from '../controllers/notificationsController'
 import { buildPageAccessDecision } from '../controllers/accessControlController'
 import { getPageFromPath, syncBrowserHistory } from '../controllers/navigationController'
+import { getSocket } from '../services/socket/socketService'
+import { mapBackendMessageToUi } from '../services/api/admin/reportsApiMappers'
 
 // Extracted hooks for better modularity
 import { useDepartmentManagementState } from './useDepartmentManagementState'
@@ -294,6 +301,93 @@ export function useAppStateOrchestrator() {
     },
   })
 
+  /**
+   * Ref that ConversationsPage keeps updated with its current conversations list.
+   * The global socket listener reads from this ref to look up sender name and
+   * report number without requiring them as hook dependencies (avoids stale closures).
+   */
+  const globalConversationsRef = useRef([])
+
+  /**
+   * Global socket listener for incoming chat messages.
+   *
+   * This lives in the orchestrator (always mounted for authenticated sessions)
+   * so message notifications reach the drawer regardless of which page is active.
+   * The ConversationsPage socket handler continues to handle UI updates (message
+   * list, read receipts, typing) independently.
+   */
+  useEffect(() => {
+    if (!accessToken || !isAuthenticated) return
+
+    const socket = getSocket(accessToken)
+    if (!socket) return
+
+    // Ensure the orchestrator joins the feed room to receive feed-wide broadcasts
+    // (like receive_message for all departments) regardless of what page is active.
+    socket.emit('join_report_feed', {})
+
+    function handleGlobalReceiveMessage(data) {
+      if (!data?.reportId || !data?.message) return
+
+      const rawMessage = data.message
+      const senderId = String(rawMessage.senderId || rawMessage.sender_id || '')
+      const isOwn = profile.id && senderId === String(profile.id)
+
+      // Only act on citizen-sent messages
+      if (isOwn || !senderId) return
+
+      const reportId = String(data.reportId)
+      const content = rawMessage.message || rawMessage.content || ''
+
+      // Look up conversation metadata from the ref (maintained by ConversationsPage)
+      const matchedConversation = globalConversationsRef.current.find(
+        (conv) => String(conv.reportId) === reportId
+      )
+      const senderName = matchedConversation?.userName || 'Citizen'
+      const reportNumber = matchedConversation?.reportNumber || ''
+
+      // Only show toast + create notification when not already fired by ConversationsPage
+      // (ConversationsPage handles its own toast; we fire here only when page is inactive).
+      // We detect this by checking whether notifyChatMessage was already called —
+      // since we can't share that state, we guard with the dedup check only.
+      setNotificationsByAdmin((previous) => {
+        const alreadyNotified = hasUnreadMessageNotificationForReport({
+          notificationsByAdmin: previous,
+          adminId: profile.id,
+          reportId,
+        })
+
+        if (alreadyNotified) return previous
+
+        return appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId: profile.id,
+          notification: buildMessageNotification({
+            senderName,
+            messageText: content,
+            reportId,
+            reportNumber,
+          }),
+        })
+      })
+    }
+
+    socket.on('receive_message', handleGlobalReceiveMessage)
+
+    return () => {
+      socket.off('receive_message', handleGlobalReceiveMessage)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, isAuthenticated, profile.id])
+
+  /**
+   * Called by ConversationsPage to keep the orchestrator's conversations ref
+   * current so the global socket listener can look up sender/report metadata.
+   */
+  function handleGlobalConversationsSync(conversations) {
+    globalConversationsRef.current = conversations || []
+  }
+
   const superadminRecipientIds = useMemo(
     () =>
       adminAccounts
@@ -455,6 +549,7 @@ export function useAppStateOrchestrator() {
     onApproveTransfer: handleApproveTransfer,
     onRejectTransfer: handleRejectTransfer,
     onRefreshAdminAccounts: handleRefreshAdminAccounts,
+    onSyncConversations: handleGlobalConversationsSync,
     setAuthPage,
   }
 

@@ -3,7 +3,7 @@ import { AppError } from "../../shared/errors/appError.js";
 import { reportMessagesRepository } from "./messages.repository.js";
 import { toReportMessageResponse } from "./messages.mapper.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
-import { emitToReportRoom, emitToUser } from "../../realtime/socket.js";
+import { emitToReportRoom, emitToUser, emitToAdminFeedRooms } from "../../realtime/socket.js";
 import { reportsSentimentClient } from "./reports.sentiment.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { buildReportsUserCachePrefix } from "./reports.cache.js";
@@ -128,6 +128,16 @@ export const reportMessagesService = {
       const reportOwnerId = access.report.user_id;
       if (reportOwnerId && String(reportOwnerId) !== String(actor.id)) {
         emitToUser(reportOwnerId, "new_report_message", {
+          reportId,
+          message: formattedMessage,
+        });
+      }
+
+      // If the sender is a citizen, broadcast to the admin feed rooms so that
+      // admins who aren't currently viewing the report room still get real-time notifications.
+      if (access.participantType === "citizen") {
+        const departmentSlug = access.report.issue_type;
+        emitToAdminFeedRooms(departmentSlug, "receive_message", {
           reportId,
           message: formattedMessage,
         });

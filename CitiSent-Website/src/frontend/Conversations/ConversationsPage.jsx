@@ -25,7 +25,7 @@ function formatLastSeen(dateString) {
   return `Last seen ${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
 }
 
-export function ConversationsPage({ profile, onViewReport }) {
+export function ConversationsPage({ profile, onViewReport, onSyncConversations }) {
   const {
     activeConversation,
     chatError,
@@ -50,7 +50,7 @@ export function ConversationsPage({ profile, onViewReport }) {
     suggestions,
     suggestionsLoading,
     totalUnread,
-  } = useConversationsState({ profile })
+  } = useConversationsState({ profile, onSyncConversations })
 
   const [isSuggestionsMinimized, setIsSuggestionsMinimized] = useState(false)
 

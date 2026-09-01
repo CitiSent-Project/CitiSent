@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiBell, FiLoader, FiTrash2, FiX } from 'react-icons/fi'
+import { FiBell, FiLoader, FiMessageSquare, FiTrash2, FiX } from 'react-icons/fi'
+import { APP_PAGES } from '../../models/pageModel'
 import {
   NotificationFilterChips,
   NotificationItem,
@@ -11,6 +12,13 @@ import {
 function getInvitationMetadata(notification) {
   const metadata = notification?.metadata || notification?.meta?.invitation
   return metadata?.kind === 'accountInvitation' ? metadata : null
+}
+
+function getMessageMetadata(notification) {
+  const type = String(notification?.type || '').toLowerCase()
+  if (!type.includes('message') && !type.includes('chat')) return null
+  const metadata = notification?.metadata || {}
+  return metadata.reportId ? metadata : null
 }
 
 function InvitationStatusLog({ metadata }) {
@@ -37,6 +45,36 @@ function InvitationStatusLog({ metadata }) {
           ? 'The user has completed password setup and activated their account.'
           : 'The setup invitation email was sent and is awaiting user account activation.'}
       </p>
+    </div>
+  )
+}
+
+/**
+ * Renders a compact report-number badge below message notifications.
+ * Mirrors the visual style of InvitationStatusLog but is specific to conversations.
+ */
+function MessageContextBadge({ metadata }) {
+  const reportNumber = metadata?.reportNumber
+  const senderName = metadata?.senderName
+
+  return (
+    <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200/60 bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800">
+          <FiMessageSquare className="text-[10px]" />
+          Conversation
+        </span>
+        {reportNumber && (
+          <span className="text-xs font-semibold text-slate-700 font-mono">
+            #{reportNumber}
+          </span>
+        )}
+      </div>
+      {senderName && (
+        <p className="mt-1 text-xs text-slate-500">
+          From <span className="font-semibold text-slate-700">{senderName}</span> — tap to open the conversation thread.
+        </p>
+      )}
     </div>
   )
 }
@@ -84,6 +122,19 @@ export function NotificationsDrawer({
       : isClearing
       ? 'Clearing notifications...'
       : 'Clear all notifications'
+
+  /**
+   * Navigates the admin to the Conversations page and closes the drawer.
+   * Used for message-type notification click handlers.
+   */
+  function handleNavigateToConversations() {
+    if (typeof onNavigate === 'function') {
+      onNavigate(APP_PAGES.CONVERSATIONS)
+    }
+    if (typeof onClose === 'function') {
+      onClose()
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -164,15 +215,19 @@ export function NotificationsDrawer({
             <div className="flex flex-col">
               {visibleNotifications.map((notification) => {
                 const invitationMetadata = getInvitationMetadata(notification)
+                const messageMetadata = getMessageMetadata(notification)
 
                 return (
                   <NotificationItem
                     key={notification.id}
                     notification={notification}
                     onToggleRead={onToggleRead}
+                    onClick={messageMetadata ? handleNavigateToConversations : undefined}
                   >
                     {invitationMetadata ? (
                       <InvitationStatusLog metadata={invitationMetadata} />
+                    ) : messageMetadata ? (
+                      <MessageContextBadge metadata={messageMetadata} />
                     ) : null}
                   </NotificationItem>
                 )

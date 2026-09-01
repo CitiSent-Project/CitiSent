@@ -377,7 +377,7 @@ export function Navbar({
 						onClearAll={onClearAll}
 						isClearing={isClearingNotifications}
 						onClose={() => setIsNotificationsOpen(false)}
-                        onNavigate={() => handleNavigate(APP_PAGES.DASHBOARD)}
+                        onNavigate={(targetPage) => handleNavigate(targetPage || APP_PAGES.DASHBOARD)}
 					/>
 				)}
 			</AnimatePresence>

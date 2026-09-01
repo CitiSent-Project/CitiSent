@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Text, View, Pressable, Alert } from "react-native";
+import { Text, View, Pressable } from "react-native";
 import { formatDateTime } from "../../../modules/shared";
 import ReportAttachmentPreview from "./ReportAttachmentPreview";
 import ReportStatusBadge from "./ReportStatusBadge";
@@ -12,26 +12,11 @@ function FieldLabel({ text }) {
 export default function MyReportCard({
   report,
   containerClassName = "mb-4",
-  onDelete,
   onOpenDiscussion,
   hasUnreadAdminMessage = false,
   unreadCount = 0,
 }) {
   const showBadge = Boolean(hasUnreadAdminMessage || unreadCount > 0);
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Report",
-      "Are you sure you want to delete this report? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => onDelete?.(report.id),
-        },
-      ]
-    );
-  };
 
   return (
     <View className={`${containerClassName} rounded-2xl border px-4 py-4 shadow-sm`} style={{ borderColor: Colors.border, backgroundColor: Colors.background }}>
@@ -83,20 +68,7 @@ export default function MyReportCard({
             </View>
           )}
 
-          {onDelete && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Delete report"
-              onPress={handleDelete}
-              className="flex-row items-center rounded-lg px-2 py-1.5"
-              style={{ backgroundColor: Colors.ui.errorSurface }}
-            >
-              <Ionicons name="trash-outline" size={14} color={Colors.error} />
-              <Text className="ml-1 text-xs font-semibold" style={{ color: Colors.error }}>
-                Delete
-              </Text>
-            </Pressable>
-          )}
+
         </View>
       </View>
     </View>

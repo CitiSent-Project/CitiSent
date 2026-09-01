@@ -3,7 +3,7 @@ import MyReportCard from "./reportItem/MyReportCard";
 import { Colors } from "../../modules/shared";
 import { useNavigation } from "@react-navigation/native";
 
-export default function MyReportsList({ reports, onDelete }) {
+export default function MyReportsList({ reports }) {
   const navigation = useNavigation();
 
   if (!reports.length) {
@@ -32,6 +32,6 @@ export default function MyReportsList({ reports, onDelete }) {
   }
 
   return reports.map((report) => (
-    <MyReportCard key={report.id} report={report} onDelete={onDelete} />
+    <MyReportCard key={report.id} report={report} />
   ));
 }

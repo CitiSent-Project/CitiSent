@@ -59,6 +59,7 @@ export const reportMessagesService = {
               senderProfile?.username ||
               senderProfile?.email ||
               null,
+            role: senderProfile?.role || null,
           },
           // Pass the current user's ID so isRead is resolved from the correct
           // report_message_reads join entry rather than always returning false.
@@ -108,7 +109,11 @@ export const reportMessagesService = {
       accessToken,
     });
 
-    const formattedMessage = toReportMessageResponse(created);
+    const formattedMessage = toReportMessageResponse({
+      ...created,
+      sender_name: actor.fname || actor.username || actor.email || null,
+      role: actor.role || null,
+    });
 
     // Broadcast receive_message to all connected socket clients viewing this report
     if (!suppressRoomBroadcast) {

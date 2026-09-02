@@ -25,6 +25,8 @@ export function toReportMessageResponse(row, readerId = null) {
     id: row.id,
     reportId: row.report_id,
     senderId: row.sender_id,
+    senderName: row.sender_name,
+    senderRole: row.role || row.sender_role,
     message: row.message,
     isRead,
     readAt: reads.find((r) => r.read_at)?.read_at ?? row.read_at ?? null,

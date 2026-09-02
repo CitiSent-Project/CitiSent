@@ -97,7 +97,7 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
           <ReportChatMessageItem
             key={message.id}
             message={message}
-            isAdmin={String(message.senderId) === String(profileId)}
+            isOwnMessage={String(message.senderId) === String(profileId)}
           />
         ))}
         <div ref={endRef} />

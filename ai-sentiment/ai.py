@@ -143,9 +143,12 @@ def get_default_suggestions(reason: str) -> dict:
     }
 
 
+# Template for generating admin note suggestions. 
+# We explicitly instruct the AI to use a humanized, conversational tone and to match the language 
+# (including Filipino/Taglish) of the citizen's report to make the notes more accessible and user-friendly.
 ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE = (
     "You are assisting a Local Government Unit (LGU) admin with an internal status note for a citizen report.\n"
-    "Generate exactly 4 concise, factual, professional note suggestions. The admin will review and edit one before saving it.\n\n"
+    "Generate exactly 4 conversational, humanized, yet professional note suggestions. The admin will review and edit one before saving it.\n\n"
     "Report details:\n"
     "- Category: {report_category}\n"
     "- Status being applied: {report_status}\n"
@@ -155,11 +158,13 @@ ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE = (
     "Recent conversation (chronological, oldest to newest):\n"
     "{conversation_context_str}\n\n"
     "Rules:\n"
-    "1. Suggestions are internal processing notes, not chat replies.\n"
-    "2. pending: acknowledge triage or assignment; in_review: record investigation/progress; resolved: record a completed action and outcome; rejected: state a respectful, factual reason it cannot proceed.\n"
-    "3. Use conversation details when available. If there is no conversation, tailor the wording to the citizen emotion without inventing facts.\n"
-    "4. Never invent completed work, dates, contacts, evidence, or promises.\n"
-    "5. Return JSON only with exactly these keys:\n"
+    "1. Tone: Write as if a helpful human staff member is summarizing the status. Avoid overly robotic or bureaucratic phrasing.\n"
+    "2. Language: ALWAYS write the suggestions in the SAME LANGUAGE as the 'Original report' or 'Recent conversation'. If it is in Filipino or Taglish, the notes MUST be in Filipino/Taglish.\n"
+    "3. Suggestions are internal processing notes to track status, not direct chat replies to the citizen.\n"
+    "4. pending: acknowledge triage or assignment; in_review: record investigation/progress; resolved: record a completed action and outcome; rejected: state a respectful, factual reason it cannot proceed.\n"
+    "5. Use conversation details when available. If there is no conversation, tailor the wording to the citizen emotion without inventing facts.\n"
+    "6. Never invent completed work, dates, contacts, evidence, or promises.\n"
+    "7. Return JSON only with exactly these keys:\n"
     "   \"suggestedNotes\": [{{ \"text\": \"...\", \"rank\": 1 }}, {{ \"text\": \"...\", \"rank\": 2 }}, {{ \"text\": \"...\", \"rank\": 3 }}, {{ \"text\": \"...\", \"rank\": 4 }}],\n"
     "   \"tone\": \"empathetic|neutral|professional|urgent\",\n"
     "   \"confidence\": 0.0-1.0,\n"
@@ -171,30 +176,32 @@ ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE = (
 def get_default_admin_note_suggestions(report_status: str, reason: str) -> dict:
     """Return safe, status-specific notes when Gemini cannot produce suggestions."""
     status = str(report_status or "pending").strip().lower()
+    # Fallback templates designed to sound helpful, humanized, and conversational.
+    # These step away from rigid bureaucratic language while still remaining professional.
     templates_by_status = {
         "in_review": [
-            "Report is under review. The assigned office is assessing the reported concern and available details.",
-            "Initial review is in progress. Additional verification may be required before a final update is provided.",
-            "The report has been forwarded for assessment based on its category and reported location.",
-            "Review is ongoing. The citizen's concern has been noted for follow-up by the responsible office.",
+            "We're currently looking into this report. The assigned team is checking the details provided.",
+            "Review is underway! We might need a bit more time to verify things before we can give a final update.",
+            "I've forwarded this report for assessment so the right team can handle it properly.",
+            "We're on it. The citizen's concern is noted and we're actively following up.",
         ],
         "resolved": [
-            "The report has been reviewed and the recorded resolution details have been completed.",
-            "The responsible office has completed the applicable action based on the report information provided.",
-            "The concern has been processed and marked resolved following the office's review.",
-            "Resolution has been recorded. The report is closed based on the completed review and action.",
+            "Great news, we've reviewed this and completed the necessary actions.",
+            "The responsible team has taken care of this based on the provided info. All sorted!",
+            "We've processed the concern and it's now marked as resolved.",
+            "Action complete! I'm closing this report since we've handled the review and necessary steps.",
         ],
         "rejected": [
-            "The report was reviewed but cannot be processed further based on the available information.",
-            "The concern could not be resolved through this report after review by the responsible office.",
-            "The report has been closed because the available details do not support further action at this time.",
-            "After review, this report cannot proceed. Additional or corrected information may be needed for a future submission.",
+            "We reviewed this, but unfortunately, we can't process it further with the current info.",
+            "We couldn't resolve this particular concern through the report at this time.",
+            "I have to close this report for now as we don't have enough details to take action.",
+            "We can't proceed with this right now. We might need the citizen to submit more details later.",
         ],
         "pending": [
-            "Report received and queued for initial review by the responsible office.",
-            "The reported concern has been logged for triage and assignment.",
-            "Initial report details have been received and will be reviewed by the appropriate office.",
-            "The citizen's concern has been recorded for assessment and follow-up.",
+            "We've received the report and it's queued up for our team to review.",
+            "The concern is logged and we'll assign it for triage shortly.",
+            "Got the initial details! The appropriate office will review this soon.",
+            "We've safely recorded the citizen's concern and will follow up on it.",
         ],
     }
     notes = templates_by_status.get(status, templates_by_status["pending"])

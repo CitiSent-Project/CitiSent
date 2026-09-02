@@ -61,7 +61,7 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
 
   if (loading) {
     return (
-      <div className="grid flex-1 place-items-center text-sm text-slate-500">
+      <div className="grid flex-1 place-items-center text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50">
         Loading conversation...
       </div>
     )
@@ -69,7 +69,7 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
 
   if (error) {
     return (
-      <div className="m-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      <div className="m-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
         {error}
       </div>
     )
@@ -77,10 +77,10 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
 
   if (!messages.length) {
     return (
-      <div className="grid flex-1 place-items-center p-8 text-center text-slate-500">
-        <FiMessageCircle className="mb-2 text-3xl text-slate-300" />
+      <div className="grid flex-1 place-items-center p-8 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50">
+        <FiMessageCircle className="mb-2 text-3xl text-slate-300 dark:text-slate-600" />
         <p className="text-sm font-medium">No messages yet.</p>
-        <p className="text-xs text-slate-400">Start the conversation with the report owner.</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">Start the conversation with the report owner.</p>
       </div>
     )
   }
@@ -91,7 +91,7 @@ export function ReportChatThread({ messages = [], loading = false, error = '', p
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4 min-w-0"
+        className="flex-1 space-y-3 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 p-4 min-w-0"
       >
         {messages.map((message) => (
           <ReportChatMessageItem

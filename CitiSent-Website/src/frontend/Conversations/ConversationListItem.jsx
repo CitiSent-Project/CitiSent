@@ -83,10 +83,10 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
       onClick={onClick}
       className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200 ${
         isActive
-          ? 'bg-blue-50/90 shadow-sm ring-1 ring-blue-200/80'
+          ? 'bg-blue-50/90 dark:bg-blue-900/30 shadow-sm ring-1 ring-blue-200/80 dark:ring-blue-500/30'
           : hasUnread
-          ? 'bg-blue-50/30 hover:bg-blue-50/60'
-          : 'hover:bg-slate-50'
+          ? 'bg-blue-50/30 dark:bg-blue-900/10 hover:bg-blue-50/60 dark:hover:bg-blue-900/20'
+          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
       }`}
       aria-current={isActive ? 'true' : undefined}
       aria-label={ariaLabel}
@@ -105,7 +105,7 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
         </div>
         {isOnline && (
           <span
-            className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500"
+            className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500"
             title="Online"
           />
         )}
@@ -116,14 +116,14 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
         <div className="flex items-center justify-between gap-2">
           <span
             className={`truncate text-sm ${
-              hasUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'
+              hasUnread ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'
             }`}
           >
             {userName}
           </span>
           <span
             className={`shrink-0 text-[11px] font-numeric ${
-              hasUnread ? 'font-bold text-blue-600' : 'font-medium text-slate-400'
+              hasUnread ? 'font-bold text-blue-600 dark:text-blue-400' : 'font-medium text-slate-400 dark:text-slate-500'
             }`}
           >
             {timeLabel}
@@ -133,12 +133,12 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p
             className={`truncate text-xs leading-relaxed  ${
-              hasUnread ? 'font-medium text-slate-900' : 'text-slate-500'
+              hasUnread ? 'font-medium text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {previewText}
             {lastMessageSenderRole === 'admin' && !hasUnread && lastMessage && (
-              <FiCheck className="ml-1 inline text-blue-500 text-[11px]" aria-label="Sent" />
+              <FiCheck className="ml-1 inline text-blue-500 dark:text-blue-400 text-[11px]" aria-label="Sent" />
             )}
           </p>
 
@@ -153,7 +153,7 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
 
         {/* Category tag */}
         {category && (
-          <span className="mt-1 inline-block max-w-full truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+          <span className="mt-1 inline-block max-w-full truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
             {category}
           </span>
         )}

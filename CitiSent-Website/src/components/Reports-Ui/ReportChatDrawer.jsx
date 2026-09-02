@@ -212,9 +212,9 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-slate-900/20" onClick={onClose} aria-hidden="true" />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-md min-w-0 flex-col bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Report chat">
-        <header className="flex items-start justify-between border-b border-slate-200 bg-[#183b68] p-4 text-white">
+      <div className="fixed inset-0 z-40 bg-slate-900/20 dark:bg-slate-900/60" onClick={onClose} aria-hidden="true" />
+      <aside className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-md min-w-0 flex-col bg-white dark:bg-slate-900 shadow-2xl dark:shadow-slate-900/50" role="dialog" aria-modal="true" aria-label="Report chat">
+        <header className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 bg-[#183b68] dark:bg-slate-950 p-4 text-white">
           <div>
             <div className="flex items-center gap-2">
               <FiMessageCircle />
@@ -254,12 +254,12 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
         {/* AI-Assisted Reply Suggestions */}
         {showSuggestions && (
-          <div className="flex flex-col gap-2 p-3 bg-slate-50 border-t border-slate-200">
-            <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold tracking-wider">
+          <div className="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider">
               <button 
                 type="button" 
                 onClick={() => setIsSuggestionsMinimized(prev => !prev)}
-                className="flex items-center gap-1.5 hover:text-slate-700 transition"
+                className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition"
                 aria-label={isSuggestionsMinimized ? "Expand suggestions" : "Minimize suggestions"}
               >
                 {isSuggestionsMinimized ? <FiChevronUp className="text-sm" /> : <FiChevronDown className="text-sm" />}
@@ -271,7 +271,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
                   type="button"
                   onClick={() => fetchSuggestions(true)}
                   disabled={suggestionsLoading}
-                  className="flex items-center gap-1 hover:text-blue-600 transition disabled:opacity-50 text-[10px] text-slate-500 font-bold"
+                  className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition disabled:opacity-50 text-[10px] text-slate-500 dark:text-slate-400 font-bold"
                 >
                   <FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE
                 </button>
@@ -280,7 +280,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
             {!isSuggestionsMinimized && (
               suggestionsLoading ? (
-                <div className="py-4 text-center text-xs text-slate-400">Generating suggestions...</div>
+                <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">Generating suggestions...</div>
               ) : suggestions.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">
                   {suggestions.map((suggestion, idx) => (
@@ -289,17 +289,17 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
                       type="button"
                       onClick={() => !sending && send(suggestion.text)}
                       disabled={sending}
-                      className={`flex flex-col justify-between text-left text-xs p-2 rounded-xl border border-slate-200/80 bg-white hover:border-blue-400 hover:bg-blue-50/40 transition-all text-slate-700 font-normal wrap-break-word shadow-2xs ${
-                        idx === 0 ? 'border-l-4 border-l-blue-600 font-medium text-slate-900 bg-blue-50/10' : ''
+                      className={`flex flex-col justify-between text-left text-xs p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/20 transition-all text-slate-700 dark:text-slate-300 font-normal wrap-break-word shadow-2xs ${
+                        idx === 0 ? 'border-l-4 border-l-blue-600 dark:border-l-blue-500 font-medium text-slate-900 dark:text-white bg-blue-50/10 dark:bg-blue-500/5' : ''
                       }`}
                     >
-                      {idx === 0 && <span className="text-[9px] text-blue-600 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
+                      {idx === 0 && <span className="text-[9px] text-blue-600 dark:text-blue-400 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
                       <span>{suggestion.text}</span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="py-2 text-center text-xs text-slate-400">No suggestions available.</div>
+                <div className="py-2 text-center text-xs text-slate-400 dark:text-slate-500">No suggestions available.</div>
               )
             )}
           </div>

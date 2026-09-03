@@ -262,7 +262,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               ) : null}
 
               {isPermanentlyLocked ? (
-                <div className={`mb-5 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${currentStatus === 'Resolved' ? 'border-emerald-200/60 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300' : 'border-rose-200/60 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-300'}`}>
+                <div className={`mb-5 flex items-start gap-3 rounded-xl px-4 py-3 text-sm ${currentStatus === 'Resolved' ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300' : ' bg-rose-50 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300'}`}>
                   <FiCheckCircle className="mt-0.5 shrink-0" />
                   <p>This report is permanently locked because it was marked as {currentStatus}. No further changes can be made.</p>
                 </div>

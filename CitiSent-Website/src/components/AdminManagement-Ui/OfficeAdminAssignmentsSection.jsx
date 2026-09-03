@@ -244,7 +244,7 @@ export function OfficeAdminAssignmentsSection({
                       {admin.email}
                     </td>
                     <td className="px-3 py-3.5">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200/60 max-w-42.5 truncate" title={admin.department}>
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-42.5 truncate" title={admin.department}>
                         {admin.department}
                       </span>
                     </td>

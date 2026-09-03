@@ -68,7 +68,7 @@ export function ProfileSummaryCard({ profile }) {
             </div>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           Active account
         </span>
@@ -91,7 +91,7 @@ export function ProfileSummaryCard({ profile }) {
                 <IconComponent className="h-3.5 w-3.5 text-blue-700" />
                 {field.label}
               </div>
-              <p className="text-sm font-medium text-slate-800 break-words">
+              <p className="text-sm font-medium text-slate-800 wrap-break-word">
                 {displayVal}
               </p>
             </article>

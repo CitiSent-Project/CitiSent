@@ -1,6 +1,6 @@
 export * from './AddAdminFormModal'
 export * from './OfficeAdminAssignmentsSection'
-export * from './AgencyCatalogSection'
+export * from './AgencyCatalog/AgencyCatalogSection'
 export * from './TransferRequestQueueSection'
 export * from './TransferReviewModal'
 export * from './DeleteAdminConfirmModal'

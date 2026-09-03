@@ -33,9 +33,7 @@ export function ReportChatMessageItem({ message, isOwnMessage }) {
       <div className={`max-w-[85%] sm:max-w-[75%] min-w-0 rounded-2xl px-4 py-3 shadow-sm ${bubbleClass}`}>
         <p className={`mb-1 text-[10px] font-semibold uppercase tracking-wide ${nameClass}`}>{senderLabel}</p>
         <p className="whitespace-pre-wrap break-all wrap-break-word text-sm leading-relaxed">{message.content}</p>
-        <p className={`mt-1.5 flex items-center justify-end gap-1 text-[10px] ${dateClass}`}>
-          {date}{isRightSide ? (message.isRead ? <FiCheck aria-label="Read" /> : <FiClock aria-label="Sent" />) : null}
-        </p>
+        <p className={`mt-1.5 flex items-center justify-end gap-1 text-[10px] ${dateClass}`}>{date}{isRightSide ? (message.isRead ? <FiCheck aria-label="Read" /> : <FiClock aria-label="Sent" />) : null}</p>
       </div>
     </div>
   )

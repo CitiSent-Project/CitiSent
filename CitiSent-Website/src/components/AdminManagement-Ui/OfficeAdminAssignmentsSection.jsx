@@ -84,7 +84,7 @@ export function OfficeAdminAssignmentsSection({
             <span>Department Filter</span>
           </label>
           <DropdownButton
-            className="w-full h-[34px] rounded-lg border-slate-200 bg-white text-xs shadow-2xs hover:border-slate-300"
+            className="w-full h-8.5 rounded-lg border-slate-200 bg-white text-xs shadow-2xs hover:border-slate-300"
             ariaLabel="Department filter"
             value={departmentFilter}
             onChange={onDepartmentFilterChange}
@@ -108,7 +108,7 @@ export function OfficeAdminAssignmentsSection({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-600 text-xs font-bold text-white shadow-2xs">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs">
                     {getAdminInitials(admin.fullName)}
                   </div>
                   <div className="min-w-0">
@@ -202,7 +202,7 @@ export function OfficeAdminAssignmentsSection({
       {/* Desktop Table View */}
       <div className="mt-5 hidden overflow-hidden rounded-xl border border-slate-200/80 shadow-2xs lg:block">
         <div className="max-w-full overflow-x-auto">
-          <table className="w-full min-w-[980px] table-fixed text-left text-xs">
+          <table className="w-full min-w-245 table-fixed text-left text-xs">
             <colgroup>
               <col className="w-[18%]" />
               <col className="w-[20%]" />
@@ -232,19 +232,19 @@ export function OfficeAdminAssignmentsSection({
                   <tr key={admin.id} className="transition-colors hover:bg-slate-50/60">
                     <td className="pl-6 pr-3 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-600 text-[11px] font-bold text-white shadow-2xs">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-600 text-[11px] font-bold text-white shadow-2xs">
                           {getAdminInitials(admin.fullName)}
                         </div>
-                        <span className="font-semibold text-slate-900 truncate max-w-[160px]" title={admin.fullName}>
+                        <span className="font-semibold text-slate-900 truncate max-w-37.5" title={admin.fullName}>
                           {admin.fullName}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-3.5 text-slate-600 truncate max-w-[180px]" title={admin.email}>
+                    <td className="px-3 py-3.5 text-slate-600 truncate max-w-45" title={admin.email}>
                       {admin.email}
                     </td>
                     <td className="px-3 py-3.5">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200/60 max-w-[170px] truncate" title={admin.department}>
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200/60 max-w-42.5 truncate" title={admin.department}>
                         {admin.department}
                       </span>
                     </td>

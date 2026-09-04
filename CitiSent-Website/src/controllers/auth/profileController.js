@@ -1,5 +1,5 @@
-import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
-import { composeFullName } from '../models/nameModel'
+import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
+import { composeFullName } from '../../models/nameModel'
 
 export function buildProfileUpdateState({ currentPreferences, updates }) {
   const nextDisplayName = composeFullName({

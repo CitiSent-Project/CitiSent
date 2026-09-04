@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { getPendingTransferRequests } from '../../controllers/departmentTransferController'
-import { getOfficeAdmins } from '../../controllers/adminManagementController'
+import { getPendingTransferRequests } from '../../controllers/admin/departmentTransferController'
+import { getOfficeAdmins } from '../../controllers/admin/adminManagementController'
 import { USER_ROLES } from '../../models/roleAccessModel'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
 import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'

@@ -19,8 +19,8 @@ import { normalizeReportStatus } from '../../models/reportStatusModel'
 import {
   createReportTimelineEntry,
   validateReportStatusChange,
-} from '../../controllers/reportStatusController'
-import { canAdminUpdateReport } from '../../controllers/reportAccessController'
+} from '../../controllers/reports/reportStatusController'
+import { canAdminUpdateReport } from '../../controllers/reports/reportAccessController'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import {
   mapBackendAdminNoteSuggestionsToUi,

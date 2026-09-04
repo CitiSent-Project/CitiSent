@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { paginateReports } from '../../controllers/userReportsController'
+import { paginateReports } from '../../controllers/reports/userReportsController'
 
 export function useReportPaginationState({ rows = [], pageSize = 6 }) {
   const [currentPage, setCurrentPage] = useState(1)

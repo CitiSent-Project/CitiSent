@@ -9,12 +9,12 @@ import {
   EmotionFilterChips,
 } from '../../components/Reports-Ui'
 import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
-import { canAdminUpdateReport } from '../../controllers/reportAccessController'
+import { canAdminUpdateReport } from '../../controllers/reports/reportAccessController'
 import {
   ALL_URGENCY_FILTER,
   filterUserReportsByUrgency,
   buildWeeklyReportTrend,
-} from '../../controllers/userReportsController'
+} from '../../controllers/reports/userReportsController'
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 
 const URGENCY_COLORS = ['#ef4444', '#f97316', '#eab308', '#10b981']

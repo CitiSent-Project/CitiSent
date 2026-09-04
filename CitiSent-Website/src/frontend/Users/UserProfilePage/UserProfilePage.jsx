@@ -8,7 +8,7 @@ import { getStorageSchemaRule } from '../../../models/storageSchemaModel'
 import { UrgencyFeedTable, UrgencyFilterChips, Pagination } from '../../../components/Reports-Ui'
 import { useReportPaginationState } from '../../../hooks/reports/useReportPaginationState'
 import { useReportFeedRealtime } from '../../../hooks/reports/useReportFeedRealtime'
-import { filterUserReportsByUrgency, ALL_URGENCY_FILTER } from '../../../controllers/userReportsController'
+import { filterUserReportsByUrgency, ALL_URGENCY_FILTER } from '../../../controllers/reports/userReportsController'
 
 const URGENCY_FILTER_CHIPS = ['All Reports', 'Critical', 'High', 'Medium', 'Low']
 

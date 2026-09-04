@@ -4,7 +4,7 @@ import {
   countUnreadNotifications,
   getAdminNotifications,
   toggleAdminNotificationReadState,
-} from '../controllers/notificationsController'
+} from '../controllers/shared/notificationsController'
 
 export function useNotificationsState({
   notificationsByAdmin,

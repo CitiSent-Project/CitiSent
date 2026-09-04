@@ -1,4 +1,4 @@
-import { normalizeReportStatus } from '../models/reportStatusModel'
+import { normalizeReportStatus } from '../../models/reportStatusModel'
 
 export function initializeReportRows(rows = []) {
   return rows.map((row) => ({ ...row, status: normalizeReportStatus(row.status) }))

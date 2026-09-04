@@ -3,7 +3,7 @@ import { mapBackendProfileToAdminProfile } from '../../services/api/admin/accoun
 import {
   buildPostLoginTransition,
   buildPostLogoutTransition,
-} from '../../controllers/navigationController'
+} from '../../controllers/navigation/navigationController'
 import { DEFAULT_ADMIN_PROFILE } from '../../models/data'
 import { APP_PAGES, AUTH_PAGES } from '../../models/pageModel'
 import { composeFullName } from '../../models/nameModel'

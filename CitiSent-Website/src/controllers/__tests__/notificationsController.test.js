@@ -9,7 +9,7 @@ import {
   getAdminNotifications,
   toggleAdminNotificationReadState,
   toggleNotificationReadState,
-} from '../notificationsController'
+} from '../shared/notificationsController'
 
 describe('notificationsController', () => {
   it('toggles only the targeted notification read state', () => {

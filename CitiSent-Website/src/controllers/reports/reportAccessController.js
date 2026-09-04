@@ -1,4 +1,4 @@
-import { canAccessDepartment, isSuperadmin } from '../models/roleAccessModel'
+import { canAccessDepartment, isSuperadmin } from '../../models/roleAccessModel'
 
 export function filterReportsForAdmin({ rows = [], profile }) {
   const role = profile?.role

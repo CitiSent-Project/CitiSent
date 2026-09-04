@@ -12,13 +12,13 @@
  * to what the orchestrator previously exposed, so callers do not need
  * any migration.
  */
-import { TRANSFER_REQUEST_STATUS } from '../../controllers/departmentTransferController'
+import { TRANSFER_REQUEST_STATUS } from '../../controllers/admin/departmentTransferController'
 import { canReviewTransferRequest } from '../../models/roleAccessModel'
 import {
   appendNotificationForAdmin,
   appendNotificationForAdmins,
   buildNotification,
-} from '../../controllers/notificationsController'
+} from '../../controllers/shared/notificationsController'
 import { transferRequestsApiService } from '../../services/api/admin/transferRequestsApiService'
 import { officeAdminsApiService } from '../../services/api/admin/officeAdminsApiService'
 import { mapBackendOfficeAdmin } from '../../services/api/admin/accountsApiMappers'

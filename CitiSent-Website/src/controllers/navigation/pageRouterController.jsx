@@ -1,20 +1,20 @@
 import { lazy } from 'react'
-import { Dashboard } from '../frontend/Pages/Dashboard'
-import { Users } from '../frontend/Users/Users'
-import { LoginPage } from '../frontend/Pages/Login-Page'
-import { Logout } from '../frontend/Pages/Logout'
-import { APP_PAGES, REPORT_SECTIONS } from '../models/pageModel'
+import { Dashboard } from '../../frontend/Pages/Dashboard'
+import { Users } from '../../frontend/Users/Users'
+import { LoginPage } from '../../frontend/Pages/Login-Page'
+import { Logout } from '../../frontend/Pages/Logout'
+import { APP_PAGES, REPORT_SECTIONS } from '../../models/pageModel'
 
 // Low-frequency pages are split into separate chunks. The named-export
 // adapters keep existing component modules unchanged while allowing Vite to
 // load each page only when it is first visited.
-const Reports = lazy(() => import('../frontend/Reports/Reports').then((module) => ({ default: module.Reports })))
-const ProfileInformation = lazy(() => import('../frontend/Pages/ProfilePage').then((module) => ({ default: module.ProfileInformation })))
-const Settings = lazy(() => import('../frontend/Pages/Settings').then((module) => ({ default: module.Settings })))
-const UserProfilePage = lazy(() => import('../frontend/Users/UserProfilePage/UserProfilePage').then((module) => ({ default: module.UserProfilePage })))
-const ReportDetailPage = lazy(() => import('../components/Reports-Ui/ReportDetailPage').then((module) => ({ default: module.ReportDetailPage })))
-const AdminManagement = lazy(() => import('../frontend/Pages/AdminManagement').then((module) => ({ default: module.AdminManagement })))
-const ConversationsPage = lazy(() => import('../frontend/Conversations/ConversationsPage').then((module) => ({ default: module.ConversationsPage })))
+const Reports = lazy(() => import('../../frontend/Reports/Reports').then((module) => ({ default: module.Reports })))
+const ProfileInformation = lazy(() => import('../../frontend/Pages/ProfilePage').then((module) => ({ default: module.ProfileInformation })))
+const Settings = lazy(() => import('../../frontend/Pages/Settings').then((module) => ({ default: module.Settings })))
+const UserProfilePage = lazy(() => import('../../frontend/Users/UserProfilePage/UserProfilePage').then((module) => ({ default: module.UserProfilePage })))
+const ReportDetailPage = lazy(() => import('../../components/Reports-Ui/ReportDetailPage').then((module) => ({ default: module.ReportDetailPage })))
+const AdminManagement = lazy(() => import('../../frontend/Pages/AdminManagement').then((module) => ({ default: module.AdminManagement })))
+const ConversationsPage = lazy(() => import('../../frontend/Conversations/ConversationsPage').then((module) => ({ default: module.ConversationsPage })))
 
 export function renderAuthPage({
     onLogin,

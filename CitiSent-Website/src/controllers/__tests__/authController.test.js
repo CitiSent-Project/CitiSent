@@ -4,7 +4,7 @@ import {
   buildRegistrationState,
   resolveAuthenticatedAdmin,
   validateLoginCredentials,
-} from '../authController'
+} from '../auth/authController'
 import { APP_PAGES } from '../../models/pageModel'
 
 describe('authController', () => {

@@ -1,5 +1,5 @@
-import { APP_PAGES } from '../models/pageModel'
-import { composeFullName } from '../models/nameModel'
+import { APP_PAGES } from '../../models/pageModel'
+import { composeFullName } from '../../models/nameModel'
 
 export function buildRegistrationState({ currentProfile, payload }) {
   const now = new Date().toISOString()

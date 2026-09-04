@@ -3,8 +3,8 @@ import { authApiService } from '../services/api/auth/authApiService'
 import {
   buildPreferenceUpdateState,
   buildProfileUpdateState,
-} from '../controllers/profileController'
-import { buildAppearanceState } from '../controllers/appearanceController'
+} from '../controllers/auth/profileController'
+import { buildAppearanceState } from '../controllers/shared/appearanceController'
 import { mapBackendProfileToAdminProfile } from '../services/api/admin/accountsApiMappers'
 
 /**

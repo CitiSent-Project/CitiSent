@@ -9,7 +9,7 @@ import {
 } from '../models/data'
 import { loadFromStorageWithSchema } from '../services/storageService'
 import { usePersistToStorage } from './shared/usePersistToStorage'
-import { buildNextActivityLog } from '../controllers/activityController'
+import { buildNextActivityLog } from '../controllers/shared/activityController'
 import { useAuthSession } from './auth/useAuthSession'
 import { useNotificationsState } from './useNotificationsState'
 import { useDepartmentState } from './departments/useDepartmentState'
@@ -25,9 +25,9 @@ import {
   appendNotificationForAdmin,
   buildMessageNotification,
   hasUnreadMessageNotificationForReport,
-} from '../controllers/notificationsController'
-import { buildPageAccessDecision } from '../controllers/accessControlController'
-import { getPageFromPath, syncBrowserHistory } from '../controllers/navigationController'
+} from '../controllers/shared/notificationsController'
+import { buildPageAccessDecision } from '../controllers/auth/accessControlController'
+import { getPageFromPath, syncBrowserHistory } from '../controllers/navigation/navigationController'
 import { getSocket } from '../services/socket/socketService'
 
 // Extracted hooks for better modularity

@@ -3,7 +3,7 @@ import {
   buildNextReportStatusMap,
   buildNextSelectedReport,
   buildViewedReport,
-} from '../reportStateController'
+} from '../reports/reportStateController'
 
 describe('reportStateController', () => {
   it('builds viewed report with mapped status override', () => {

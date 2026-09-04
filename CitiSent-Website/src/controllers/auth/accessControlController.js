@@ -1,4 +1,4 @@
-import { canAccessPage } from '../models/roleAccessModel'
+import { canAccessPage } from '../../models/roleAccessModel'
 
 export function buildPageAccessDecision({ role, requestedPage }) {
   const allowed = canAccessPage({ role, page: requestedPage })

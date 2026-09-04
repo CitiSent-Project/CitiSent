@@ -9,7 +9,7 @@ import {
   paginateReports,
   sortReports,
   sortReportsByLatest,
-} from '../userReportsController'
+} from '../reports/userReportsController'
 
 describe('userReportsController', () => {
   const rows = [

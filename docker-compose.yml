@@ -40,6 +40,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - SENTIMENT_API_URL=http://ai-sentiment:8000/analyze
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - INVITATION_JWT_SECRET=${INVITATION_JWT_SECRET}
+      - WEB_APP_BASE_URL=${WEB_APP_BASE_URL}
 
 volumes:
   redis-data:

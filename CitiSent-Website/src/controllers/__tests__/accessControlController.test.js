@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { APP_PAGES } from '../../models/pageModel'
 import { USER_ROLES } from '../../models/roleAccessModel'
-import { buildPageAccessDecision } from '../accessControlController'
+import { buildPageAccessDecision } from '../auth/accessControlController'
 
 describe('accessControlController', () => {
   it('allows office admins to access report pages', () => {

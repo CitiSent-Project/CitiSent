@@ -3,7 +3,7 @@ import {
   buildProfileSubmissionState,
   buildPreferenceUpdateState,
   buildProfileUpdateState,
-} from '../profileController'
+} from '../auth/profileController'
 import { USER_ROLES } from '../../models/roleAccessModel'
 
 describe('profileController', () => {

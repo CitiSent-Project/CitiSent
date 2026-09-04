@@ -10,7 +10,7 @@ import {
     VerticalChart,
 } from '../../components/Dashboard-Ui'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
-import { buildDashboardStatCards } from '../../controllers/dashboardController'
+import { buildDashboardStatCards } from '../../controllers/admin/dashboardController'
 import {
     mapDashboardCategoryBreakdown,
     mapDashboardRecentAdmins,

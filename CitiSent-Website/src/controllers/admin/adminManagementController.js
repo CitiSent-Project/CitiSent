@@ -1,4 +1,4 @@
-import { USER_ROLES } from '../models/roleAccessModel'
+import { USER_ROLES } from '../../models/roleAccessModel'
 
 export function getOfficeAdmins(adminAccounts = []) {
   return adminAccounts.filter((admin) => admin.role === USER_ROLES.OFFICE_ADMIN)

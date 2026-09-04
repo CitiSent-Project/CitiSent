@@ -10,8 +10,8 @@ import {
   getUsersPage,
   getPageFromPath,
   syncBrowserHistory,
-} from '../../controllers/navigationController'
-import { buildPageAccessDecision } from '../../controllers/accessControlController'
+} from '../../controllers/navigation/navigationController'
+import { buildPageAccessDecision } from '../../controllers/auth/accessControlController'
 import { usePageLoadingState } from '../shared/usePageLoadingState'
 
 

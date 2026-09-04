@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDashboardNewUserRows, buildDashboardStatCards } from '../dashboardController'
+import { buildDashboardNewUserRows, buildDashboardStatCards } from '../admin/dashboardController'
 
 describe('dashboardController', () => {
   it('maps stat cards with icon components from icon keys', () => {

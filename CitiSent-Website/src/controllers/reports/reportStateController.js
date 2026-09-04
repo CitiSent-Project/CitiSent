@@ -1,4 +1,4 @@
-import { normalizeReportStatus } from '../models/reportStatusModel'
+import { normalizeReportStatus } from '../../models/reportStatusModel'
 
 export function buildViewedReport({ report, reportStatusMap }) {
   const mappedStatus = reportStatusMap[report.id] || report.status

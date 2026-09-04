@@ -4,7 +4,7 @@ import {
   canAdminUpdateReport,
   filterReportsForAdmin,
   getScopedAgencyFilters,
-} from '../reportAccessController'
+} from '../reports/reportAccessController'
 
 describe('reportAccessController', () => {
   const rows = [

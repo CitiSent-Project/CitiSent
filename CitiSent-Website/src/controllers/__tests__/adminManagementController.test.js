@@ -6,7 +6,7 @@ import {
   filterPendingTransferRequests,
   getOfficeAdmins,
   getTotalUnreadCount,
-} from '../adminManagementController'
+} from '../admin/adminManagementController'
 import { USER_ROLES } from '../../models/roleAccessModel'
 
 describe('adminManagementController', () => {

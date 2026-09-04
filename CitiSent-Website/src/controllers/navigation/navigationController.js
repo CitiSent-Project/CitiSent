@@ -1,5 +1,5 @@
-import { APP_PAGES, AUTH_PAGES, PAGE_ROUTES } from '../models/pageModel'
-import { buildViewedReport } from './reportStateController'
+import { APP_PAGES, AUTH_PAGES, PAGE_ROUTES } from '../../models/pageModel'
+import { buildViewedReport } from '../reports/reportStateController'
 
 /**
  * Resolves the URL pathname for a given application page key and parameters.

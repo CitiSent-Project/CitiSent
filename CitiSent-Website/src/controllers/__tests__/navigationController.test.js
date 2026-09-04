@@ -14,7 +14,7 @@ import {
   getReportsCategoryPage,
   getUsersPage,
   syncBrowserHistory,
-} from '../navigationController'
+} from '../navigation/navigationController'
 import { APP_PAGES, AUTH_PAGES } from '../../models/pageModel'
 
 describe('navigationController', () => {

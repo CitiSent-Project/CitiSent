@@ -18,8 +18,8 @@ import {
 import { ProfileSummaryCard } from '../../components/Account-Ui'
 import { ReloginModal } from '../../components/Account-Ui/ReloginModal'
 import { formatDateTime } from '../../models/data'
-import { buildProfileSubmissionState } from '../../controllers/profileController'
-import { TRANSFER_REQUEST_STATUS } from '../../controllers/departmentTransferController'
+import { buildProfileSubmissionState } from '../../controllers/auth/profileController'
+import { TRANSFER_REQUEST_STATUS } from '../../controllers/admin/departmentTransferController'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'
 

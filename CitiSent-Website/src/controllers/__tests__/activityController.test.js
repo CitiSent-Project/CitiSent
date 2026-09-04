@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildNextActivityLog } from '../activityController'
+import { buildNextActivityLog } from '../shared/activityController'
 
 describe('activityController', () => {
   it('prepends a new activity entry and caps length', () => {

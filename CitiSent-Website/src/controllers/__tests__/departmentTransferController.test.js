@@ -5,7 +5,7 @@ import {
   buildTransferRequestCreation,
   getPendingTransferRequests,
   TRANSFER_REQUEST_STATUS,
-} from '../departmentTransferController'
+} from '../admin/departmentTransferController'
 
 describe('departmentTransferController', () => {
   afterEach(() => {

@@ -7,7 +7,7 @@ import {
 import {
   buildNextReportStatusMap,
   buildNextSelectedReport,
-} from '../../controllers/reportStateController'
+} from '../../controllers/reports/reportStateController'
 import { APP_PAGES } from '../../models/pageModel'
 
 /**

@@ -42,7 +42,7 @@ vi.mock('react', () => ({
   useCallback: vi.fn((fn) => fn),
 }))
 
-import { useReportFeedRealtime } from '../useReportFeedRealtime'
+import { useReportFeedRealtime } from '../reports/useReportFeedRealtime'
 import { getSocket } from '../../services/socket/socketService'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

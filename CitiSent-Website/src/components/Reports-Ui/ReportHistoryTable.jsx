@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle } from "react-icons/fi";
 import { TableLoader } from '../ui/TableLoader';
 import { Pagination } from '../ui/Pagination';
-import { useReportPaginationState } from '../../hooks/useReportPaginationState';
+import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState';
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_URGENCY_BADGE_CLASSES,

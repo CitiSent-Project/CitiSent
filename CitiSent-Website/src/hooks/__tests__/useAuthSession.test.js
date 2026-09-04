@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useAuthSession } from '../useAuthSession'
+import { useAuthSession } from '../auth/useAuthSession'
 import { authApiService } from '../../services/api/auth/authApiService'
 
 vi.mock('../../services/api/auth/authApiService', () => ({

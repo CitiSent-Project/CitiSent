@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useModalAccessibility } from '../../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 import { getStructuredInputError } from '../../../utils/structuredInputValidation'
 import { toSlug } from './utils'
 

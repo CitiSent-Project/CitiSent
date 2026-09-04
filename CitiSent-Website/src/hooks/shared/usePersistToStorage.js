@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { saveToStorage, saveToStorageWithSchema } from '../services/storageService'
+import { saveToStorage, saveToStorageWithSchema } from '../../services/storageService'
 
 export function usePersistToStorage(key, value, options = {}) {
   useEffect(() => {

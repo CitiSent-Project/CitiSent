@@ -15,7 +15,7 @@ vi.mock('../../services/storageService', () => ({
   saveToStorageWithSchema: saveToStorageWithSchemaMock,
 }))
 
-import { usePersistToStorage } from '../usePersistToStorage'
+import { usePersistToStorage } from '../shared/usePersistToStorage'
 
 describe('usePersistToStorage', () => {
   it('persists key/value inside effect callback', () => {

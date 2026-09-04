@@ -3,7 +3,7 @@ import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_PREFERENCES,
 } from '../../models/data'
-import { usePersistToStorage } from '../../hooks/usePersistToStorage'
+import { usePersistToStorage } from '../../hooks/shared/usePersistToStorage'
 import { loadFromStorage } from '../../services/storageService'
 import {
   AppearanceSettingsTab,

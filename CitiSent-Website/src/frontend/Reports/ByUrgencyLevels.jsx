@@ -15,7 +15,7 @@ import {
   filterUserReportsByUrgency,
   buildWeeklyReportTrend,
 } from '../../controllers/userReportsController'
-import { useReportPaginationState } from '../../hooks/useReportPaginationState'
+import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 
 const URGENCY_COLORS = ['#ef4444', '#f97316', '#eab308', '#10b981']
 const DAY_MS = 24 * 60 * 60 * 1000

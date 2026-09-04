@@ -8,13 +8,13 @@ import {
   DEFAULT_TRANSFER_REQUESTS,
 } from '../models/data'
 import { loadFromStorageWithSchema } from '../services/storageService'
-import { usePersistToStorage } from './usePersistToStorage'
+import { usePersistToStorage } from './shared/usePersistToStorage'
 import { buildNextActivityLog } from '../controllers/activityController'
-import { useAuthSession } from './useAuthSession'
+import { useAuthSession } from './auth/useAuthSession'
 import { useNotificationsState } from './useNotificationsState'
-import { useDepartmentState } from './useDepartmentState'
-import { useAdminAccountsState } from './useAdminAccountsState'
-import { useAdminTransferState } from './useAdminTransferState'
+import { useDepartmentState } from './departments/useDepartmentState'
+import { useAdminAccountsState } from './admin/useAdminAccountsState'
+import { useAdminTransferState } from './admin/useAdminTransferState'
 import { APP_PAGES, AUTH_PAGES } from '../models/pageModel'
 import { normalizeUserRole, USER_ROLES } from '../models/roleAccessModel'
 import { getStorageSchemaRule } from '../models/storageSchemaModel'
@@ -31,11 +31,11 @@ import { getPageFromPath, syncBrowserHistory } from '../controllers/navigationCo
 import { getSocket } from '../services/socket/socketService'
 
 // Extracted hooks for better modularity
-import { useDepartmentManagementState } from './useDepartmentManagementState'
+import { useDepartmentManagementState } from './departments/useDepartmentManagementState'
 import { useProfileAndPreferencesState } from './useProfileAndPreferencesState'
-import { useAdminNavigation } from './useAdminNavigation'
-import { useReportManagementState } from './useReportManagementState'
-import { useSessionHydration } from './useSessionHydration'
+import { useAdminNavigation } from './admin/useAdminNavigation'
+import { useReportManagementState } from './reports/useReportManagementState'
+import { useSessionHydration } from './auth/useSessionHydration'
 
 function loadSchemaBackedValue(key, fallbackValue, overrides = {}) {
   const schemaRule = getStorageSchemaRule(key)

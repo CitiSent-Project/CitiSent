@@ -15,7 +15,7 @@
 import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useReportDetailState } from '../useReportDetailState'
+import { useReportDetailState } from '../reports/useReportDetailState'
 
 // ---------------------------------------------------------------------------
 // Mock dependencies

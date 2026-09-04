@@ -54,7 +54,6 @@ export const usersService = {
   },
 
   async updateCurrentUser(authUser, payload, accessToken) {
-    console.log("[DEBUG] updateCurrentUser - incoming payload:", payload);
     const normalizedFname =
       payload.fname !== undefined ? normalizeNamePart(payload.fname) : undefined;
     const normalizedMname =
@@ -102,8 +101,6 @@ export const usersService = {
       ...(normalizedProvince !== undefined ? { province: normalizedProvince } : {}),
     };
 
-    console.log("[DEBUG] updateCurrentUser - updatePayload:", updatePayload);
-    try { require('fs').appendFileSync('backend_debug.log', JSON.stringify({ incoming: payload, update: updatePayload }) + '\n'); } catch (e) {}
     const profile = await usersRepository.upsertProfileByUserId(
       authUser.id,
       updatePayload,

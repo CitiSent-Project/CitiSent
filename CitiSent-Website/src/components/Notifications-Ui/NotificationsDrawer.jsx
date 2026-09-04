@@ -30,8 +30,8 @@ function InvitationStatusLog({ metadata }) {
         <span
           className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
             isActive
-              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/60'
-              : 'bg-amber-100 text-amber-800 border border-amber-200/60'
+              ? 'bg-emerald-100 text-emerald-800 '
+              : 'bg-amber-100 text-amber-800'
           }`}
         >
           {isActive ? 'Active' : 'Pending'}

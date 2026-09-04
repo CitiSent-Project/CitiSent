@@ -89,7 +89,7 @@ export function AgencyDesktopTable({
                                         {department.label}
                                     </td>
                                     <td className="px-3 py-3">
-                                        <code className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-600 border border-slate-200/60">
+                                        <code className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-600">
                                             {department.id}
                                         </code>
                                     </td>
@@ -97,8 +97,8 @@ export function AgencyDesktopTable({
                                         <span
                                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                                                 department.isActive
-                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-                                                    : 'bg-slate-100 text-slate-500 border border-slate-200/60'
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-slate-100 text-slate-500'
                                             }`}
                                         >
                                             <span className={`h-1.5 w-1.5 rounded-full ${department.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />

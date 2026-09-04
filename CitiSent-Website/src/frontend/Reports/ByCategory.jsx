@@ -248,7 +248,7 @@ export function ByCategory({
         </section>
 
         <section className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[1fr_1.45fr] w-full min-w-0">
-          <div className="min-w-0 w-full min-h-[360px] sm:min-h-[400px]">
+          <div className="min-w-0 w-full min-h-90 sm:min-h-100">
             <PieChart
               title={reportsByCategoryData.title}
               total={reportsByCategoryData.total}
@@ -258,7 +258,7 @@ export function ByCategory({
               legend={reportsByCategoryData.legend}
             />
           </div>
-          <div className="min-w-0 w-full min-h-[360px] sm:min-h-[400px]">
+          <div className="min-w-0 w-full min-h-90 sm:min-h-100">
             <VerticalChart
               title={reportsThisWeekData.title}
               labels={reportsThisWeekData.labels}

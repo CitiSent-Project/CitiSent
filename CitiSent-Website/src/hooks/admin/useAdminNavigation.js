@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { APP_PAGES } from '../models/pageModel'
+import { APP_PAGES } from '../../models/pageModel'
 import {
   buildPageNavigationTransition,
   buildReportDetailTransition,
@@ -10,9 +10,9 @@ import {
   getUsersPage,
   getPageFromPath,
   syncBrowserHistory,
-} from '../controllers/navigationController'
-import { buildPageAccessDecision } from '../controllers/accessControlController'
-import { usePageLoadingState } from './usePageLoadingState'
+} from '../../controllers/navigationController'
+import { buildPageAccessDecision } from '../../controllers/accessControlController'
+import { usePageLoadingState } from '../shared/usePageLoadingState'
 
 
 /**

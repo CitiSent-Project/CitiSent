@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react'
-import { USER_ROLES, normalizeUserRole } from '../models/roleAccessModel'
-import { departmentsApiService } from '../services/api/admin/departmentsApiService'
+import { USER_ROLES, normalizeUserRole } from '../../models/roleAccessModel'
+import { departmentsApiService } from '../../services/api/admin/departmentsApiService'
 
 export function normalizeDepartmentOption(department) {
   if (!department || typeof department !== 'object') return null

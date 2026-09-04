@@ -16,7 +16,7 @@ vi.mock('react', () => ({
   useEffect: useEffectMock,
 }))
 
-import { usePageLoadingState } from '../usePageLoadingState'
+import { usePageLoadingState } from '../shared/usePageLoadingState'
 
 describe('usePageLoadingState', () => {
   afterEach(() => {

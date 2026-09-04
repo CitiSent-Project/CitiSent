@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 
 /**
  * ReloginModal

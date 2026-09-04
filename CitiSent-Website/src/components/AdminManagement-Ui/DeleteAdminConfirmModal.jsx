@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 
 /** Confirms the irreversible removal of an office admin account. */
 export function DeleteAdminConfirmModal({ admin, isOpen, isDeleting, onCancel, onConfirm }) {

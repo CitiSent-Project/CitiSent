@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 
 /** Confirms the irreversible removal of a citizen account. */
 export function DeleteUserConfirmModal({ user, isOpen, isDeleting, onCancel, onConfirm }) {

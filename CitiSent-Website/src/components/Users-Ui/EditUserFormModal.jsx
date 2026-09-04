@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 import { splitFullName } from '../../models/nameModel'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'
 

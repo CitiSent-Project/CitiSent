@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { FiUploadCloud } from 'react-icons/fi'
-import { useModalAccessibility } from '../../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 
 export function RemoveLogoModal({ department, onClose, onDeleteDepartmentLogo, isBusy, logoError }) {
     const removeLogoModalRef = useRef(null)

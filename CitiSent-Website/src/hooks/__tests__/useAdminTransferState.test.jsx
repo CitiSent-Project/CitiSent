@@ -10,7 +10,7 @@
 import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useAdminTransferState } from '../useAdminTransferState'
+import { useAdminTransferState } from '../admin/useAdminTransferState'
 
 // ---------------------------------------------------------------------------
 // Mock all API service modules used by the hook.

@@ -12,17 +12,17 @@
  * to what the orchestrator previously exposed, so callers do not need
  * any migration.
  */
-import { TRANSFER_REQUEST_STATUS } from '../controllers/departmentTransferController'
-import { canReviewTransferRequest } from '../models/roleAccessModel'
+import { TRANSFER_REQUEST_STATUS } from '../../controllers/departmentTransferController'
+import { canReviewTransferRequest } from '../../models/roleAccessModel'
 import {
   appendNotificationForAdmin,
   appendNotificationForAdmins,
   buildNotification,
-} from '../controllers/notificationsController'
-import { transferRequestsApiService } from '../services/api/admin/transferRequestsApiService'
-import { officeAdminsApiService } from '../services/api/admin/officeAdminsApiService'
-import { mapBackendOfficeAdmin } from '../services/api/admin/accountsApiMappers'
-import { mapBackendTransferRequest } from '../services/api/admin/transferRequestsApiMappers'
+} from '../../controllers/notificationsController'
+import { transferRequestsApiService } from '../../services/api/admin/transferRequestsApiService'
+import { officeAdminsApiService } from '../../services/api/admin/officeAdminsApiService'
+import { mapBackendOfficeAdmin } from '../../services/api/admin/accountsApiMappers'
+import { mapBackendTransferRequest } from '../../services/api/admin/transferRequestsApiMappers'
 
 /**
  * @param {object} deps - All external state and setters the hook needs.

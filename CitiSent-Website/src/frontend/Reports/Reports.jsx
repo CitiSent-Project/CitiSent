@@ -10,7 +10,7 @@ import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMapp
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS, DEFAULT_PREFERENCES } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
-import { useReportFeedRealtime } from '../../hooks/useReportFeedRealtime'
+import { useReportFeedRealtime } from '../../hooks/reports/useReportFeedRealtime'
 import { dashboardApiService } from '../../services/api/admin/dashboardApiService'
 import { mapDashboardWeeklyTrend } from '../../services/api/admin/dashboardApiMappers'
 

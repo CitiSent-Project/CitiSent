@@ -4,7 +4,7 @@ import {
   filterOfficeAdmins,
   filterPendingTransferRequests,
   getTotalUnreadCount,
-} from '../controllers/adminManagementController'
+} from '../../controllers/adminManagementController'
 
 export function useAdminManagementState({
   officeAdmins,

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { SettingsSectionCard } from "../Account-Ui";
 import { SettingsSelect } from "./SettingsSelect";
 import { authApiService } from "../../services/api/auth/authApiService";
-import { useModalAccessibility } from "../../hooks/useModalAccessibility";
+import { useModalAccessibility } from "../../hooks/shared/useModalAccessibility";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const timeoutOptions = [

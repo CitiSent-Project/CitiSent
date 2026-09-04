@@ -1,5 +1,5 @@
-import { canReviewTransferRequest } from '../models/roleAccessModel'
-import { departmentsApiService } from '../services/api/admin/departmentsApiService'
+import { canReviewTransferRequest } from '../../models/roleAccessModel'
+import { departmentsApiService } from '../../services/api/admin/departmentsApiService'
 import { normalizeDepartmentOption } from './useDepartmentState'
 
 /**

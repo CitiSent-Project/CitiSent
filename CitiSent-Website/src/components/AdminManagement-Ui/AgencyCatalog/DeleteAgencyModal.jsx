@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
-import { useModalAccessibility } from '../../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 import { formatReferenceBreakdownMessage } from './utils'
 
 export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isBusy }) {

@@ -3,8 +3,8 @@ import { getPendingTransferRequests } from '../../controllers/departmentTransfer
 import { getOfficeAdmins } from '../../controllers/adminManagementController'
 import { USER_ROLES } from '../../models/roleAccessModel'
 import { notifyError, notifySuccess } from '../../components/ui/toastHelpers'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
-import { useAdminManagementState } from '../../hooks/useAdminManagementState'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
+import { useAdminManagementState } from '../../hooks/admin/useAdminManagementState'
 import { usersApiService } from '../../services/api/admin/usersApiService'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { loadFromStorageWithSchema } from '../../services/storageService'
@@ -168,7 +168,7 @@ export function AdminManagement({
 
   if (profile?.role !== USER_ROLES.SUPERADMIN) {
     return (
-      <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Admin Management</h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -180,7 +180,7 @@ export function AdminManagement({
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
       <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs">
           <div className="min-w-0">

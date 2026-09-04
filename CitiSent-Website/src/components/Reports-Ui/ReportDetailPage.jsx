@@ -6,7 +6,7 @@ import {
   REPORT_EMOTION_BADGE_CLASSES,
 } from '../../models/reportStatusModel'
 import { ReportChatDrawer } from './ReportChatDrawer'
-import { useReportDetailState } from '../../hooks/useReportDetailState'
+import { useReportDetailState } from '../../hooks/reports/useReportDetailState'
 
 const STATUS_ICONS = {
   Pending: FiClock,

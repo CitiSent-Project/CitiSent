@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { useModalAccessibility } from '../../hooks/useModalAccessibility'
+import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 import { Spinner } from '../ui/Spinner'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'

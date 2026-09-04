@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { USER_ROLES, normalizeUserRole } from '../models/roleAccessModel'
-import { officeAdminsApiService } from '../services/api/admin/officeAdminsApiService'
-import { mapBackendOfficeAdmin } from '../services/api/admin/accountsApiMappers'
+import { USER_ROLES, normalizeUserRole } from '../../models/roleAccessModel'
+import { officeAdminsApiService } from '../../services/api/admin/officeAdminsApiService'
+import { mapBackendOfficeAdmin } from '../../services/api/admin/accountsApiMappers'
 
 export function useAdminAccountsState({ accessToken, role, setAdminAccounts, notifyError }) {
   const handleRefreshAdminAccounts = useCallback(async () => {

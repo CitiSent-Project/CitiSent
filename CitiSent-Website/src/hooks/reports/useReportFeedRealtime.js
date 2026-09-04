@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { getSocket } from '../services/socket/socketService'
+import { getSocket } from '../../services/socket/socketService'
 
 /**
  * Debounce delay (ms) – bursts of report_feed_changed events within this

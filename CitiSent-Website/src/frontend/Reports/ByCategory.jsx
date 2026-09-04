@@ -5,7 +5,7 @@ import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, Urgenc
 import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reportAccessController'
 import { filterUserReportsByCategory, buildWeeklyReportTrend } from '../../controllers/userReportsController'
-import { useReportPaginationState } from '../../hooks/useReportPaginationState'
+import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
 
 const CATEGORY_COLORS = ['#1650e8', '#65c98d', '#8d66d6', '#ff9082', '#39bee0', '#ffb44d', '#2f89e5', '#7a6ce5', '#4f46e5']

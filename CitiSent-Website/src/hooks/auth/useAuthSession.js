@@ -1,14 +1,14 @@
-import { authApiService } from '../services/api/auth/authApiService'
-import { mapBackendProfileToAdminProfile } from '../services/api/admin/accountsApiMappers'
+import { authApiService } from '../../services/api/auth/authApiService'
+import { mapBackendProfileToAdminProfile } from '../../services/api/admin/accountsApiMappers'
 import {
   buildPostLoginTransition,
   buildPostLogoutTransition,
-} from '../controllers/navigationController'
-import { DEFAULT_ADMIN_PROFILE } from '../models/data'
-import { APP_PAGES, AUTH_PAGES } from '../models/pageModel'
-import { composeFullName } from '../models/nameModel'
-import { USER_ROLES } from '../models/roleAccessModel'
-import { createLoginPerformance } from '../services/loginPerformance'
+} from '../../controllers/navigationController'
+import { DEFAULT_ADMIN_PROFILE } from '../../models/data'
+import { APP_PAGES, AUTH_PAGES } from '../../models/pageModel'
+import { composeFullName } from '../../models/nameModel'
+import { USER_ROLES } from '../../models/roleAccessModel'
+import { createLoginPerformance } from '../../services/loginPerformance'
 
 function normalizeLoginIdentifier(payload = {}) {
   const candidate = String(payload.identifier || payload.email || '').trim()

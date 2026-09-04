@@ -14,22 +14,22 @@
  * and returning only derived state + event handlers.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { notifySuccess, notifyError } from '../components/ui/toastHelpers'
-import { normalizeReportStatus } from '../models/reportStatusModel'
+import { notifySuccess, notifyError } from '../../components/ui/toastHelpers'
+import { normalizeReportStatus } from '../../models/reportStatusModel'
 import {
   createReportTimelineEntry,
   validateReportStatusChange,
-} from '../controllers/reportStatusController'
-import { canAdminUpdateReport } from '../controllers/reportAccessController'
-import { reportsApiService } from '../services/api/admin/reportsApiService'
+} from '../../controllers/reportStatusController'
+import { canAdminUpdateReport } from '../../controllers/reportAccessController'
+import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import {
   mapBackendAdminNoteSuggestionsToUi,
   mapBackendMessagesResponse,
   mapUiStatusToBackendStatus,
-} from '../services/api/admin/reportsApiMappers'
-import { loadFromStorageWithSchema } from '../services/storageService'
-import { ADMIN_STORAGE_KEYS } from '../models/data'
-import { getStorageSchemaRule } from '../models/storageSchemaModel'
+} from '../../services/api/admin/reportsApiMappers'
+import { loadFromStorageWithSchema } from '../../services/storageService'
+import { ADMIN_STORAGE_KEYS } from '../../models/data'
+import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 
 /**
  * @param {object}   params

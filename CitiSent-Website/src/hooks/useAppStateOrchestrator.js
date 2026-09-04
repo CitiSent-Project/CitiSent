@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { notifyError, notifySuccess, notifyErrorWithRetry, notifyChatMessage } from '../components/ui/toastHelpers'
+import { notifyError, notifySuccess, notifyErrorWithRetry } from '../components/ui/toastHelpers'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_ADMIN_ACCOUNTS,
@@ -12,7 +12,7 @@ import { usePersistToStorage } from './usePersistToStorage'
 import { buildNextActivityLog } from '../controllers/activityController'
 import { useAuthSession } from './useAuthSession'
 import { useNotificationsState } from './useNotificationsState'
-import { useDepartmentState, normalizeDepartmentOptions, normalizeDepartmentOption } from './useDepartmentState'
+import { useDepartmentState } from './useDepartmentState'
 import { useAdminAccountsState } from './useAdminAccountsState'
 import { useAdminTransferState } from './useAdminTransferState'
 import { APP_PAGES, AUTH_PAGES } from '../models/pageModel'
@@ -29,7 +29,6 @@ import {
 import { buildPageAccessDecision } from '../controllers/accessControlController'
 import { getPageFromPath, syncBrowserHistory } from '../controllers/navigationController'
 import { getSocket } from '../services/socket/socketService'
-import { mapBackendMessageToUi } from '../services/api/admin/reportsApiMappers'
 
 // Extracted hooks for better modularity
 import { useDepartmentManagementState } from './useDepartmentManagementState'
@@ -198,8 +197,6 @@ export function useAppStateOrchestrator() {
     departmentOptions,
     departmentCatalog,
     refreshDepartmentsState,
-    setDepartmentOptions,
-    setDepartmentCatalog,
   } = useDepartmentState({
     accessToken,
     role: profile.role,
@@ -228,7 +225,6 @@ export function useAppStateOrchestrator() {
     setActivityLog,
     setSelectedReport,
     setSelectedUserProfile,
-    setActivePage,
     notifyError,
     notifyErrorWithRetry,
   })
@@ -377,7 +373,6 @@ export function useAppStateOrchestrator() {
     return () => {
       socket.off('receive_message', handleGlobalReceiveMessage)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, isAuthenticated, profile.id])
 
   /**
@@ -454,7 +449,6 @@ export function useAppStateOrchestrator() {
   // 4. Report Management logic
   const {
     reportStatusMap,
-    setReportStatusMap,
     handleReportStatusUpdate,
   } = useReportManagementState({
     accessToken,

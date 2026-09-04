@@ -53,8 +53,51 @@ export function useDepartmentState({ accessToken, role }) {
   }, [accessToken, role])
 
   useEffect(() => {
-    refreshDepartmentsState()
-  }, [refreshDepartmentsState])
+    let isActive = true
+
+    const syncDepartments = async () => {
+      if (!accessToken) {
+        if (isActive) {
+          setDepartmentOptions([])
+          setDepartmentCatalog([])
+        }
+        return
+      }
+
+      try {
+        const activeResponse = await departmentsApiService.getDepartments(accessToken)
+        const options = normalizeDepartmentOptions(activeResponse?.departments)
+
+        if (isActive) {
+          setDepartmentOptions(options.filter((department) => department.isActive))
+        }
+
+        if (normalizeUserRole(role) !== USER_ROLES.SUPERADMIN) {
+          if (isActive) {
+            setDepartmentCatalog([])
+          }
+          return
+        }
+
+        const catalogResponse = await departmentsApiService.getDepartmentsCatalog(accessToken, { includeInactive: true })
+
+        if (isActive) {
+          setDepartmentCatalog(normalizeDepartmentOptions(catalogResponse?.departments))
+        }
+      } catch {
+        if (isActive) {
+          setDepartmentOptions([])
+          setDepartmentCatalog([])
+        }
+      }
+    }
+
+    void syncDepartments()
+
+    return () => {
+      isActive = false
+    }
+  }, [accessToken, role])
 
   return {
     departmentOptions,

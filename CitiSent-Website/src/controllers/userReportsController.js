@@ -166,7 +166,7 @@ export function buildWeeklyReportTrend(rows = []) {
 
   const sevenDaysAgo = now - 7 * DAY_MS
   rows.forEach((row) => {
-    const ts = Date.parse(row.createdAt || '')
+    const ts = row.dateValue || Date.parse(row.createdAt || '')
     if (Number.isNaN(ts) || ts < sevenDaysAgo) return
     const dateKey = new Date(ts).toISOString().slice(0, 10)
     if (countsByDateKey[dateKey] !== undefined) {

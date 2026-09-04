@@ -42,6 +42,7 @@ function buildAgencyOptionsFromRows(rows = []) {
 
 export function ByCategory({
   rows,
+  weeklyTrendData,
   profile,
   reportsPerPage = 6,
   defaultSorting = 'Latest first',
@@ -143,30 +144,30 @@ export function ByCategory({
 
   const urgencyChips = ['All Urgency', 'Critical', 'High', 'Medium', 'Low']
   const reportStats = useMemo(() => {
-    const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
-    const unresolvedCount = rows.length - resolvedCount
+    const pendingCount = rows.filter((row) => row.status === 'Pending').length
+    const inProgressCount = rows.filter((row) => row.status === 'In Progress').length
 
     return [
       {
         id: 'total-reports',
-        label: 'Total Reports',
+        label: 'Total Active Reports',
         value: String(rows.length),
         icon: 'folder',
         accent: 'green',
       },
       {
-        id: 'resolved-reports',
-        label: 'Reports Resolved',
-        value: String(resolvedCount),
-        icon: 'resolved',
+        id: 'pending-reports',
+        label: 'Pending Review',
+        value: String(pendingCount),
+        icon: 'unresolved',
         accent: 'amber',
       },
       {
-        id: 'unresolved-reports',
-        label: 'Unresolved Reports',
-        value: String(unresolvedCount),
-        icon: 'unresolved',
-        accent: 'violet',
+        id: 'inprogress-reports',
+        label: 'In Progress',
+        value: String(inProgressCount),
+        icon: 'inprogress',
+        accent: 'blue',
       },
     ]
   }, [rows])
@@ -176,7 +177,7 @@ export function ByCategory({
     )
 
     return {
-      title: 'Total Reports Per Category',
+      title: 'Total Pending Reports',
       total: String(rows.length),
       labels: categoryAgencyCards.map((agency) => agency.label),
       values,
@@ -187,7 +188,11 @@ export function ByCategory({
       })),
     }
   }, [categoryAgencyCards, rows])
-  const reportsThisWeekData = useMemo(() => buildWeeklyReportTrend(rows), [rows])
+
+  const reportsThisWeekData = useMemo(() => {
+    if (weeklyTrendData) return weeklyTrendData;
+    return buildWeeklyReportTrend([])
+  }, [weeklyTrendData])
 
   const {
     totalPages,

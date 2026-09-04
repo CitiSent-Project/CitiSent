@@ -24,6 +24,7 @@ const EMOTION_FILTER_CHIPS = ['All Emotions', ...REPORT_EMOTION_OPTIONS]
 
 export function ByUrgencyLevels({
   rows,
+  weeklyTrendData,
   profile,
   reportsPerPage = 6,
   defaultSorting = 'Latest first',
@@ -113,30 +114,30 @@ export function ByUrgencyLevels({
   }
 
   const reportStats = useMemo(() => {
-    const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
-    const unresolvedCount = rows.length - resolvedCount
+    const pendingCount = rows.filter((row) => row.status === 'Pending').length
+    const inProgressCount = rows.filter((row) => row.status === 'In Progress').length
 
     return [
       {
         id: 'total-reports',
-        label: 'Total Reports',
+        label: 'Total Active Reports',
         value: String(rows.length),
         icon: 'folder',
         accent: 'green',
       },
       {
-        id: 'resolved-reports',
-        label: 'Reports Resolved',
-        value: String(resolvedCount),
-        icon: 'resolved',
+        id: 'pending-reports',
+        label: 'Pending Review',
+        value: String(pendingCount),
+        icon: 'unresolved',
         accent: 'amber',
       },
       {
-        id: 'unresolved-reports',
-        label: 'Unresolved Reports',
-        value: String(unresolvedCount),
-        icon: 'unresolved',
-        accent: 'violet',
+        id: 'inprogress-reports',
+        label: 'In Progress',
+        value: String(inProgressCount),
+        icon: 'inprogress',
+        accent: 'blue',
       },
     ]
   }, [rows])
@@ -148,7 +149,7 @@ export function ByUrgencyLevels({
     )
 
     return {
-      title: 'Reports By Urgency Levels',
+      title: 'Total Pending Reports',
       total: String(rows.length),
       labels,
       values,
@@ -160,7 +161,10 @@ export function ByUrgencyLevels({
     }
   }, [rows])
 
-  const reportsThisWeekData = useMemo(() => buildWeeklyReportTrend(rows), [rows])
+  const reportsThisWeekData = useMemo(() => {
+    if (weeklyTrendData) return weeklyTrendData;
+    return buildWeeklyReportTrend([])
+  }, [weeklyTrendData])
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 min-w-0 bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">

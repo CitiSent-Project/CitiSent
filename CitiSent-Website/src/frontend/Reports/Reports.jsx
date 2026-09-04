@@ -11,6 +11,8 @@ import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS, DEFAULT_PREFERENCES } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { useReportFeedRealtime } from '../../hooks/useReportFeedRealtime'
+import { dashboardApiService } from '../../services/api/admin/dashboardApiService'
+import { mapDashboardWeeklyTrend } from '../../services/api/admin/dashboardApiMappers'
 
 export function Reports({
   section = 'category',
@@ -57,6 +59,15 @@ export function Reports({
     accessToken,
     onInvalidate: handleFeedInvalidate,
     enabled: Boolean(accessToken),
+  })
+
+  const weeklyTrendQuery = useQuery({
+    queryKey: ['dashboard-weekly-trend', accessToken],
+    enabled: Boolean(accessToken),
+    queryFn: async () => {
+      const response = await dashboardApiService.getDashboardWeeklyTrend(accessToken)
+      return mapDashboardWeeklyTrend(response?.data)
+    }
   })
 
   const updateReportMutation = useMutation({
@@ -126,6 +137,11 @@ export function Reports({
 
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])
 
+  const activeRows = useMemo(
+    () => scopedRows.filter((row) => row.status !== 'Resolved' && row.status !== 'Unresolved'),
+    [scopedRows]
+  )
+
   async function handleUpdateStatus(reportId, newStatus) {
     try {
       const result = await updateReportMutation.mutateAsync({ reportId, newStatus })
@@ -153,7 +169,8 @@ export function Reports({
   if (section === 'urgency') {
     return (
       <ByUrgencyLevels
-        rows={scopedRows}
+        rows={activeRows}
+        weeklyTrendData={weeklyTrendQuery.data}
         profile={profile}
         reportsPerPage={reportsPerPage}
         defaultSorting={defaultSorting}
@@ -167,7 +184,8 @@ export function Reports({
 
   return (
       <ByCategory
-      rows={scopedRows}
+      rows={activeRows}
+      weeklyTrendData={weeklyTrendQuery.data}
       profile={profile}
       reportsPerPage={reportsPerPage}
       defaultSorting={defaultSorting}

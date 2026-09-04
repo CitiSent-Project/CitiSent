@@ -1,15 +1,17 @@
-import { FiAlertCircle, FiCheckCircle, FiFolder } from "react-icons/fi";
+import { FiAlertCircle, FiCheckCircle, FiClock, FiFolder } from "react-icons/fi";
 
 const iconMap = {
   folder: FiFolder,
   resolved: FiCheckCircle,
   unresolved: FiAlertCircle,
+  inprogress: FiClock,
 };
 
 const accentMap = {
   green: "bg-green-800 text-green-100",
   amber: "bg-amber-800 text-amber-100",
   violet: "bg-purple-800 text-purple-100",
+  blue: "bg-blue-800 text-blue-100",
 };
 
 export function ReportsStatCards({ stats }) {

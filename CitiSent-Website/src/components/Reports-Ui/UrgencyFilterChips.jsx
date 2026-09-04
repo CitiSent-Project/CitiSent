@@ -8,7 +8,7 @@ export function UrgencyFilterChips({
   searchTerm,
   onSearchChange,
   statusFilter,
-  statusOptions = ['All Status', 'Pending', 'In Progress', 'Resolved', 'Unresolved'],
+  statusOptions = ['All Status', 'Pending', 'In Progress'],
   onStatusChange
 }) {
   const normalizedStatusOptions = statusOptions.map((option) => ({

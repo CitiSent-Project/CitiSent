@@ -29,7 +29,7 @@ export function UrgencyDoughnutChart({ title, total, labels, values, colors, leg
     <div className="h-full rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm flex flex-col min-w-0 w-full dark:border-slate-700/80 dark:bg-slate-800">
       <h3 className="mb-4 font-semibold text-slate-900 text-base md:text-lg dark:text-white">{title}</h3>
       <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-4 w-full min-w-0">
-        <div className="relative w-full max-w-[200px] sm:max-w-[240px] aspect-square flex-shrink-0 mx-auto">
+        <div className="relative w-full max-w-50 sm:max-w-60 aspect-square shrink-0 mx-auto">
           <Doughnut data={data} options={options} />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span className="text-xl sm:text-2xl font-bold text-slate-900 font-numeric dark:text-slate-100">{total}</span>

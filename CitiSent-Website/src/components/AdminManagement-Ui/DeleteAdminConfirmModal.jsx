@@ -22,26 +22,26 @@ export function DeleteAdminConfirmModal({ admin, isOpen, isDeleting, onCancel, o
         aria-labelledby="delete-admin-title"
         aria-describedby="delete-admin-description"
         tabIndex={-1}
-        className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+        className="w-full max-w-md rounded-2xl bg-white shadow-xl dark:border dark:border-slate-700 dark:bg-slate-800"
       >
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 id="delete-admin-title" className="text-lg font-semibold text-slate-900">
+        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+          <h2 id="delete-admin-title" className="text-lg font-semibold text-slate-900 dark:text-white">
             Delete office admin account?
           </h2>
         </div>
-        <div className="px-5 py-4 text-sm text-slate-700">
+        <div className="px-5 py-4 text-sm text-slate-700 dark:text-slate-300">
           <p id="delete-admin-description">
             This permanently deletes the admin account for{' '}
-            <strong>{admin.fullName || admin.name || admin.username}</strong> ({admin.email}).
+            <strong className="text-slate-900 dark:text-white">{admin.fullName || admin.name || admin.username}</strong> ({admin.email}).
           </p>
-          <p className="mt-2 font-medium text-rose-700">This action cannot be undone.</p>
+          <p className="mt-2 font-medium text-rose-700 dark:text-rose-400">This action cannot be undone.</p>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
           <button
             type="button"
             onClick={onCancel}
             disabled={isDeleting}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             Cancel
           </button>

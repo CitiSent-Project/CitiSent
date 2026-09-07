@@ -7,7 +7,7 @@ export function SettingsSelect({ label, value, onChange, options }) {
 
   return (
     <div>
-      <label className="mb-1 block text-sm text-slate-700">{label}</label>
+      <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300">{label}</label>
       <DropdownButton
         className="w-full"
         ariaLabel={label}

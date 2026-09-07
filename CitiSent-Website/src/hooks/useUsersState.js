@@ -89,6 +89,21 @@ export function useUsersState({ profile, onViewUserProfile }) {
   const totalUsers = usersQuery.data?.totalUsers || 0
   const visibleUsers = useMemo(() => [...users].sort((a, b) => sortBy === 'Name' ? a.name.localeCompare(b.name) : sortBy === 'Oldest' ? a.registeredAtValue - b.registeredAtValue : b.registeredAtValue - a.registeredAtValue), [users, sortBy])
   const selectedVisibleUserIds = useMemo(() => selectedUserIds.filter((id) => visibleUsers.some((user) => user.id === id)), [selectedUserIds, visibleUsers])
+  const selectedVisibleUsers = useMemo(
+    () => visibleUsers.filter((user) => selectedVisibleUserIds.includes(user.id)),
+    [visibleUsers, selectedVisibleUserIds]
+  )
+  const selectedActiveUsers = useMemo(
+    () => selectedVisibleUsers.filter((user) => user.status !== 'Banned'),
+    [selectedVisibleUsers]
+  )
+  const selectedBannedUsers = useMemo(
+    () => selectedVisibleUsers.filter((user) => user.status === 'Banned'),
+    [selectedVisibleUsers]
+  )
+  const selectedActiveCount = selectedActiveUsers.length
+  const selectedBannedCount = selectedBannedUsers.length
+
   const totalPages = Math.max(1, Math.ceil(totalUsers / PAGE_SIZE))
   const activePage = Math.min(currentPage, totalPages)
   const visiblePages = useMemo(() => totalPages <= 3 ? Array.from({ length: totalPages }, (_, index) => index + 1) : activePage <= 2 ? [1, 2, 3] : activePage >= totalPages - 1 ? [totalPages - 2, totalPages - 1, totalPages] : [activePage - 1, activePage, activePage + 1], [activePage, totalPages])
@@ -155,13 +170,14 @@ export function useUsersState({ profile, onViewUserProfile }) {
     setIsBulkBanning(true)
     try {
       if (!canToggleBan) return notifyError('Bulk action denied.', 'Only superadmins can ban users.')
-      if (!selectedVisibleUserIds.length) return notifyError('Bulk ban failed.', 'Select one or more users first.')
+      const targetUserIds = selectedActiveUsers.map((user) => user.id)
+      if (!targetUserIds.length) return notifyError('Bulk ban failed.', 'Select one or more active or pending users to ban.')
       const token = getStoredAccessToken()
       if (!token) return notifyError('Bulk ban failed.', 'Your session has expired. Please sign in again.')
       
-      await usersApiService.bulkBanUsers(token, { userIds: selectedVisibleUserIds, reason: 'Bulk ban from Users page' })
-      const successfulCount = selectedVisibleUserIds.length
-      setSelectedUserIds([])
+      await usersApiService.bulkBanUsers(token, { userIds: targetUserIds, reason: 'Bulk ban from Users page' })
+      const successfulCount = targetUserIds.length
+      setSelectedUserIds((prev) => prev.filter((id) => !targetUserIds.includes(id)))
       await invalidateUsersData()
       notifySuccess(`Banned ${successfulCount} user(s) successfully.`)
     } catch (error) {
@@ -175,13 +191,14 @@ export function useUsersState({ profile, onViewUserProfile }) {
     setIsBulkUnbanning(true)
     try {
       if (!canToggleBan) return notifyError('Bulk action denied.', 'Only superadmins can unban users.')
-      if (!selectedVisibleUserIds.length) return notifyError('Bulk unban failed.', 'Select one or more users first.')
+      const targetUserIds = selectedBannedUsers.map((user) => user.id)
+      if (!targetUserIds.length) return notifyError('Bulk unban failed.', 'Select one or more banned users to activate.')
       const token = getStoredAccessToken()
       if (!token) return notifyError('Bulk unban failed.', 'Your session has expired. Please sign in again.')
       
-      await usersApiService.bulkUnbanUsers(token, { userIds: selectedVisibleUserIds })
-      const successfulCount = selectedVisibleUserIds.length
-      setSelectedUserIds([])
+      await usersApiService.bulkUnbanUsers(token, { userIds: targetUserIds })
+      const successfulCount = targetUserIds.length
+      setSelectedUserIds((prev) => prev.filter((id) => !targetUserIds.includes(id)))
       await invalidateUsersData()
       notifySuccess(`Unbanned ${successfulCount} user(s) successfully.`)
     } catch (error) {
@@ -191,5 +208,49 @@ export function useUsersState({ profile, onViewUserProfile }) {
     }
   }
 
-  return { searchTerm, sortBy, filterBy, visibleUsers, selectedVisibleUserIds, totalPages, activePage, visiblePages, stats: userStatsQuery.data || { active: 0, pending: 0, banned: 0 }, isLoading: usersQuery.isLoading || usersQuery.isFetching, canCreateUsers, canToggleBan, isAddUserModalOpen, setIsAddUserModalOpen, selectedUser, isEditUserOpen, setIsEditUserOpen, userPendingDeletion, setUserPendingDeletion, processingUserIds, isBulkBanning, isBulkUnbanning, handleSortChange, handleFilterChange, handleSearchChange, handlePageChange, handleNextPage, handlePreviousPage, handleAddUserSubmit, handleViewUser, handleEditUser, handleEditUserSubmit, handleToggleBanUser, handleDeleteUser, handleToggleSelectUser, handleToggleSelectAllVisibleUsers, handleBulkBanUsers, handleBulkUnbanUsers, closeEditModal: () => { setIsEditUserOpen(false); setSelectedUser(null) } }
+  return {
+    searchTerm,
+    sortBy,
+    filterBy,
+    visibleUsers,
+    selectedVisibleUserIds,
+    selectedActiveUsers,
+    selectedBannedUsers,
+    selectedActiveCount,
+    selectedBannedCount,
+    totalPages,
+    activePage,
+    visiblePages,
+    stats: userStatsQuery.data || { active: 0, pending: 0, banned: 0 },
+    isLoading: usersQuery.isLoading || usersQuery.isFetching,
+    canCreateUsers,
+    canToggleBan,
+    isAddUserModalOpen,
+    setIsAddUserModalOpen,
+    selectedUser,
+    isEditUserOpen,
+    setIsEditUserOpen,
+    userPendingDeletion,
+    setUserPendingDeletion,
+    processingUserIds,
+    isBulkBanning,
+    isBulkUnbanning,
+    handleSortChange,
+    handleFilterChange,
+    handleSearchChange,
+    handlePageChange,
+    handleNextPage,
+    handlePreviousPage,
+    handleAddUserSubmit,
+    handleViewUser,
+    handleEditUser,
+    handleEditUserSubmit,
+    handleToggleBanUser,
+    handleDeleteUser,
+    handleToggleSelectUser,
+    handleToggleSelectAllVisibleUsers,
+    handleBulkBanUsers,
+    handleBulkUnbanUsers,
+    closeEditModal: () => { setIsEditUserOpen(false); setSelectedUser(null) },
+  }
 }

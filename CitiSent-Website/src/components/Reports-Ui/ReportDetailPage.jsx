@@ -317,7 +317,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               </div>
 
               {canProcessReport ? (
-                <div className="theme-dark-note-panel relative mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-linear-to-br from-blue-50 via-white to-sky-50 p-5 shadow-[0_8px_24px_rgba(79,70,229,0.08)] dark:border-blue-900/50 dark:from-blue-900/20 dark:via-slate-800 dark:to-blue-900/10 dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+                <div className="relative mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-linear-to-br from-blue-50 via-white to-sky-50 p-5 shadow-[0_8px_24px_rgba(79,70,229,0.08)] dark:border-blue-900/50 dark:from-blue-900/20 dark:via-slate-800 dark:to-blue-900/10 dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-blue-200/40 blur-3xl dark:bg-blue-600/20" />
                   <div className="relative mb-4 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">

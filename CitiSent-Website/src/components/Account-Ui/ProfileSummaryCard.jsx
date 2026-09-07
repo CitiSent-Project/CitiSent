@@ -43,32 +43,32 @@ export function ProfileSummaryCard({ profile }) {
     : "Not assigned";
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-6 dark:border-slate-700">
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-blue-900 text-xl font-bold text-white shadow-sm ring-4 ring-blue-50">
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-blue-900 text-xl font-bold text-white shadow-sm ring-4 ring-blue-50 dark:ring-blue-950/40">
             {initials}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold tracking-tight text-slate-900">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {displayName}
               </h2>
               {profile.username ? (
-                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:border-blue-700/50 dark:bg-blue-900/40 dark:text-blue-300">
                   {formattedUsername}
                 </span>
               ) : null}
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
-                <FiUser className="h-3 w-3 text-slate-400" />
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <FiUser className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                 {profile.role || "Administrator"}
               </span>
             </div>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           Active account
         </span>
@@ -85,25 +85,25 @@ export function ProfileSummaryCard({ profile }) {
           return (
             <article
               key={field.key}
-              className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+              className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50"
             >
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <IconComponent className="h-3.5 w-3.5 text-blue-700" />
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <IconComponent className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
                 {field.label}
               </div>
-              <p className="text-sm font-medium text-slate-800 wrap-break-word">
+              <p className="text-sm font-medium text-slate-800 wrap-break-word dark:text-slate-200">
                 {displayVal}
               </p>
             </article>
           );
         })}
 
-        <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <FiCalendar className="h-3.5 w-3.5 text-blue-700" />
+        <article className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <FiCalendar className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
             Joined
           </div>
-          <p className="text-sm font-medium text-slate-800">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
             {formatDateTime(profile.joinedAt)}
           </p>
         </article>

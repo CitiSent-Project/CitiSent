@@ -195,12 +195,12 @@ export function ProfileInformation({
 
   return (
     <>
-    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
+    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin Profile</h1>
-            <p className="mt-0.5 text-sm text-slate-600">Profile data is powered by your registration details.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Admin Profile</h1>
+            <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Profile data is powered by your registration details.</p>
           </div>
           {!editing ? (
             <button
@@ -219,9 +219,9 @@ export function ProfileInformation({
                   setEditing(false)
                   setSubmissionFeedback(null)
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
-                <FiX className="h-4 w-4 text-slate-500" />
+                <FiX className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 Cancel
               </button>
               <button
@@ -249,14 +249,14 @@ export function ProfileInformation({
         <ProfileSummaryCard profile={profile} />
 
         {editing ? (
-          <section ref={editFormRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700">
+          <section ref={editFormRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-4 dark:border-slate-700/80">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                 <FiEdit3 className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Editable details</h2>
-                <p className="text-xs text-slate-500">Update your account information below.</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Editable details</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Update your account information below.</p>
               </div>
             </div>
 
@@ -264,8 +264,8 @@ export function ProfileInformation({
               <div
                 className={`mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm font-medium ${
                   submissionFeedback.type === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-900'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    ? 'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-200'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-200'
                 }`}
               >
                 {submissionFeedback.type === 'error' ? (
@@ -278,7 +278,7 @@ export function ProfileInformation({
             ) : null}
 
             {inputError ? (
-              <div role="alert" className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-sm font-medium text-rose-800">
+              <div role="alert" className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-sm font-medium text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-200">
                 <FiAlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
                 <span>{inputError}</span>
               </div>
@@ -286,73 +286,73 @@ export function ProfileInformation({
 
             <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">First name</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">First name</label>
                 <input
                   value={draft.fname}
                   onChange={(event) => updateDraft('fname', event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Middle name (optional)</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Middle name (optional)</label>
                 <input
                   value={draft.mname}
                   onChange={(event) => updateDraft('mname', event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Last name</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Last name</label>
                 <input
                   value={draft.lname}
                   onChange={(event) => updateDraft('lname', event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   Username
                 </label>
                 {isSuperAdmin ? (
                   <input
                     value={draft.username}
                     onChange={(event) => updateDraft('username', event.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                   />
                 ) : (
                   <div className="relative">
                     <input
                       value={draft.username ? `@${draft.username.replace(/^@/, '')}` : ''}
                       disabled
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed select-none"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed select-none dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400"
                     />
                     <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
                   </div>
                 )}
                 {!isSuperAdmin ? (
-                  <p className="mt-1 text-xs text-slate-400">Username is permanent and managed by system admins.</p>
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Username is permanent and managed by system admins.</p>
                 ) : null}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Email</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Email</label>
                 <input
                   value={draft.email}
                   onChange={(event) => updateDraft('email', event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Department</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Department</label>
                 <select
                   value={draft.department}
                   onChange={(event) => updateDraft('department', event.target.value)}
                   disabled={isOfficeAdmin && hasPendingTransferRequest}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:disabled:bg-slate-900/40 dark:disabled:text-slate-500"
                 >
                   {!departmentLabels.includes(draft.department) ? (
                     <option value={draft.department}>{draft.department}</option>
@@ -364,60 +364,60 @@ export function ProfileInformation({
                   ))}
                 </select>
                 {isOfficeAdmin ? (
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Department changes are processed as transfer requests requiring superadmin approval.
                   </p>
                 ) : null}
                 {isOfficeAdmin && hasPendingTransferRequest ? (
-                  <p className="mt-1 text-xs font-medium text-amber-700">
+                  <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
                     Pending transfer request exists. Department edits are locked.
                   </p>
                 ) : null}
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Phone</label>
-                <div className="flex rounded-xl border border-slate-300 overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all">
-                  <span className="bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 border-r border-slate-200 select-none flex items-center">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Phone</label>
+                <div className="flex rounded-xl border border-slate-300 overflow-hidden focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60">
+                  <span className="bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 border-r border-slate-200 select-none flex items-center dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                     +63
                   </span>
                   <input
                     type="text"
                     value={displayPhone}
                     onChange={handlePhoneChange}
-                    className="w-full bg-transparent px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none"
+                    className="w-full bg-transparent px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none dark:text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Barangay</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Barangay</label>
                 <input
                   value={draft.barangay}
                   onChange={(event) => updateDraft('barangay', event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">City</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">City</label>
                 <div className="relative">
                   <input
                     value={draft.city}
                     disabled
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400"
                   />
                   <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">Province</label>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Province</label>
                 <div className="relative">
                   <input
                     value={draft.province}
                     disabled
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-100/70 px-3.5 py-2.5 pr-8 text-sm font-medium text-slate-600 cursor-not-allowed dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400"
                   />
                   <FiLock className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
                 </div>
@@ -425,7 +425,7 @@ export function ProfileInformation({
 
               {isOfficeAdmin && draft.department !== profile.department ? (
                 <div className="md:col-span-2 lg:col-span-3">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                     Transfer request reason
                   </label>
                   <textarea
@@ -433,22 +433,22 @@ export function ProfileInformation({
                     value={transferReason}
                     onChange={(event) => setTransferReason(event.target.value)}
                     placeholder="Explain why you are requesting a department change."
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                   />
                 </div>
               ) : null}
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-700/80">
               <button
                 type="button"
                 onClick={() => {
                   setEditing(false)
                   setSubmissionFeedback(null)
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition active:scale-95 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
-                <FiX className="h-4 w-4 text-slate-500" />
+                <FiX className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 Cancel
               </button>
               <button
@@ -473,12 +473,12 @@ export function ProfileInformation({
           </section>
         ) : null}
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 dark:border-slate-700/80">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
               <FiActivity className="h-4 w-4" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">Recent activity</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent activity</h2>
           </div>
 
           <div className="mt-5 space-y-2.5">
@@ -486,25 +486,25 @@ export function ProfileInformation({
               activityLog.slice(0, 6).map((entry) => (
                 <article
                   key={entry.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/50"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-white text-blue-700 border border-slate-200">
+                    <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-white text-blue-700 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400">
                       <FiActivity className="h-3.5 w-3.5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">{entry.action}</p>
-                      <p className="text-xs text-slate-500">{entry.detail}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.action}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{entry.detail}</p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500">
                     <FiClock className="h-3 w-3" />
                     {formatDateTime(entry.createdAt)}
                   </span>
                 </article>
               ))
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+              <p className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
                 Activity will appear here as you use the admin portal.
               </p>
             )}

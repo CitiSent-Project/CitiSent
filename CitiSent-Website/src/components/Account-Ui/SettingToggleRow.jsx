@@ -1,9 +1,9 @@
 export function SettingToggleRow({ title, description, checked, onChange }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/50">
       <div>
-        <p className="text-sm font-medium text-slate-800">{title}</p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{title}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
       </div>
 
       <button

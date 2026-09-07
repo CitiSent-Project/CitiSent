@@ -32,15 +32,15 @@ export function SystemSettingsTab({
         options={timezoneOptions}
       />
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-        <p className="text-sm font-medium text-slate-800">Activity logs</p>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/50">
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Activity logs</p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           {activityLog.length} activity log entries are available in Audit & Logs.
         </p>
         <button
           type="button"
           onClick={onOpenActivityLogs}
-          className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           Open activity logs
         </button>

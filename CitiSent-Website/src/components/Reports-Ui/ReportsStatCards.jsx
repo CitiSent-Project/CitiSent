@@ -23,7 +23,7 @@ export function ReportsStatCards({ stats }) {
         return (
           <div
             key={stat.id}
-            className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4 shadow-sm min-w-0"
+            className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4 shadow-sm min-w-0 dark:border-slate-700/80 dark:bg-slate-800"
           >
             <div
               className={`grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-xl ${accentMap[stat.accent]}`}
@@ -31,8 +31,8 @@ export function ReportsStatCards({ stats }) {
               <Icon className="text-lg sm:text-xl" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm text-slate-500 truncate">{stat.label}</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-slate-900 font-numeric">
+              <p className="text-xs sm:text-sm text-slate-500 truncate dark:text-slate-400">{stat.label}</p>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-slate-900 font-numeric dark:text-white">
                 {stat.value}
               </p>
             </div>

@@ -116,14 +116,14 @@ export function SecuritySettingsTab({
         title="Security"
         description="Manage session behavior and review security actions."
       >
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-300">
-          <p className="text-sm font-medium text-slate-800">Change password</p>
-          <p className="mt-1 text-xs text-slate-500">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-300 dark:border-slate-700 dark:bg-slate-900/50">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Change password</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Securely change your account password. We will send a verification code to your email first.
           </p>
 
           {feedback.message && (
-            <div className={`mt-3 rounded-md p-3 text-sm ${feedback.type === "error" ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+            <div className={`mt-3 rounded-md p-3 text-sm ${feedback.type === "error" ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"}`}>
               {feedback.message}
             </div>
           )}
@@ -142,7 +142,7 @@ export function SecuritySettingsTab({
           {step === "otp" && (
             <form onSubmit={handleVerifyOtp} className="mt-4 flex flex-col gap-3">
               <div>
-                <label htmlFor="otp" className="mb-1 block text-sm font-medium text-slate-700">
+                <label htmlFor="otp" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Verification Code (6-digit)
                 </label>
                 <input
@@ -152,7 +152,7 @@ export function SecuritySettingsTab({
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
-                  className="block w-full max-w-50 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="block w-full max-w-50 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                   required
                 />
               </div>
@@ -167,7 +167,7 @@ export function SecuritySettingsTab({
                 <button
                   type="button"
                   onClick={resetFlow}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
@@ -178,57 +178,57 @@ export function SecuritySettingsTab({
           {step === "password" && (
             <form onSubmit={handleChangePassword} className="mt-4 flex max-w-sm flex-col gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Current Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
                 <div className="relative">
                   <input
                     type={showPasswords ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPasswords(!showPasswords)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     {showPasswords ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
                 <div className="relative">
                   <input
                     type={showPasswords ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPasswords(!showPasswords)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     {showPasswords ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Confirm New Password</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
                 <div className="relative">
                   <input
                     type={showPasswords ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPasswords(!showPasswords)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     {showPasswords ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
@@ -245,7 +245,7 @@ export function SecuritySettingsTab({
                 <button
                   type="button"
                   onClick={resetFlow}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
@@ -261,23 +261,23 @@ export function SecuritySettingsTab({
           options={timeoutOptions}
         />
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-sm font-medium text-slate-800">Two-Factor Authentication</p>
-          <p className="mt-1 text-xs text-slate-500">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/50">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Two-Factor Authentication</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             2FA enrollment is currently unavailable and has not been enabled for this portal.
           </p>
           <button
             type="button"
             disabled
-            className="mt-3 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-400"
+            className="mt-3 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
           >
             Not enabled
           </button>
         </div>
 
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
-          <p className="text-sm font-medium text-red-900">Security action</p>
-          <p className="mt-1 text-xs text-rose-600">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-900/50 dark:bg-rose-950/30">
+          <p className="text-sm font-medium text-red-900 dark:text-rose-200">Security action</p>
+          <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
             For demo purposes, sign out and return to the login screen.
           </p>
           <button
@@ -299,12 +299,12 @@ export function SecuritySettingsTab({
             aria-modal="true"
             aria-labelledby="relogin-title"
             aria-describedby="relogin-desc"
-            className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-800"
           >
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-7 w-7 text-emerald-600"
+                className="h-7 w-7 text-emerald-600 dark:text-emerald-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -313,16 +313,16 @@ export function SecuritySettingsTab({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 id="relogin-title" className="text-center text-lg font-semibold text-slate-900">
+            <h2 id="relogin-title" className="text-center text-lg font-semibold text-slate-900 dark:text-white">
               Password Changed Successfully
             </h2>
-            <p id="relogin-desc" className="mt-2 text-center text-sm text-slate-600">
+            <p id="relogin-desc" className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
               For security purposes, you will now be logged out. Please sign in again with your new password.
             </p>
             <button
               type="button"
               onClick={onRequestLogout}
-              className="mt-6 w-full rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+              className="mt-6 w-full rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-500"
             >
               Acknowledge and Sign Out
             </button>

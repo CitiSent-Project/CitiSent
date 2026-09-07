@@ -61,19 +61,19 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
                 aria-modal="true"
                 aria-label="Delete agency modal"
                 tabIndex={-1}
-                className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100"
+                className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
-                <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-                    <h3 className="text-base font-bold tracking-tight text-slate-900">Delete Agency</h3>
+                <div className="border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-700">
+                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Delete Agency</h3>
                 </div>
-                <p className="mx-5 pt-4 text-xs text-slate-600 sm:mx-6">
-                    This will permanently remove <span className="font-semibold text-slate-900">{department.label}</span>. This action cannot be undone.
+                <p className="mx-5 pt-4 text-xs text-slate-600 sm:mx-6 dark:text-slate-300">
+                    This will permanently remove <span className="font-semibold text-slate-900 dark:text-white">{department.label}</span>. This action cannot be undone.
                 </p>
-                <p className="mx-5 mt-1 text-[11px] text-slate-400 sm:mx-6">
+                <p className="mx-5 mt-1 text-[11px] text-slate-400 sm:mx-6 dark:text-slate-400">
                     Inactive agencies can still be blocked when they are referenced by existing records.
                 </p>
                 <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-5 py-4 sm:px-6">
-                    <label className="flex items-start gap-2.5 rounded-xl border border-rose-200/80 bg-rose-50/70 p-3 text-xs text-rose-900">
+                    <label className="flex items-start gap-2.5 rounded-xl border border-rose-200/80 bg-rose-50/70 p-3 text-xs text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
                         <input
                             type="checkbox"
                             required
@@ -88,16 +88,16 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
                         Use cleanup only for inactive agencies when you intentionally want destructive removal.
                     </p>
                     {deleteError ? (
-                        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800">
+                        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
                             {deleteError}
                         </p>
                     ) : null}
 
-                    <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             Cancel
                         </button>

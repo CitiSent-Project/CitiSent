@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import {
   createAdminUserSchema,
   deleteAdminUserSchema,
+  bulkBanUsersSchema,
+  bulkUnbanUsersSchema,
 } from "./admin.schema.js";
 
 function createPayload(overrides = {}) {
@@ -50,4 +52,54 @@ test("deleteAdminUserSchema requires a valid user id", () => {
   });
 
   assert.equal(parsed.params.userId, "bfbb6c4b-5e4c-4185-b0f1-7857944c2fed");
+});
+
+test("bulkBanUsersSchema requires an array of valid UUIDs", () => {
+  assert.throws(() =>
+    bulkBanUsersSchema.parse({
+      params: {},
+      query: {},
+      body: { userIds: [] },
+    }),
+  );
+
+  assert.throws(() =>
+    bulkBanUsersSchema.parse({
+      params: {},
+      query: {},
+      body: { userIds: ["invalid-uuid"] },
+    }),
+  );
+
+  const parsed = bulkBanUsersSchema.parse({
+    params: {},
+    query: {},
+    body: {
+      userIds: ["bfbb6c4b-5e4c-4185-b0f1-7857944c2fed", "92d6fb5f-933a-4b65-b375-4d6b31fddce2"],
+      reason: "Policy violation",
+    },
+  });
+
+  assert.equal(parsed.body.userIds.length, 2);
+  assert.equal(parsed.body.reason, "Policy violation");
+});
+
+test("bulkUnbanUsersSchema requires an array of valid UUIDs", () => {
+  assert.throws(() =>
+    bulkUnbanUsersSchema.parse({
+      params: {},
+      query: {},
+      body: { userIds: [] },
+    }),
+  );
+
+  const parsed = bulkUnbanUsersSchema.parse({
+    params: {},
+    query: {},
+    body: {
+      userIds: ["bfbb6c4b-5e4c-4185-b0f1-7857944c2fed"],
+    },
+  });
+
+  assert.equal(parsed.body.userIds.length, 1);
 });

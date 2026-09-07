@@ -153,75 +153,75 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 text-sm text-slate-500">
-            <button onClick={onBackToUsers} className="hover:text-slate-700">Users</button> / <span>User Profile</span>
+      <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+          <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            <button onClick={onBackToUsers} className="hover:text-slate-700 dark:hover:text-slate-200">Users</button> / <span>User Profile</span>
           </div>
-          <h1 className="text-xl font-semibold text-slate-900">User not found</h1>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">User not found</h1>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8">
-      <div className="mb-4 text-sm text-slate-500">
-        <button onClick={onBackToUsers} className="hover:text-slate-700">Users</button> / <span className="text-slate-700">User Profile</span>
+    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+      <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        <button onClick={onBackToUsers} className="hover:text-slate-700 dark:hover:text-slate-200">Users</button> / <span className="text-slate-700 dark:text-slate-300">User Profile</span>
       </div>
 
       {/* User Information Details Card */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
         <div className="mb-6 flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-slate-900">User Profile</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">User Profile</h1>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">User ID</p>
-            <p className="text-slate-900 font-numeric">{user.id}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">User ID</p>
+            <p className="text-slate-900 font-numeric dark:text-slate-100">{user.id}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Full Name</p>
-            <p className="text-slate-900">{user.name}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Full Name</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.name}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
-            <p className="text-slate-900">{user.email}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Email</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.email}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-            <p className="text-slate-900">{user.status}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.status}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Phone Number</p>
-            <p className="text-slate-900">+{user.phoneNumber || 'Not available'}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Phone Number</p>
+            <p className="text-slate-900 dark:text-slate-100">+{user.phoneNumber || 'Not available'}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Gender</p>
-            <p className="text-slate-900">{user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available'}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Gender</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available'}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Barangay</p>
-            <p className="text-slate-900">{user.barangay || 'Not available'}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Barangay</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.barangay || 'Not available'}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">City</p>
-            <p className="text-slate-900">{user.city || 'Not available'}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">City</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.city || 'Not available'}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Province</p>
-            <p className="text-slate-900">{user.province || 'Not available'}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Province</p>
+            <p className="text-slate-900 dark:text-slate-100">{user.province || 'Not available'}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Registered At</p>
-            <p className="text-slate-900 font-numeric">{user.registeredAt}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Registered At</p>
+            <p className="text-slate-900 font-numeric dark:text-slate-100">{user.registeredAt}</p>
           </div>
         </div>
       </section>
 
       {/* Reports Submitted by User Section */}
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-slate-900">Reports Submitted by User</h2>
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-4 dark:border-slate-700/80 dark:bg-slate-800">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Reports Submitted by User</h2>
         
         {/* Filters Toolbar */}
         <UrgencyFilterChips
@@ -235,9 +235,9 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
         />
 
         {isLoading ? (
-          <div className="py-10 text-center text-sm text-slate-400">Loading user reports...</div>
+          <div className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">Loading user reports...</div>
         ) : reportsError ? (
-          <div className="py-10 text-center text-sm text-red-500">Failed to load reports.</div>
+          <div className="py-10 text-center text-sm text-red-500 dark:text-red-400">Failed to load reports.</div>
         ) : (
           <>
             <UrgencyFeedTable

@@ -53,20 +53,24 @@ export function Users({ onViewUserProfile, profile }) {
               <button
                 type="button"
                 onClick={s.handleBulkUnbanUsers}
-                disabled={s.isBulkUnbanning || s.isBulkBanning}
-                className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-100 dark:hover:bg-emerald-900/50 disabled:opacity-50"
+                disabled={s.selectedBannedCount === 0 || s.isBulkUnbanning || s.isBulkBanning}
+                className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 transition hover:bg-emerald-100 dark:hover:bg-emerald-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {s.isBulkUnbanning && <Spinner size="sm" />}
-                Activate Selected
+                {s.selectedBannedCount > 0
+                  ? `Activate Selected (${s.selectedBannedCount})`
+                  : 'Activate Selected'}
               </button>
               <button
                 type="button"
                 onClick={s.handleBulkBanUsers}
-                disabled={s.isBulkBanning || s.isBulkUnbanning}
-                className="flex items-center gap-2 rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 transition hover:bg-rose-100 dark:hover:bg-rose-900/50 disabled:opacity-50"
+                disabled={s.selectedActiveCount === 0 || s.isBulkBanning || s.isBulkUnbanning}
+                className="flex items-center gap-2 rounded-lg bg-rose-50 dark:bg-rose-900/30 px-3 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 transition hover:bg-rose-100 dark:hover:bg-rose-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {s.isBulkBanning && <Spinner size="sm" />}
-                Ban Selected
+                {s.selectedActiveCount > 0
+                  ? `Ban Selected (${s.selectedActiveCount})`
+                  : 'Ban Selected'}
               </button>
             </div>
           )}

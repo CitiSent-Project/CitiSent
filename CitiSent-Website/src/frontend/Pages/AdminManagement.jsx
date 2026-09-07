@@ -168,10 +168,10 @@ export function AdminManagement({
 
   if (profile?.role !== USER_ROLES.SUPERADMIN) {
     return (
-      <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Admin Management</h1>
-          <p className="mt-2 text-sm text-slate-600">
+      <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-700/80 dark:bg-slate-800">
+          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl dark:text-white">Admin Management</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             This page is available to superadmins only.
           </p>
         </div>
@@ -180,12 +180,12 @@ export function AdminManagement({
   }
 
   return (
-    <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-350 flex-1 overflow-hidden bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Admin Management</h1>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">Admin Management</h1>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
               Assign office admins by department, manage agency catalog, and process transfer queue approvals.
             </p>
           </div>

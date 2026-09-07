@@ -14,9 +14,9 @@ function ActionMenu({ report, onViewReport }) {
       <button
         type="button"
         onClick={() => onViewReport?.(report)}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100"
+        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
       >
-        <FiEye className="text-sm text-slate-500" />
+        <FiEye className="text-sm text-slate-500 dark:text-slate-400" />
         View
       </button>
     </div>
@@ -43,20 +43,20 @@ const EMOTION_LEGEND = [
 
 function TableLegend() {
   return (
-    <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+    <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
       <div className="flex flex-wrap items-start gap-6">
         {/* Urgency Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Urgency Level
           </p>
           <div className="flex flex-wrap gap-2">
             {URGENCY_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
-                <span className="text-xs text-slate-700">
+                <span className="text-xs text-slate-700 dark:text-slate-300">
                   {item.label}
-                  <span className="ml-0.5 text-slate-500">— {item.description}</span>
+                  <span className="ml-0.5 text-slate-500 dark:text-slate-400">— {item.description}</span>
                 </span>
               </div>
             ))}
@@ -65,14 +65,14 @@ function TableLegend() {
 
         {/* Emotion Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Emotion Status
           </p>
           <div className="flex flex-wrap gap-2">
             {EMOTION_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
-                <span className="text-xs text-slate-700">{item.label}</span>
+                <span className="text-xs text-slate-700 dark:text-slate-300">{item.label}</span>
               </div>
             ))}
           </div>
@@ -98,7 +98,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
               <th className="px-4 py-3 w-24">ID</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3 hidden md:table-cell">Location</th>
@@ -133,7 +133,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
                     No reports to display.
                   </td>
                 </tr>
@@ -144,13 +144,13 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-slate-100 transition-colors hover:bg-slate-100"
+                  className="border-b border-slate-100 transition-colors hover:bg-slate-100 dark:border-slate-700/60 dark:hover:bg-slate-700/40"
                 >
-                  <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24" title={row.reportNum || row.id}>
+                  <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24 dark:text-slate-200" title={row.reportNum || row.id}>
                     {row.reportNum || truncateId(row.id)}
                   </td>
-                  <td className="px-4 py-3 text-slate-800">{row.name}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-slate-600">
+                  <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{row.name}</td>
+                  <td className="px-4 py-3 hidden md:table-cell text-slate-600 dark:text-slate-300">
                     {row.location}
                   </td>
                   <td className="px-4 py-3">
@@ -174,7 +174,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                       {normalizedStatus}
                     </span>
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric">
+                  <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric dark:text-slate-400">
                     {row.date}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -196,12 +196,12 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
       <div className="block md:hidden space-y-3 mt-4">
         {isInitialLoading && (
           [1, 2, 3].map((i) => (
-            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm" />
+            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700 dark:bg-slate-800/50" />
           ))
         )}
         {!isInitialLoading && rows.length === 0 && (
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs">
-            <p className="text-sm text-slate-500">No reports to display.</p>
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-sm text-slate-500 dark:text-slate-400">No reports to display.</p>
           </div>
         )}
         {!isInitialLoading && rows.length > 0 && (
@@ -209,14 +209,14 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             const normalizedStatus = normalizeReportStatus(row.status);
 
             return (
-              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300">
+              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60">
+                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                       {row.reportNum || truncateId(row.id)}
                     </span>
-                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate">{row.name}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500 truncate">{row.location}</p>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.name}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 truncate dark:text-slate-400">{row.location}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}>
@@ -228,12 +228,12 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2">
+                <div className="mt-4 flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 gap-2 dark:border-slate-700">
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_EMOTION_BADGE_CLASSES[row.emotionLevel] || "bg-slate-500/20 text-slate-400 border border-slate-500/30"}`}>
                       {row.emotionLevel || 'Neutral'}
                     </span>
-                    <p className="text-[11px] text-slate-400 font-numeric">
+                    <p className="text-[11px] text-slate-400 font-numeric dark:text-slate-500">
                       {row.date}
                     </p>
                   </div>

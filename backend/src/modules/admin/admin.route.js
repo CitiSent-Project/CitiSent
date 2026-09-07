@@ -64,6 +64,20 @@ adminRouter.post(
 );
 
 adminRouter.patch(
+  "/users/bulk-ban",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(bulkBanUsersSchema),
+  asyncHandler(adminController.bulkBanUsers),
+);
+
+adminRouter.patch(
+  "/users/bulk-unban",
+  requireRole([USER_ROLES.SUPERADMIN]),
+  validateRequest(bulkUnbanUsersSchema),
+  asyncHandler(adminController.bulkUnbanUsers),
+);
+
+adminRouter.patch(
   "/users/:userId",
   requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
   validateRequest(updateAdminUserSchema),
@@ -89,20 +103,6 @@ adminRouter.patch(
   requireRole([USER_ROLES.SUPERADMIN]),
   validateRequest(unbanAdminUserSchema),
   asyncHandler(adminController.unbanUser),
-);
-
-adminRouter.patch(
-  "/users/bulk-ban",
-  requireRole([USER_ROLES.SUPERADMIN]),
-  validateRequest(bulkBanUsersSchema),
-  asyncHandler(adminController.bulkBanUsers),
-);
-
-adminRouter.patch(
-  "/users/bulk-unban",
-  requireRole([USER_ROLES.SUPERADMIN]),
-  validateRequest(bulkUnbanUsersSchema),
-  asyncHandler(adminController.bulkUnbanUsers),
 );
 
 adminRouter.get(

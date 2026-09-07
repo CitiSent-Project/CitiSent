@@ -68,8 +68,8 @@ export function VerticalChart({ title, labels, values }) {
   };
 
   return (
-    <div className="h-full rounded-2xl bg-white p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col min-w-0 w-full">
-      <h3 className="mb-4 font-semibold text-slate-900 text-base md:text-lg">{title}</h3>
+    <div className="h-full rounded-2xl bg-white p-4 md:p-6 shadow-sm border border-slate-200 flex flex-col min-w-0 w-full dark:border-slate-700/80 dark:bg-slate-800">
+      <h3 className="mb-4 font-semibold text-slate-900 text-base md:text-lg dark:text-white">{title}</h3>
       <div className="relative flex-1 min-h-[220px] w-full min-w-0">
         <Bar data={data} options={options} />
       </div>

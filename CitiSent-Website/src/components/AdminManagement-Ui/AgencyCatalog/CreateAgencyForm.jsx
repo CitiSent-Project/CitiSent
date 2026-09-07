@@ -49,9 +49,9 @@ export function CreateAgencyForm({ onCreateDepartment }) {
 
     return (
         <>
-            <form className="mt-4 flex flex-col gap-2.5 bg-slate-50/70 p-4 rounded-xl border border-slate-100 sm:flex-row sm:items-end" onSubmit={handleCreateDepartment}>
+            <form className="mt-4 flex flex-col gap-2.5 bg-slate-50/70 p-4 rounded-xl border border-slate-100 sm:flex-row sm:items-end dark:bg-slate-900/40 dark:border-slate-700/60" onSubmit={handleCreateDepartment}>
                 <div className="flex-1 min-w-0">
-                    <label htmlFor="create-agency-input" className="block mb-1 text-xs font-semibold text-slate-700">
+                    <label htmlFor="create-agency-input" className="block mb-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
                         Agency Name
                     </label>
                     <input
@@ -59,7 +59,7 @@ export function CreateAgencyForm({ onCreateDepartment }) {
                         value={form.name}
                         onChange={(event) => updateForm('name', event.target.value)}
                         placeholder="e.g. City Treasury Office"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-2xs transition hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-2xs transition hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:hover:border-slate-600"
                     />
                 </div>
                 <button

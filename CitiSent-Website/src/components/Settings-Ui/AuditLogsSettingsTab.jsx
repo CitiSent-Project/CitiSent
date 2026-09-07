@@ -51,8 +51,8 @@ export function AuditLogsSettingsTab({ activityLog = [], preferences, onUpdatePr
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-800">View activity logs</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">View activity logs</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Showing the latest {visibleEntries.length} of {activityLog.length} saved entries.
           </p>
         </div>
@@ -62,8 +62,8 @@ export function AuditLogsSettingsTab({ activityLog = [], preferences, onUpdatePr
           disabled={!hasLogs}
           className={`rounded-lg px-3 py-2 text-sm font-semibold ${
             hasLogs
-              ? "bg-blue-900 text-white hover:bg-slate-800"
-              : "border border-slate-300 bg-slate-100 text-slate-400"
+              ? "bg-blue-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500"
+              : "border border-slate-300 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
           }`}
         >
           Download logs
@@ -75,17 +75,17 @@ export function AuditLogsSettingsTab({ activityLog = [], preferences, onUpdatePr
           visibleEntries.map((entry) => (
             <article
               key={entry.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/50"
             >
               <div>
-                <p className="text-sm font-medium text-slate-800">{entry.action}</p>
-                <p className="text-xs text-slate-500">{entry.detail}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{entry.action}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{entry.detail}</p>
               </div>
-              <span className="text-xs text-slate-500">{formatDateTime(entry.createdAt)}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{formatDateTime(entry.createdAt)}</span>
             </article>
           ))
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-300 px-3 py-5 text-sm text-slate-500">
+          <p className="rounded-lg border border-dashed border-slate-300 px-3 py-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
             Activity will appear here as you use the admin portal.
           </p>
         )}

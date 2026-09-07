@@ -214,17 +214,17 @@ export function Dashboard() {
     )
 
     return (
-        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-4 py-6 sm:px-6 lg:px-8 dark:bg-slate-900">
             <MotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 className="mb-6 sm:mb-8"
             >
-                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
                     Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
                 </h1>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
                 </p>
             </MotionDiv>

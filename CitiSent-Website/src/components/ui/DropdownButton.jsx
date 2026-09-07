@@ -279,19 +279,19 @@ export function DropdownButton({
 				aria-expanded={open}
 				aria-controls={listboxId}
 				aria-label={ariaLabel || label || 'Dropdown'}
-				className={`group inline-flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+				className={`group inline-flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:focus:ring-blue-500/20 ${
 					disabled
 						? 'cursor-not-allowed opacity-70'
 						: 'cursor-pointer shadow-sm hover:shadow-md'
 				}`}
 			>
-				{Icon ? <Icon className="shrink-0 text-base text-slate-500" /> : null}
+				{Icon ? <Icon className="shrink-0 text-base text-slate-500 dark:text-slate-400" /> : null}
 
 				<div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left">
-					{label ? <span className="whitespace-nowrap text-xs text-slate-400">{label}:</span> : null}
+					{label ? <span className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">{label}:</span> : null}
 					<span
 						className={`truncate font-medium ${
-							isPlaceholder ? 'text-slate-400' : 'text-slate-700'
+							isPlaceholder ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'
 						}`}
 					>
 						{selectedLabel}
@@ -299,7 +299,7 @@ export function DropdownButton({
 				</div>
 
 				<FiChevronDown
-					className={`ml-auto shrink-0 text-sm text-slate-400 transition-transform duration-150 ease-in-out ${
+					className={`ml-auto shrink-0 text-sm text-slate-400 dark:text-slate-500 transition-transform duration-150 ease-in-out ${
 						open ? 'rotate-180' : ''
 					}`}
 				/>
@@ -310,7 +310,7 @@ export function DropdownButton({
 					<div
 						ref={popoverRef}
 						style={popoverStyle}
-						className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl transition-all duration-150 ease-out ${
+						className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl transition-all duration-150 ease-out dark:border-slate-700 dark:bg-slate-800 ${
 							isVisible
 								? 'opacity-100 translate-y-0 scale-100'
 								: 'opacity-0 -translate-y-1 scale-[0.98]'
@@ -370,10 +370,10 @@ export function DropdownButton({
 										}}
 										className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors ${
 											optionDisabled
-												? 'cursor-not-allowed text-slate-300'
+												? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
 												: active
-													? 'bg-slate-50 text-slate-900'
-													: 'text-slate-700 hover:bg-slate-50'
+													? 'bg-slate-50 text-slate-900 dark:bg-slate-700 dark:text-white'
+													: 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700'
 										} ${selected ? 'font-medium' : 'font-normal'}`}
 									>
 										<span className="min-w-0 flex-1 truncate">{option.label}</span>
@@ -384,7 +384,7 @@ export function DropdownButton({
 								)
 							})
 						) : (
-							<div className="px-3 py-2 text-sm text-slate-400">No options</div>
+							<div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">No options</div>
 						)}
 					</div>
 				</div>,

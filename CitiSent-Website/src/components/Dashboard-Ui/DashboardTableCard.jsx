@@ -10,22 +10,22 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
 
   return (
     <MotionDiv
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
     >
-      <div className="border-b border-slate-200 p-6">
-        <h3 className="font-semibold text-slate-900">{title}</h3>
+      <div className="border-b border-slate-200 p-6 dark:border-slate-700">
+        <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
       </div>
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
+            <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80">
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600"
+                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
                 >
                   {col}
                 </th>
@@ -56,17 +56,17 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-slate-400">
+                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                   No data available.
                 </td>
               </tr>
             ) : (
               rows.map((row, idx) => (
-              <tr key={idx} className="border-b border-slate-100 transition hover:bg-slate-50">
+              <tr key={idx} className="border-b border-slate-100 transition hover:bg-slate-50 dark:border-slate-700/60 dark:hover:bg-slate-700/40">
                 {Object.values(row).map((cell, cellIdx) => (
                   <td
                     key={cellIdx}
-                    className={`px-6 py-4 text-sm text-slate-700 ${
+                    className={`px-6 py-4 text-sm text-slate-700 dark:text-slate-200 ${
                       cellIdx !== 0 && /\d/.test(String(cell)) ? 'font-numeric' : ''
                     }`}
                   >
@@ -81,27 +81,27 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
       </div>
 
       {/* Mobile Card List View */}
-      <div className="block md:hidden bg-slate-50/50 p-4">
+      <div className="block md:hidden bg-slate-50/50 p-4 dark:bg-slate-900/40">
         {isInitialLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 w-full animate-pulse rounded-xl bg-slate-200/50" />
+              <div key={i} className="h-24 w-full animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-700/50" />
             ))}
           </div>
         )}
         {!isInitialLoading && rows.length === 0 && (
-          <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-8 text-center shadow-2xs">
-            <p className="text-sm text-slate-500">No data available.</p>
+          <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-8 text-center shadow-2xs dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-sm text-slate-500 dark:text-slate-400">No data available.</p>
           </div>
         )}
         {!isInitialLoading && rows.length > 0 && (
           <div className="space-y-3">
             {rows.map((row, idx) => (
-              <div key={idx} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300">
+              <div key={idx} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
                 {Object.values(row).map((cell, cellIdx) => (
-                  <div key={cellIdx} className={`flex items-center justify-between ${cellIdx !== 0 ? 'mt-2 border-t border-slate-100 pt-2' : ''}`}>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{columns[cellIdx]}</span>
-                    <span className={`text-sm text-slate-800 ${cellIdx !== 0 && /\d/.test(String(cell)) ? 'font-numeric font-medium' : ''}`}>
+                  <div key={cellIdx} className={`flex items-center justify-between ${cellIdx !== 0 ? 'mt-2 border-t border-slate-100 pt-2 dark:border-slate-700' : ''}`}>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{columns[cellIdx]}</span>
+                    <span className={`text-sm text-slate-800 dark:text-slate-200 ${cellIdx !== 0 && /\d/.test(String(cell)) ? 'font-numeric font-medium' : ''}`}>
                       {cellIdx === 0 ? <ProfilePill label={cell} /> : cell}
                     </span>
                   </div>

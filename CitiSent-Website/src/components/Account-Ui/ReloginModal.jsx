@@ -29,13 +29,13 @@ export function ReloginModal({ isOpen, onConfirmLogout }) {
         aria-modal="true"
         aria-labelledby="relogin-title"
         aria-describedby="relogin-desc"
-        className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-800"
       >
         {/* Icon */}
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-7 w-7 text-amber-600"
+            className="h-7 w-7 text-amber-600 dark:text-amber-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -51,14 +51,14 @@ export function ReloginModal({ isOpen, onConfirmLogout }) {
 
         <h2
           id="relogin-title"
-          className="text-center text-lg font-semibold text-slate-900"
+          className="text-center text-lg font-semibold text-slate-900 dark:text-white"
         >
           Email address changed
         </h2>
 
         <p
           id="relogin-desc"
-          className="mt-2 text-center text-sm text-slate-600"
+          className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400"
         >
           Your email address has been updated successfully. For security
           purposes, you need to sign in again with your new credentials.
@@ -67,7 +67,7 @@ export function ReloginModal({ isOpen, onConfirmLogout }) {
         <button
           type="button"
           onClick={onConfirmLogout}
-          className="mt-6 w-full rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          className="mt-6 w-full rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-500"
         >
           Re‑login now
         </button>

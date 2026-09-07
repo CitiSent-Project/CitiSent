@@ -43,7 +43,7 @@ export function AccountSettingsTab({
         />
 
         {isOfficeAdmin ? (
-          <p className="text-xs text-slate-500 md:col-span-2">
+          <p className="text-xs text-slate-500 md:col-span-2 dark:text-slate-400">
             Department changes require a transfer request in the Transfers tab.
           </p>
         ) : null}

@@ -66,17 +66,17 @@ const CONTENT_OFFSET_CLASSES = {
 const CONNECTION_STATUS_UI = {
 	connected: {
 		label: 'Connected',
-		containerClass: 'bg-emerald-50 text-emerald-700',
+		containerClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
 		dotClass: 'bg-emerald-500',
 	},
 	reconnecting: {
 		label: 'Reconnecting',
-		containerClass: 'bg-amber-50 text-amber-700',
+		containerClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
 		dotClass: 'bg-amber-500',
 	},
 	offline: {
 		label: 'Offline',
-		containerClass: 'bg-rose-50 text-red-900',
+		containerClass: 'bg-rose-50 text-red-900 dark:bg-rose-950/40 dark:text-rose-300',
 		dotClass: 'bg-rose-500',
 	},
 }
@@ -258,7 +258,7 @@ export function Navbar({
 	}
 
 	return (
-		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900">
+		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
 			<AnimatePresence>
 				{mobileOpen && (
 					<MotionButton
@@ -315,7 +315,7 @@ export function Navbar({
 					expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
 				}`}
 			>
-				<header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md px-4 py-3 md:px-6 lg:px-8">
+				<header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md px-4 py-3 md:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-900/95">
 					<div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
 							<button
@@ -339,8 +339,8 @@ export function Navbar({
 								onClick={() => setIsNotificationsOpen(true)}
 								className={`relative grid h-9 w-9 place-items-center rounded-full border bg-white transition ${
 									isNotificationsOpen
-										? 'border-blue-800 bg-blue-50 text-blue-900'
-										: 'border-slate-400 text-slate-600 hover:border-blue-300 hover:bg-blue-200 transition duration-300'
+										? 'border-blue-800 bg-blue-50 text-blue-900 dark:border-blue-500 dark:bg-blue-900/40 dark:text-blue-300'
+										: 'border-slate-400 text-slate-600 hover:border-blue-300 hover:bg-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition duration-300'
 								}`}
 								aria-label="Notifications"
 							>
@@ -356,8 +356,8 @@ export function Navbar({
 								onClick={() => handleNavigate(APP_PAGES.ADMIN_PROFILE)}
 								className={`grid h-10 w-10 place-items-center rounded-full border transition ${
 									activePage === APP_PAGES.ADMIN_PROFILE
-										? 'border-blue-700 bg-blue-100 text-blue-900'
-										: 'border-slate-400 text-slate-900 hover:border-blue-300 hover:bg-blue-200'
+										? 'border-blue-700 bg-blue-100 text-blue-900 dark:border-blue-500 dark:bg-blue-900/40 dark:text-blue-300'
+										: 'border-slate-400 text-slate-900 hover:border-blue-300 hover:bg-blue-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
 								}`}
 								aria-label="User profile"
 							>

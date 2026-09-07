@@ -152,23 +152,23 @@ export function ReportHistoryTable({
   return (
     <div className="space-y-4">
       {/* Filters Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
         <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
           {/* Month Selector */}
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
-            <FiCalendar className="text-slate-500 text-sm" />
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+            <FiCalendar className="text-slate-500 text-sm dark:text-slate-400" />
             <span className="font-medium">Period:</span>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent font-numeric focus:outline-none text-slate-800"
+              className="bg-transparent font-numeric focus:outline-none text-slate-800 dark:text-slate-200"
             />
             {selectedMonth && (
               <button
                 type="button"
                 onClick={() => setSelectedMonth('')}
-                className="text-[10px] text-blue-600 hover:underline font-semibold ml-1"
+                className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold ml-1"
               >
                 Reset
               </button>
@@ -176,14 +176,14 @@ export function ReportHistoryTable({
           </div>
 
           {/* Status Filter Group */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-medium">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-medium dark:border-slate-700 dark:bg-slate-900/50">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
               className={`rounded-md px-2.5 py-1 transition-colors ${
                 statusFilter === 'all'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               All History
@@ -194,7 +194,7 @@ export function ReportHistoryTable({
               className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
                 statusFilter === 'resolved'
                   ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-600 hover:text-emerald-600'
+                  : 'text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400'
               }`}
             >
               <FiCheckCircle className={statusFilter === 'resolved' ? 'text-white' : 'text-emerald-500'} />
@@ -206,7 +206,7 @@ export function ReportHistoryTable({
               className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
                 statusFilter === 'rejected'
                   ? 'bg-rose-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-600 hover:text-rose-600'
+                  : 'text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400'
               }`}
             >
               <FiXCircle className={statusFilter === 'rejected' ? 'text-white' : 'text-rose-500'} />
@@ -223,7 +223,7 @@ export function ReportHistoryTable({
                 aria-label="Filter by department"
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
               >
                 {availableDepartments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -241,7 +241,7 @@ export function ReportHistoryTable({
                 aria-label="Filter by emotional status"
                 value={emotionFilter}
                 onChange={(e) => setEmotionFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
               >
                 {EMOTION_OPTIONS.map((emotion) => (
                   <option key={emotion} value={emotion}>
@@ -259,7 +259,7 @@ export function ReportHistoryTable({
                 aria-label="Filter by urgency level"
                 value={urgencyFilter}
                 onChange={(e) => setUrgencyFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs"
+                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
               >
                 {URGENCY_OPTIONS.map((urgency) => (
                   <option key={urgency} value={urgency}>
@@ -285,10 +285,10 @@ export function ReportHistoryTable({
       </div>
 
       {/* History Feed Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
               <th className="px-4 py-3.5 w-32">Report #</th>
               <th className="px-4 py-3.5">Reporter</th>
               <th className="px-4 py-3.5 hidden md:table-cell">Location</th>
@@ -322,7 +322,7 @@ export function ReportHistoryTable({
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">
+                <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                   {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
                 </td>
               </tr>
@@ -335,15 +335,15 @@ export function ReportHistoryTable({
                 return (
                   <tr
                     key={row.id}
-                    className="border-b border-slate-100 transition-colors hover:bg-slate-50"
+                    className="border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-700/50"
                   >
-                    <td className="px-4 py-3.5 font-medium text-slate-800 font-numeric w-32" title={rawId}>
-                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700">
+                    <td className="px-4 py-3.5 font-medium text-slate-800 font-numeric w-32 dark:text-slate-200" title={rawId}>
+                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 dark:bg-slate-900 dark:text-slate-300">
                         {displayId}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-800 font-medium">{row.name || 'Citizen'}</td>
-                    <td className="px-4 py-3.5 hidden md:table-cell text-slate-600 max-w-xs truncate">
+                    <td className="px-4 py-3.5 text-slate-800 font-medium dark:text-slate-200">{row.name || 'Citizen'}</td>
+                    <td className="px-4 py-3.5 hidden md:table-cell text-slate-600 max-w-xs truncate dark:text-slate-400">
                       {row.location}
                     </td>
                     <td className="px-4 py-3.5">
@@ -360,14 +360,14 @@ export function ReportHistoryTable({
                         {normalizedStatus}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs">
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
                       {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : (row.date || 'N/A')}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <button
                         type="button"
                         onClick={() => onViewReport?.(row)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-xs theme-dark-btn-outline"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-xs dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:hover:text-white"
                       >
                         <FiEye className="text-xs" />
                         Details
@@ -386,12 +386,12 @@ export function ReportHistoryTable({
       <div className="block md:hidden space-y-3">
         {isInitialLoading && (
           [1, 2, 3].map((i) => (
-            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm" />
+            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/50" />
           ))
         )}
         {!isInitialLoading && visibleRows.length === 0 && (
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs">
-            <p className="text-sm text-slate-500">
+          <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/50">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
             </p>
           </div>
@@ -402,14 +402,14 @@ export function ReportHistoryTable({
             const displayId = formatReportId(row.reportNum, row.id);
 
             return (
-              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300">
+              <div key={row.id} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300 dark:border-slate-700/80 dark:bg-slate-800 dark:hover:border-slate-600">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60">
+                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                       {displayId}
                     </span>
-                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate">{row.name || 'Citizen'}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500 truncate">{row.location}</p>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.name || 'Citizen'}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 truncate dark:text-slate-400">{row.location}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}>
@@ -421,14 +421,14 @@ export function ReportHistoryTable({
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <p className="text-[11px] text-slate-400 font-numeric">
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
+                  <p className="text-[11px] text-slate-400 font-numeric dark:text-slate-500">
                     {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : (row.date || 'N/A')}
                   </p>
                   <button
                     type="button"
                     onClick={() => onViewReport?.(row)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:hover:text-white"
                   >
                     <FiEye className="text-xs" />
                     Details

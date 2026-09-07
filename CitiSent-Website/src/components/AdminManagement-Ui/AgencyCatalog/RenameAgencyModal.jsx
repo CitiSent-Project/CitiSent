@@ -75,18 +75,18 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
                 aria-modal="true"
                 aria-label="Rename agency modal"
                 tabIndex={-1}
-                className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100"
+                className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
-                <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-                    <h3 className="text-base font-bold tracking-tight text-slate-900">Rename Agency</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                <div className="border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-700/80">
+                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Rename Agency</h3>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         Update the display name for {department.label}.
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmitRenameDepartment} className="space-y-4 px-5 py-5 sm:px-6">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Agency Name</label>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Agency Name</label>
                         <input
                             type="text"
                             value={renameName}
@@ -100,12 +100,12 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
                                 setRenameName(event.target.value)
                             }}
                             placeholder="City Treasury Office"
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                         />
-                        {renameError ? <p className="mt-1 text-xs text-rose-600 font-medium">{renameError}</p> : null}
+                        {renameError ? <p className="mt-1 text-xs text-rose-600 font-medium dark:text-rose-400">{renameError}</p> : null}
                     </div>
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700">Slug</label>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Slug</label>
                         <input
                             type="text"
                             value={renameSlug}
@@ -119,16 +119,16 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
                                 setRenameSlug(nextSlug)
                             }}
                             placeholder="city-treasury-office"
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-slate-500"
                         />
-                        <p className="mt-1 text-[11px] text-slate-400">Use lowercase letters, numbers, and hyphens.</p>
+                        <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Use lowercase letters, numbers, and hyphens.</p>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-700/80">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             Cancel
                         </button>

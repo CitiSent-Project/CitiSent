@@ -136,11 +136,11 @@ export function AgencyCatalogSection({
     }
 
     return (
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all sm:p-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all sm:p-6 dark:border-slate-700/80 dark:bg-slate-800">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg font-bold tracking-tight text-slate-900">Agency Catalog</h2>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Agency Catalog</h2>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         Manage agency names, availability, and official logos shown across CitiSent.
                     </p>
                 </div>
@@ -165,8 +165,8 @@ export function AgencyCatalogSection({
                 ))}
 
                 {sortedCatalog.length === 0 ? (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center">
-                        <p className="text-xs font-medium text-slate-500">No agencies found in catalog.</p>
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">No agencies found in catalog.</p>
                     </div>
                 ) : null}
             </div>

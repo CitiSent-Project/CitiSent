@@ -37,14 +37,14 @@ export function History({
   }, [rows])
 
   return (
-    <main className="mx-auto max-w-350 flex-1 px-4 py-6 md:px-6 lg:px-8">
+    <main className="mx-auto max-w-350 flex-1 px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex flex-col gap-6">
         <header className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-slate-900">Reports History</h1>
-          <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700">!</span>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Reports History</h1>
+          <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700 dark:border-slate-600 dark:text-slate-300">!</span>
         </header>
 
-        <section className="rounded-2xl bg-[#5f82bd] p-4 md:p-6 shadow-sm">
+        <section className="rounded-2xl bg-[#5f82bd] p-4 md:p-6 shadow-sm dark:bg-slate-800">
           <ReportsStatCards stats={reportStats} />
         </section>
 

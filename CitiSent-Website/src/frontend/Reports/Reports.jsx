@@ -160,7 +160,6 @@ export function Reports({
         rows={scopedRows}
         departmentOptions={departmentOptions}
         onViewReport={onViewReport}
-        onRefresh={refetchReports}
         isLoading={loading}
       />
     )
@@ -176,14 +175,13 @@ export function Reports({
         defaultSorting={defaultSorting}
         onViewReport={onViewReport}
         onUpdateStatus={handleUpdateStatus}
-        onRefresh={refetchReports}
         isLoading={loading}
       />
     )
   }
 
   return (
-      <ByCategory
+    <ByCategory
       rows={activeRows}
       weeklyTrendData={weeklyTrendQuery.data}
       profile={profile}
@@ -191,9 +189,8 @@ export function Reports({
       defaultSorting={defaultSorting}
       departmentOptions={departmentOptions}
       onViewReport={onViewReport}
-        onUpdateStatus={handleUpdateStatus}
-        onRefresh={refetchReports}
-        isLoading={loading}
+      onUpdateStatus={handleUpdateStatus}
+      isLoading={loading}
     />
   )
 }

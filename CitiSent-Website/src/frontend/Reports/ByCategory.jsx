@@ -49,7 +49,6 @@ export function ByCategory({
   departmentOptions = [],
   onViewReport,
   onUpdateStatus,
-  onRefresh,
   isLoading = false,
 }) {
   const [selectedAgencyId, setSelectedAgencyId] = useState(ALL_CATEGORY_FILTER_ID)
@@ -233,19 +232,9 @@ export function ByCategory({
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 min-w-0 bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:gap-5 w-full min-w-0">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">Reports</h1>
-            <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700">!</span>
-          </div>
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 transition-colors"
-          >
-            {isLoading ? 'Refreshing…' : 'Refresh'}
-          </button>
+        <header className="flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">Reports</h1>
+          <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700">!</span>
         </header>
 
         <section className="rounded-2xl bg-[#5f82bd] p-3 sm:p-4 md:p-6 w-full min-w-0">

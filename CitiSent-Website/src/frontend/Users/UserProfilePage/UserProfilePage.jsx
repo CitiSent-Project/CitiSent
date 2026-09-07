@@ -174,14 +174,6 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <h1 className="text-2xl font-semibold text-slate-900">User Profile</h1>
-          <button
-            type="button"
-            onClick={() => refetchReports()}
-            disabled={isFetching}
-            className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isFetching ? 'Refreshing…' : 'Refresh reports'}
-          </button>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>

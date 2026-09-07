@@ -15,6 +15,7 @@ import { transferRequestsApiService } from '../../services/api/admin/transferReq
 vi.mock('../../components/ui/toastHelpers', () => ({
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
+  notifyErrorWithRetry: vi.fn(),
 }))
 
 vi.mock('../usePageLoadingState', () => ({
@@ -499,12 +500,26 @@ describe('useAppStateOrchestrator department hydration', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     window.localStorage.clear()
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.accessToken, schemaValue('token-dept-001'))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.authSession, schemaValue(true))
+    window.localStorage.setItem(ADMIN_STORAGE_KEYS.profile, schemaValue({ id: 'admin-1', role: 'Office Admin' }))
     window.matchMedia = vi.fn().mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     })
 
+    authApiService.me.mockResolvedValue({
+      data: {
+        id: 'admin-1',
+        email: 'admin@citisent.gov',
+        fullName: 'Admin User',
+        role: 'Office Admin',
+        accountType: 'admin',
+        departmentId: 'public-safety',
+        departmentLabel: 'Public Safety',
+      },
+    })
     departmentsApiService.getDepartments.mockResolvedValue({
       departments: [
         {
@@ -545,16 +560,15 @@ describe('useAppStateOrchestrator department hydration', () => {
     vi.clearAllMocks()
   })
 
-  it('fetches active department options without an access token', async () => {
+  it('fetches active department options when an access token is present', async () => {
     await act(async () => {
       root.render(<HookHarness />)
       await flushMicrotasks()
     })
 
     expect(departmentsApiService.getDepartments).toHaveBeenCalledTimes(1)
-    expect(departmentsApiService.getDepartments).toHaveBeenCalledWith()
+    expect(departmentsApiService.getDepartments).toHaveBeenCalledWith('token-dept-001')
     expect(departmentsApiService.getDepartmentsCatalog).not.toHaveBeenCalled()
-    expect(authApiService.me).not.toHaveBeenCalled()
     expect(latestState.appState.departmentOptions).toEqual([
       expect.objectContaining({
         id: 'public-safety',

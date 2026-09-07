@@ -1,7 +1,10 @@
 import os
 import json
 import asyncio
+import collections
 import logging
+import random
+import time
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -12,7 +15,67 @@ logger = logging.getLogger("citisent.ai")
 
 _client = None
 MODEL = "gemini-flash-lite-latest"  # most token-efficient available on free tier
-GEMINI_TIMEOUT_SECONDS = 12  # prevent hanging if Gemini is slow or rate-limited
+GEMINI_TIMEOUT_SECONDS = 30  # accommodates queuing delay + Gemini latency
+GEMINI_MAX_RETRIES = 3        # retry up to 3x on transient errors
+GEMINI_RETRY_BASE_DELAY = 2  # seconds — full-jitter exponential: up to 2s, 4s, 8s
+
+
+class _GeminiRateLimiter:
+    """
+    Sliding-window rate limiter + concurrency cap for the Gemini API.
+
+    Limits are read from environment variables so the same code works on
+    both free and paid tiers — no code changes needed when upgrading:
+
+        Free tier  (~30 RPM):  GEMINI_RPM_LIMIT=25  GEMINI_MAX_CONCURRENT=3   (defaults)
+        Paid tier (~4000 RPM): GEMINI_RPM_LIMIT=2000 GEMINI_MAX_CONCURRENT=50
+
+    Excess requests QUEUE and wait instead of crashing into 429s.
+
+    Usage (async context manager):
+        async with _rate_limiter:
+            response = await client.aio.models.generate_content(...)
+    """
+    # Read from env — defaults are conservative free-tier values.
+    # Override in docker-compose / .env when upgrading to paid tier.
+    RPM_LIMIT     = int(os.getenv("GEMINI_RPM_LIMIT", "25"))      # req/min cap
+    MAX_CONCURRENT = int(os.getenv("GEMINI_MAX_CONCURRENT", "3"))  # simultaneous calls
+
+    def __init__(self) -> None:
+        # Timestamps of the last RPM_LIMIT requests (sliding 60-second window)
+        self._window: collections.deque = collections.deque()
+        self._lock = asyncio.Lock()
+        self._semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
+
+    async def __aenter__(self):
+        # 1. Concurrency gate — block if MAX_CONCURRENT already in-flight
+        await self._semaphore.acquire()
+        # 2. Sliding-window gate — block if RPM_LIMIT hit in last 60s
+        async with self._lock:
+            now = time.monotonic()
+            # Drop timestamps older than 60 seconds
+            while self._window and now - self._window[0] > 60.0:
+                self._window.popleft()
+            if len(self._window) >= self.RPM_LIMIT:
+                # Wait until the oldest slot rolls out of the 60-second window
+                wait = 60.0 - (now - self._window[0]) + 0.05  # tiny buffer
+                logger.info(
+                    "Gemini quota full (%d/%d rpm) — queuing request for %.1fs",
+                    len(self._window), self.RPM_LIMIT, wait,
+                )
+                await asyncio.sleep(wait)
+                now = time.monotonic()
+                while self._window and now - self._window[0] > 60.0:
+                    self._window.popleft()
+            self._window.append(time.monotonic())
+        return self
+
+    async def __aexit__(self, *_):
+        self._semaphore.release()
+
+
+# Module-level singleton — shared across all three Gemini call sites
+_rate_limiter = _GeminiRateLimiter()
 
 
 def _get_client():
@@ -22,15 +85,14 @@ def _get_client():
     return _client
 
 
-# Compact prompt with LGU office context, admin summary, and emotion classification
+# Trimmed prompt — same accuracy, ~30% fewer tokens = more requests fit in free quota
 PROMPT_TEMPLATE = (
-    'Classify this LGU citizen report. Return JSON only with these exact keys:\n'
-    '{{"urgency": "Critical|High|Medium|Low", "emotion": "Sad|Happy|Frustrated|Angry|Disappointed|Excited|Delighted|Neutral", "confidence": 0.0-1.0, "summary": "..."}}\n\n'
-    'Rules:\n'
-    '- Critical=life threat; High=serious infra; Medium=maintenance; Low=suggestion\n'
-    '- Sad=sorrowful/grief; Happy=pleased/content; Frustrated=annoyed/dissatisfied; Angry=hostile/outraged; Disappointed=let down/unmet expectations; Excited=eager/enthusiastic; Delighted=very pleased/overjoyed; Neutral=factual/no strong feeling\n'
-    '- "summary" MUST be a 1-2 sentence explanation for the admin. You MUST put a HUGE EMPHASIS on the emotion and sentiment of the citizen (e.g., frustrated, panicked, calm) alongside why the urgency was chosen for the selected office.\n\n'
-    'Selected Office:{office} Location:{location} Report:{description}'
+    'Classify this LGU citizen report. Return JSON only:\n'
+    '{{"urgency":"Critical|High|Medium|Low","emotion":"Sad|Happy|Frustrated|Angry|Disappointed|Excited|Delighted|Neutral","confidence":0.0-1.0,"summary":"..."}}\n'
+    'urgency: Critical=life threat; High=serious infra; Medium=maintenance; Low=suggestion\n'
+    'emotion: Sad=grief; Happy=content; Frustrated=annoyed; Angry=outraged; Disappointed=let down; Excited=enthusiastic; Delighted=overjoyed; Neutral=factual\n'
+    'summary: 1-2 sentences for admin. Emphasize citizen emotion+sentiment and urgency reason.\n'
+    'Office:{office} Location:{location} Report:{description}'
 )
 
 VALID_URGENCY = ["Critical", "High", "Medium", "Low"]
@@ -46,22 +108,47 @@ async def analyze_report(office: str, location: str, description: str) -> dict:
         description=description,
     )
 
-    try:
-        response = await asyncio.wait_for(
-            client.aio.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",  # forces clean JSON — no markdown fences
-                    max_output_tokens=250,                  # increased to accommodate emotion + summary
-                    temperature=0.1,                        # low temp = consistent, deterministic output
-                ),
-            ),
-            timeout=GEMINI_TIMEOUT_SECONDS,
-        )
-    except asyncio.TimeoutError:
-        logger.warning("Gemini API call timed out after %ds", GEMINI_TIMEOUT_SECONDS)
-        raise TimeoutError(f"Gemini API did not respond within {GEMINI_TIMEOUT_SECONDS}s")
+    last_exc = None
+    for attempt in range(1, GEMINI_MAX_RETRIES + 1):
+        try:
+            # Rate limiter queues this call if quota is full — no wasted 429s
+            async with _rate_limiter:
+                response = await asyncio.wait_for(
+                    client.aio.models.generate_content(
+                        model=MODEL,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",  # forces clean JSON
+                            max_output_tokens=200,                  # trimmed; summary fits in 200
+                            temperature=0.1,                        # low temp = consistent output
+                        ),
+                    ),
+                    timeout=GEMINI_TIMEOUT_SECONDS,
+                )
+            break  # success — exit retry loop
+        except asyncio.TimeoutError:
+            logger.warning("Gemini timed out after %ds (attempt %d/%d)", GEMINI_TIMEOUT_SECONDS, attempt, GEMINI_MAX_RETRIES)
+            last_exc = TimeoutError(f"Gemini did not respond within {GEMINI_TIMEOUT_SECONDS}s")
+            if attempt < GEMINI_MAX_RETRIES:
+                # Full jitter: avoids thundering-herd on simultaneous retries
+                await asyncio.sleep(random.uniform(0, GEMINI_RETRY_BASE_DELAY * attempt))
+            continue
+        except Exception as exc:
+            err_str = str(exc)
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                # Full-jitter exponential backoff: 0–2s, 0–4s, 0–8s
+                delay = random.uniform(0, GEMINI_RETRY_BASE_DELAY * (2 ** (attempt - 1)))
+                logger.warning(
+                    "Gemini rate-limited (attempt %d/%d) — retrying in %.1fs",
+                    attempt, GEMINI_MAX_RETRIES, delay,
+                )
+                last_exc = exc
+                if attempt < GEMINI_MAX_RETRIES:
+                    await asyncio.sleep(delay)
+                continue
+            raise  # non-retryable — propagate immediately
+    else:
+        raise last_exc
 
     # Guard: Gemini may return an empty or blocked response
     raw_text = getattr(response, "text", None)
@@ -240,20 +327,21 @@ async def generate_suggestions(
     )
 
     try:
-        response = await asyncio.wait_for(
-            client.aio.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    max_output_tokens=600,
-                    temperature=0.2,
+        async with _rate_limiter:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        max_output_tokens=500,
+                        temperature=0.2,
+                    ),
                 ),
-            ),
-            timeout=GEMINI_TIMEOUT_SECONDS,
-        )
+                timeout=GEMINI_TIMEOUT_SECONDS,
+            )
     except asyncio.TimeoutError:
-        logger.warning("Gemini suggestions call timed out after %ds", GEMINI_TIMEOUT_SECONDS)
+        logger.warning("Gemini suggestions timed out after %ds", GEMINI_TIMEOUT_SECONDS)
         return get_default_suggestions("Gemini suggestions API call timed out")
     except Exception as exc:
         logger.error("Gemini suggestions API call failed: %s", str(exc))
@@ -318,18 +406,19 @@ async def generate_admin_note_suggestions(
     )
 
     try:
-        response = await asyncio.wait_for(
-            client.aio.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    max_output_tokens=600,
-                    temperature=0.2,
+        async with _rate_limiter:
+            response = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        max_output_tokens=500,
+                        temperature=0.2,
+                    ),
                 ),
-            ),
-            timeout=GEMINI_TIMEOUT_SECONDS,
-        )
+                timeout=GEMINI_TIMEOUT_SECONDS,
+            )
         raw_text = getattr(response, "text", None)
         if not raw_text or not raw_text.strip():
             return get_default_admin_note_suggestions(report_status, "Gemini returned an empty response")

@@ -10,7 +10,7 @@ import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import {
-  AgencyCatalogSection,
+  DepartmentCatalogSection,
   OfficeAdminAssignmentsSection,
   TransferRequestQueueSection,
   TransferReviewModal,
@@ -186,7 +186,7 @@ export function AdminManagement({
           <div className="min-w-0">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">Admin Management</h1>
             <p className="mt-1 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
-              Assign office admins by department, manage agency catalog, and process transfer queue approvals.
+              Assign office admins by department, manage department catalog, and process transfer queue approvals.
             </p>
           </div>
           <button
@@ -217,7 +217,7 @@ export function AdminManagement({
           processingAdminIds={processingAdminIds}
         />
 
-        <AgencyCatalogSection
+        <DepartmentCatalogSection
           departmentCatalog={departmentCatalog}
           onCreateDepartment={onCreateDepartment}
           onUpdateDepartment={onUpdateDepartment}

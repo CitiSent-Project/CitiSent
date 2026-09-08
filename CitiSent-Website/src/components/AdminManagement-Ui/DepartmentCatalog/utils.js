@@ -24,7 +24,7 @@ export function formatReferenceBreakdownMessage(referenceBreakdown) {
         return ''
     }
 
-    return `This agency is still linked to ${linkedItems.join(', ')}.`
+    return `This department is still linked to ${linkedItems.join(', ')}.`
 }
 
 export function toSlug(value) {

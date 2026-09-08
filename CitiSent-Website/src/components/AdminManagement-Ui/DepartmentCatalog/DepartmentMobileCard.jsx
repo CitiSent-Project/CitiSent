@@ -1,6 +1,6 @@
 import { FiEdit2, FiImage, FiToggleLeft, FiToggleRight, FiTrash2, FiUploadCloud, FiXCircle } from 'react-icons/fi'
 
-export function AgencyMobileCard({
+export function DepartmentMobileCard({
     department,
     isBusy,
     logoError,
@@ -80,7 +80,7 @@ export function AgencyMobileCard({
                         type="button"
                         disabled={isBusy}
                         onClick={() => onOpenRenameModal(department)}
-                        title="Rename agency"
+                        title="Rename department"
                         aria-label={`Rename ${department.label}`}
                         className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                     >
@@ -90,7 +90,7 @@ export function AgencyMobileCard({
                         type="button"
                         disabled={isBusy}
                         onClick={() => onToggleDepartmentActive(department)}
-                        title={department.isActive ? 'Deactivate agency' : 'Activate agency'}
+                        title={department.isActive ? 'Deactivate department' : 'Activate department'}
                         aria-label={`${department.isActive ? 'Deactivate' : 'Activate'} ${department.label}`}
                         className={`grid h-8 w-8 place-items-center rounded-lg border transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                             department.isActive
@@ -108,7 +108,7 @@ export function AgencyMobileCard({
                         type="button"
                         disabled={isBusy}
                         onClick={() => onOpenDeleteModal(department)}
-                        title="Delete agency"
+                        title="Delete department"
                         aria-label={`Delete ${department.label}`}
                         className="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-all disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-900/40"
                     >

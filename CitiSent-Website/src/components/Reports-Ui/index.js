@@ -1,4 +1,4 @@
-export { AgencyCardsGrid } from './AgencyCardsGrid'
+export { DepartmentCardsGrid } from './DepartmentCardsGrid'
 export { Pagination } from '../ui/Pagination'
 export { ReportsStatCards } from './ReportsStatCards'
 export { UrgencyDoughnutChart } from './UrgencyDoughnutChart'

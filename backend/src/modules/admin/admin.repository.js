@@ -646,6 +646,23 @@ export const adminRepository = {
     return data || [];
   },
 
+  async listSuperadmins({ accessToken }) {
+    const db = getDb(accessToken);
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .select("*")
+      .eq("account_type", "admin")
+      .eq("role", USER_ROLES.SUPERADMIN)
+      .order("lname", { ascending: true })
+      .order("fname", { ascending: true });
+
+    if (error) {
+      throw toGatewayError("Failed to fetch superadmins", error);
+    }
+
+    return data || [];
+  },
+
   async getOfficeAdminByUserId({ accessToken, adminUserId }) {
     const db = getDb(accessToken);
     const { data, error } = await db

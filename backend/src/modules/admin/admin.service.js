@@ -1111,6 +1111,21 @@ export const adminService = {
       throw new AppError("Office admin not found", StatusCodes.NOT_FOUND);
     }
 
+    notificationsRepository
+      .createNotification({
+        accessToken,
+        userId: adminUserId,
+        type: "account",
+        title: "Department assignment updated",
+        message: `Your assigned department is now ${resolvedDepartment.name}.`,
+      })
+      .catch((error) => {
+        logger.warn("Failed to notify reassigned admin", {
+          adminUserId,
+          error: error?.message,
+        });
+      });
+
     return toOfficeAdminResponse(updatedOfficeAdmin);
   },
 
@@ -1167,6 +1182,48 @@ export const adminService = {
       },
     });
 
+    const actorName = actor.fullName || actor.email || "Office Admin";
+
+    notificationsRepository
+      .createNotification({
+        accessToken,
+        userId: actor.id,
+        type: "account",
+        title: "Transfer request submitted",
+        message: `Your request to transfer to ${resolvedDepartment.name} is pending review.`,
+      })
+      .catch((error) => {
+        logger.warn("Failed to notify requester", { error: error?.message });
+      });
+
+    adminRepository
+      .listSuperadmins({ accessToken })
+      .then((superadmins) => {
+        return Promise.all(
+          superadmins.map((admin) =>
+            notificationsRepository
+              .createNotification({
+                accessToken,
+                userId: admin.user_id,
+                type: "account",
+                title: "New transfer request",
+                message: `${actorName} requested transfer to ${resolvedDepartment.name}.`,
+              })
+              .catch((error) => {
+                logger.warn("Failed to notify superadmin", {
+                  adminId: admin.user_id,
+                  error: error?.message,
+                });
+              })
+          )
+        );
+      })
+      .catch((error) => {
+        logger.warn("Failed to fetch superadmins for transfer request notification", {
+          error: error?.message,
+        });
+      });
+
     return toTransferRequestResponse(createdRequest);
   },
 
@@ -1207,6 +1264,18 @@ export const adminService = {
       reviewNotes: reviewNotes || "Approved by superadmin.",
     });
 
+    notificationsRepository
+      .createNotification({
+        accessToken,
+        userId: request.admin_user_id,
+        type: "account",
+        title: "Transfer approved",
+        message: `Your transfer request to ${request.requested_department_label} has been approved.`,
+      })
+      .catch((error) => {
+        logger.warn("Failed to notify requester", { error: error?.message });
+      });
+
     return toTransferRequestResponse(reviewedRequest);
   },
 
@@ -1239,6 +1308,18 @@ export const adminService = {
       reviewerName: actor.fullName || actor.email || "Superadmin",
       reviewNotes,
     });
+
+    notificationsRepository
+      .createNotification({
+        accessToken,
+        userId: request.admin_user_id,
+        type: "account",
+        title: "Transfer rejected",
+        message: `Your transfer request to ${request.requested_department_label} has been rejected.`,
+      })
+      .catch((error) => {
+        logger.warn("Failed to notify requester", { error: error?.message });
+      });
 
     return toTransferRequestResponse(reviewedRequest);
   },

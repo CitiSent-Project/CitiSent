@@ -4,6 +4,7 @@ const NOTIFICATION_TYPE_LABELS = Object.freeze({
   account: "Account",
   alert: "Alert",
   system: "System",
+  message: "Message",
 });
 
 export function toAdminNotificationResponse(row) {

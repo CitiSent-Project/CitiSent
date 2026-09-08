@@ -7,6 +7,7 @@ import { emitToReportRoom, emitToUser, emitToAdminFeedRooms } from "../../realti
 import { reportsSentimentClient } from "./reports.sentiment.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { buildReportsUserCachePrefix } from "./reports.cache.js";
+import { adminRepository } from "../admin/admin.repository.js";
 
 
 function normalizeMessageInput(message) {
@@ -151,32 +152,69 @@ export const reportMessagesService = {
       // Non-critical
     }
 
-    const participants = await reportMessagesRepository.getAgencyParticipants({
-      agencyId: access.report.agency_id,
-      accessToken,
-      excludeUserId: actor.id,
-    });
-    const recipient = pickNotificationRecipient(participants, actor.id);
+    const invalidateUserIds = new Set([access.report.user_id]);
 
-    if (recipient?.user_id) {
-      await notificationsRepository.createNotification({
+    if (access.participantType === "citizen") {
+      const participants = await reportMessagesRepository.getAgencyParticipants({
+        agencyId: access.report.agency_id,
         accessToken,
-        userId: recipient.user_id,
-        type: "message",
-        title: "Admin replied to your report",
-        message: normalizedMessage,
-        reportId,
-        metadata: {
-          senderId: actor.id,
-          reportId,
-          issueType: access.report?.issue_type || null,
-          reportDescription: access.report?.description || null,
-        },
+        excludeUserId: actor.id,
       });
+
+      let superadmins = [];
+      try {
+        superadmins = await adminRepository.listSuperadmins({ accessToken });
+      } catch (err) {}
+
+      const allAdminsToNotify = new Set(participants.map((p) => p.user_id));
+      superadmins.forEach((sa) => allAdminsToNotify.add(sa.user_id));
+
+      const senderName = actor.fname || actor.username || actor.email || "Citizen";
+
+      await Promise.all(
+        Array.from(allAdminsToNotify).map((userId) => {
+          invalidateUserIds.add(userId);
+          return notificationsRepository
+            .createNotification({
+              accessToken,
+              userId,
+              type: "message",
+              title: `New message from ${senderName}`,
+              message: normalizedMessage,
+              reportId,
+              metadata: {
+                senderId: actor.id,
+                reportId,
+                issueType: access.report?.issue_type || null,
+                reportDescription: access.report?.description || null,
+                senderName,
+              },
+            })
+            .catch(() => {});
+        })
+      );
+    } else {
+      const reportOwnerId = access.report.user_id;
+      if (reportOwnerId && String(reportOwnerId) !== String(actor.id)) {
+        await notificationsRepository
+          .createNotification({
+            accessToken,
+            userId: reportOwnerId,
+            type: "message",
+            title: "Admin replied to your report",
+            message: normalizedMessage,
+            reportId,
+            metadata: {
+              senderId: actor.id,
+              reportId,
+              issueType: access.report?.issue_type || null,
+              reportDescription: access.report?.description || null,
+            },
+          })
+          .catch(() => {});
+      }
     }
 
-    // Invalidate unread summary cache for report owner and recipient
-    const invalidateUserIds = new Set([access.report.user_id, recipient?.user_id].filter(Boolean));
     for (const uId of invalidateUserIds) {
       cacheService.deleteByPrefix(buildReportsUserCachePrefix(uId)).catch(() => {});
     }

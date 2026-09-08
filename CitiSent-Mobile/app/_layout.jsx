@@ -59,6 +59,9 @@ export default function RootLayout() {
               <Stack.Screen name="profile/notifications" />
               <Stack.Screen name="profile/edit" />
               <Stack.Screen name="profile/settings" />
+              <Stack.Screen name="legal/terms" />
+              <Stack.Screen name="legal/privacy" />
+              <Stack.Screen name="legal/community-guidelines" />
             </Stack>
           </AnimatedSplashLayout>
         </View>

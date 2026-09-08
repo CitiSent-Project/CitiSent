@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 import { formatReferenceBreakdownMessage } from './utils'
 
-export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isBusy }) {
+export function DeleteDepartmentModal({ department, onClose, onDeleteDepartment, isBusy }) {
     const [deleteError, setDeleteError] = useState('')
     const [deleteWithCleanup, setDeleteWithCleanup] = useState(false)
     const deleteModalRef = useRef(null)
@@ -41,7 +41,7 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
 
         const referenceBreakdown = result?.details?.breakdown
         const breakdownMessage = formatReferenceBreakdownMessage(referenceBreakdown)
-        const fallbackMessage = result?.message || 'Unable to delete agency.'
+        const fallbackMessage = result?.message || 'Unable to delete department.'
 
         setDeleteError(breakdownMessage ? `${fallbackMessage} ${breakdownMessage}` : fallbackMessage)
     }
@@ -59,18 +59,18 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
                 ref={deleteModalRef}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Delete agency modal"
+                aria-label="Delete department modal"
                 tabIndex={-1}
                 className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
                 <div className="border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-700">
-                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Delete Agency</h3>
+                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Delete Department</h3>
                 </div>
                 <p className="mx-5 pt-4 text-xs text-slate-600 sm:mx-6 dark:text-slate-300">
                     This will permanently remove <span className="font-semibold text-slate-900 dark:text-white">{department.label}</span>. This action cannot be undone.
                 </p>
                 <p className="mx-5 mt-1 text-[11px] text-slate-400 sm:mx-6 dark:text-slate-400">
-                    Inactive agencies can still be blocked when they are referenced by existing records.
+                    Inactive departments can still be blocked when they are referenced by existing records.
                 </p>
                 <form onSubmit={handleConfirmDeleteDepartment} className="space-y-4 px-5 py-4 sm:px-6">
                     <label className="flex items-start gap-2.5 rounded-xl border border-rose-200/80 bg-rose-50/70 p-3 text-xs text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
@@ -85,7 +85,7 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
                         <span className="font-medium">Also remove linked reports and clear department references.</span>
                     </label>
                     <p className="-mt-2 text-[11px] text-slate-400">
-                        Use cleanup only for inactive agencies when you intentionally want destructive removal.
+                        Use cleanup only for inactive departments when you intentionally want destructive removal.
                     </p>
                     {deleteError ? (
                         <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
@@ -106,7 +106,7 @@ export function DeleteAgencyModal({ department, onClose, onDeleteDepartment, isB
                             disabled={isBusy || !deleteWithCleanup}
                             className="inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 active:scale-[0.98] shadow-xs shadow-rose-500/20 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
                         >
-                            {isBusy ? 'Deleting...' : 'Delete Agency'}
+                            {isBusy ? 'Deleting...' : 'Delete Department'}
                         </button>
                     </div>
                 </form>

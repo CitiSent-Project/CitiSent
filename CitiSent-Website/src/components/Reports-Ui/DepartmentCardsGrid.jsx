@@ -1,7 +1,9 @@
 import { FiLayers } from 'react-icons/fi'
 import { DropdownButton } from '../ui/DropdownButton'
 
-const agencyIconById = {
+// Maps internal department slugs/IDs to their matching icon filenames.
+// This keeps the card grid looking rich even before a custom logo is uploaded.
+const departmentIconById = {
   bplo: 'bplo.png',
   cto: 'City Treasury Office.png',
   bfp: 'BFPoffice.png',
@@ -13,8 +15,9 @@ const agencyIconById = {
   pwd: 'PWDSenior.png',
 }
 
-const agencyIconAliases = {
-  ...agencyIconById,
+// Slug aliases let us match longer human-readable slugs to the same icon.
+const departmentIconAliases = {
+  ...departmentIconById,
   'city-treasury-office': 'City Treasury Office.png',
   'bureau-of-fire-protection-bfp-processing-area': 'BFPoffice.png',
   'city-traffic-management-division-impounding-services': 'City Traffic Management.png',
@@ -24,7 +27,9 @@ const agencyIconAliases = {
   'senior-citizens-pwd-accessibility-services': 'PWDSenior.png',
 }
 
-function normalizeAgencyKey(value) {
+// Normalizes a department key to a consistent lowercase-hyphenated format
+// so icon lookups work regardless of casing or whitespace in the source data.
+function normalizeDepartmentKey(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
@@ -33,51 +38,55 @@ function normalizeAgencyKey(value) {
     .replace(/^-+|-+$/g, '')
 }
 
+// Tries to find a matching icon filename for a given department item
+// by normalizing both its ID and label and checking the alias map.
 function resolveIconFileName(item) {
   const candidates = [
     item?.id,
     item?.label,
-    normalizeAgencyKey(item?.id),
-    normalizeAgencyKey(item?.label),
+    normalizeDepartmentKey(item?.id),
+    normalizeDepartmentKey(item?.label),
   ]
 
   for (const candidate of candidates) {
-    const key = normalizeAgencyKey(candidate)
+    const key = normalizeDepartmentKey(candidate)
     if (!key) {
       continue
     }
 
-    if (agencyIconAliases[key]) {
-      return agencyIconAliases[key]
+    if (departmentIconAliases[key]) {
+      return departmentIconAliases[key]
     }
   }
 
   return null
 }
 
-export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
+export function DepartmentCardsGrid({ items, selectedItemId, onSelectItem }) {
   const selectedItem = items.find((item) => item.id === selectedItemId) || items[0]
-  const normalizedAgencyOptions = items.map((item) => ({ label: item.label, value: item.id }))
+  // Build the dropdown options list for the mobile view.
+  const normalizedDepartmentOptions = items.map((item) => ({ label: item.label, value: item.id }))
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Agency Filter</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Choose an agency to narrow the report feed.</p>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Department Filter</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Choose a department to narrow the report feed.</p>
         </div>
       </div>
 
+      {/* Mobile: compact dropdown for small screens */}
       <div className="md:hidden">
         <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-          Select Agency
+          Select Department
         </label>
         <DropdownButton
           value={selectedItemId ?? selectedItem?.id ?? ''}
-          options={normalizedAgencyOptions}
+          options={normalizedDepartmentOptions}
           onChange={onSelectItem}
           icon={FiLayers}
-          ariaLabel="Select agency"
+          ariaLabel="Select department"
           className="mt-2 h-12 w-full rounded-xl border-slate-200 bg-slate-50 px-4 text-slate-700 focus-within:border-blue-400 focus-within:bg-white dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200"
         />
 
@@ -130,7 +139,7 @@ export function AgencyCardsGrid({ items, selectedItemId, onSelectItem }) {
                     {item.label}
                   </p>
                   <p className={`text-xs ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                    {isSelected ? 'Currently selected' : 'Filter reports by this agency'}
+                    {isSelected ? 'Currently selected' : 'Filter reports by this department'}
                   </p>
                 </div>
               </div>

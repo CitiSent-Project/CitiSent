@@ -37,12 +37,12 @@ export function RemoveLogoModal({ department, onClose, onDeleteDepartmentLogo, i
                 ref={removeLogoModalRef}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Remove agency logo modal"
+                aria-label="Remove department logo modal"
                 tabIndex={-1}
                 className="max-h-[calc(100vh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
                 <div className="border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-700">
-                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Remove Agency Logo</h3>
+                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Remove Department Logo</h3>
                 </div>
                 <div className="px-5 py-4 sm:px-6">
                     <div className="flex items-center gap-3.5 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 mb-4 dark:border-amber-800/50 dark:bg-amber-950/40">
@@ -63,7 +63,7 @@ export function RemoveLogoModal({ department, onClose, onDeleteDepartmentLogo, i
                         </div>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-300">
-                        Removing the logo will reset the agency icon to the default system placeholder for all administrative views.
+                        Removing the logo will reset the department icon to the default system placeholder for all administrative views.
                     </p>
 
                     {logoError ? (

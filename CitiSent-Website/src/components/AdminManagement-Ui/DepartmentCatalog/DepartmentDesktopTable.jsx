@@ -1,6 +1,6 @@
 import { FiEdit2, FiImage, FiToggleLeft, FiToggleRight, FiTrash2, FiUploadCloud, FiXCircle } from 'react-icons/fi'
 
-export function AgencyDesktopTable({
+export function DepartmentDesktopTable({
     catalog,
     busyDepartmentSlug,
     logoErrorBySlug,
@@ -24,7 +24,7 @@ export function AgencyDesktopTable({
                     <thead>
                         <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
                             <th className="pl-6 pr-3 py-3">Logo</th>
-                            <th className="px-3 py-3">Agency</th>
+                            <th className="px-3 py-3">Department</th>
                             <th className="px-3 py-3">Slug</th>
                             <th className="px-3 py-3">Status</th>
                             <th className="pl-3 pr-6 py-3 text-center">Actions</th>
@@ -111,7 +111,7 @@ export function AgencyDesktopTable({
                                                 type="button"
                                                 disabled={isBusy}
                                                 onClick={() => onOpenRenameModal(department)}
-                                                title="Rename agency"
+                                                title="Rename department"
                                                 aria-label={`Rename ${department.label}`}
                                                 className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                                             >
@@ -121,7 +121,7 @@ export function AgencyDesktopTable({
                                                 type="button"
                                                 disabled={isBusy}
                                                 onClick={() => onToggleDepartmentActive(department)}
-                                                title={department.isActive ? 'Deactivate agency' : 'Activate agency'}
+                                                title={department.isActive ? 'Deactivate department' : 'Activate department'}
                                                 aria-label={`${department.isActive ? 'Deactivate' : 'Activate'} ${department.label}`}
                                                 className={`grid h-8 w-8 place-items-center rounded-lg border transition-all disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs ${
                                                     department.isActive
@@ -139,7 +139,7 @@ export function AgencyDesktopTable({
                                                 type="button"
                                                 disabled={isBusy}
                                                 onClick={() => onOpenDeleteModal(department)}
-                                                title="Delete agency"
+                                                title="Delete department"
                                                 aria-label={`Delete ${department.label}`}
                                                 className="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-all disabled:cursor-not-allowed disabled:opacity-60 shadow-2xs dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-900/40"
                                             >
@@ -154,7 +154,7 @@ export function AgencyDesktopTable({
                         {catalog.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="pl-6 pr-6 py-10 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-                                    No agencies found in catalog.
+                                    No departments found in catalog.
                                 </td>
                             </tr>
                         ) : null}

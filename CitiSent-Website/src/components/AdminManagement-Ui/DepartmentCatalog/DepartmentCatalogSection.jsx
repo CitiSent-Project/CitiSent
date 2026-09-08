@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 import { validateLogoFile } from './utils'
-import { CreateAgencyForm } from './CreateAgencyForm'
-import { AgencyMobileCard } from './AgencyMobileCard'
-import { AgencyDesktopTable } from './AgencyDesktopTable'
-import { RenameAgencyModal } from './RenameAgencyModal'
-import { DeleteAgencyModal } from './DeleteAgencyModal'
+import { CreateDepartmentForm } from './CreateDepartmentForm'
+import { DepartmentMobileCard } from './DepartmentMobileCard'
+import { DepartmentDesktopTable } from './DepartmentDesktopTable'
+import { RenameDepartmentModal } from './RenameDepartmentModal'
+import { DeleteDepartmentModal } from './DeleteDepartmentModal'
 import { RemoveLogoModal } from './RemoveLogoModal'
 
-export function AgencyCatalogSection({
+export function DepartmentCatalogSection({
     departmentCatalog = [],
     onCreateDepartment,
     onUpdateDepartment,
@@ -106,7 +106,7 @@ export function AgencyCatalogSection({
         setBusyDepartmentSlug('')
 
         if (!result?.ok) {
-            setLogoError(department.id, result?.message || 'Unable to update agency logo.')
+            setLogoError(department.id, result?.message || 'Unable to update department logo.')
         }
     }
 
@@ -130,7 +130,7 @@ export function AgencyCatalogSection({
         setBusyDepartmentSlug('')
         
         if (!result?.ok) {
-            setLogoError(payload.departmentSlug, result?.message || 'Unable to remove agency logo.')
+            setLogoError(payload.departmentSlug, result?.message || 'Unable to remove department logo.')
         }
         return result
     }
@@ -139,19 +139,19 @@ export function AgencyCatalogSection({
         <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all sm:p-6 dark:border-slate-700/80 dark:bg-slate-800">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Agency Catalog</h2>
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Department Catalog</h2>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        Manage agency names, availability, and official logos shown across CitiSent.
+                        Manage department names, availability, and official logos shown across CitiSent.
                     </p>
                 </div>
             </div>
 
-            <CreateAgencyForm onCreateDepartment={onCreateDepartment} />
+            <CreateDepartmentForm onCreateDepartment={onCreateDepartment} />
 
             {/* Mobile Card List View */}
             <div className="mt-5 space-y-3 md:hidden">
                 {sortedCatalog.map((department) => (
-                    <AgencyMobileCard
+                    <DepartmentMobileCard
                         key={department.id}
                         department={department}
                         isBusy={busyDepartmentSlug === department.id}
@@ -166,13 +166,13 @@ export function AgencyCatalogSection({
 
                 {sortedCatalog.length === 0 ? (
                     <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-8 text-center dark:border-slate-700 dark:bg-slate-800/50">
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">No agencies found in catalog.</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">No departments found in catalog.</p>
                     </div>
                 ) : null}
             </div>
 
             {/* Desktop Table View */}
-            <AgencyDesktopTable
+            <DepartmentDesktopTable
                 catalog={sortedCatalog}
                 busyDepartmentSlug={busyDepartmentSlug}
                 logoErrorBySlug={logoErrorBySlug}
@@ -183,14 +183,14 @@ export function AgencyCatalogSection({
                 onOpenDeleteModal={handleOpenDeleteModal}
             />
 
-            <RenameAgencyModal
+            <RenameDepartmentModal
                 department={renameModal}
                 onClose={handleCloseRenameModal}
                 onUpdateDepartment={handleUpdateDepartmentWrapper}
                 isBusy={renameModal ? busyDepartmentSlug === renameModal.id : false}
             />
 
-            <DeleteAgencyModal
+            <DeleteDepartmentModal
                 department={deleteModal}
                 onClose={handleCloseDeleteModal}
                 onDeleteDepartment={handleDeleteDepartmentWrapper}

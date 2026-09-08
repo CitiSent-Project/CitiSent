@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PieChart } from '../../components/Dashboard-Ui/Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
-import { AgencyCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips, EmotionFilterChips } from '../../components/Reports-Ui'
+import { DepartmentCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips, EmotionFilterChips } from '../../components/Reports-Ui'
 import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reports/reportAccessController'
 import { filterUserReportsByCategory, buildWeeklyReportTrend } from '../../controllers/reports/userReportsController'
@@ -81,7 +81,7 @@ export function ByCategory({
   const cardsWithAllFilter = useMemo(() => {
     const scopedAgencies = getScopedAgencyFilters({ agencies: categoryAgencyCards, profile })
     if (hasAllAccess) {
-      return [{ id: ALL_CATEGORY_FILTER_ID, label: 'All Agencies', tone: 'bg-slate-100' }, ...scopedAgencies]
+      return [{ id: ALL_CATEGORY_FILTER_ID, label: 'All Departments', tone: 'bg-slate-100' }, ...scopedAgencies]
     }
 
     return scopedAgencies
@@ -138,8 +138,9 @@ export function ByCategory({
     emotionFilter,
   ])
 
-  const selectedAgencyLabel =
-    cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Agencies'
+  // The label shown in the feed header badge.
+  const selectedDepartmentLabel =
+    cardsWithAllFilter.find((a) => a.id === effectiveSelectedAgencyId)?.label || 'All Departments'
 
   const urgencyChips = ['All Urgency', 'Critical', 'High', 'Medium', 'Low']
   const reportStats = useMemo(() => {
@@ -261,7 +262,7 @@ export function ByCategory({
           </div>
         </section>
 
-        <AgencyCardsGrid
+        <DepartmentCardsGrid
           items={cardsWithAllFilter}
           selectedItemId={effectiveSelectedAgencyId}
           onSelectItem={handleSelectAgency}
@@ -269,9 +270,9 @@ export function ByCategory({
 
         <section className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm w-full min-w-0 dark:border-slate-700/80 dark:bg-slate-800">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-700">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Report Feed by Agency</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Report Feed by Department</h2>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-cyan-900 dark:bg-blue-900/40 dark:text-cyan-200">
-              {selectedAgencyLabel}
+              {selectedDepartmentLabel}
             </span>
           </div>
 

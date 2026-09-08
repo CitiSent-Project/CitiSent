@@ -299,7 +299,7 @@ function AdminManagementSkeleton() {
     <div className="space-y-6">
       <HeaderSkeleton titleWidth="w-52" actionWidth="w-36" />
 
-      {/* Agency Catalog Cards */}
+      {/* Department Catalog Cards */}
       <section aria-hidden="true" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {renderRepeated(3, (index) => (
           <CardSkeleton key={index} className="p-5">

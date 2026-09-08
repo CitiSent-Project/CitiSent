@@ -3,7 +3,7 @@ import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibili
 import { getStructuredInputError } from '../../../utils/structuredInputValidation'
 import { toSlug } from './utils'
 
-export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isBusy }) {
+export function RenameDepartmentModal({ department, onClose, onUpdateDepartment, isBusy }) {
     const [renameName, setRenameName] = useState('')
     const [renameSlug, setRenameSlug] = useState('')
     const [renameError, setRenameError] = useState('')
@@ -31,7 +31,7 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
         const nextName = String(renameName || '').trim()
         const nextSlug = toSlug(renameSlug)
         if (!nextName) {
-            setRenameError('Agency name is required.')
+            setRenameError('Department name is required.')
             return
         }
 
@@ -57,7 +57,7 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
             return
         }
 
-        setRenameError(result?.message || 'Unable to update agency name.')
+        setRenameError(result?.message || 'Unable to update department name.')
     }
 
     return (
@@ -73,12 +73,12 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
                 ref={renameModalRef}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Rename agency modal"
+                aria-label="Rename department modal"
                 tabIndex={-1}
                 className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] border border-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
                 <div className="border-b border-slate-100 px-5 py-4 sm:px-6 dark:border-slate-700/80">
-                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Rename Agency</h3>
+                    <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Rename Department</h3>
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                         Update the display name for {department.label}.
                     </p>
@@ -86,7 +86,7 @@ export function RenameAgencyModal({ department, onClose, onUpdateDepartment, isB
 
                 <form onSubmit={handleSubmitRenameDepartment} className="space-y-4 px-5 py-5 sm:px-6">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Agency Name</label>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">Department Name</label>
                         <input
                             type="text"
                             value={renameName}

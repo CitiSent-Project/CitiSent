@@ -9,6 +9,7 @@ import {
   AuthChoiceField,
   AuthCityFooter,
   AuthInputField,
+  AuthLegalConsent,
   AuthSelectField,
   authApi,
 } from "../../modules/auth";
@@ -43,6 +44,8 @@ const INITIAL_FIELD_ERRORS = {
   barangay: "",
   password: "",
   confirmPassword: "",
+  agreeTerms: "",
+  agreePrivacy: "",
 };
 
 function mapRegisterErrorToFieldErrors(errorMessage) {
@@ -146,6 +149,8 @@ export default function CreateAccountScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh();
   const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
 
@@ -294,6 +299,14 @@ export default function CreateAccountScreen() {
       nextErrors.confirmPassword = "Passwords do not match.";
     }
 
+    if (!agreeTerms) {
+      nextErrors.agreeTerms = "You must agree to the Terms & Conditions.";
+    }
+
+    if (!agreePrivacy) {
+      nextErrors.agreePrivacy = "You must acknowledge the Privacy Notice.";
+    }
+
     setFieldErrors(nextErrors);
 
     return {
@@ -308,7 +321,9 @@ export default function CreateAccountScreen() {
         !nextErrors.clientType &&
         !nextErrors.barangay &&
         !nextErrors.password &&
-        !nextErrors.confirmPassword,
+        !nextErrors.confirmPassword &&
+        !nextErrors.agreeTerms &&
+        !nextErrors.agreePrivacy,
       trimmedFname,
       trimmedMname,
       trimmedLname,
@@ -568,6 +583,21 @@ export default function CreateAccountScreen() {
               returnKeyType="go"
               onSubmitEditing={handleCreateAccount}
               error={fieldErrors.confirmPassword}
+            />
+
+            <AuthLegalConsent
+              agreeTerms={agreeTerms}
+              onToggleTerms={() => {
+                setAgreeTerms((prev) => !prev);
+                setFieldErrors((prev) => ({ ...prev, agreeTerms: "" }));
+              }}
+              termsError={fieldErrors.agreeTerms}
+              agreePrivacy={agreePrivacy}
+              onTogglePrivacy={() => {
+                setAgreePrivacy((prev) => !prev);
+                setFieldErrors((prev) => ({ ...prev, agreePrivacy: "" }));
+              }}
+              privacyError={fieldErrors.agreePrivacy}
             />
 
             <AuthActionButton

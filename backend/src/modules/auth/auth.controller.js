@@ -100,7 +100,7 @@ export const authController = {
   },
 
   async sendGuestOtp(req, res) {
-    const result = await authService.sendGuestOtp(req.body.phoneNumber);
+    const result = await authService.sendGuestOtp(req.body.email);
 
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -109,10 +109,10 @@ export const authController = {
   },
 
   async verifyGuestOtp(req, res) {
-    const { phoneNumber, otp } = req.body;
+    const { email, otp } = req.body;
     const currentGuestId = req.user?.id || null;
     const result = await authService.verifyGuestOtp(
-      phoneNumber,
+      email,
       otp,
       currentGuestId,
     );

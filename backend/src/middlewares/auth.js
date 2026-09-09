@@ -43,7 +43,7 @@ export async function requireAuth(req, _res, next) {
           role: "guest",
           isGuest: true,
           isVerified: Boolean(guestPayload.isVerified),
-          phoneNumber: guestPayload.phoneNumber || null,
+          email: guestPayload.email || null,
         };
         req.accessToken = token;
         req.perf?.add("auth", Date.now() - authStart);

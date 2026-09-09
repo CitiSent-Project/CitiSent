@@ -5,72 +5,63 @@ const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds cooldown between sends
 const MAX_VERIFY_ATTEMPTS = 5;
 const SEND_RATE_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
-const SEND_RATE_MAX = 3; // max 3 OTP requests per phone number per 10 min
+const SEND_RATE_MAX = 3; // max 3 OTP requests per email per 10 min
 
 /**
- * In-memory OTP storage for guest phone verifications.
+ * In-memory OTP storage for guest Gmail verifications.
  * @type {Map<string, { hash: string, expiresAt: number, attempts: number, lastSentAt: number }>}
  */
 const guestOtpStore = new Map();
 
 /**
- * Rate limit tracking per phone number.
+ * Rate limit tracking per email address.
  * @type {Map<string, { count: number, windowStart: number }>}
  */
 const guestSendRateStore = new Map();
 
 /**
- * Normalizes and validates Philippine mobile phone numbers.
- * Supports inputs:
- *  - 09XXXXXXXXX (11 digits)
- *  - 9XXXXXXXXX (10 digits)
- *  - +639XXXXXXXXX (13 chars)
- *  - 639XXXXXXXXX (12 digits)
- * Returns normalized E.164-style format: "+639XXXXXXXXX"
- * Throws an Error if the phone number is invalid.
+ * Normalizes and validates that the email address is a valid Gmail address.
+ * Rejects non-Gmail addresses (e.g. yahoo.com, outlook.com, hotmail.com, company.com).
+ * Returns normalized lowercase trimmed email string.
  */
-export function normalizePhilippinePhoneNumber(phoneNumber) {
-  if (!phoneNumber || typeof phoneNumber !== "string") {
-    throw new Error("Phone number is required");
+export function normalizeGmailAddress(email) {
+  if (!email || typeof email !== "string") {
+    throw new Error("Please enter a valid Gmail address.");
   }
 
-  // Strip all non-digit characters except leading +
-  const cleaned = phoneNumber.trim().replace(/[^\d+]/g, "");
+  const normalized = email.trim().toLowerCase();
 
-  let digits = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
-
-  // If starts with 09 (11 digits: 09XXXXXXXXX)
-  if (digits.startsWith("09") && digits.length === 11) {
-    digits = "63" + digits.slice(1);
-  } else if (digits.startsWith("9") && digits.length === 10) {
-    // 9XXXXXXXXX (10 digits)
-    digits = "63" + digits;
-  } else if (digits.startsWith("639") && digits.length === 12) {
-    // 639XXXXXXXXX (12 digits) - already has 63
-  } else {
-    throw new Error(
-      "Invalid Philippine mobile number. Please use the format 09XXXXXXXXX.",
-    );
+  // Basic email pattern check
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    throw new Error("Please enter a valid Gmail address.");
   }
 
-  // Must now be exactly 12 digits starting with 639
-  if (!/^639\d{9}$/.test(digits)) {
-    throw new Error(
-      "Invalid Philippine mobile number. Please use the format 09XXXXXXXXX.",
-    );
+  // Gmail domain check
+  const atIndex = normalized.lastIndexOf("@");
+  const domain = normalized.slice(atIndex + 1);
+
+  if (domain !== "gmail.com") {
+    throw new Error("Guest verification currently requires a Gmail address.");
   }
 
-  return `+${digits}`;
+  const localPart = normalized.slice(0, atIndex);
+  if (!localPart || localPart.length < 1) {
+    throw new Error("Please enter a valid Gmail address.");
+  }
+
+  return normalized;
 }
 
-export function isValidPhilippinePhoneNumber(phoneNumber) {
+export function isGmailAddress(email) {
   try {
-    normalizePhilippinePhoneNumber(phoneNumber);
+    normalizeGmailAddress(email);
     return true;
   } catch {
     return false;
   }
 }
+
+export const isValidGmailAddress = isGmailAddress;
 
 function hashOtp(otp) {
   return crypto.createHash("sha256").update(String(otp).trim()).digest("hex");
@@ -97,17 +88,17 @@ function pruneExpiredOtps() {
   }
 }
 
-export const guestOtpService = {
+export const guestEmailOtpService = {
   /**
-   * Check send rate limits and cooldown for the normalized phone number.
-   * Throws an error with user-friendly message if rate limited.
+   * Check send rate limits and cooldown for the normalized email.
+   * Throws an error with a user-friendly message if rate limited.
    */
-  checkSendRateLimit(normalizedPhone) {
+  checkSendRateLimit(normalizedEmail) {
     pruneExpiredOtps();
     const now = Date.now();
 
-    // 1. Check active resend cooldown
-    const existingEntry = guestOtpStore.get(normalizedPhone);
+    // 1. Check active resend cooldown (60 seconds)
+    const existingEntry = guestOtpStore.get(normalizedEmail);
     if (existingEntry && existingEntry.lastSentAt) {
       const elapsed = now - existingEntry.lastSentAt;
       if (elapsed < RESEND_COOLDOWN_MS) {
@@ -118,8 +109,8 @@ export const guestOtpService = {
       }
     }
 
-    // 2. Check 10-minute window rate limit
-    const rateEntry = guestSendRateStore.get(normalizedPhone);
+    // 2. Check 10-minute window rate limit (max 3)
+    const rateEntry = guestSendRateStore.get(normalizedEmail);
     if (rateEntry && now - rateEntry.windowStart <= SEND_RATE_WINDOW_MS) {
       if (rateEntry.count >= SEND_RATE_MAX) {
         const waitMs = SEND_RATE_WINDOW_MS - (now - rateEntry.windowStart);
@@ -130,21 +121,21 @@ export const guestOtpService = {
       }
       rateEntry.count += 1;
     } else {
-      guestSendRateStore.set(normalizedPhone, { count: 1, windowStart: now });
+      guestSendRateStore.set(normalizedEmail, { count: 1, windowStart: now });
     }
   },
 
   /**
    * Generates a new 6-digit OTP, stores its SHA-256 hash, and invalidates any previous code.
-   * Returns plaintext OTP to be dispatched via SMS.
+   * Returns plaintext OTP to be dispatched via Email.
    */
-  createOtp(normalizedPhone) {
+  createOtp(normalizedEmail) {
     const plainOtp = generateSecureOtp();
     const hashed = hashOtp(plainOtp);
     const now = Date.now();
 
-    // Overwrites and invalidates any previous OTP for this phone number
-    guestOtpStore.set(normalizedPhone, {
+    // Overwrites and invalidates any previous OTP for this email
+    guestOtpStore.set(normalizedEmail, {
       hash: hashed,
       expiresAt: now + OTP_TTL_MS,
       attempts: 0,
@@ -159,22 +150,22 @@ export const guestOtpService = {
    * Enforces attempt limits (max 5) and expiration.
    * On success, deletes the OTP (single-use) and returns true.
    */
-  verifyOtp(normalizedPhone, submittedOtp) {
+  verifyOtp(normalizedEmail, submittedOtp) {
     pruneExpiredOtps();
-    const entry = guestOtpStore.get(normalizedPhone);
+    const entry = guestOtpStore.get(normalizedEmail);
 
     if (!entry) {
-      throw new Error("No verification code found or it has already expired. Please request a new one.");
+      throw new Error("This verification code has expired. Please request a new code.");
     }
 
     if (Date.now() > entry.expiresAt) {
-      guestOtpStore.delete(normalizedPhone);
-      throw new Error("Verification code has expired. Please request a new one.");
+      guestOtpStore.delete(normalizedEmail);
+      throw new Error("This verification code has expired. Please request a new code.");
     }
 
     if (entry.attempts >= MAX_VERIFY_ATTEMPTS) {
-      guestOtpStore.delete(normalizedPhone);
-      throw new Error("Too many failed attempts. Your verification code has been invalidated. Please request a new one.");
+      guestOtpStore.delete(normalizedEmail);
+      throw new Error("Too many attempts. Please request a new verification code.");
     }
 
     const inputHash = hashOtp(submittedOtp);
@@ -183,15 +174,15 @@ export const guestOtpService = {
       const remaining = MAX_VERIFY_ATTEMPTS - entry.attempts;
 
       if (remaining <= 0) {
-        guestOtpStore.delete(normalizedPhone);
-        throw new Error("Too many failed attempts. Your verification code has been invalidated. Please request a new one.");
+        guestOtpStore.delete(normalizedEmail);
+        throw new Error("Too many attempts. Please request a new verification code.");
       }
 
-      throw new Error(`Incorrect verification code. ${remaining} attempt(s) remaining.`);
+      throw new Error(`Incorrect verification code. Please try again. (${remaining} attempt(s) remaining)`);
     }
 
     // Success: single-use, immediately invalidate
-    guestOtpStore.delete(normalizedPhone);
+    guestOtpStore.delete(normalizedEmail);
     return true;
   },
 

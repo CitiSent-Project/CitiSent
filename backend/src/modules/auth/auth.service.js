@@ -27,11 +27,11 @@ import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import { env } from "../../config/env.js";
 import {
-  guestOtpService,
-  normalizePhilippinePhoneNumber,
-} from "../../shared/security/guestOtp.service.js";
+  guestEmailOtpService,
+  normalizeGmailAddress,
+} from "../../shared/security/guestEmailOtp.service.js";
 import { signGuestToken } from "../../shared/security/guestTokens.js";
-import { smsProvider } from "../../shared/sms/smsProvider.js";
+import { sendGuestVerificationOtpEmail } from "../../shared/email/mailer.js";
 import { createAdminSupabaseClient } from "../../config/supabase.js";
 
 function normalizeEmail(value) {
@@ -593,7 +593,7 @@ export const authService = {
 
   async createGuestSession() {
     const guestId = crypto.randomUUID();
-    const token = signGuestToken({ guestId, isVerified: false });
+    const token = signGuestToken({ guestId, isVerified: false, email: null });
 
     return {
       token,
@@ -607,27 +607,30 @@ export const authService = {
     };
   },
 
-  async sendGuestOtp(phoneNumber) {
-    let normalizedPhone;
+  async sendGuestOtp(email) {
+    let normalizedEmail;
     try {
-      normalizedPhone = normalizePhilippinePhoneNumber(phoneNumber);
+      normalizedEmail = normalizeGmailAddress(email);
     } catch (err) {
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
     try {
-      guestOtpService.checkSendRateLimit(normalizedPhone);
+      guestEmailOtpService.checkSendRateLimit(normalizedEmail);
     } catch (err) {
       throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
     }
 
-    const plainOtp = guestOtpService.createOtp(normalizedPhone);
+    const plainOtp = guestEmailOtpService.createOtp(normalizedEmail);
 
     try {
-      await smsProvider.sendOtp({ phoneNumber: normalizedPhone, otp: plainOtp });
+      await sendGuestVerificationOtpEmail({
+        toEmail: normalizedEmail,
+        otp: plainOtp,
+      });
     } catch (err) {
       throw new AppError(
-        "Failed to deliver verification SMS. Please check your number and try again.",
+        "We couldn't send the verification code. Please try again.",
         StatusCodes.BAD_GATEWAY,
         { error: err.message },
       );
@@ -635,27 +638,26 @@ export const authService = {
 
     return {
       sent: true,
-      phoneNumber: normalizedPhone,
+      email: normalizedEmail,
       cooldownSeconds: 60,
       expiresInSeconds: 300,
     };
   },
 
-  async verifyGuestOtp(phoneNumber, otp, currentGuestId = null) {
-    let normalizedPhone;
+  async verifyGuestOtp(email, otp, currentGuestId = null) {
+    let normalizedEmail;
     try {
-      normalizedPhone = normalizePhilippinePhoneNumber(phoneNumber);
+      normalizedEmail = normalizeGmailAddress(email);
     } catch (err) {
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
     try {
-      guestOtpService.verifyOtp(normalizedPhone, otp);
+      guestEmailOtpService.verifyOtp(normalizedEmail, otp);
     } catch (err) {
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
-    const cleanDigits = normalizedPhone.replace(/\D/g, "");
     let guestUserId = null;
 
     try {
@@ -663,21 +665,21 @@ export const authService = {
       if (adminDb) {
         const { data: existingProfile } = await adminDb
           .from("profiles")
-          .select("user_id, phone_number, account_type")
-          .eq("phone_number", cleanDigits)
+          .select("user_id, email, account_type")
+          .eq("email", normalizedEmail)
           .maybeSingle();
 
         if (existingProfile?.user_id) {
           guestUserId = existingProfile.user_id;
         } else {
-          const guestEmail = `guest_${cleanDigits}@guest.citisent.local`;
+          const usernameSuffix = normalizedEmail.split("@")[0].slice(0, 15);
           const { data: createdAuth } = await adminDb.auth.admin.createUser({
-            email: guestEmail,
+            email: normalizedEmail,
             email_confirm: true,
             user_metadata: {
               role: "guest",
               is_guest: true,
-              phone_number: cleanDigits,
+              email: normalizedEmail,
             },
           });
 
@@ -686,8 +688,9 @@ export const authService = {
             await adminDb
               .from("profiles")
               .update({
-                phone_number: cleanDigits,
+                email: normalizedEmail,
                 account_type: "guest",
+                username: `guest_${usernameSuffix}`,
                 fname: "Guest",
                 lname: "User",
                 barangay: "Poblacion 1",
@@ -707,7 +710,7 @@ export const authService = {
     const token = signGuestToken({
       guestId: guestUserId,
       isVerified: true,
-      phoneNumber: normalizedPhone,
+      email: normalizedEmail,
     });
 
     return {
@@ -718,9 +721,10 @@ export const authService = {
         role: "guest",
         isGuest: true,
         isVerified: true,
-        phoneNumber: normalizedPhone,
+        email: normalizedEmail,
         username: "Verified Guest",
       },
     };
   },
 };
+

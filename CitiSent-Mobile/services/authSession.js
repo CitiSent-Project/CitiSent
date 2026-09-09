@@ -95,11 +95,13 @@ function normalizeUser(user, options = {}) {
 
   const isGuest = Boolean(user.isGuest || user.role === "guest");
   const isVerified = isGuest ? Boolean(user.isVerified) : true;
+  const email = user.email || user.user_metadata?.email || "";
 
   return {
     ...user,
     username,
     phoneNumber,
+    email,
     gender,
     profileImage,
     isGuest,
@@ -251,6 +253,11 @@ export function getAuthUsername(fallbackValue = "") {
 export function getAuthPhoneNumber(fallbackValue = "") {
   const phoneNumber = normalizePhoneNumber(sessionUser?.phoneNumber);
   return phoneNumber || normalizePhoneNumber(fallbackValue);
+}
+
+export function getAuthEmail(fallbackValue = "") {
+  const email = normalizeText(sessionUser?.email);
+  return email || normalizeText(fallbackValue);
 }
 
 export function isGuestUser() {

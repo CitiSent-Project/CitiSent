@@ -167,14 +167,14 @@ export const authApi = {
     }
   },
 
-  sendGuestOtp: async (phoneNumber) => {
-    const response = await api.post("/auth/guest/send-otp", { phoneNumber });
+  sendGuestOtp: async (email) => {
+    const response = await api.post("/auth/guest/send-otp", { email });
     return response?.data ?? response;
   },
 
-  verifyGuestOtp: async (phoneNumber, otp) => {
+  verifyGuestOtp: async (email, otp) => {
     const response = await api.post("/auth/guest/verify-otp", {
-      phoneNumber,
+      email,
       otp,
     });
     const authPayload = unwrapAuthPayload(response);

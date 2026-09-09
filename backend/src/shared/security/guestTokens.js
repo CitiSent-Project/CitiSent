@@ -8,14 +8,14 @@ const GUEST_JWT_SECRET =
 /**
  * Signs a guest session token (expires in 7 days).
  */
-export function signGuestToken({ guestId, isVerified = false, phoneNumber = null }) {
+export function signGuestToken({ guestId, isVerified = false, email = null }) {
   return jwt.sign(
     {
       guestId,
       role: "guest",
       isGuest: true,
       isVerified: Boolean(isVerified),
-      phoneNumber: phoneNumber || null,
+      email: email || null,
       purpose: "guest_session",
     },
     GUEST_JWT_SECRET,

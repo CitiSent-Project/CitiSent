@@ -11,6 +11,7 @@ import { RefreshableScrollView, usePullToRefresh, useNotifications, Colors } fro
 import { AuthCityFooter, authApi } from "../../modules/auth";
 import {
   getAuthPhoneNumber,
+  getAuthEmail,
   getAuthUsername,
   getAuthGender,
   getAuthProfileImage,
@@ -37,9 +38,11 @@ export default function Profile() {
   };
 
   const resolveDisplayPhone = () => {
+    if (isGuest) {
+      return isVerified ? (getAuthEmail("") || "Verified Guest (Gmail)") : "Unverified Guest";
+    }
     const raw = getAuthPhoneNumber("");
     if (raw) return raw;
-    if (isGuest) return isVerified ? "Verified Phone" : "Unverified Guest";
     return "";
   };
 
@@ -127,8 +130,8 @@ export default function Profile() {
             <Text className="text-sm font-bold text-blue-900">Guest Account</Text>
             <Text className="mt-1 text-xs text-blue-700 leading-4">
               {isVerified
-                ? "Your phone number is verified. Create a permanent account anytime to keep your reports saved."
-                : "You are browsing as a guest. When you submit a report, you will verify your phone number via SMS."}
+                ? "Your Gmail address is verified. Create a permanent account anytime to keep your reports saved."
+                : "You are browsing as a guest. When you submit a report, you will verify your Gmail address."}
             </Text>
             <Pressable
               onPress={() => router.push("/auth/CreateAccount")}

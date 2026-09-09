@@ -3,20 +3,20 @@ import assert from "node:assert/strict";
 
 import { authService } from "./auth.service.js";
 import {
-  guestOtpService,
-  normalizePhilippinePhoneNumber,
-  isValidPhilippinePhoneNumber,
-} from "../../shared/security/guestOtp.service.js";
+  guestEmailOtpService,
+  normalizeGmailAddress,
+  isValidGmailAddress,
+} from "../../shared/security/guestEmailOtp.service.js";
 import {
   signGuestToken,
   tryVerifyGuestToken,
 } from "../../shared/security/guestTokens.js";
-import { smsProvider, mockSmsProvider } from "../../shared/sms/smsProvider.js";
 import { reportsService } from "../reports/reports.service.js";
 import { reportsRepository } from "../reports/reports.repository.js";
 import { departmentsService } from "../departments/departments.service.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { reportsSentimentClient } from "../reports/reports.sentiment.js";
+import { mailerService } from "../../shared/email/mailer.js";
 
 // Stub sentiment client to avoid external HTTP requests and timeouts
 reportsSentimentClient.analyzeReport = async () => ({
@@ -27,10 +27,8 @@ reportsSentimentClient.analyzeReport = async () => ({
 
 // Helper to reset stores between test runs
 function resetGuestStores() {
-  guestOtpService.clearAll();
-  mockSmsProvider.clear();
+  guestEmailOtpService.clearAll();
 }
-
 
 test("1. Guest can obtain a guest session with unverified initial state", async () => {
   resetGuestStores();
@@ -47,49 +45,74 @@ test("1. Guest can obtain a guest session with unverified initial state", async 
   assert.equal(verifiedPayload.isVerified, false);
 });
 
-test("2. Philippine phone number normalization", () => {
-  assert.equal(normalizePhilippinePhoneNumber("09171234567"), "+639171234567");
-  assert.equal(normalizePhilippinePhoneNumber("9171234567"), "+639171234567");
-  assert.equal(normalizePhilippinePhoneNumber("+639171234567"), "+639171234567");
-  assert.equal(normalizePhilippinePhoneNumber("639171234567"), "+639171234567");
-  assert.equal(normalizePhilippinePhoneNumber("0917-123-4567"), "+639171234567");
-  assert.equal(normalizePhilippinePhoneNumber("0917 123 4567"), "+639171234567");
+test("2. Gmail address normalization and non-Gmail rejection", () => {
+  // Valid Gmail addresses normalized to lowercase trimmed
+  assert.equal(normalizeGmailAddress("User@gmail.com"), "user@gmail.com");
+  assert.equal(normalizeGmailAddress("  john.doe@GMAIL.COM  "), "john.doe@gmail.com");
+  assert.equal(normalizeGmailAddress("citizen123@gmail.com"), "citizen123@gmail.com");
 
-  // Rejections
-  assert.throws(() => normalizePhilippinePhoneNumber("028123456")); // landline
-  assert.throws(() => normalizePhilippinePhoneNumber("12345")); // too short
-  assert.throws(() => normalizePhilippinePhoneNumber("+14155552671")); // US number
-  assert.equal(isValidPhilippinePhoneNumber("09181234567"), true);
-  assert.equal(isValidPhilippinePhoneNumber("08123456789"), false);
+  assert.equal(isValidGmailAddress("test@gmail.com"), true);
+  assert.equal(isValidGmailAddress("test@GMAIL.COM"), true);
+
+  // Reject non-Gmail providers as required
+  assert.throws(() => normalizeGmailAddress("example@yahoo.com"), /Guest verification currently requires a Gmail address/);
+  assert.throws(() => normalizeGmailAddress("example@hotmail.com"), /Guest verification currently requires a Gmail address/);
+  assert.throws(() => normalizeGmailAddress("example@outlook.com"), /Guest verification currently requires a Gmail address/);
+  assert.throws(() => normalizeGmailAddress("example@proton.me"), /Guest verification currently requires a Gmail address/);
+  assert.throws(() => normalizeGmailAddress("example@company.com"), /Guest verification currently requires a Gmail address/);
+  assert.throws(() => normalizeGmailAddress("invalid-email"), /Please enter a valid Gmail address/);
+
+  assert.equal(isValidGmailAddress("user@yahoo.com"), false);
+  assert.equal(isValidGmailAddress("user@outlook.com"), false);
+  assert.equal(isValidGmailAddress("notanemail"), false);
 });
 
-test("3. Guest can request an OTP dispatched via SMS provider", async () => {
+test("3. Guest can request an OTP dispatched via Gmail mailer", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  const result = await authService.sendGuestOtp(phone);
+  const email = "citizen.reporter@gmail.com";
+  let capturedOtp = null;
+  let capturedRecipient = null;
+
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async ({ toEmail, otp }) => {
+    capturedRecipient = toEmail;
+    capturedOtp = otp;
+    return { success: true };
+  };
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
+
+  const result = await authService.sendGuestOtp(email);
   assert.equal(result.sent, true);
-  assert.equal(result.phoneNumber, "+639171234567");
+  assert.equal(result.email, "citizen.reporter@gmail.com");
   assert.equal(result.cooldownSeconds, 60);
 
-  // Verify mock SMS provider captured the code
-  const lastMsg = mockSmsProvider.getLastMessageFor("+639171234567");
-  assert.ok(lastMsg);
-  assert.match(lastMsg.otp, /^\d{6}$/);
+  // Mailer was called with 6-digit OTP
+  assert.equal(capturedRecipient, "citizen.reporter@gmail.com");
+  assert.ok(capturedOtp);
+  assert.match(capturedOtp, /^\d{6}$/);
 
-  // Ensure plain OTP was NOT returned in response
+  // Ensure plain OTP was NOT returned in the API response
   assert.equal(result.otp, undefined);
 });
 
-test("4. OTP requests are rate limited (cooldown and max requests)", async () => {
+test("4. OTP requests are rate limited (cooldown and max requests)", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  await authService.sendGuestOtp(phone);
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async () => ({ success: true });
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
 
-  // Immediate second request within 60s cooldown must be rejected
+  const email = "rate.limited@gmail.com";
+  await authService.sendGuestOtp(email);
+
+  // Immediate second request within 60s cooldown must be rejected with 429
   await assert.rejects(
-    () => authService.sendGuestOtp(phone),
+    () => authService.sendGuestOtp(email),
     (err) => {
       assert.equal(err.statusCode, 429);
       assert.match(err.message, /Please wait/);
@@ -98,14 +121,24 @@ test("4. OTP requests are rate limited (cooldown and max requests)", async () =>
   );
 });
 
-test("5. Incorrect OTP is rejected with remaining attempts counter", async () => {
+test("5. Incorrect OTP is rejected with remaining attempts counter", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  await authService.sendGuestOtp(phone);
+  let generatedOtp = null;
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async ({ otp }) => {
+    generatedOtp = otp;
+    return { success: true };
+  };
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
+
+  const email = "incorrect.otp@gmail.com";
+  await authService.sendGuestOtp(email);
 
   await assert.rejects(
-    () => authService.verifyGuestOtp(phone, "000000"),
+    () => authService.verifyGuestOtp(email, "000000"),
     (err) => {
       assert.equal(err.statusCode, 400);
       assert.match(err.message, /Incorrect verification code/);
@@ -115,71 +148,94 @@ test("5. Incorrect OTP is rejected with remaining attempts counter", async () =>
   );
 });
 
-test("6. OTP is invalidated after maximum incorrect attempts (5)", async () => {
+test("6. OTP is invalidated after maximum incorrect attempts (5)", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  await authService.sendGuestOtp(phone);
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async () => ({ success: true });
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
+
+  const email = "five.attempts@gmail.com";
+  await authService.sendGuestOtp(email);
 
   for (let i = 0; i < 4; i++) {
-    await assert.rejects(() => authService.verifyGuestOtp(phone, "000000"));
+    await assert.rejects(() => authService.verifyGuestOtp(email, "000000"));
   }
 
   // 5th attempt invalidates
   await assert.rejects(
-    () => authService.verifyGuestOtp(phone, "000000"),
+    () => authService.verifyGuestOtp(email, "000000"),
     (err) => {
-      assert.match(err.message, /Too many failed attempts/);
+      assert.match(err.message, /Too many attempts/);
       return true;
     },
   );
 
   // Subsequent attempt fails as expired/invalid
   await assert.rejects(
-    () => authService.verifyGuestOtp(phone, "000000"),
+    () => authService.verifyGuestOtp(email, "000000"),
     (err) => {
-      assert.match(err.message, /No verification code found/);
+      assert.match(err.message, /This verification code has expired/);
       return true;
     },
   );
 });
 
-test("7. Correct OTP verifies guest and returns verified token", async () => {
+test("7. Correct OTP verifies guest and returns verified token", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  await authService.sendGuestOtp(phone);
+  let capturedOtp = null;
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async ({ otp }) => {
+    capturedOtp = otp;
+    return { success: true };
+  };
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
 
-  const lastMsg = mockSmsProvider.getLastMessageFor("+639171234567");
-  assert.ok(lastMsg);
+  const email = "verified.user@gmail.com";
+  await authService.sendGuestOtp(email);
+  assert.ok(capturedOtp);
 
-  const verifyResult = await authService.verifyGuestOtp(phone, lastMsg.otp);
+  const verifyResult = await authService.verifyGuestOtp(email, capturedOtp);
   assert.equal(verifyResult.verified, true);
   assert.equal(verifyResult.user.isGuest, true);
   assert.equal(verifyResult.user.isVerified, true);
-  assert.equal(verifyResult.user.phoneNumber, "+639171234567");
+  assert.equal(verifyResult.user.email, "verified.user@gmail.com");
 
   const verifiedJwt = tryVerifyGuestToken(verifyResult.token);
   assert.ok(verifiedJwt);
   assert.equal(verifiedJwt.isGuest, true);
   assert.equal(verifiedJwt.isVerified, true);
+  assert.equal(verifiedJwt.email, "verified.user@gmail.com");
 });
 
-test("8. Single-use: OTP cannot be reused after verification", async () => {
+test("8. Single-use: OTP cannot be reused after verification", async (t) => {
   resetGuestStores();
 
-  const phone = "09171234567";
-  await authService.sendGuestOtp(phone);
+  let capturedOtp = null;
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async ({ otp }) => {
+    capturedOtp = otp;
+    return { success: true };
+  };
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
 
-  const lastMsg = mockSmsProvider.getLastMessageFor("+639171234567");
-  await authService.verifyGuestOtp(phone, lastMsg.otp);
+  const email = "single.use@gmail.com";
+  await authService.sendGuestOtp(email);
+  await authService.verifyGuestOtp(email, capturedOtp);
 
   // Trying to use the same OTP again must fail
   await assert.rejects(
-    () => authService.verifyGuestOtp(phone, lastMsg.otp),
+    () => authService.verifyGuestOtp(email, capturedOtp),
     (err) => {
       assert.equal(err.statusCode, 400);
-      assert.match(err.message, /No verification code found/);
+      assert.match(err.message, /This verification code has expired/);
       return true;
     },
   );
@@ -256,9 +312,8 @@ test("10. Verified guest CAN submit a report", async (t) => {
     role: "guest",
     isGuest: true,
     isVerified: true,
-    phoneNumber: "+639171234567",
+    email: "verified.guest@gmail.com",
   };
-
 
   const created = await reportsService.createReport({
     userId: verifiedActor.id,
@@ -362,27 +417,24 @@ test("12. Guest cannot bypass verification by sending arbitrary request body fla
   );
 });
 
-test("13. SMS provider failures are handled gracefully with friendly error", async (t) => {
+test("13. Email sending failures are handled gracefully with friendly error", async (t) => {
   resetGuestStores();
 
-  const origSend = mockSmsProvider.sendOtp;
-  mockSmsProvider.sendOtp = async () => {
-    throw new Error("Carrier network timeout");
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async () => {
+    throw new Error("SMTP connection timeout");
   };
 
   t.after(() => {
-    mockSmsProvider.sendOtp = origSend;
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
   });
 
   await assert.rejects(
-    () => authService.sendGuestOtp("09171234567"),
+    () => authService.sendGuestOtp("fail.smtp@gmail.com"),
     (err) => {
       assert.equal(err.statusCode, 502);
-      assert.match(err.message, /Failed to deliver verification SMS/);
+      assert.match(err.message, /We couldn't send the verification code. Please try again./);
       return true;
     },
   );
 });
-
-
-

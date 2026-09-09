@@ -85,7 +85,7 @@ authRouter.post(
   asyncHandler(authController.resetPasswordWithOtp),
 );
 
-// Guest authentication & phone OTP verification routes
+// Guest authentication & Gmail OTP verification routes
 authRouter.post(
   "/guest",
   asyncHandler(authController.createGuestSession),

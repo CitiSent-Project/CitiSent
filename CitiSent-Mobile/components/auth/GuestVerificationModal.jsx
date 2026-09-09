@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/colors";
@@ -29,9 +28,9 @@ export default function GuestVerificationModal({
   onClose,
   onVerified,
 }) {
-  // Steps: 'phone' | 'otp' | 'success'
-  const [step, setStep] = useState("phone");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  // Steps: 'email' | 'otp' | 'success'
+  const [step, setStep] = useState("email");
+  const [email, setEmail] = useState("");
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
   const inputRefs = useRef([]);
 
@@ -45,8 +44,8 @@ export default function GuestVerificationModal({
   const resendTimerRef = useRef(null);
 
   const resetState = useCallback(() => {
-    setStep("phone");
-    setPhoneNumber("");
+    setStep("email");
+    setEmail("");
     setDigits(Array(OTP_LENGTH).fill(""));
     setError("");
     setIsLoading(false);
@@ -88,22 +87,30 @@ export default function GuestVerificationModal({
     }, 1000);
   }, []);
 
+  // Client-side Gmail validation
+  const validateGmail = (inputEmail) => {
+    const trimmed = (inputEmail || "").trim().toLowerCase();
+    if (!trimmed) {
+      return { valid: false, message: "Please enter your Gmail address." };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      return { valid: false, message: "Please enter a valid Gmail address." };
+    }
+    const domain = trimmed.slice(trimmed.lastIndexOf("@") + 1);
+    if (domain !== "gmail.com") {
+      return {
+        valid: false,
+        message: "Guest verification currently requires a Gmail address.",
+      };
+    }
+    return { valid: true, email: trimmed };
+  };
+
   // Send OTP
   const handleSendOtp = async () => {
-    const rawNumber = phoneNumber.trim().replace(/\D/g, "");
-    if (!rawNumber) {
-      setError("Please enter your Philippine phone number.");
-      return;
-    }
-
-    const fullNumber = rawNumber.startsWith("09")
-      ? rawNumber
-      : rawNumber.startsWith("9")
-      ? "0" + rawNumber
-      : rawNumber;
-
-    if (fullNumber.length !== 11 || !fullNumber.startsWith("09")) {
-      setError("Please enter a valid 11-digit mobile number (e.g. 09171234567).");
+    const check = validateGmail(email);
+    if (!check.valid) {
+      setError(check.message);
       return;
     }
 
@@ -111,7 +118,7 @@ export default function GuestVerificationModal({
     setError("");
 
     try {
-      await authApi.sendGuestOtp(fullNumber);
+      await authApi.sendGuestOtp(check.email);
       setStep("otp");
       setDigits(Array(OTP_LENGTH).fill(""));
       startOtpTimer();
@@ -120,7 +127,9 @@ export default function GuestVerificationModal({
         inputRefs.current[0]?.focus();
       }, 150);
     } catch (err) {
-      setError(err?.message || "Unable to send verification code. Please try again.");
+      setError(
+        err?.message || "We couldn't send the verification code. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -130,24 +139,25 @@ export default function GuestVerificationModal({
   const handleResendOtp = async () => {
     if (resendCooldown > 0 || isLoading) return;
 
+    const check = validateGmail(email);
+    if (!check.valid) {
+      setError(check.message);
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setDigits(Array(OTP_LENGTH).fill(""));
 
-    const rawNumber = phoneNumber.trim().replace(/\D/g, "");
-    const fullNumber = rawNumber.startsWith("09")
-      ? rawNumber
-      : rawNumber.startsWith("9")
-      ? "0" + rawNumber
-      : rawNumber;
-
     try {
-      await authApi.sendGuestOtp(fullNumber);
+      await authApi.sendGuestOtp(check.email);
       startOtpTimer();
       startResendCooldown();
       inputRefs.current[0]?.focus();
     } catch (err) {
-      setError(err?.message || "Unable to resend code. Please try again.");
+      setError(
+        err?.message || "We couldn't send the verification code. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -185,34 +195,33 @@ export default function GuestVerificationModal({
     }
 
     if (otpSecondsLeft === 0) {
-      setError("Your code has expired. Please request a new one.");
+      setError("This verification code has expired. Please request a new code.");
+      return;
+    }
+
+    const check = validateGmail(email);
+    if (!check.valid) {
+      setError(check.message);
       return;
     }
 
     setIsLoading(true);
     setError("");
 
-    const rawNumber = phoneNumber.trim().replace(/\D/g, "");
-    const fullNumber = rawNumber.startsWith("09")
-      ? rawNumber
-      : rawNumber.startsWith("9")
-      ? "0" + rawNumber
-      : rawNumber;
-
     try {
-      await authApi.verifyGuestOtp(fullNumber, otp);
+      await authApi.verifyGuestOtp(check.email, otp);
       clearInterval(otpTimerRef.current);
       clearInterval(resendTimerRef.current);
       setStep("success");
 
-      // Auto-continue after brief positive feedback
+      // Auto-continue report submission after brief positive feedback
       setTimeout(() => {
         if (onVerified) {
           onVerified();
         }
       }, 900);
     } catch (err) {
-      const msg = err?.message || "Verification failed. Please try again.";
+      const msg = err?.message || "Incorrect verification code. Please try again.";
       setError(msg);
 
       if (
@@ -254,11 +263,11 @@ export default function GuestVerificationModal({
               </Pressable>
             )}
 
-            {/* STEP 1: Phone input */}
-            {step === "phone" && (
+            {/* STEP 1: Gmail Input */}
+            {step === "email" && (
               <View>
                 <View className="mb-4 h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 self-center">
-                  <Ionicons name="shield-checkmark" size={26} color="#1D4ED8" />
+                  <Ionicons name="mail" size={24} color="#1D4ED8" />
                 </View>
 
                 <Text
@@ -273,29 +282,32 @@ export default function GuestVerificationModal({
                   style={{ color: Colors.text?.slate || "#4B5563" }}
                 >
                   To help prevent spam and false reports, guest users must verify
-                  their phone number before submitting a report.
+                  their Gmail address before submitting a report.
                 </Text>
 
                 <View className="mb-2">
                   <Text className="mb-1.5 text-xs font-semibold text-slate-700">
-                    Philippine Mobile Number
+                    Gmail address
                   </Text>
                   <View className="flex-row items-center rounded-xl border border-slate-300 bg-slate-50 px-3 py-1">
-                    <Text className="mr-2 text-sm font-bold text-slate-800">
-                      +63
-                    </Text>
-                    <View className="h-5 w-[1px] bg-slate-300 mr-2" />
+                    <Ionicons
+                      name="logo-google"
+                      size={16}
+                      color="#EA4335"
+                      style={{ marginRight: 8 }}
+                    />
                     <TextInput
-                      value={phoneNumber}
+                      value={email}
                       onChangeText={(val) => {
-                        setPhoneNumber(val);
+                        setEmail(val);
                         setError("");
                       }}
-                      placeholder="0917 123 4567"
+                      placeholder="example@gmail.com"
                       placeholderTextColor="#94A3B8"
-                      keyboardType="phone-pad"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
                       className="flex-1 py-2 text-sm font-semibold text-slate-900"
-                      maxLength={14}
                       autoFocus
                     />
                   </View>
@@ -309,11 +321,11 @@ export default function GuestVerificationModal({
 
                 <Pressable
                   onPress={handleSendOtp}
-                  disabled={isLoading || !phoneNumber.trim()}
+                  disabled={isLoading || !email.trim()}
                   className="mt-4 w-full rounded-xl py-3.5 shadow-sm"
                   style={{
                     backgroundColor:
-                      isLoading || !phoneNumber.trim()
+                      isLoading || !email.trim()
                         ? "#93C5FD"
                         : Colors.primaryStrong,
                   }}
@@ -354,7 +366,7 @@ export default function GuestVerificationModal({
                 >
                   We sent a 6-digit code to{"\n"}
                   <Text className="font-bold text-slate-800">
-                    +63 {phoneNumber.replace(/^0/, "")}
+                    {email.trim().toLowerCase()}
                   </Text>
                 </Text>
 
@@ -362,7 +374,7 @@ export default function GuestVerificationModal({
                 <View className="mb-4 items-center">
                   {isOtpExpired ? (
                     <Text className="text-xs font-semibold text-red-500">
-                      Code expired. Please request a new one.
+                      This verification code has expired. Please request a new code.
                     </Text>
                   ) : (
                     <Text className="text-xs text-slate-500">
@@ -439,12 +451,12 @@ export default function GuestVerificationModal({
                 <View className="mt-4 flex-row items-center justify-between px-1">
                   <Pressable
                     onPress={() => {
-                      setStep("phone");
+                      setStep("email");
                       setError("");
                     }}
                   >
                     <Text className="text-xs font-semibold text-slate-500">
-                      Change number
+                      Change email
                     </Text>
                   </Pressable>
 
@@ -471,7 +483,7 @@ export default function GuestVerificationModal({
                 </View>
 
                 <Text className="mb-1 text-center text-xl font-extrabold text-slate-900">
-                  Phone number verified
+                  Email verified
                 </Text>
 
                 <Text className="text-center text-xs text-slate-500">

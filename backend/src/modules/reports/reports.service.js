@@ -185,6 +185,7 @@ export const reportsService = {
 
   async createReport({
     userId,
+    actor,
     issueType,
     description,
     location,
@@ -193,6 +194,28 @@ export const reportsService = {
     attachmentUrl,
     accessToken,
   }) {
+    if (actor?.isGuest) {
+      if (!actor.isVerified) {
+        const error = new AppError(
+          "Guest verification required. Please verify your phone number via OTP before submitting a report.",
+          StatusCodes.FORBIDDEN,
+        );
+        error.code = "GUEST_VERIFICATION_REQUIRED";
+        throw error;
+      }
+
+      // Anti-spam duplicate check: reject exact same report from guest within 60s
+      const duplicateKey = `guest:report:dupe:${actor.id}:${issueType}:${location}:${description}`.slice(0, 150);
+      const isDuplicate = await cacheService.getJSON(duplicateKey);
+      if (isDuplicate) {
+        throw new AppError(
+          "Duplicate report detected. Please wait a moment before submitting again.",
+          StatusCodes.TOO_MANY_REQUESTS,
+        );
+      }
+      await cacheService.setJSON(duplicateKey, true, 60);
+    }
+
     if (latitude === undefined || longitude === undefined) {
       throw new AppError("Location coordinates (latitude and longitude) are required.", StatusCodes.BAD_REQUEST);
     }

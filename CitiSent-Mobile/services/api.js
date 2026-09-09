@@ -52,12 +52,20 @@ async function request(endpoint, options = {}) {
       error.details = parsedBody.details;
       error.status = response.status;
       error.requestId = parsedBody.requestId;
+      error.code = parsedBody.code || parsedBody.details?.code;
     }
+
+    const isGuestVerificationRequired =
+      error.code === "GUEST_VERIFICATION_REQUIRED" ||
+      String(backendMessage || "").includes("Guest verification required");
 
     // Auto-clear stale or expired session on auth failures so the app
     // immediately falls back to local/cached data on subsequent calls
     // without spamming repeated failing network requests.
-    if (response.status === 401 || response.status === 403) {
+    if (
+      (response.status === 401 || response.status === 403) &&
+      !isGuestVerificationRequired
+    ) {
       clearAuthToken();
     }
 

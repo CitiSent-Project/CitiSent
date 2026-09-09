@@ -141,4 +141,52 @@ export const authApi = {
     });
     return response?.data ?? response;
   },
+
+  continueAsGuest: async () => {
+    try {
+      const response = await api.post("/auth/guest", {});
+      const authPayload = unwrapAuthPayload(response);
+      if (authPayload?.token) {
+        setAuthToken(authPayload.token);
+        setAuthUser(authPayload.user, {
+          fallbackUsername: "Guest",
+        });
+      }
+      return authPayload;
+    } catch {
+      // Fallback guest session if offline
+      const guestUser = {
+        id: "guest-" + Date.now(),
+        role: "guest",
+        isGuest: true,
+        isVerified: false,
+        username: "Guest",
+      };
+      setAuthUser(guestUser);
+      return { user: guestUser };
+    }
+  },
+
+  sendGuestOtp: async (phoneNumber) => {
+    const response = await api.post("/auth/guest/send-otp", { phoneNumber });
+    return response?.data ?? response;
+  },
+
+  verifyGuestOtp: async (phoneNumber, otp) => {
+    const response = await api.post("/auth/guest/verify-otp", {
+      phoneNumber,
+      otp,
+    });
+    const authPayload = unwrapAuthPayload(response);
+    if (authPayload?.token) {
+      setAuthToken(authPayload.token);
+    }
+    if (authPayload?.user) {
+      setAuthUser(authPayload.user, {
+        fallbackUsername: "Verified Guest",
+      });
+    }
+    return authPayload;
+  },
 };
+

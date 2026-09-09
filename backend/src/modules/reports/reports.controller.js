@@ -46,6 +46,7 @@ export const reportsController = {
   async create(req, res) {
     const created = await reportsService.createReport({
       userId: req.user.id,
+      actor: req.user,
       ...req.body,
       accessToken: req.accessToken,
     });

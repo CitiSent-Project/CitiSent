@@ -156,3 +156,39 @@ export const resetPasswordWithOtpSchema = z.object({
       .max(128),
   }),
 });
+
+export const sendGuestOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(1, "Phone number is required.")
+      .refine(
+        (val) => /^(\+?63|0)?9\d{9}$/.test(val.replace(/[\s-]/g, "")),
+        { message: "A valid Philippine mobile number is required (e.g. 09XXXXXXXXX)." },
+      ),
+  }),
+});
+
+export const verifyGuestOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(1, "Phone number is required.")
+      .refine(
+        (val) => /^(\+?63|0)?9\d{9}$/.test(val.replace(/[\s-]/g, "")),
+        { message: "A valid Philippine mobile number is required (e.g. 09XXXXXXXXX)." },
+      ),
+    otp: z
+      .string()
+      .trim()
+      .length(6, "Verification code must be exactly 6 digits.")
+      .regex(/^\d{6}$/, "Verification code must contain digits only."),
+  }),
+});
+

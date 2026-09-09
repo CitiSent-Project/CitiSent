@@ -24,7 +24,15 @@ import {
 import { otpStore_ } from "../../shared/security/otp.store.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 import { env } from "../../config/env.js";
+import {
+  guestOtpService,
+  normalizePhilippinePhoneNumber,
+} from "../../shared/security/guestOtp.service.js";
+import { signGuestToken } from "../../shared/security/guestTokens.js";
+import { smsProvider } from "../../shared/sms/smsProvider.js";
+import { createAdminSupabaseClient } from "../../config/supabase.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -581,5 +589,138 @@ export const authService = {
     });
 
     return { changed: true };
+  },
+
+  async createGuestSession() {
+    const guestId = crypto.randomUUID();
+    const token = signGuestToken({ guestId, isVerified: false });
+
+    return {
+      token,
+      user: {
+        id: guestId,
+        role: "guest",
+        isGuest: true,
+        isVerified: false,
+        username: "Guest",
+      },
+    };
+  },
+
+  async sendGuestOtp(phoneNumber) {
+    let normalizedPhone;
+    try {
+      normalizedPhone = normalizePhilippinePhoneNumber(phoneNumber);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+      guestOtpService.checkSendRateLimit(normalizedPhone);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
+    }
+
+    const plainOtp = guestOtpService.createOtp(normalizedPhone);
+
+    try {
+      await smsProvider.sendOtp({ phoneNumber: normalizedPhone, otp: plainOtp });
+    } catch (err) {
+      throw new AppError(
+        "Failed to deliver verification SMS. Please check your number and try again.",
+        StatusCodes.BAD_GATEWAY,
+        { error: err.message },
+      );
+    }
+
+    return {
+      sent: true,
+      phoneNumber: normalizedPhone,
+      cooldownSeconds: 60,
+      expiresInSeconds: 300,
+    };
+  },
+
+  async verifyGuestOtp(phoneNumber, otp, currentGuestId = null) {
+    let normalizedPhone;
+    try {
+      normalizedPhone = normalizePhilippinePhoneNumber(phoneNumber);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+      guestOtpService.verifyOtp(normalizedPhone, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    const cleanDigits = normalizedPhone.replace(/\D/g, "");
+    let guestUserId = null;
+
+    try {
+      const adminDb = createAdminSupabaseClient();
+      if (adminDb) {
+        const { data: existingProfile } = await adminDb
+          .from("profiles")
+          .select("user_id, phone_number, account_type")
+          .eq("phone_number", cleanDigits)
+          .maybeSingle();
+
+        if (existingProfile?.user_id) {
+          guestUserId = existingProfile.user_id;
+        } else {
+          const guestEmail = `guest_${cleanDigits}@guest.citisent.local`;
+          const { data: createdAuth } = await adminDb.auth.admin.createUser({
+            email: guestEmail,
+            email_confirm: true,
+            user_metadata: {
+              role: "guest",
+              is_guest: true,
+              phone_number: cleanDigits,
+            },
+          });
+
+          if (createdAuth?.user?.id) {
+            guestUserId = createdAuth.user.id;
+            await adminDb
+              .from("profiles")
+              .update({
+                phone_number: cleanDigits,
+                account_type: "guest",
+                fname: "Guest",
+                lname: "User",
+                barangay: "Poblacion 1",
+              })
+              .eq("user_id", guestUserId);
+          }
+        }
+      }
+    } catch {
+      // Non-fatal fallback if Supabase is offline/mocked
+    }
+
+    if (!guestUserId) {
+      guestUserId = currentGuestId || crypto.randomUUID();
+    }
+
+    const token = signGuestToken({
+      guestId: guestUserId,
+      isVerified: true,
+      phoneNumber: normalizedPhone,
+    });
+
+    return {
+      verified: true,
+      token,
+      user: {
+        id: guestUserId,
+        role: "guest",
+        isGuest: true,
+        isVerified: true,
+        phoneNumber: normalizedPhone,
+        username: "Verified Guest",
+      },
+    };
   },
 };

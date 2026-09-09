@@ -1,5 +1,4 @@
-import { useState, useCallback } from "react";
-import { View } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,7 +9,14 @@ import {
 } from "../../modules/profile";
 import { RefreshableScrollView, usePullToRefresh, useNotifications, Colors } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
-import { getAuthPhoneNumber, getAuthUsername, getAuthGender, getAuthProfileImage } from "../../services/authSession";
+import {
+  getAuthPhoneNumber,
+  getAuthUsername,
+  getAuthGender,
+  getAuthProfileImage,
+  isGuestUser,
+  isGuestVerified,
+} from "../../services/authSession";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 export default function Profile() {
@@ -22,10 +28,23 @@ export default function Profile() {
   const { hasUnreadAdminMessage } = useAdminMessageState();
   const { unreadCount, refreshNotifications } = useNotifications();
 
-  // Fix 2: store session-derived values in state so they update when the
-  // screen regains focus (e.g. after returning from Edit Profile).
-  const [displayUsername, setDisplayUsername] = useState(() => getAuthUsername(""));
-  const [displayPhoneNumber, setDisplayPhoneNumber] = useState(() => getAuthPhoneNumber(""));
+  const isGuest = isGuestUser();
+  const isVerified = isGuestVerified();
+
+  const resolveDisplayName = () => {
+    if (isGuest) return "Guest User";
+    return getAuthUsername("");
+  };
+
+  const resolveDisplayPhone = () => {
+    const raw = getAuthPhoneNumber("");
+    if (raw) return raw;
+    if (isGuest) return isVerified ? "Verified Phone" : "Unverified Guest";
+    return "";
+  };
+
+  const [displayUsername, setDisplayUsername] = useState(resolveDisplayName);
+  const [displayPhoneNumber, setDisplayPhoneNumber] = useState(resolveDisplayPhone);
   const [displayGender, setDisplayGender] = useState(() => getAuthGender());
   const [displayProfileImage, setDisplayProfileImage] = useState(() => getAuthProfileImage());
 
@@ -33,11 +52,11 @@ export default function Profile() {
   // edits are immediately reflected in the header.
   useFocusEffect(
     useCallback(() => {
-      setDisplayUsername(getAuthUsername(""));
-      setDisplayPhoneNumber(getAuthPhoneNumber(""));
+      setDisplayUsername(resolveDisplayName());
+      setDisplayPhoneNumber(resolveDisplayPhone());
       setDisplayGender(getAuthGender());
       setDisplayProfileImage(getAuthProfileImage());
-    }, [])
+    }, [isGuest, isVerified])
   );
 
   const { refreshing, onRefresh } = usePullToRefresh(() => {
@@ -94,8 +113,31 @@ export default function Profile() {
           phone={displayPhoneNumber}
           gender={displayGender}
           profileImage={displayProfileImage}
-          onEditProfile={() => router.push("/profile/edit")}
+          onEditProfile={() => {
+            if (isGuest) {
+              router.push("/auth/CreateAccount");
+            } else {
+              router.push("/profile/edit");
+            }
+          }}
         />
+
+        {isGuest && (
+          <View className="mx-4 mt-3 rounded-2xl bg-blue-50 border border-blue-200 p-4">
+            <Text className="text-sm font-bold text-blue-900">Guest Account</Text>
+            <Text className="mt-1 text-xs text-blue-700 leading-4">
+              {isVerified
+                ? "Your phone number is verified. Create a permanent account anytime to keep your reports saved."
+                : "You are browsing as a guest. When you submit a report, you will verify your phone number via SMS."}
+            </Text>
+            <Pressable
+              onPress={() => router.push("/auth/CreateAccount")}
+              className="mt-3 self-start rounded-xl bg-blue-700 px-4 py-2"
+            >
+              <Text className="text-xs font-bold text-white">Create Full Account</Text>
+            </Pressable>
+          </View>
+        )}
 
         <View className="pt-4">
           {profileActions.map((item) => (
@@ -114,7 +156,12 @@ export default function Profile() {
           <View className="mx-5 mt-2 h-[1px]" style={{ backgroundColor: Colors.divider }} />
 
           <View className="pt-2">
-            <ProfileMenuItem icon="log-out-outline" label="Logout" danger onPress={() => setIsLogoutVisible(true)} />
+            <ProfileMenuItem
+              icon="log-out-outline"
+              label={isGuest ? "Exit Guest Mode" : "Logout"}
+              danger
+              onPress={() => setIsLogoutVisible(true)}
+            />
           </View>
         </View>
       </RefreshableScrollView>

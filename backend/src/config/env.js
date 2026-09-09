@@ -157,6 +157,12 @@ const envSchema = z.object({
   GMAIL_APP_PASSWORD: optionalString(z.string().min(1)),
   INVITATION_JWT_SECRET: optionalString(z.string().min(32)),
   WEB_APP_BASE_URL: optionalString(z.string().url()),
+  SMS_PROVIDER: z.enum(["mock", "semaphore", "twilio"]).default("mock"),
+  SEMAPHORE_API_KEY: optionalString(z.string().min(1)),
+  SEMAPHORE_SENDER_NAME: optionalString(z.string().min(1)),
+  TWILIO_ACCOUNT_SID: optionalString(z.string().min(1)),
+  TWILIO_AUTH_TOKEN: optionalString(z.string().min(1)),
+  TWILIO_PHONE_NUMBER: optionalString(z.string().min(1)),
   ENABLE_RUNTIME_METRICS: envBoolean.default(false),
   RUNTIME_METRICS_INTERVAL_MS: z.coerce
     .number()

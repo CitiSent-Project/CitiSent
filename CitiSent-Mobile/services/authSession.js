@@ -93,12 +93,17 @@ function normalizeUser(user, options = {}) {
     user.user_metadata?.profileImage ||
     null;
 
+  const isGuest = Boolean(user.isGuest || user.role === "guest");
+  const isVerified = isGuest ? Boolean(user.isVerified) : true;
+
   return {
     ...user,
     username,
     phoneNumber,
     gender,
     profileImage,
+    isGuest,
+    isVerified,
   };
 }
 
@@ -248,10 +253,20 @@ export function getAuthPhoneNumber(fallbackValue = "") {
   return phoneNumber || normalizePhoneNumber(fallbackValue);
 }
 
+export function isGuestUser() {
+  return Boolean(sessionUser?.isGuest || sessionUser?.role === "guest");
+}
+
+export function isGuestVerified() {
+  if (!isGuestUser()) return true;
+  return Boolean(sessionUser?.isVerified);
+}
+
 export function clearAuthToken() {
   sessionToken = "";
   sessionUser = null;
   clearAllCache();
   notifyAuthState(null);
 }
+
 

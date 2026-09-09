@@ -4,6 +4,8 @@ import { supabase } from "../config/supabase.js";
 import { AppError } from "../shared/errors/appError.js";
 import { cacheService } from "../shared/cache/cacheService.js";
 
+import { tryVerifyGuestToken } from "../shared/security/guestTokens.js";
+
 const AUTH_CACHE_TTL_SECONDS = 60;
 
 function isLikelyJwt(value) {
@@ -30,6 +32,31 @@ export async function requireAuth(req, _res, next) {
 
     if (!token) {
       return next(new AppError("Unauthorized", StatusCodes.UNAUTHORIZED));
+    }
+
+    // Check if token is a CitiSent signed guest token
+    try {
+      const guestPayload = tryVerifyGuestToken(token);
+      if (guestPayload) {
+        req.user = {
+          id: guestPayload.guestId,
+          role: "guest",
+          isGuest: true,
+          isVerified: Boolean(guestPayload.isVerified),
+          phoneNumber: guestPayload.phoneNumber || null,
+        };
+        req.accessToken = token;
+        req.perf?.add("auth", Date.now() - authStart);
+        return next();
+      }
+    } catch (guestErr) {
+      if (guestErr?.isGuestError) {
+        return next(
+          new AppError(guestErr.message, StatusCodes.UNAUTHORIZED, {
+            code: guestErr.code,
+          }),
+        );
+      }
     }
 
     const tokenHash = hashToken(token);

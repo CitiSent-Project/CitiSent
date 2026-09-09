@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
-import { Animated, Easing, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Easing, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import {
   AuthActionButton,
   AuthBrandMark,
   AuthCityFooter,
+  authApi,
 } from "../../modules/auth";
 import { useSplashTransition } from "../../modules/shared";
 
@@ -81,6 +82,21 @@ export default function LoginScreen() {
     router.push("/auth/CreateAccount");
   };
 
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
+
+  const handleContinueAsGuest = async () => {
+    if (isGuestLoading) return;
+    setIsGuestLoading(true);
+    try {
+      await authApi.continueAsGuest();
+      router.replace("/(tabs)");
+    } catch {
+      router.replace("/(tabs)");
+    } finally {
+      setIsGuestLoading(false);
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#1B2D4F]">
       <StatusBar style="light" />
@@ -108,9 +124,24 @@ export default function LoginScreen() {
         >
           <Text className="text-center text-[46px] font-normal text-[#CFDAEA]">Welcome!</Text>
 
-          <View className="mt-12 w-full">
+          <View className="mt-10 w-full">
             <AuthActionButton label="Create Account" variant="primary" onPress={handleCreateAccount} />
             <AuthActionButton label="Login" variant="outline" onPress={handleLogin} />
+
+            <View className="mt-3 items-center">
+              <Pressable
+                onPress={handleContinueAsGuest}
+                disabled={isGuestLoading}
+                className="py-2.5 px-4"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Continue as Guest"
+              >
+                <Text className="text-center text-sm font-semibold text-[#93C5FD]">
+                  {isGuestLoading ? "Entering as Guest..." : "Continue as Guest →"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </Animated.View>
       </View>

@@ -89,4 +89,38 @@ export const authController = {
       data: result,
     });
   },
+
+  async createGuestSession(_req, res) {
+    const result = await authService.createGuestSession();
+
+    return res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async sendGuestOtp(req, res) {
+    const result = await authService.sendGuestOtp(req.body.phoneNumber);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async verifyGuestOtp(req, res) {
+    const { phoneNumber, otp } = req.body;
+    const currentGuestId = req.user?.id || null;
+    const result = await authService.verifyGuestOtp(
+      phoneNumber,
+      otp,
+      currentGuestId,
+    );
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
 };
+

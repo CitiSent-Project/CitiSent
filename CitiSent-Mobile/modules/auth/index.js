@@ -6,6 +6,7 @@ export { default as AuthCityFooter } from "../../components/auth/AuthCityFooter"
 export { default as AuthInputField } from "../../components/auth/AuthInputField";
 export { default as AuthLegalConsent } from "../../components/auth/AuthLegalConsent";
 export { default as AuthSelectField } from "../../components/auth/AuthSelectField";
+export { default as GuestVerificationModal } from "../../components/auth/GuestVerificationModal";
 
 export { authApi } from "../../services/auth";
 export {

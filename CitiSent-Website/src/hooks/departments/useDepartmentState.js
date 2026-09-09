@@ -16,7 +16,7 @@ export function normalizeDepartmentOption(department) {
     slug: String(department.slug || id).trim(),
     name: String(department.name || label).trim(),
     description: String(department.description || '').trim(),
-    isActive: department.isActive !== false,
+    isActive: department.isActive !== false && department.is_active !== false && department.is_active !== 0,
     logoPath: department.logoPath || department.logo_path || null,
     logoUrl: department.logoUrl || department.logo_url || null,
     createdAt: department.createdAt || null,

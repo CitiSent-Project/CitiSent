@@ -37,7 +37,7 @@ function normalizeDepartment(row = {}) {
     label: name,
     name,
     description: String(row.description || "").trim(),
-    isActive: row.isActive !== false,
+    isActive: row.isActive !== false && row.is_active !== false && row.is_active !== 0,
     logoPath: row.logoPath || row.logo_path || null,
     logoUrl: row.logoUrl || row.logo_url || null,
     createdAt: row.createdAt || null,
@@ -62,18 +62,20 @@ function normalizeDepartments(rows) {
 }
 
 export const departmentsApi = {
-  getDepartments: async () => {
-    if (Array.isArray(memoryDepartments) && memoryDepartments.length > 0) {
-      return memoryDepartments;
-    }
-
-    try {
-      const cached = await getCache(DEPARTMENTS_CACHE_KEY);
-      if (Array.isArray(cached) && cached.length > 0) {
-        memoryDepartments = cached;
-        return cached;
+  getDepartments: async (options = {}) => {
+    if (!options.forceRefresh) {
+      if (Array.isArray(memoryDepartments) && memoryDepartments.length > 0) {
+        return memoryDepartments;
       }
-    } catch {}
+
+      try {
+        const cached = await getCache(DEPARTMENTS_CACHE_KEY);
+        if (Array.isArray(cached) && cached.length > 0) {
+          memoryDepartments = cached;
+          return cached;
+        }
+      } catch {}
+    }
 
     try {
       const response = await api.get("/departments");

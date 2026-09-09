@@ -6,6 +6,7 @@ import { DepartmentDesktopTable } from './DepartmentDesktopTable'
 import { RenameDepartmentModal } from './RenameDepartmentModal'
 import { DeleteDepartmentModal } from './DeleteDepartmentModal'
 import { RemoveLogoModal } from './RemoveLogoModal'
+import { ToggleDepartmentActiveModal } from './ToggleDepartmentActiveModal'
 
 export function DepartmentCatalogSection({
     departmentCatalog = [],
@@ -20,6 +21,7 @@ export function DepartmentCatalogSection({
     const [renameModal, setRenameModal] = useState(null)
     const [deleteModal, setDeleteModal] = useState(null)
     const [removeLogoModal, setRemoveLogoModal] = useState(null)
+    const [toggleActiveModal, setToggleActiveModal] = useState(null)
     const [logoErrorBySlug, setLogoErrorBySlug] = useState({})
 
     const sortedCatalog = useMemo(
@@ -44,6 +46,10 @@ export function DepartmentCatalogSection({
 
     function handleCloseDeleteModal() {
         setDeleteModal(null)
+    }
+
+    function handleCloseToggleActiveModal() {
+        setToggleActiveModal(null)
     }
 
     function handleOpenRemoveLogoModal(department) {
@@ -77,7 +83,11 @@ export function DepartmentCatalogSection({
         }))
     }
 
-    async function handleToggleDepartmentActive(department) {
+    function handleToggleDepartmentActive(department) {
+        setToggleActiveModal(department)
+    }
+
+    async function handleConfirmToggleDepartmentActive(department) {
         setBusyDepartmentSlug(department.id)
         await onSetDepartmentActive({
             departmentSlug: department.id,
@@ -203,6 +213,13 @@ export function DepartmentCatalogSection({
                 onDeleteDepartmentLogo={handleDeleteDepartmentLogoWrapper}
                 isBusy={removeLogoModal ? busyDepartmentSlug === removeLogoModal.id : false}
                 logoError={removeLogoModal ? logoErrorBySlug[removeLogoModal.id] : ''}
+            />
+
+            <ToggleDepartmentActiveModal
+                department={toggleActiveModal}
+                onClose={handleCloseToggleActiveModal}
+                onToggleDepartmentActive={handleConfirmToggleDepartmentActive}
+                isBusy={toggleActiveModal ? busyDepartmentSlug === toggleActiveModal.id : false}
             />
         </section>
     )

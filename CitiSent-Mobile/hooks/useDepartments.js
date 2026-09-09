@@ -6,8 +6,8 @@ export default function useDepartments() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchDepartments = useCallback(async () => {
-    const nextDepartments = await departmentsApi.getDepartments();
+  const fetchDepartments = useCallback(async (options = {}) => {
+    const nextDepartments = await departmentsApi.getDepartments(options);
     return Array.isArray(nextDepartments) ? nextDepartments : [];
   }, []);
 
@@ -46,7 +46,7 @@ export default function useDepartments() {
     setError(null);
 
     try {
-      const nextDepartments = await fetchDepartments();
+      const nextDepartments = await fetchDepartments({ forceRefresh: true });
       setDepartments(nextDepartments);
     } catch (err) {
       setDepartments([]);

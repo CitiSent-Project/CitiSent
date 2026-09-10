@@ -23,7 +23,7 @@ export function validateReportStatusChange({ currentStatus, nextStatus, adminNot
     }
   }
 
-  const requiresNotes = normalizedNext === 'Resolved' || normalizedNext === 'Unresolved'
+  const requiresNotes = normalizedNext === 'Resolved' || normalizedNext === 'Rejected'
   if (requiresNotes && !String(adminNotes || '').trim()) {
     return {
       ok: false,

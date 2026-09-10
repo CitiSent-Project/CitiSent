@@ -15,7 +15,7 @@ const STATUS_LABEL_MAP = {
   pending: "Pending",
   in_review: "In Progress",
   resolved: "Completed",
-  rejected: "Unresolved",
+  rejected: "Rejected",
 };
 
 function readArray(payload, key, fallback) {
@@ -264,7 +264,7 @@ export const reportsApi = {
           "pending": "pending",
           "in progress": "in_review",
           "completed": "resolved",
-          "unresolved": "rejected",
+          "rejected": "rejected",
         }[statusFilter.toLowerCase()] || statusFilter;
         query += `&status=${backendStatus}`;
       }
@@ -304,7 +304,7 @@ export const reportsApi = {
         pending: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Pending").length,
         inProgress: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "In Progress").length,
         completed: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Completed").length,
-        unresolved: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Unresolved").length,
+        rejected: MY_REPORTS.filter((r) => normalizeStatus(r.status) === "Rejected").length,
       };
     }
 
@@ -315,7 +315,7 @@ export const reportsApi = {
         pending: counts.pending || 0,
         inProgress: counts.in_review || 0,
         completed: counts.resolved || 0,
-        unresolved: counts.rejected || 0,
+        rejected: counts.rejected || 0,
       };
       await setCache(cacheKey, result, 300); // Fix for Issue #5
       return result;
@@ -325,7 +325,7 @@ export const reportsApi = {
       if (cached) {
         return cached;
       }
-      return { pending: 0, inProgress: 0, completed: 0, unresolved: 0 };
+      return { pending: 0, inProgress: 0, completed: 0, rejected: 0 };
     }
   },
 

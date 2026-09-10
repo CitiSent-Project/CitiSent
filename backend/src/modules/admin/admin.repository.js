@@ -803,12 +803,12 @@ export const adminRepository = {
     return data;
   },
 
-  async listDashboardReports({ actor, accessToken, startAt, endAt }) {
+  async listDashboardReports({ actor, accessToken, startAt, endAt, columns = "id, issue_type, status, created_at" }) {
     const db = getDb(accessToken);
 
     let query = db
       .from(REPORTS_TABLE)
-      .select("id, issue_type, status, created_at")
+      .select(columns)
       .order("created_at", { ascending: false });
 
     query = applyDepartmentScope(query, actor);

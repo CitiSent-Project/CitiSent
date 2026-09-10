@@ -14,9 +14,9 @@ const statusStyles = {
     backgroundColor: Colors.ui.warningSoft,
     textColor: Colors.text.statusPending,
   },
-  Unresolved: {
+  Rejected: {
     backgroundColor: Colors.ui.dangerSoft,
-    textColor: Colors.text.statusUnresolved,
+    textColor: Colors.text.statusRejected,
   },
 };
 

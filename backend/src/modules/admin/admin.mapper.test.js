@@ -10,7 +10,7 @@ import {
 test("mapReportStatusInputToPersisted maps UI labels to stored values", () => {
   assert.equal(mapReportStatusInputToPersisted("In Progress"), "in_review");
   assert.equal(mapReportStatusInputToPersisted("Resolved"), "resolved");
-  assert.equal(mapReportStatusInputToPersisted("Unresolved"), "rejected");
+  assert.equal(mapReportStatusInputToPersisted("Rejected"), "rejected");
   assert.equal(mapReportStatusInputToPersisted("Pending"), "pending");
 });
 

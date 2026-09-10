@@ -17,7 +17,7 @@ const STATUS_FILTERS = [
   { key: "pending", label: "Pending" },
   { key: "in progress", label: "In Progress" },
   { key: "completed", label: "Completed" },
-  { key: "unresolved", label: "Unresolved" },
+  { key: "rejected", label: "Rejected" },
 ];
 
 function normalizeStatus(value) {
@@ -29,7 +29,7 @@ function normalizeFilterStatus(status) {
   if (s === "pending") return "pending";
   if (s === "in progress" || s === "in_review") return "in progress";
   if (s === "completed" || s === "resolved") return "completed";
-  if (s === "unresolved" || s === "rejected") return "unresolved";
+  if (s === "rejected") return "rejected";
   return s;
 }
 
@@ -74,7 +74,7 @@ export default function ReportsMadePage() {
   } = useMyReports(selectedStatus);
 
   // Fetch all counts on load/refresh
-  const [counts, setCounts] = useState({ pending: 0, inProgress: 0, completed: 0, unresolved: 0 });
+  const [counts, setCounts] = useState({ pending: 0, inProgress: 0, completed: 0, rejected: 0 });
 
   const fetchCounts = async () => {
     try {
@@ -235,8 +235,8 @@ export default function ReportsMadePage() {
             <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Completed</Text>
           </View>
           <View className="flex-1 rounded-xl px-3 py-3" style={{ backgroundColor: Colors.background }}>
-            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{counts.unresolved}</Text>
-            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Unresolved</Text>
+            <Text className="text-xl font-extrabold" style={{ color: Colors.text.heading }}>{counts.rejected}</Text>
+            <Text className="text-xs font-semibold" style={{ color: Colors.text.secondary }}>Rejected</Text>
           </View>
         </View>
       </View>

@@ -5,7 +5,7 @@ const REPORT_STATUS_LABEL_MAP = {
   pending: 'Pending',
   in_review: 'In Progress',
   resolved: 'Resolved',
-  rejected: 'Unresolved',
+  rejected: 'Rejected',
 }
 
 function formatDate(value) {
@@ -80,7 +80,7 @@ export function mapUiStatusToBackendStatus(status) {
     return 'in_review'
   }
 
-  if (normalizedStatus === 'unresolved') {
+  if (normalizedStatus === 'rejected') {
     return 'rejected'
   }
 

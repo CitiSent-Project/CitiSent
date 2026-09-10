@@ -117,7 +117,7 @@ export default function NotificationDetailsModal({ visible, notification, onClos
                     style={{ 
                       backgroundColor: notification.meta.status.toLowerCase() === "resolved" 
                         ? Colors.ui.successSoft 
-                        : notification.meta.status.toLowerCase() === "unresolved"
+                        : notification.meta.status.toLowerCase() === "rejected"
                         ? Colors.ui.dangerSoft
                         : Colors.ui.infoSurface 
                     }}
@@ -127,8 +127,8 @@ export default function NotificationDetailsModal({ visible, notification, onClos
                       style={{ 
                         color: notification.meta.status.toLowerCase() === "resolved" 
                           ? Colors.text.statusComplete 
-                          : notification.meta.status.toLowerCase() === "unresolved"
-                          ? Colors.text.statusUnresolved
+                        : notification.meta.status.toLowerCase() === "rejected"
+                          ? Colors.text.statusRejected
                           : Colors.text.statusProgress 
                       }}
                     >

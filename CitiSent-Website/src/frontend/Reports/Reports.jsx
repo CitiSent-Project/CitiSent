@@ -138,7 +138,7 @@ export function Reports({
   const scopedRows = useMemo(() => filterReportsForAdmin({ rows, profile }), [rows, profile])
 
   const activeRows = useMemo(
-    () => scopedRows.filter((row) => row.status !== 'Resolved' && row.status !== 'Unresolved'),
+    () => scopedRows.filter((row) => row.status !== 'Resolved' && row.status !== 'Rejected'),
     [scopedRows]
   )
 
@@ -169,6 +169,7 @@ export function Reports({
     return (
       <ByUrgencyLevels
         rows={activeRows}
+        allReports={scopedRows}
         weeklyTrendData={weeklyTrendQuery.data}
         profile={profile}
         reportsPerPage={reportsPerPage}
@@ -183,6 +184,7 @@ export function Reports({
   return (
     <ByCategory
       rows={activeRows}
+      allReports={scopedRows}
       weeklyTrendData={weeklyTrendQuery.data}
       profile={profile}
       reportsPerPage={reportsPerPage}

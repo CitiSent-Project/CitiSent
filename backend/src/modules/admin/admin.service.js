@@ -42,7 +42,7 @@ const REPORT_STATUS_LABELS = Object.freeze({
   pending: "Pending",
   in_review: "In Progress",
   resolved: "Resolved",
-  rejected: "Unresolved",
+  rejected: "Rejected",
 });
 
 function buildAdminNoteFallbacks(status, reason, emotion = "Neutral") {
@@ -1332,6 +1332,7 @@ export const adminService = {
       adminRepository.listDashboardReports({
         actor,
         accessToken,
+        columns: "status",
       }),
     ]);
 
@@ -1373,6 +1374,7 @@ export const adminService = {
     const reportRows = await adminRepository.listDashboardReports({
       actor,
       accessToken,
+      columns: "status",
     });
 
     const statusCounts = {
@@ -1404,6 +1406,7 @@ export const adminService = {
       adminRepository.listDashboardReports({
         actor,
         accessToken,
+        columns: "issue_type",
       }),
       departmentsService.listDepartments({
         accessToken,
@@ -1465,6 +1468,7 @@ export const adminService = {
       accessToken,
       startAt,
       endAt,
+      columns: "status, created_at",
     });
 
     const points = [];

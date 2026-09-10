@@ -58,15 +58,15 @@ export function ReportHistoryTable({
     return rows.filter((row) => {
       const normalizedStatus = normalizeReportStatus(row.status);
       
-      // We only include historical records (Resolved or Unresolved)
-      if (normalizedStatus !== 'Resolved' && normalizedStatus !== 'Unresolved') {
+      // We only include historical records (Resolved or Rejected)
+      if (normalizedStatus !== 'Resolved' && normalizedStatus !== 'Rejected') {
         return false;
       }
 
       // Status Filter
       if (statusFilter !== 'all') {
         if (statusFilter === 'resolved' && normalizedStatus !== 'Resolved') return false;
-        if (statusFilter === 'rejected' && normalizedStatus !== 'Unresolved') return false;
+        if (statusFilter === 'rejected' && normalizedStatus !== 'Rejected') return false;
       }
 
       // Department Filter
@@ -288,14 +288,15 @@ export function ReportHistoryTable({
       <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
+            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs text-center font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
               <th className="px-4 py-3.5 w-32">Report #</th>
-              <th className="px-4 py-3.5">Reporter</th>
+              <th className="px-4 py-3.5">Department</th>
               <th className="px-4 py-3.5 hidden md:table-cell">Location</th>
               <th className="px-4 py-3.5">Urgency</th>
               <th className="px-4 py-3.5">Outcome</th>
-              <th className="px-4 py-3.5 hidden lg:table-cell">Date Logged</th>
-              <th className="px-4 py-3.5 text-right">Action</th>
+              <th className="px-4 py-3.5 hidden lg:table-cell">Date Submitted</th>
+              <th className="px-4 py-3.5 hidden lg:table-cell">Date Completed</th>
+              <th className="px-4 py-3.5">Action</th>
             </tr>
           </thead>
           <TableLoader
@@ -305,7 +306,7 @@ export function ReportHistoryTable({
             label="Loading history logs..."
             refreshText="Refreshing history logs..."
             rows={1}
-            columns={7}
+            columns={8}
             cellClassName="h-4 w-24"
           />
           <TableLoader
@@ -315,14 +316,14 @@ export function ReportHistoryTable({
             variant="skeleton"
             label="Loading history logs..."
             rows={5}
-            columns={7}
+            columns={8}
             cellClassName="h-4 w-24"
           />
           {!isInitialLoading && (
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                   {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
                 </td>
               </tr>
@@ -342,7 +343,9 @@ export function ReportHistoryTable({
                         {displayId}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-800 font-medium dark:text-slate-200">{row.name || 'Citizen'}</td>
+                    <td className="px-4 py-3.5 text-slate-800 font-medium dark:text-slate-200">
+                      {row.category || row.issueType || 'Unassigned'}
+                    </td>
                     <td className="px-4 py-3.5 hidden md:table-cell text-slate-600 max-w-xs truncate dark:text-slate-400">
                       {row.location}
                     </td>
@@ -361,7 +364,10 @@ export function ReportHistoryTable({
                       </span>
                     </td>
                     <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
-                      {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : (row.date || 'N/A')}
+                      {row.date || 'N/A'}
+                    </td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
+                      {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <button
@@ -408,7 +414,7 @@ export function ReportHistoryTable({
                     <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                       {displayId}
                     </span>
-                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.name || 'Citizen'}</p>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.category || row.issueType || 'Unassigned'}</p>
                     <p className="mt-0.5 text-[11px] text-slate-500 truncate dark:text-slate-400">{row.location}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -422,9 +428,10 @@ export function ReportHistoryTable({
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
-                  <p className="text-[11px] text-slate-400 font-numeric dark:text-slate-500">
-                    {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : (row.date || 'N/A')}
-                  </p>
+                  <div className="flex flex-col gap-0.5 text-[11px] text-slate-400 font-numeric dark:text-slate-500">
+                    <p>Submitted: {row.date || 'N/A'}</p>
+                    <p>Completed: {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => onViewReport?.(row)}

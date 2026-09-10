@@ -147,8 +147,8 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   // ---------------------------------------------------------------------------
   const currentStatus = normalizeReportStatus(report?.status)
 
-  // A report marked as Unresolved or Resolved is permanently locked.
-  const isPermanentlyLocked = currentStatus === 'Unresolved' || currentStatus === 'Resolved'
+  // A report marked as Rejected or Resolved is permanently locked.
+  const isPermanentlyLocked = currentStatus === 'Rejected' || currentStatus === 'Resolved'
   const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
   const canChat = canAdminUpdateReport({ profile, report })
   const isSaveDisabled =
@@ -197,8 +197,8 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
       return
     }
 
-    // Intercept if marking as Unresolved or Resolved to show verification modal
-    if (validation.nextStatus === 'Unresolved' || validation.nextStatus === 'Resolved') {
+    // Intercept if marking as Rejected or Resolved to show verification modal
+    if (validation.nextStatus === 'Rejected' || validation.nextStatus === 'Resolved') {
       setPendingValidation(validation)
       setIsVerificationModalOpen(true)
       return

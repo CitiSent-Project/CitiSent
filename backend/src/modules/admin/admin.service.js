@@ -42,7 +42,7 @@ const REPORT_STATUS_LABELS = Object.freeze({
   pending: "Pending",
   in_review: "In Progress",
   resolved: "Resolved",
-  rejected: "Unresolved",
+  rejected: "Rejected",
 });
 
 function buildAdminNoteFallbacks(status, reason, emotion = "Neutral") {

@@ -61,6 +61,40 @@ export function mapDashboardCategoryBreakdown(payload = {}, fallbackColors = [])
   }
 }
 
+export function mapDashboardStatusBreakdown(payload = {}) {
+  const rows = Array.isArray(payload?.breakdown) ? payload.breakdown : []
+
+  const labelMap = {
+    pending: 'Pending',
+    'in-progress': 'In Progress',
+    resolved: 'Resolved',
+    rejected: 'Rejected',
+  }
+
+  const colorMap = {
+    pending: '#f59e0b',     // Amber
+    'in-progress': '#3b82f6', // Blue
+    resolved: '#10b981',    // Emerald
+    rejected: '#ef4444',    // Red
+  }
+
+  const labels = rows.map((row) => labelMap[row.status?.toLowerCase()] || row.status || 'Unknown')
+  const values = rows.map((row) => Number(row.count) || 0)
+  const colors = rows.map((row) => colorMap[row.status?.toLowerCase()] || '#94a3b8')
+
+  return {
+    title: 'Report Status Breakdown',
+    total: formatCompactNumber(payload?.totalReports ?? values.reduce((sum, value) => sum + value, 0)),
+    labels,
+    values,
+    colors,
+    legend: labels.map((label, index) => ({
+      label,
+      color: colors[index],
+    })),
+  }
+}
+
 export function mapDashboardWeeklyTrend(payload = {}) {
   return {
     title: 'Total Reports This Week',

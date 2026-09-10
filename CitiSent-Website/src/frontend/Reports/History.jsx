@@ -8,8 +8,8 @@ export function History({
 }) {
   const reportStats = useMemo(() => {
     const resolvedCount = rows.filter((row) => row.status === 'Resolved').length
-    const unresolvedCount = rows.filter((row) => row.status === 'Unresolved').length
-    const totalHistorical = resolvedCount + unresolvedCount
+    const rejectedCount = rows.filter((row) => row.status === 'Rejected').length
+    const totalHistorical = resolvedCount + rejectedCount
 
     return [
       {
@@ -27,10 +27,10 @@ export function History({
         accent: 'amber',
       },
       {
-        id: 'unresolved-reports',
-        label: 'Unresolved / Rejected',
-        value: String(unresolvedCount),
-        icon: 'unresolved',
+        id: 'rejected-reports',
+        label: 'Rejected',
+        value: String(rejectedCount),
+        icon: 'rejected',
         accent: 'violet',
       },
     ]

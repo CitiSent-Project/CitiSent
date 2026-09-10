@@ -12,7 +12,7 @@ const STATUS_ICONS = {
   Pending: FiClock,
   'In Progress': FiFileText,
   Resolved: FiCheckCircle,
-  Unresolved: FiAlertCircle,
+  Rejected: FiAlertCircle,
 }
 
 /**
@@ -251,7 +251,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <section className="rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-sm backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-800/95">
               <h2 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">Process Report</h2>
               <p className="mb-5 text-xs text-slate-500 dark:text-slate-400">
-                Update the status. Adding notes is required when resolving or marking as unresolved.
+                Update the status. Adding notes is required when resolving or marking as rejected.
               </p>
 
               {!canProcessReport && !isPermanentlyLocked ? (

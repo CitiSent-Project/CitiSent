@@ -69,7 +69,7 @@ export const Colors = {
     statusComplete: "#2C8A5A",
     statusProgress: "#2D6FA9",
     statusPending: "#B86A08",
-    statusUnresolved: "#B91C1C",
+    statusRejected: "#B91C1C",
   },
   border: "#E5E7EB", // gray-200
   borderSoft: "#E2E8F0",

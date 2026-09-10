@@ -3,7 +3,7 @@ import { FiAlertCircle, FiCheckCircle, FiClock, FiFolder } from "react-icons/fi"
 const iconMap = {
   folder: FiFolder,
   resolved: FiCheckCircle,
-  unresolved: FiAlertCircle,
+  rejected: FiAlertCircle,
   inprogress: FiClock,
 };
 

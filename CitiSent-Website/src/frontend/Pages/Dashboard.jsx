@@ -7,12 +7,14 @@ import {
     DashboardStatCard,
     DashboardTableCard,
     PieChart,
+    SolidPieChart,
     VerticalChart,
 } from '../../components/Dashboard-Ui'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { buildDashboardStatCards } from '../../controllers/admin/dashboardController'
 import {
     mapDashboardCategoryBreakdown,
+    mapDashboardStatusBreakdown,
     mapDashboardRecentAdmins,
     mapDashboardRecentUsers,
     mapDashboardSummaryToStatCards,
@@ -110,10 +112,11 @@ export function Dashboard() {
         queryKey: ['dashboard-overview', accessToken],
         enabled: Boolean(accessToken),
         queryFn: async () => {
-            const [summaryResponse, categoryResponse, weeklyResponse, adminsResponse, usersResponse] =
+            const [summaryResponse, categoryResponse, statusResponse, weeklyResponse, adminsResponse, usersResponse] =
                 await Promise.all([
                     dashboardApiService.getDashboardSummary(accessToken),
                     dashboardApiService.getDashboardReportsByCategory(accessToken),
+                    dashboardApiService.getDashboardReportsByStatus(accessToken),
                     dashboardApiService.getDashboardWeeklyTrend(accessToken),
                     dashboardApiService.getDashboardRecentAdmins(accessToken, { limit: 5 }),
                     dashboardApiService.getDashboardRecentUsers(accessToken, { limit: 5 }),
@@ -122,6 +125,7 @@ export function Dashboard() {
             return {
                 summary: summaryResponse?.data,
                 category: categoryResponse?.data,
+                statusBreakdown: statusResponse?.data,
                 weekly: weeklyResponse?.data,
                 admins: adminsResponse?.data,
                 users: usersResponse?.data,
@@ -180,6 +184,14 @@ export function Dashboard() {
         return mapDashboardCategoryBreakdown(dashboardQuery.data.category, DASHBOARD_CATEGORY_COLORS)
     }, [dashboardQuery.data?.category])
 
+    const statusData = useMemo(() => {
+        if (!dashboardQuery.data?.statusBreakdown) {
+            return EMPTY_CATEGORY_DATA // Has same shape (title, total, labels, etc.)
+        }
+
+        return mapDashboardStatusBreakdown(dashboardQuery.data.statusBreakdown)
+    }, [dashboardQuery.data?.statusBreakdown])
+
     const weeklyData = useMemo(() => {
         if (!dashboardQuery.data?.weekly) {
             return EMPTY_WEEKLY_DATA
@@ -237,8 +249,8 @@ export function Dashboard() {
             </div>
 
             {/* Charts Grid */}
-            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
-                <div className="lg:col-span-5 h-125">
+            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="h-110">
                     <PieChart
                         title={categoryData.title}
                         total={categoryData.total}
@@ -248,13 +260,23 @@ export function Dashboard() {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="lg:col-span-7 h-125">
-                    <VerticalChart
-                        title={weeklyData.title}
-                        labels={weeklyData.labels}
-                        values={weeklyData.values}
+                <div className="h-110">
+                    <SolidPieChart
+                        title={statusData.title}
+                        total={statusData.total}
+                        labels={statusData.labels}
+                        values={statusData.values}
+                        colors={statusData.colors}
+                        legend={statusData.legend}
                     />
                 </div>
+            </div>
+            <div className="mb-6 sm:mb-8 w-full h-110">
+                <VerticalChart
+                    title={weeklyData.title}
+                    labels={weeklyData.labels}
+                    values={weeklyData.values}
+                />
             </div>
 
             {/* Tables Grid */}

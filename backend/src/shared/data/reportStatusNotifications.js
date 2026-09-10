@@ -22,10 +22,10 @@ const STATUS_NOTIFICATION_CONTENT = Object.freeze({
   }),
   rejected: Object.freeze({
     statusCode: "rejected",
-    statusLabel: "Unresolved",
+    statusLabel: "Rejected",
     eventType: "report_rejected",
-    title: "Report Unresolved",
-    message: "Your report has been marked as unresolved. Open the app to review details.",
+    title: "Report Rejected",
+    message: "Your report has been marked as rejected. Open the app to review details.",
   }),
 });
 

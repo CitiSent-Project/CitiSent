@@ -12,7 +12,7 @@ const STATUS_LABELS = Object.freeze({
   pending: "Pending",
   in_review: "In Progress",
   resolved: "Resolved",
-  rejected: "Unresolved",
+  rejected: "Rejected",
 });
 
 function normalizeStatusValue(status) {
@@ -223,7 +223,7 @@ export function mapReportStatusInputToPersisted(status) {
     return "in_review";
   }
 
-  if (normalizedStatus === "unresolved") {
+  if (normalizedStatus === "rejected") {
     return "rejected";
   }
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { SolidPieChart } from '../../components/Dashboard-Ui/Solid-Pie-Chart'
 import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import {
   Pagination,
@@ -24,6 +25,7 @@ const EMOTION_FILTER_CHIPS = ['All Emotions', ...REPORT_EMOTION_OPTIONS]
 
 export function ByUrgencyLevels({
   rows,
+  allReports = [],
   weeklyTrendData,
   profile,
   reportsPerPage = 6,
@@ -128,7 +130,7 @@ export function ByUrgencyLevels({
         id: 'pending-reports',
         label: 'Pending Review',
         value: String(pendingCount),
-        icon: 'unresolved',
+        icon: 'rejected',
         accent: 'amber',
       },
       {
@@ -141,24 +143,30 @@ export function ByUrgencyLevels({
     ]
   }, [rows])
 
-  const urgencyLevelsData = useMemo(() => {
-    const labels = ['Critical', 'High', 'Medium', 'Low']
-    const values = labels.map(
-      (label) => rows.filter((row) => row.urgency === label).length
-    )
+  const reportsByStatusData = useMemo(() => {
+    const dataSource = allReports.length > 0 ? allReports : rows;
+    const pendingCount = dataSource.filter((r) => r.status === 'Pending').length;
+    const inProgressCount = dataSource.filter((r) => r.status === 'In Progress').length;
+    const resolvedCount = dataSource.filter((r) => r.status === 'Resolved').length;
+    const rejectedCount = dataSource.filter((r) => r.status === 'Rejected').length;
+
+    const values = [pendingCount, inProgressCount, resolvedCount, rejectedCount];
+    const labels = ['Pending', 'In Progress', 'Resolved', 'Rejected'];
+    // Amber, Blue, Emerald, Red
+    const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'];
 
     return {
-      title: 'Total Pending Reports',
-      total: String(rows.length),
+      title: 'Report Status Breakdown',
+      total: String(dataSource.length),
       labels,
       values,
-      colors: URGENCY_COLORS,
+      colors,
       legend: labels.map((label, index) => ({
         label,
-        color: URGENCY_COLORS[index],
+        color: colors[index],
       })),
-    }
-  }, [rows])
+    };
+  }, [allReports, rows]);
 
   const reportsThisWeekData = useMemo(() => {
     if (weeklyTrendData) return weeklyTrendData;
@@ -179,13 +187,13 @@ export function ByUrgencyLevels({
 
         <section className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[1fr_1.45fr] w-full min-w-0">
           <div className="min-w-0 w-full min-h-90 sm:min-h-100">
-            <UrgencyDoughnutChart
-              title={urgencyLevelsData.title}
-              total={urgencyLevelsData.total}
-              labels={urgencyLevelsData.labels}
-              values={urgencyLevelsData.values}
-              colors={urgencyLevelsData.colors}
-              legend={urgencyLevelsData.legend}
+            <SolidPieChart
+              title={reportsByStatusData.title}
+              total={reportsByStatusData.total}
+              labels={reportsByStatusData.labels}
+              values={reportsByStatusData.values}
+              colors={reportsByStatusData.colors}
+              legend={reportsByStatusData.legend}
             />
           </div>
           <div className="min-w-0 w-full min-h-90 sm:min-h-100">

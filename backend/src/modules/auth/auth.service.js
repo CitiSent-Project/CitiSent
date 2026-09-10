@@ -52,8 +52,13 @@ function normalizeOptionalString(value) {
 async function resolveProfileEmailFromCandidates(candidates) {
   const dedupedCandidates = [...new Set(candidates.filter(Boolean))];
 
-  for (const candidate of dedupedCandidates) {
-    const profile = await authRepository.getProfileByIdentifier(candidate);
+  const profiles = await Promise.all(
+    dedupedCandidates.map((candidate) =>
+      authRepository.getProfileByIdentifier(candidate)
+    )
+  );
+
+  for (const profile of profiles) {
     const profileEmail = normalizeEmail(profile?.email);
 
     if (profileEmail) {
@@ -433,11 +438,23 @@ export const authService = {
     // Concurrently run profile resolution and Supabase authentication.
     // If identifier was username/phone, profile is already in loginContext.
     // If identifier was email, profile fetch and auth request run in parallel.
-    const profilePromise = loginContext.profile
-      ? Promise.resolve(loginContext.profile)
-      : track("preAuthProfileLookup", () =>
-          authRepository.getProfileByIdentifier(resolvedEmail),
-        );
+    const profilePromise = track("preAuthProfileLookup", async () => {
+      const p = loginContext.profile
+        ? loginContext.profile
+        : await authRepository.getProfileByIdentifier(resolvedEmail);
+        
+      let isBanned = false;
+      if (p?.user_id) {
+        if (String(p.account_status || "").trim().toLowerCase() === "banned") {
+          isBanned = true;
+        } else {
+          isBanned = await track("banLookup", () =>
+            authRepository.checkActiveBanByUserId(p.user_id),
+          );
+        }
+      }
+      return { profile: p, isBanned };
+    });
 
     const authPromise = track("supabaseAuth", () =>
       authRepository.loginWithEmailPassword({
@@ -449,25 +466,19 @@ export const authService = {
       (err) => ({ ok: false, err }),
     );
 
-    const [preProfile, authResult] = await Promise.all([
+    const [preProfileContext, authResult] = await Promise.all([
       profilePromise,
       authPromise,
     ]);
 
-    // Check for active ban before handling any auth errors
-    if (preProfile?.user_id) {
-      const isBanned =
-        String(preProfile.account_status || "").trim().toLowerCase() === "banned" ||
-        (await track("banLookup", () =>
-          authRepository.checkActiveBanByUserId(preProfile.user_id),
-        ));
+    const preProfile = preProfileContext.profile;
 
-      if (isBanned) {
-        throw new AppError(
-          "Your account has been banned.",
-          StatusCodes.FORBIDDEN,
-        );
-      }
+    // Check for active ban before handling any auth errors
+    if (preProfileContext.isBanned) {
+      throw new AppError(
+        "Your account has been banned.",
+        StatusCodes.FORBIDDEN,
+      );
     }
 
     if (!authResult.ok) {
@@ -555,10 +566,18 @@ export const authService = {
   },
 
   async me(authUser, accessToken) {
-    const profile = await authRepository.getProfileByUserId(
-      authUser.id,
-      accessToken,
-    );
+    const cacheKey = `profile:user:${authUser.id}`;
+    let profile = await cacheService.getJSON(cacheKey);
+
+    if (!profile) {
+      profile = await authRepository.getProfileByUserId(
+        authUser.id,
+        accessToken,
+      );
+      if (profile) {
+        await cacheService.setJSON(cacheKey, profile, 120).catch(() => {});
+      }
+    }
 
     return buildActor({
       authUser,

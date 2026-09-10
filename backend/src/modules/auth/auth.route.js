@@ -12,6 +12,8 @@ import {
   requestOtpSchema,
   resetPasswordSchema,
   resetPasswordWithOtpSchema,
+  sendGuestOtpSchema,
+  verifyGuestOtpSchema,
   verifyOtpSchema,
 } from "./auth.schema.js";
 import { authController } from "./auth.controller.js";
@@ -83,4 +85,23 @@ authRouter.post(
   asyncHandler(authController.resetPasswordWithOtp),
 );
 
+// Guest authentication & Gmail OTP verification routes
+authRouter.post(
+  "/guest",
+  asyncHandler(authController.createGuestSession),
+);
+
+authRouter.post(
+  "/guest/send-otp",
+  validateRequest(sendGuestOtpSchema),
+  asyncHandler(authController.sendGuestOtp),
+);
+
+authRouter.post(
+  "/guest/verify-otp",
+  validateRequest(verifyGuestOtpSchema),
+  asyncHandler(authController.verifyGuestOtp),
+);
+
 export { authRouter };
+

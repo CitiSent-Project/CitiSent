@@ -25,6 +25,8 @@ import {
   Colors,
   usePullToRefresh,
 } from "../../modules/shared";
+import { GuestVerificationModal } from "../../modules/auth";
+import { isGuestUser, isGuestVerified } from "../../services/authSession";
 import useDepartments from "../../hooks/useDepartments";
 import { reportsApi } from "../../services/reports";
 
@@ -68,6 +70,7 @@ export default function CreateReportIssueDetailScreen() {
     message: "",
     onCloseAction: null,
   });
+  const [isGuestOtpModalVisible, setIsGuestOtpModalVisible] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh(reloadDepartments);
   const scrollViewRef = useRef(null);
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
@@ -150,6 +153,16 @@ export default function CreateReportIssueDetailScreen() {
       return;
     }
 
+    // If guest user and not yet phone-verified, intercept and prompt OTP
+    if (isGuestUser() && !isGuestVerified()) {
+      setIsGuestOtpModalVisible(true);
+      return;
+    }
+
+    await executeSubmitReport();
+  }
+
+  async function executeSubmitReport() {
     setIsSubmitting(true);
     try {
       let attachmentUrl;
@@ -182,6 +195,15 @@ export default function CreateReportIssueDetailScreen() {
       );
     } catch (error) {
       setIsSubmitting(false);
+      const isGuestRequired =
+        error?.code === "GUEST_VERIFICATION_REQUIRED" ||
+        String(error?.message || "").includes("Guest verification required");
+
+      if (isGuestRequired) {
+        setIsGuestOtpModalVisible(true);
+        return;
+      }
+
       showModal(
         "error",
         "Submission failed",
@@ -284,6 +306,16 @@ export default function CreateReportIssueDetailScreen() {
         message={modalConfig.message}
         onClose={closeModal}
       />
+
+      <GuestVerificationModal
+        visible={isGuestOtpModalVisible}
+        onClose={() => setIsGuestOtpModalVisible(false)}
+        onVerified={() => {
+          setIsGuestOtpModalVisible(false);
+          executeSubmitReport();
+        }}
+      />
     </View>
+
   );
 }

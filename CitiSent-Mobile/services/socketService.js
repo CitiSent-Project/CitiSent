@@ -1,6 +1,6 @@
 import { io } from "socket.io-client/dist/socket.io.js";
 import { resolveApiBaseUrl } from "./apiConfig";
-import { getAuthToken, clearAuthToken, isJwtExpired, onAuthStateChanged } from "./authSession";
+import { getAuthToken, clearAuthToken, isJwtExpired, onAuthStateChanged, isGuestUser } from "./authSession";
 
 let socketInstance = null;
 
@@ -16,6 +16,13 @@ export function resolveSocketBaseUrl() {
  */
 export function getSocket(options = {}) {
   const token = options.token || getAuthToken();
+
+  // Guest accounts use custom JWTs that are not Supabase tokens;
+  // the backend socket middleware rejects them. Guests do not need
+  // real-time features, so skip socket connection entirely.
+  if (isGuestUser()) {
+    return null;
+  }
 
   if (!token || isJwtExpired(token)) {
     if (socketInstance) {
@@ -89,10 +96,10 @@ export function disconnectSocket() {
   }
 }
 
-// Automatically react to auth changes (logout or token clear)
+// Automatically react to auth changes (logout, token clear, or guest session)
 onAuthStateChanged((user) => {
   const token = getAuthToken();
-  if (!user || !token || isJwtExpired(token)) {
+  if (!user || !token || isJwtExpired(token) || isGuestUser()) {
     disconnectSocket();
   }
 });

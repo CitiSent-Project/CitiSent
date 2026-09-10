@@ -24,7 +24,15 @@ import {
 import { otpStore_ } from "../../shared/security/otp.store.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 import { env } from "../../config/env.js";
+import {
+  guestEmailOtpService,
+  normalizeGmailAddress,
+} from "../../shared/security/guestEmailOtp.service.js";
+import { signGuestToken } from "../../shared/security/guestTokens.js";
+import { sendGuestVerificationOtpEmail } from "../../shared/email/mailer.js";
+import { createAdminSupabaseClient } from "../../config/supabase.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -582,4 +590,141 @@ export const authService = {
 
     return { changed: true };
   },
+
+  async createGuestSession() {
+    const guestId = crypto.randomUUID();
+    const token = signGuestToken({ guestId, isVerified: false, email: null });
+
+    return {
+      token,
+      user: {
+        id: guestId,
+        role: "guest",
+        isGuest: true,
+        isVerified: false,
+        username: "Guest",
+      },
+    };
+  },
+
+  async sendGuestOtp(email) {
+    let normalizedEmail;
+    try {
+      normalizedEmail = normalizeGmailAddress(email);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+      guestEmailOtpService.checkSendRateLimit(normalizedEmail);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
+    }
+
+    const plainOtp = guestEmailOtpService.createOtp(normalizedEmail);
+
+    try {
+      await sendGuestVerificationOtpEmail({
+        toEmail: normalizedEmail,
+        otp: plainOtp,
+      });
+    } catch (err) {
+      throw new AppError(
+        "We couldn't send the verification code. Please try again.",
+        StatusCodes.BAD_GATEWAY,
+        { error: err.message },
+      );
+    }
+
+    return {
+      sent: true,
+      email: normalizedEmail,
+      cooldownSeconds: 60,
+      expiresInSeconds: 300,
+    };
+  },
+
+  async verifyGuestOtp(email, otp, currentGuestId = null) {
+    let normalizedEmail;
+    try {
+      normalizedEmail = normalizeGmailAddress(email);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    try {
+      guestEmailOtpService.verifyOtp(normalizedEmail, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    let guestUserId = null;
+
+    try {
+      const adminDb = createAdminSupabaseClient();
+      if (adminDb) {
+        const { data: existingProfile } = await adminDb
+          .from("profiles")
+          .select("user_id, email, account_type")
+          .eq("email", normalizedEmail)
+          .maybeSingle();
+
+        if (existingProfile?.user_id) {
+          guestUserId = existingProfile.user_id;
+        } else {
+          const usernameSuffix = normalizedEmail.split("@")[0].slice(0, 15);
+          const { data: createdAuth } = await adminDb.auth.admin.createUser({
+            email: normalizedEmail,
+            email_confirm: true,
+            user_metadata: {
+              role: "guest",
+              is_guest: true,
+              email: normalizedEmail,
+            },
+          });
+
+          if (createdAuth?.user?.id) {
+            guestUserId = createdAuth.user.id;
+            await adminDb
+              .from("profiles")
+              .update({
+                email: normalizedEmail,
+                account_type: "guest",
+                username: `guest_${usernameSuffix}`,
+                fname: "Guest",
+                lname: "User",
+                barangay: "Poblacion 1",
+              })
+              .eq("user_id", guestUserId);
+          }
+        }
+      }
+    } catch {
+      // Non-fatal fallback if Supabase is offline/mocked
+    }
+
+    if (!guestUserId) {
+      guestUserId = currentGuestId || crypto.randomUUID();
+    }
+
+    const token = signGuestToken({
+      guestId: guestUserId,
+      isVerified: true,
+      email: normalizedEmail,
+    });
+
+    return {
+      verified: true,
+      token,
+      user: {
+        id: guestUserId,
+        role: "guest",
+        isGuest: true,
+        isVerified: true,
+        email: normalizedEmail,
+        username: "Verified Guest",
+      },
+    };
+  },
 };
+

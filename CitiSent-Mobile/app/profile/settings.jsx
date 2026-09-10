@@ -10,7 +10,7 @@ import {
 } from "../../modules/profile";
 import { Colors } from "../../modules/shared";
 import { usersApi } from "../../services/users";
-import { clearAuthToken } from "../../services/authSession";
+import { clearAuthToken, isGuestUser } from "../../services/authSession";
 
 function SettingsActionRow({ icon, label, onPress, danger = false, disabled = false, value }) {
   return (
@@ -44,6 +44,8 @@ function SettingsActionRow({ icon, label, onPress, danger = false, disabled = fa
 export default function SettingsPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const isGuest = isGuestUser();
 
   const [isPasswordSheetVisible, setIsPasswordSheetVisible] = useState(false);
   const [isDeleteSheetVisible, setIsDeleteSheetVisible] = useState(false);
@@ -89,7 +91,8 @@ export default function SettingsPage() {
       <SettingsActionRow
         icon="lock-closed-outline"
         label="Change password"
-        onPress={openPasswordSheet}
+        onPress={isGuest ? undefined : openPasswordSheet}
+        disabled={isGuest}
       />
 
       <Text className="mb-2 mt-3 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Legal</Text>

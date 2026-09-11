@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FiMessageCircle, FiRefreshCw, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import { FiMessageCircle, FiRefreshCw, FiX } from 'react-icons/fi'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
-import { mapBackendMessagesResponse, mapBackendMessageToUi, mapBackendSuggestionsToUi } from '../../services/api/admin/reportsApiMappers'
+import { mapBackendMessagesResponse, mapBackendMessageToUi } from '../../services/api/admin/reportsApiMappers'
 import { ReportChatThread } from './ReportChatThread'
 import { ReportChatComposer } from './ReportChatComposer'
 import {
@@ -22,30 +22,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
   const [isUserTyping, setIsUserTyping] = useState(false)
   const typingTimerRef = useRef(null)
 
-  const [suggestions, setSuggestions] = useState([])
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
-  const [suggestionText, setSuggestionText] = useState('')
-  const [isSuggestionsMinimized, setIsSuggestionsMinimized] = useState(false)
 
-  const fetchSuggestions = useCallback(async (force = false) => {
-    if (!report?.id || !token) return
-    setSuggestionsLoading(true)
-    try {
-      const res = await reportsApiService.getReportChatSuggestions(token, report.id, force)
-      const mapped = mapBackendSuggestionsToUi(res)
-      setSuggestions(mapped.suggestedReplies || [])
-    } catch (err) {
-      console.error('Failed to load chat suggestions:', err)
-      setSuggestions([
-        { text: "Thank you for reaching out. We have received your message and are looking into it.", rank: 1 },
-        { text: "Could you please provide more details or clarify your request?", rank: 2 },
-        { text: "We are currently reviewing this issue and will update you as soon as possible.", rank: 3 },
-        { text: "If this is an immediate emergency, please contact our direct hotline or emergency services.", rank: 4 }
-      ])
-    } finally {
-      setSuggestionsLoading(false)
-    }
-  }, [report?.id, token])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -65,8 +42,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
   // Initial load
   useEffect(() => {
     load()
-    fetchSuggestions()
-  }, [load, fetchSuggestions])
+  }, [load])
 
   // Socket.IO Real-time Subscriptions
   useEffect(() => {
@@ -81,9 +57,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
       const raw = data.message
       const isOwn = profile?.id && String(raw.senderId || raw.sender_id) === String(profile.id)
       
-      if (!isOwn) {
-        fetchSuggestions(false)
-      }
+
 
       const newMsg = mapBackendMessageToUi({
         id: raw.id,
@@ -137,7 +111,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
       socket.off('stop_typing', handleStopTyping)
       leaveReportRoom(token, report.id)
     }
-  }, [report.id, token, profile?.id, fetchSuggestions])
+  }, [report.id, token, profile?.id])
 
   async function send(content) {
     if (!content.trim() || !report?.id) return false
@@ -207,9 +181,6 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
     }
   }
 
-  const lastMessage = messages[messages.length - 1]
-  const showSuggestions = !lastMessage || lastMessage.senderRole !== 'admin'
-
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-900/20 dark:bg-slate-900/60" onClick={onClose} aria-hidden="true" />
@@ -252,65 +223,10 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
           </div>
         )}
 
-        {/* AI-Assisted Reply Suggestions */}
-        {showSuggestions && (
-          <div className="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
-            <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider">
-              <button 
-                type="button" 
-                onClick={() => setIsSuggestionsMinimized(prev => !prev)}
-                className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition"
-                aria-label={isSuggestionsMinimized ? "Expand suggestions" : "Minimize suggestions"}
-              >
-                {isSuggestionsMinimized ? <FiChevronUp className="text-sm" /> : <FiChevronDown className="text-sm" />}
-                <span>AI-ASSISTED REPLY SUGGESTIONS</span>
-              </button>
-              
-              {!isSuggestionsMinimized && (
-                <button
-                  type="button"
-                  onClick={() => fetchSuggestions(true)}
-                  disabled={suggestionsLoading}
-                  className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition disabled:opacity-50 text-[10px] text-slate-500 dark:text-slate-400 font-bold"
-                >
-                  <FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE
-                </button>
-              )}
-            </div>
-
-            {!isSuggestionsMinimized && (
-              suggestionsLoading ? (
-                <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">Generating suggestions...</div>
-              ) : suggestions.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {suggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => !sending && send(suggestion.text)}
-                      disabled={sending}
-                      className={`flex flex-col justify-between text-left text-xs p-2 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/20 transition-all text-slate-700 dark:text-slate-300 font-normal wrap-break-word shadow-2xs ${
-                        idx === 0 ? 'border-l-4 border-l-blue-600 dark:border-l-blue-500 font-medium text-slate-900 dark:text-white bg-blue-50/10 dark:bg-blue-500/5' : ''
-                      }`}
-                    >
-                      {idx === 0 && <span className="text-[9px] text-blue-600 dark:text-blue-400 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
-                      <span>{suggestion.text}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-2 text-center text-xs text-slate-400 dark:text-slate-500">No suggestions available.</div>
-              )
-            )}
-          </div>
-        )}
-
         <ReportChatComposer
           onSend={send}
           onTyping={handleComposerTyping}
           disabled={sending || loading}
-          suggestionText={suggestionText}
-          onSuggestionUsed={() => setSuggestionText('')}
         />
       </aside>
     </>

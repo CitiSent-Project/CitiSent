@@ -11,7 +11,6 @@ FastAPI + Google Gemini microservice scaffolded for emotion classification, real
 * **Emotion & Sentiment Classification:** Identifies citizen emotional states (*Sad*, *Happy*, *Frustrated*, *Angry*, *Disappointed*, *Excited*, *Delighted*, *Neutral*).
 * **Urgency Levels:** Evaluates real-world risk and operational severity (*Critical*, *High*, *Medium*, *Low*).
 * **Automated Admin Summaries:** Generates a concise 1–2 sentence executive summary highlighting citizen sentiment alongside actionable reasons for the selected department.
-* **Smart Responder Chat Suggestions:** Proposes contextual response drafts for city staff handling citizen inquiries.
 * **Admin Note Suggestions:** Automatically formulates structured triage notes based on the issue description and resolution history.
 * **Deterministic & Fast Output:** Leverages structured JSON outputs and low temperature settings with strict timeout safeguards.
 
@@ -141,10 +140,7 @@ Checks if the Gemini client is properly initialized and returns supported classi
   }
   ```
 
-### 3. Chat Suggestions (`POST /chat/suggestions`)
-Generates contextual quick replies for city staff responding to citizen chat messages.
-
-### 4. Admin Note Suggestions (`POST /admin-notes/suggestions`)
+### 3. Admin Note Suggestions (`POST /admin-notes/suggestions`)
 Generates internal summary notes based on conversation history and resolution progress.
 
 ---
@@ -168,7 +164,7 @@ Generates internal summary notes based on conversation history and resolution pr
 ai-sentiment/
 ├── api/                        # FastAPI route controllers
 │   ├── get_report.py           # Health and status endpoints
-│   ├── get_suggestions.py      # Chat and admin note suggestion routes
+│   ├── get_suggestions.py      # Admin note suggestion routes
 │   └── post_report.py          # Primary report analysis route (/analyze)
 ├── tests/                      # Unit and integration test suites
 ├── ai.py                       # Core Gemini SDK integration and prompt engineering

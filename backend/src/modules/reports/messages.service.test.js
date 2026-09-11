@@ -4,7 +4,8 @@ import { AppError } from "../../shared/errors/appError.js";
 import { reportMessagesService } from "./messages.service.js";
 import { reportMessagesRepository } from "./messages.repository.js";
 import { notificationsRepository } from "../admin/notifications/notifications.repository.js";
-import { reportsSentimentClient } from "./reports.sentiment.js";
+import { adminRepository } from "../admin/admin.repository.js";
+
 
 function createReport(overrides = {}) {
   return {
@@ -77,7 +78,9 @@ test("sendMessage creates a notification for the other participant", async () =>
   const originalCreateNotification = notificationsRepository.createNotification;
   const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
   const originalGetAgencyParticipants = reportMessagesRepository.getAgencyParticipants;
+  const originalListSuperadmins = adminRepository.listSuperadmins;
   try {
+    adminRepository.listSuperadmins = async () => [];
     reportMessagesRepository.isParticipantForReport = async () => ({
       report: createReport(),
       allowed: true,
@@ -116,93 +119,7 @@ test("sendMessage creates a notification for the other participant", async () =>
     notificationsRepository.createNotification = originalCreateNotification;
     reportMessagesRepository.isParticipantForReport = originalIsParticipantForReport;
     reportMessagesRepository.getAgencyParticipants = originalGetAgencyParticipants;
-  }
-});
-
-test("getChatSuggestions blocks citizens from fetching suggestions", async () => {
-  const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
-  try {
-    reportMessagesRepository.isParticipantForReport = async () => ({
-      report: createReport(),
-      allowed: true,
-      participantType: "citizen",
-    });
-
-    await assert.rejects(
-      () =>
-        reportMessagesService.getChatSuggestions({
-          actor: { id: "citizen-1" },
-          reportId: "report-1",
-          accessToken: "token",
-        }),
-      (error) => error instanceof AppError && error.statusCode === 403,
-    );
-  } finally {
-    reportMessagesRepository.isParticipantForReport = originalIsParticipantForReport;
-  }
-});
-
-import { cacheService } from "../../shared/cache/cacheService.js";
-
-test("getChatSuggestions orchestrates call to sentiment client for suggestions", async () => {
-  const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
-  const originalGetConversation = reportMessagesRepository.getConversation;
-  const originalGetChatSuggestions = reportsSentimentClient.getChatSuggestions;
-  const originalGetJSON = cacheService.getJSON;
-  const originalSetJSON = cacheService.setJSON;
-  try {
-    cacheService.getJSON = async () => null;
-    cacheService.setJSON = async () => {};
-
-    reportMessagesRepository.isParticipantForReport = async () => ({
-      report: createReport({ description: "Citizen report description", issue_type: "Flooding", sentiment_label: "High", emotion_level: "Angry" }),
-      allowed: true,
-      participantType: "admin",
-    });
-
-    reportMessagesRepository.getConversation = async () => ({
-      rows: [
-        { id: "msg-1", sender_id: "citizen-1", message: "Citizen first message", created_at: "2026-07-24T00:00:00.000Z" },
-        { id: "msg-2", sender_id: "admin-1", message: "Admin response", created_at: "2026-07-24T00:01:00.000Z" }
-      ],
-      count: 2,
-    });
-
-    let clientPayload = null;
-    reportsSentimentClient.getChatSuggestions = async (payload) => {
-      clientPayload = payload;
-      return {
-        suggestedReplies: [
-          { text: "Reply A", rank: 1 },
-          { text: "Reply B", rank: 2 },
-          { text: "Reply C", rank: 3 },
-          { text: "Reply D", rank: 4 }
-        ],
-        tone: "professional",
-      };
-    };
-
-    const result = await reportMessagesService.getChatSuggestions({
-      actor: { id: "admin-1" },
-      reportId: "report-1",
-      accessToken: "token",
-    });
-
-    assert.equal(result.suggestedReplies.length, 4);
-    assert.equal(clientPayload.latestUserMessage, "Citizen first message");
-    assert.deepEqual(clientPayload.conversationContext, [
-      { sender: "Citizen", text: "Citizen first message" },
-      { sender: "Admin", text: "Admin response" }
-    ]);
-    assert.equal(clientPayload.reportCategory, "Flooding");
-    assert.equal(clientPayload.urgency, "High");
-    assert.equal(clientPayload.detectedEmotion, "Angry");
-  } finally {
-    reportMessagesRepository.isParticipantForReport = originalIsParticipantForReport;
-    reportMessagesRepository.getConversation = originalGetConversation;
-    reportsSentimentClient.getChatSuggestions = originalGetChatSuggestions;
-    cacheService.getJSON = originalGetJSON;
-    cacheService.setJSON = originalSetJSON;
+    adminRepository.listSuperadmins = originalListSuperadmins;
   }
 });
 

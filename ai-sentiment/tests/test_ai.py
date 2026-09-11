@@ -118,17 +118,13 @@ def test_analyze_report_timeout(monkeypatch):
         monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
         monkeypatch.setattr(ai, "GEMINI_TIMEOUT_SECONDS", 0.05)
 
-        with pytest.raises(TimeoutError, match="Gemini API did not respond"):
+        with pytest.raises(TimeoutError, match="Gemini.*did not respond"):
             await ai.analyze_report("Office", "Location", "Valid description here.")
 
     asyncio.run(_test())
 
 
-def test_get_default_suggestions():
-    defaults = ai.get_default_suggestions("Test reason")
-    assert len(defaults["suggestedReplies"]) == 4
-    assert defaults["reason"] == "Test reason"
-    assert defaults["suggestedReplies"][0]["rank"] == 1
+
 
 
 def test_get_default_admin_note_suggestions_by_status():
@@ -139,62 +135,7 @@ def test_get_default_admin_note_suggestions_by_status():
         assert notes["suggestedNotes"][0]["rank"] == 1
 
 
-def test_generate_suggestions_success(monkeypatch):
-    async def _test():
-        response_payload = {
-            "suggestedReplies": [
-                {"text": "We are dispatching a team immediately.", "rank": 1},
-                {"text": "Could you provide a photo of the incident?", "rank": 2},
-                {"text": "We are verifying with the local barangay.", "rank": 3},
-                {"text": "For emergencies call 911.", "rank": 4},
-            ],
-            "tone": "urgent",
-            "confidence": 0.95,
-            "reason": "Critical infrastructure issue.",
-            "triggerEmotion": "Angry",
-            "fallbackMessage": "We are looking into this.",
-        }
-        fake_client = make_mock_client(json.dumps(response_payload))
-        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
 
-        result = await ai.generate_suggestions(
-            latest_message="When will the team arrive?",
-            conversation_context=[{"sender": "citizen", "text": "Water pipe burst."}],
-            report_category="Water Works",
-            urgency="High",
-            detected_emotion="Frustrated",
-        )
-
-        assert len(result["suggestedReplies"]) == 4
-        assert result["suggestedReplies"][0]["text"] == "We are dispatching a team immediately."
-        assert result["tone"] == "urgent"
-
-    asyncio.run(_test())
-
-
-def test_generate_suggestions_fallback_on_invalid_output(monkeypatch):
-    async def _test():
-        # Missing required reply items (returns only 1 instead of 4)
-        bad_payload = {
-            "suggestedReplies": [
-                {"text": "Reply 1", "rank": 1},
-            ],
-        }
-        fake_client = make_mock_client(json.dumps(bad_payload))
-        monkeypatch.setattr(ai, "_get_client", lambda: fake_client)
-
-        result = await ai.generate_suggestions(
-            latest_message="Hello",
-            conversation_context=[],
-            report_category="General",
-            urgency="Low",
-            detected_emotion="Neutral",
-        )
-
-        # Should safely return fallback suggestions
-        assert len(result["suggestedReplies"]) == 4
-
-    asyncio.run(_test())
 
 
 def test_generate_admin_note_suggestions_success(monkeypatch):

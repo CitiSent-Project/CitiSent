@@ -119,39 +119,6 @@ def test_status_endpoint_returns_503_when_client_fails(monkeypatch):
     assert response.json()["detail"] == "Sentiment analysis model is unavailable."
 
 
-def test_chat_suggestions_endpoint(monkeypatch):
-    async def fake_generate_suggestions(**kwargs):
-        return {
-            "suggestedReplies": [
-                {"text": "Suggestion 1", "rank": 1},
-                {"text": "Suggestion 2", "rank": 2},
-                {"text": "Suggestion 3", "rank": 3},
-                {"text": "Suggestion 4", "rank": 4},
-            ],
-            "tone": "neutral",
-            "confidence": 0.9,
-            "reason": "Test reason",
-            "triggerEmotion": "Neutral",
-            "fallbackMessage": "Fallback",
-        }
-
-    monkeypatch.setattr(get_suggestions_module, "generate_suggestions", fake_generate_suggestions)
-
-    response = client.post(
-        "/chat/suggestions",
-        json={
-            "latestUserMessage": "Need help with road repair",
-            "conversationContext": [{"sender": "user", "text": "Hello"}],
-            "reportCategory": "Roads",
-            "urgency": "Medium",
-            "detectedEmotion": "Neutral",
-        },
-    )
-
-    assert response.status_code == 200
-    assert len(response.json()["suggestedReplies"]) == 4
-
-
 def test_admin_note_suggestions_endpoint(monkeypatch):
     async def fake_generate_admin_note_suggestions(**kwargs):
         return {

@@ -33,8 +33,6 @@ export const reportsApiService = {
     apiClient.post(`/reports/${reportId}/messages`, { message: content }, { token }),
   markReportMessagesRead: (token, reportId) =>
     apiClient.patch(`/reports/${reportId}/messages/read`, {}, { token }),
-  getReportChatSuggestions: (token, reportId, forceRegenerate = false) =>
-    apiClient.get(`/reports/${reportId}/messages/suggestions?forceRegenerate=${forceRegenerate}`, { token }),
   getReportAdminNoteSuggestions: (token, reportId, status, forceRegenerate = false) => {
     const params = new URLSearchParams({
       status: String(status || 'pending'),

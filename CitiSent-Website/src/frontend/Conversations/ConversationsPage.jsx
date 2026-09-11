@@ -103,20 +103,61 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
         <div className={`flex flex-1 min-w-0 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
           {activeConversation ? (
             <>
-              <header className="flex shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-[#183b68] dark:bg-slate-950 px-5 py-3.5 text-white">
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setMobileShowChat(false)} className="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-white/10 md:hidden" aria-label="Back to conversations list"><FiArrowLeft /></button>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-semibold">{activeConversation.userName}</h2>
-                      {activeConversation.isOnline ? <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />Online</span> : <span className="text-[11px] font-medium text-blue-200">{formatLastSeen(activeConversation.lastMessageAt)}</span>}
+              <header className="flex shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-[#183b68] dark:bg-slate-950 px-3.5 py-2.5 sm:px-5 sm:py-3.5 text-white gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setMobileShowChat(false)}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg transition hover:bg-white/10 md:hidden"
+                    aria-label="Back to conversations list"
+                  >
+                    <FiArrowLeft className="text-base" />
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h2 className="font-semibold text-sm sm:text-base truncate text-white">
+                        {activeConversation.userName}
+                      </h2>
+                      {activeConversation.isOnline ? (
+                        <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-300">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Online
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-[10px] sm:text-[11px] font-medium text-blue-200 truncate max-w-28">
+                          {formatLastSeen(activeConversation.lastMessageAt)}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-blue-100">Report {activeConversation.reportNumber || activeConversation.reportId}{activeConversation.category ? ` · ${activeConversation.category}` : ''}</p>
+                    <p className="truncate text-[11px] sm:text-xs text-blue-100/90 font-medium">
+                      Report {activeConversation.reportNumber || (activeConversation.reportId ? `${String(activeConversation.reportId).slice(0, 8)}…` : '')}
+                      {activeConversation.category ? ` · ${activeConversation.category}` : ''}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {onViewReport && <button type="button" onClick={() => onViewReport(mapBackendReportToUiRow(activeConversation.rawReport))} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition hover:bg-white/10" aria-label="View full report"><FiFileText /> View Report</button>}
-                  <button type="button" onClick={() => { loadMessages(activeConversation.reportId); fetchSuggestions(activeConversation.reportId) }} className="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-white/10" aria-label="Refresh chat"><FiRefreshCw /></button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {onViewReport && (
+                    <button
+                      type="button"
+                      onClick={() => onViewReport(mapBackendReportToUiRow(activeConversation.rawReport))}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium transition hover:bg-white/10 active:scale-95"
+                      aria-label="View full report"
+                      title="View full report"
+                    >
+                      <FiFileText className="text-sm shrink-0" />
+                      <span className="hidden sm:inline">View Report</span>
+                      <span className="sm:hidden text-[11px]">Report</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { loadMessages(activeConversation.reportId); fetchSuggestions(activeConversation.reportId) }}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/15 transition hover:bg-white/10 active:scale-95"
+                    aria-label="Refresh chat"
+                    title="Refresh chat"
+                  >
+                    <FiRefreshCw className="text-xs" />
+                  </button>
                 </div>
               </header>
 

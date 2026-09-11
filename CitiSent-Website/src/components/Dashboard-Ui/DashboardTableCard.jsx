@@ -10,13 +10,13 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
 
   return (
     <MotionDiv
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800"
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-700/80 dark:bg-slate-800"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
     >
-      <div className="border-b border-slate-200 p-6 dark:border-slate-700">
-        <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
+      <div className="border-b border-slate-200 px-4 py-3.5 sm:px-6 sm:py-4 dark:border-slate-700">
+        <h3 className="font-semibold text-slate-900 text-base sm:text-lg dark:text-white">{title}</h3>
       </div>
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
@@ -81,7 +81,7 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
       </div>
 
       {/* Mobile Card List View */}
-      <div className="block md:hidden bg-slate-50/50 p-4 dark:bg-slate-900/40">
+      <div className="block md:hidden bg-slate-50/50 p-3 sm:p-4 dark:bg-slate-900/40">
         {isInitialLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -96,18 +96,49 @@ export function DashboardTableCard({ title, columns, rows, isLoading = false }) 
         )}
         {!isInitialLoading && rows.length > 0 && (
           <div className="space-y-3">
-            {rows.map((row, idx) => (
-              <div key={idx} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
-                {Object.values(row).map((cell, cellIdx) => (
-                  <div key={cellIdx} className={`flex items-center justify-between ${cellIdx !== 0 ? 'mt-2 border-t border-slate-100 pt-2 dark:border-slate-700' : ''}`}>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{columns[cellIdx]}</span>
-                    <span className={`text-sm text-slate-800 dark:text-slate-200 ${cellIdx !== 0 && /\d/.test(String(cell)) ? 'font-numeric font-medium' : ''}`}>
-                      {cellIdx === 0 ? <ProfilePill label={cell} /> : cell}
-                    </span>
+            {rows.map((row, idx) => {
+              const cells = Object.values(row)
+              const primaryCell = cells[0]
+              const secondaryCells = cells.slice(1)
+
+              return (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200/90 bg-white p-3.5 sm:p-4 shadow-2xs transition-all hover:border-slate-300 dark:border-slate-700/80 dark:bg-slate-800 dark:hover:border-slate-600"
+                >
+                  {/* Card Header: User/Admin Identity */}
+                  <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-slate-100 dark:border-slate-700/60 min-w-0">
+                    <ProfilePill label={primaryCell} />
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {/* Secondary Metadata Rows */}
+                  <div className="mt-2.5 space-y-2">
+                    {secondaryCells.map((cell, sIdx) => {
+                      const colLabel = columns[sIdx + 1]
+                      const isNumeric = /\d/.test(String(cell))
+
+                      return (
+                        <div
+                          key={sIdx}
+                          className="flex items-start justify-between gap-3 text-xs"
+                        >
+                          <span className="shrink-0 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                            {colLabel}
+                          </span>
+                          <span
+                            className={`min-w-0 flex-1 text-right text-xs sm:text-sm font-medium text-slate-800 break-words dark:text-slate-200 ${
+                              isNumeric ? 'font-numeric' : ''
+                            }`}
+                          >
+                            {cell || '—'}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

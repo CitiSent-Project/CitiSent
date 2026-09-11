@@ -107,12 +107,13 @@ export function OfficeAdminAssignmentsSection({
               className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs">
                     {getAdminInitials(admin.fullName)}
                   </div>
-                  <div className="min-w-0">
-                    <p className="break-all text-xs text-slate-500 dark:text-slate-400">{admin.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{admin.fullName}</p>
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">{admin.email}</p>
                   </div>
                 </div>
                 <span

@@ -634,6 +634,19 @@ export const authService = {
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
+    const isRegistered = await authRepository.isRegisteredUserEmail(normalizedEmail);
+    if (isRegistered) {
+      throw new AppError(
+        "This email is already registered.",
+        StatusCodes.CONFLICT,
+        {
+          supportingText:
+            "This Gmail address is already associated with an existing CitiSent account. Please use a different Gmail address or log in to your existing account.",
+          code: "EMAIL_ALREADY_REGISTERED",
+        },
+      );
+    }
+
     try {
       guestEmailOtpService.checkSendRateLimit(normalizedEmail);
     } catch (err) {
@@ -671,6 +684,19 @@ export const authService = {
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
+    const isRegistered = await authRepository.isRegisteredUserEmail(normalizedEmail);
+    if (isRegistered) {
+      throw new AppError(
+        "This email is already registered.",
+        StatusCodes.CONFLICT,
+        {
+          supportingText:
+            "This Gmail address is already associated with an existing CitiSent account. Please use a different Gmail address or log in to your existing account.",
+          code: "EMAIL_ALREADY_REGISTERED",
+        },
+      );
+    }
+
     try {
       guestEmailOtpService.verifyOtp(normalizedEmail, otp);
     } catch (err) {
@@ -688,9 +714,9 @@ export const authService = {
           .eq("email", normalizedEmail)
           .maybeSingle();
 
-        if (existingProfile?.user_id) {
+        if (existingProfile?.user_id && existingProfile?.account_type === "guest") {
           guestUserId = existingProfile.user_id;
-        } else {
+        } else if (!existingProfile?.user_id) {
           const usernameSuffix = normalizedEmail.split("@")[0].slice(0, 15);
           const { data: createdAuth } = await adminDb.auth.admin.createUser({
             email: normalizedEmail,
@@ -746,4 +772,3 @@ export const authService = {
     };
   },
 };
-

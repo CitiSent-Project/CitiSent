@@ -301,10 +301,13 @@ async function queryProfileByIdentifier(db, identifier) {
 }
 
 async function queryProfileByEmail(db, email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return { data: null, error: null };
+
   const { data, error } = await db
     .from(PROFILES_TABLE)
     .select("*")
-    .eq("email", email)
+    .or(`email.eq.${normalized},email.ilike.${normalized}`)
     .limit(1)
     .maybeSingle();
 
@@ -464,6 +467,46 @@ export const authRepository = {
     }
 
     return data || null;
+  },
+
+  async isRegisteredUserEmail(email) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      return false;
+    }
+
+    const profile = await this.getProfileByEmail(normalizedEmail);
+    if (profile) {
+      const accountType = String(profile.account_type || "").trim().toLowerCase();
+      const role = String(profile.role || "").trim().toLowerCase();
+
+      // Guest accounts are not considered registered user accounts
+      if (accountType === "guest" || role === "guest") {
+        return false;
+      }
+
+      return true;
+    }
+
+    // Secondary check: inspect Supabase Auth users for orphaned or unprofiled registered users
+    const adminDb = createAdminSupabaseClient();
+    if (adminDb) {
+      try {
+        const authUser = await findAuthUserByEmail(normalizedEmail);
+        if (authUser?.id) {
+          const role = String(authUser.user_metadata?.role || "").trim().toLowerCase();
+          const isGuest = Boolean(authUser.user_metadata?.is_guest);
+          if (role === "guest" || isGuest) {
+            return false;
+          }
+          return true;
+        }
+      } catch {
+        // Fall back gracefully if auth inspection fails
+      }
+    }
+
+    return false;
   },
 
   async updateAuthUserPassword(userId, newPassword) {

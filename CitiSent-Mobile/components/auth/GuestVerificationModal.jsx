@@ -35,7 +35,7 @@ export default function GuestVerificationModal({
   const inputRefs = useRef([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   // Timers
   const [otpSecondsLeft, setOtpSecondsLeft] = useState(OTP_TTL_SECONDS);
@@ -47,7 +47,7 @@ export default function GuestVerificationModal({
     setStep("email");
     setEmail("");
     setDigits(Array(OTP_LENGTH).fill(""));
-    setError("");
+    setError(null);
     setIsLoading(false);
     clearInterval(otpTimerRef.current);
     clearInterval(resendTimerRef.current);
@@ -110,12 +110,12 @@ export default function GuestVerificationModal({
   const handleSendOtp = async () => {
     const check = validateGmail(email);
     if (!check.valid) {
-      setError(check.message);
+      setError({ message: check.message, supportingText: "" });
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     try {
       await authApi.sendGuestOtp(check.email);
@@ -127,9 +127,11 @@ export default function GuestVerificationModal({
         inputRefs.current[0]?.focus();
       }, 150);
     } catch (err) {
-      setError(
-        err?.message || "We couldn't send the verification code. Please try again."
-      );
+      setError({
+        message:
+          err?.message || "We couldn't send the verification code. Please try again.",
+        supportingText: err?.details?.supportingText || "",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -141,12 +143,12 @@ export default function GuestVerificationModal({
 
     const check = validateGmail(email);
     if (!check.valid) {
-      setError(check.message);
+      setError({ message: check.message, supportingText: "" });
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError(null);
     setDigits(Array(OTP_LENGTH).fill(""));
 
     try {
@@ -155,9 +157,11 @@ export default function GuestVerificationModal({
       startResendCooldown();
       inputRefs.current[0]?.focus();
     } catch (err) {
-      setError(
-        err?.message || "We couldn't send the verification code. Please try again."
-      );
+      setError({
+        message:
+          err?.message || "We couldn't send the verification code. Please try again.",
+        supportingText: err?.details?.supportingText || "",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +170,7 @@ export default function GuestVerificationModal({
   // Digit handling
   const handleDigitChange = (value, index) => {
     const cleaned = value.replace(/\D/g, "").slice(-1);
-    setError("");
+    setError(null);
 
     const newDigits = [...digits];
     newDigits[index] = cleaned;
@@ -190,23 +194,29 @@ export default function GuestVerificationModal({
   const handleVerify = async () => {
     const otp = digits.join("");
     if (otp.length < OTP_LENGTH) {
-      setError("Please enter all 6 digits of your verification code.");
+      setError({
+        message: "Please enter all 6 digits of your verification code.",
+        supportingText: "",
+      });
       return;
     }
 
     if (otpSecondsLeft === 0) {
-      setError("This verification code has expired. Please request a new code.");
+      setError({
+        message: "This verification code has expired. Please request a new code.",
+        supportingText: "",
+      });
       return;
     }
 
     const check = validateGmail(email);
     if (!check.valid) {
-      setError(check.message);
+      setError({ message: check.message, supportingText: "" });
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     try {
       await authApi.verifyGuestOtp(check.email, otp);
@@ -222,7 +232,10 @@ export default function GuestVerificationModal({
       }, 900);
     } catch (err) {
       const msg = err?.message || "Incorrect verification code. Please try again.";
-      setError(msg);
+      setError({
+        message: msg,
+        supportingText: err?.details?.supportingText || "",
+      });
 
       if (
         msg.toLowerCase().includes("invalidated") ||
@@ -300,7 +313,7 @@ export default function GuestVerificationModal({
                       value={email}
                       onChangeText={(val) => {
                         setEmail(val);
-                        setError("");
+                        setError(null);
                       }}
                       placeholder="example@gmail.com"
                       placeholderTextColor="#94A3B8"
@@ -314,9 +327,26 @@ export default function GuestVerificationModal({
                 </View>
 
                 {error ? (
-                  <Text className="mt-1 mb-2 text-xs font-medium text-red-600">
-                    {error}
-                  </Text>
+                  <View className="mt-2 mb-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                    <View className="flex-row items-start gap-1.5">
+                      <Ionicons
+                        name="alert-circle"
+                        size={16}
+                        color="#DC2626"
+                        style={{ marginTop: 1 }}
+                      />
+                      <View className="flex-1">
+                        <Text className="text-xs font-bold text-red-700">
+                          {typeof error === "string" ? error : error.message}
+                        </Text>
+                        {typeof error === "object" && error?.supportingText ? (
+                          <Text className="mt-1 text-xs leading-4 text-red-600">
+                            {error.supportingText}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  </View>
                 ) : null}
 
                 <Pressable
@@ -422,7 +452,7 @@ export default function GuestVerificationModal({
 
                 {error ? (
                   <Text className="mb-3 text-center text-xs font-medium text-red-600">
-                    {error}
+                    {typeof error === "string" ? error : error.message}
                   </Text>
                 ) : null}
 

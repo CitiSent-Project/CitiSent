@@ -12,6 +12,7 @@ import {
 	FiLogOut,
 	FiChevronDown,
 	FiChevronUp,
+	FiX,
 } from 'react-icons/fi'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../../models/pageModel'
@@ -94,7 +95,7 @@ function CitiSentLogoIcon({ className = '' }) {
 	return <img src={CitiSentLogo} alt="CitiSent logo" className={className} />
 }
 
-function NavOption({ item, activePage, onNavigate, expanded }) {
+function NavOption({ item, activePage, onNavigate, isDesktopExpanded }) {
 	const hasChildren = Boolean(item.children?.length)
 	const isReportsSection = activePage.startsWith(`${APP_PAGES.REPORTS}:`)
 	const isSelected = hasChildren ? isReportsSection : activePage === item.pageKey
@@ -121,41 +122,43 @@ function NavOption({ item, activePage, onNavigate, expanded }) {
 			<MotionButton
 				type="button"
 				onClick={handleClick}
-				className={`relative flex h-11 w-full items-center rounded-lg px-2 transition-colors ${
+				className={`relative flex h-11 w-full items-center rounded-xl px-2.5 transition-colors ${
 					isSelected
-						? 'bg-blue-900/40 text-white shadow-[inset_0_0_0_1px_rgba(96,165,250,0.35)]'
+						? 'bg-blue-900/50 text-white shadow-[inset_0_0_0_1px_rgba(96,165,250,0.35)]'
 						: item.danger
 							? 'text-rose-200 hover:bg-rose-900/30 hover:text-rose-100'
 							: 'text-slate-100/90 hover:bg-blue-900/30 hover:text-white'
 				}`}
 			>
-				<MotionDiv className="grid h-full w-10 place-content-center text-lg">
+				<MotionDiv className="grid h-full w-9 place-content-center text-lg shrink-0">
 					<Icon />
 				</MotionDiv>
 
-			{expanded && (
-				<span className="text-sm font-medium">
+				<span className={`text-sm font-medium pl-1.5 truncate ${isDesktopExpanded ? 'block' : 'block lg:hidden'}`}>
 					{item.label}
 				</span>
-			)}
 
-			{hasChildren && expanded ? (
-				<span className="ml-auto pr-1 text-cyan-100/90">
-					{submenuOpen ? <FiChevronUp className="text-lg" /> : <FiChevronDown className="text-lg" />}
-				</span>
-			) : null}
+				{hasChildren ? (
+					<span className={`ml-auto pr-1 text-cyan-100/90 ${isDesktopExpanded ? 'block' : 'block lg:hidden'}`}>
+						{submenuOpen ? <FiChevronUp className="text-base" /> : <FiChevronDown className="text-base" />}
+					</span>
+				) : null}
 
-			{item.notifications && expanded && (
-				<span
-					className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-cyan-300 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f3d67] font-numeric"
-				>
-					{item.notifications}
-				</span>
-				)}
+				{item.notifications ? (
+					<span
+						className={`rounded-full bg-cyan-300 px-2 py-0.5 text-[10px] font-bold text-[#1f3d67] font-numeric ${
+							isDesktopExpanded
+								? 'ml-auto'
+								: 'ml-auto lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2'
+						}`}
+					>
+						{item.notifications}
+					</span>
+				) : null}
 			</MotionButton>
 
-			{hasChildren && expanded && submenuOpen ? (
-				<div className="mt-1 space-y-1 border-l border-blue-200/30 pl-5">
+			{hasChildren && submenuOpen ? (
+				<div className={`mt-1 space-y-1 border-l border-blue-200/30 pl-5 ${isDesktopExpanded ? 'block' : 'block lg:hidden'}`}>
 					{item.children.map((child) => {
 						const childSelected = activePage === child.pageKey
 
@@ -164,9 +167,9 @@ function NavOption({ item, activePage, onNavigate, expanded }) {
 								type="button"
 								key={child.pageKey}
 								onClick={() => onNavigate(child.pageKey)}
-								className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+								className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
 									childSelected
-										? 'bg-blue-900/40 text-white'
+										? 'bg-blue-900/50 text-white font-medium'
 										: 'text-cyan-100/90 hover:bg-blue-900/30 hover:text-white'
 								}`}
 							>
@@ -180,22 +183,31 @@ function NavOption({ item, activePage, onNavigate, expanded }) {
 	)
 }
 
-function BrandBlock({ expanded }) {
+function BrandBlock({ isDesktopExpanded, onCloseMobile }) {
 	return (
 		<div className="mb-4 border-b border-white/12 pb-4">
 			<div className="flex items-center justify-between rounded-md p-1">
-				<div className="flex items-center gap-3">
-					<MotionDiv className="h-11 w-11 shrink-0">
+				<div className="flex items-center gap-3 min-w-0">
+					<MotionDiv className="h-10 w-10 shrink-0">
 						<CitiSentLogoIcon className="h-full w-full" />
 					</MotionDiv>
 
-					{expanded && (
-					<div>
+					<div className={isDesktopExpanded ? 'block' : 'block lg:hidden'}>
 						<span className="block text-sm font-semibold tracking-wide text-cyan-100">CitiSent</span>
 						<span className="block text-xs text-cyan-100/70">Admin Workspace</span>
 					</div>
-					)}
 				</div>
+
+				{onCloseMobile ? (
+					<button
+						type="button"
+						onClick={onCloseMobile}
+						className="grid h-8 w-8 place-items-center rounded-lg text-cyan-100 transition hover:bg-white/10 lg:hidden shrink-0"
+						aria-label="Close navigation menu"
+					>
+						<FiX className="text-lg" />
+					</button>
+				) : null}
 			</div>
 		</div>
 	)
@@ -274,19 +286,23 @@ export function Navbar({
 			</AnimatePresence>
 
 			<MotionAside
-				className={`fixed left-0 top-0 z-40 h-full bg-[#2f4f80] text-white shadow-2xl transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 ${expanded ? SIDEBAR_WIDTH_CLASSES.expanded : SIDEBAR_WIDTH_CLASSES.collapsed} ${mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'}`}
+				className={`fixed left-0 top-0 z-40 h-full bg-[#2f4f80] text-white shadow-2xl transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 w-72 max-w-[85vw] ${
+					expanded ? 'lg:w-60' : 'lg:w-[4.5rem]'
+				} ${
+					mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'
+				}`}
 			>
-				<div className={`flex h-full flex-col pb-20 pt-5 ${expanded ? 'px-4' : 'px-2'}`}>
-					<BrandBlock expanded={expanded} />
+				<div className={`flex h-full flex-col pb-20 pt-5 px-4 ${expanded ? 'lg:px-4' : 'lg:px-2'}`}>
+					<BrandBlock isDesktopExpanded={expanded} onCloseMobile={() => setMobileOpen(false)} />
 
-					<nav className="flex-1 space-y-2">
+					<nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">
 						{visibleNavItems.map((item) => (
 							<NavOption
 								key={item.label}
 								item={item}
 								activePage={activePage}
 								onNavigate={handleNavigate}
-								expanded={expanded}
+								isDesktopExpanded={expanded}
 							/>
 						))}
 					</nav>
@@ -294,16 +310,16 @@ export function Navbar({
 					<MotionButton
 						type="button"
 						onClick={() => setExpanded((prev) => !prev)}
-						className="absolute bottom-0 left-0 right-0 border-t border-white/12 bg-[#2f4f80] transition-colors hover:bg-[#3b5f97]"
+						className="hidden lg:block absolute bottom-0 left-0 right-0 border-t border-white/12 bg-[#2f4f80] transition-colors hover:bg-[#3b5f97]"
 					>
-						<div className={`flex items-center py-2 ${expanded ? 'px-3' : 'px-2'}`}>
-							<MotionDiv className="grid h-10 w-10 place-content-center text-lg text-cyan-100">
-								<span>{'>>'}</span>
+						<div className={`flex items-center py-2.5 ${expanded ? 'px-3' : 'px-2'}`}>
+							<MotionDiv className="grid h-9 w-9 place-content-center text-base text-cyan-100">
+								<span>{expanded ? '<<' : '>>'}</span>
 							</MotionDiv>
 							{expanded && (
-							<span className="text-sm font-medium text-cyan-100">
-								Hide
-							</span>
+								<span className="text-sm font-medium text-cyan-100">
+									Collapse
+								</span>
 							)}
 						</div>
 					</MotionButton>

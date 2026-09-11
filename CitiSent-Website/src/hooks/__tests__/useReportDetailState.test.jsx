@@ -230,13 +230,13 @@ describe('useReportDetailState', () => {
     expect(latestState.isSaveDisabled).toBe(true)
   })
 
-  it('treats an Unresolved report as permanently locked', async () => {
-    const unresolvedReport = { ...MOCK_REPORT, status: 'Unresolved' }
+  it('treats a Rejected report as permanently locked', async () => {
+    const rejectedReport = { ...MOCK_REPORT, status: 'Rejected' }
     const onUpdateStatus = vi.fn()
 
     await act(async () => {
       root.render(
-        <HookHarness report={unresolvedReport} profile={SUPERADMIN_PROFILE} onUpdateStatus={onUpdateStatus} />
+        <HookHarness report={rejectedReport} profile={SUPERADMIN_PROFILE} onUpdateStatus={onUpdateStatus} />
       )
       await flushMicrotasks()
     })

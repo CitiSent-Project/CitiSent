@@ -197,7 +197,7 @@ export const reportsService = {
     if (actor?.isGuest) {
       if (!actor.isVerified) {
         const error = new AppError(
-          "Guest verification required. Please verify your phone number via OTP before submitting a report.",
+          "Guest verification required. Please verify your Gmail address via OTP before submitting a report.",
           StatusCodes.FORBIDDEN,
         );
         error.code = "GUEST_VERIFICATION_REQUIRED";

@@ -55,6 +55,14 @@ function resolveUrgency(value) {
 }
 
 function resolveReporterName(profile) {
+  if (
+    profile?.account_type === "guest" ||
+    profile?.role === "guest" ||
+    profile?.is_guest
+  ) {
+    return "Guest";
+  }
+
   return (
     composeFullName({
       fname: profile?.fname,

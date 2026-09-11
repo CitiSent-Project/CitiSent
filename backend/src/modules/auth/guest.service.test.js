@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { authService } from "./auth.service.js";
+import { authRepository } from "./auth.repository.js";
 import {
   guestEmailOtpService,
   normalizeGmailAddress,
@@ -17,6 +18,7 @@ import { departmentsService } from "../departments/departments.service.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { reportsSentimentClient } from "../reports/reports.sentiment.js";
 import { mailerService } from "../../shared/email/mailer.js";
+import { toAdminReportResponse } from "../admin/admin.mapper.js";
 
 // Stub sentiment client to avoid external HTTP requests and timeouts
 reportsSentimentClient.analyzeReport = async () => ({
@@ -437,4 +439,218 @@ test("13. Email sending failures are handled gracefully with friendly error", as
       return true;
     },
   );
+});
+
+test("14. Existing registered Gmail cannot request Guest OTP (409 Conflict)", async (t) => {
+  resetGuestStores();
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async (email) => {
+    return email === "existinguser@gmail.com";
+  };
+  t.after(() => {
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+  });
+
+  await assert.rejects(
+    () => authService.sendGuestOtp("existinguser@gmail.com"),
+    (err) => {
+      assert.equal(err.statusCode, 409);
+      assert.equal(err.message, "This email is already registered.");
+      assert.match(
+        err.details?.supportingText,
+        /This Gmail address is already associated with an existing CitiSent account/,
+      );
+      return true;
+    },
+  );
+});
+
+test("15. Existing registered Gmail does NOT generate OTP or send email", async (t) => {
+  resetGuestStores();
+
+  let mailerCalled = false;
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async () => {
+    mailerCalled = true;
+    return { success: true };
+  };
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async (email) => {
+    return email === "john.doe@gmail.com";
+  };
+
+  t.after(() => {
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+  });
+
+  await assert.rejects(() => authService.sendGuestOtp("john.doe@gmail.com"));
+
+  // Ensure mailer was never invoked
+  assert.equal(mailerCalled, false, "Mailer must NOT be called for existing registered accounts");
+
+  // Ensure verifying any OTP for this email fails with no OTP generated
+  await assert.rejects(
+    () => authService.verifyGuestOtp("john.doe@gmail.com", "123456"),
+    (err) => {
+      assert.equal(err.statusCode, 409);
+      assert.equal(err.message, "This email is already registered.");
+      return true;
+    },
+  );
+});
+
+test("16. Existing registered check is case-insensitive (e.g. ExistingUser@GMAIL.COM)", async (t) => {
+  resetGuestStores();
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async (email) => {
+    return email === "existinguser@gmail.com";
+  };
+  t.after(() => {
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+  });
+
+  // Uppercase input should be normalized and matched against registered email
+  await assert.rejects(
+    () => authService.sendGuestOtp("ExistingUser@GMAIL.COM"),
+    (err) => {
+      assert.equal(err.statusCode, 409);
+      assert.equal(err.message, "This email is already registered.");
+      return true;
+    },
+  );
+});
+
+test("17. Existing registered check trims leading and trailing whitespace", async (t) => {
+  resetGuestStores();
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async (email) => {
+    return email === "existinguser@gmail.com";
+  };
+  t.after(() => {
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+  });
+
+  await assert.rejects(
+    () => authService.sendGuestOtp("   existinguser@gmail.com   "),
+    (err) => {
+      assert.equal(err.statusCode, 409);
+      assert.equal(err.message, "This email is already registered.");
+      return true;
+    },
+  );
+});
+
+test("18. Guest cannot bypass existing registered check by calling verifyGuestOtp directly", async (t) => {
+  resetGuestStores();
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async (email) => {
+    return email === "existinguser@gmail.com";
+  };
+  t.after(() => {
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+  });
+
+  await assert.rejects(
+    () => authService.verifyGuestOtp("ExistingUser@GMAIL.COM", "123456"),
+    (err) => {
+      assert.equal(err.statusCode, 409);
+      assert.equal(err.message, "This email is already registered.");
+      return true;
+    },
+  );
+});
+
+test("19. Prior guest account can request OTP and is not falsely blocked as registered account", async (t) => {
+  resetGuestStores();
+
+  const origGetProfile = authRepository.getProfileByEmail;
+  // Existing guest account in profiles table
+  authRepository.getProfileByEmail = async (email) => {
+    if (email === "prior.guest@gmail.com") {
+      return {
+        user_id: "prior-guest-uuid",
+        email: "prior.guest@gmail.com",
+        account_type: "guest",
+        role: "guest",
+      };
+    }
+    return null;
+  };
+
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  let sentOtp = null;
+  mailerService.sendGuestVerificationOtpEmail = async ({ otp }) => {
+    sentOtp = otp;
+    return { success: true };
+  };
+
+  t.after(() => {
+    authRepository.getProfileByEmail = origGetProfile;
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
+
+  // Verify authRepository.isRegisteredUserEmail correctly identifies this as NOT a registered user
+  const isRegistered = await authRepository.isRegisteredUserEmail("prior.guest@gmail.com");
+  assert.equal(isRegistered, false, "Guest account must not be flagged as registered user");
+
+  // Guest can request OTP successfully
+  const result = await authService.sendGuestOtp("prior.guest@gmail.com");
+  assert.equal(result.sent, true);
+  assert.ok(sentOtp);
+});
+
+test("20. Reporter identity for guest report always resolves to 'Guest'", () => {
+  const mapped = toAdminReportResponse({
+    reportRow: {
+      id: "report-123",
+      report_number: "REP-123",
+      issue_type: "Pothole",
+      user_id: "guest-user-uuid",
+    },
+    reporterProfile: {
+      user_id: "guest-user-uuid",
+      email: "guest.reporter@gmail.com",
+      username: "guest_citizen_123",
+      fname: "Guest",
+      lname: "User",
+      account_type: "guest",
+      role: "guest",
+    },
+  });
+
+  assert.equal(mapped.reporter.fullName, "Guest", "Guest reporter name must be strictly 'Guest'");
+});
+
+test("21. New unregistered Gmail can request OTP, verify, and submit report", async (t) => {
+  resetGuestStores();
+
+  const origIsRegistered = authRepository.isRegisteredUserEmail;
+  authRepository.isRegisteredUserEmail = async () => false;
+
+  let capturedOtp = null;
+  const origSendEmail = mailerService.sendGuestVerificationOtpEmail;
+  mailerService.sendGuestVerificationOtpEmail = async ({ otp }) => {
+    capturedOtp = otp;
+    return { success: true };
+  };
+
+  t.after(() => {
+    authRepository.isRegisteredUserEmail = origIsRegistered;
+    mailerService.sendGuestVerificationOtpEmail = origSendEmail;
+  });
+
+  const email = "brandnew.guest@gmail.com";
+  const sendResult = await authService.sendGuestOtp(email);
+  assert.equal(sendResult.sent, true);
+  assert.ok(capturedOtp);
+
+  const verifyResult = await authService.verifyGuestOtp(email, capturedOtp);
+  assert.equal(verifyResult.verified, true);
+  assert.equal(verifyResult.user.isVerified, true);
 });

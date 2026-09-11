@@ -226,31 +226,31 @@ export function Dashboard() {
     )
 
     return (
-        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-4 py-6 sm:px-6 lg:px-8 dark:bg-slate-900">
+        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-3.5 py-5 sm:px-6 sm:py-6 lg:px-8 dark:bg-slate-900">
             <MotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-6 sm:mb-8"
+                className="mb-5 sm:mb-8"
             >
                 <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
                     Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
                 </h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
                 </p>
             </MotionDiv>
 
             {/* Stats Grid */}
-            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-3.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((card) => (
                     <DashboardStatCard key={card.id} {...card} />
                 ))}
             </div>
 
             {/* Charts Grid */}
-            <div className="mb-6 sm:mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="h-110">
+            <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
+                <div className="h-[360px] sm:h-[400px] lg:h-110 min-w-0">
                     <PieChart
                         title={categoryData.title}
                         total={categoryData.total}
@@ -260,7 +260,7 @@ export function Dashboard() {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="h-110">
+                <div className="h-[360px] sm:h-[400px] lg:h-110 min-w-0">
                     <SolidPieChart
                         title={statusData.title}
                         total={statusData.total}
@@ -271,7 +271,7 @@ export function Dashboard() {
                     />
                 </div>
             </div>
-            <div className="mb-6 sm:mb-8 w-full h-110">
+            <div className="mb-5 sm:mb-8 w-full h-[320px] sm:h-[380px] lg:h-110 min-w-0">
                 <VerticalChart
                     title={weeklyData.title}
                     labels={weeklyData.labels}
@@ -280,7 +280,7 @@ export function Dashboard() {
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
                 <DashboardTableCard
                     title="Admins"
                     columns={adminsTableColumns}

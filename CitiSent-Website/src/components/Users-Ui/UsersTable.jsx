@@ -128,8 +128,8 @@ function UsersTableRow({
 
   return (
     <div className="group relative border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-800/50 lg:grid lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px] lg:items-center lg:gap-4 lg:px-5 lg:py-3.5">
-      {/* Checkbox — absolutely positioned on mobile, grid cell on desktop */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 lg:static lg:translate-y-0 lg:flex lg:items-center lg:justify-center">
+      {/* Checkbox — anchored to top on mobile, grid cell on desktop */}
+      <div className="absolute left-4 top-4.5 lg:static lg:flex lg:items-center lg:justify-center">
         <input
           type="checkbox"
           className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900"
@@ -140,7 +140,7 @@ function UsersTableRow({
       </div>
 
       {/* User Details — avatar + name/email */}
-      <div className="flex min-w-0 items-center gap-3 ml-8 pr-10 lg:ml-0 lg:pr-0">
+      <div className="flex min-w-0 items-center gap-3 ml-8 pr-11 lg:ml-0 lg:pr-0">
         <div className="shrink-0">
           <UserInitialsAvatar name={user.name} />
         </div>
@@ -151,7 +151,7 @@ function UsersTableRow({
       </div>
 
       {/* Location */}
-      <div className="mt-2 ml-11 lg:mt-0 lg:ml-0 lg:flex lg:items-center">
+      <div className="mt-2.5 ml-11 lg:mt-0 lg:ml-0 lg:flex lg:items-center">
         <p className="truncate text-[11px] text-slate-600 dark:text-slate-300 lg:text-sm">
           <span className="lg:hidden font-semibold uppercase tracking-wider text-slate-400 mr-1">Location:</span>
           {formatLocation(user)}
@@ -172,14 +172,14 @@ function UsersTableRow({
         </p>
       </div>
 
-      {/* Action button — absolutely positioned on mobile (top-right), flex-end in grid on desktop */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:static lg:translate-y-0 lg:flex lg:items-center lg:justify-end">
+      {/* Action button — anchored to top on mobile (top-right), flex-end in grid on desktop */}
+      <div className="absolute right-4 top-4 lg:static lg:flex lg:items-center lg:justify-end">
         <button
           type="button"
           ref={triggerRef}
           disabled={isProcessing}
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-          className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+          className="grid h-8.5 w-8.5 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
         >
           {isProcessing ? <Spinner size="sm" /> : <FiMoreHorizontal />}
         </button>

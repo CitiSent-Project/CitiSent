@@ -599,7 +599,27 @@ export const adminRepository = {
     const rows = reportRows
       .filter((report) => messagesByReportId.has(String(report.id)))
       .map((report) => ({ ...report, ...messagesByReportId.get(String(report.id)) }));
-    const reporterProfilesByUserId = await loadReporterProfiles(db, rows);
+    
+    // [DPA 2012 Compliance: Data Minimization]
+    // Fetch only the email address for the users in these conversations.
+    // We do not use loadReporterProfiles to avoid fetching and caching full PII profiles (like fname, lname).
+    const conversationUserIds = Array.from(
+      new Set(rows.map((row) => row.user_id).filter(Boolean))
+    );
+    
+    let reporterProfilesByUserId = {};
+    if (conversationUserIds.length > 0) {
+      const { data: profilesData } = await db
+        .from(PROFILES_TABLE)
+        .select("user_id, email")
+        .in("user_id", conversationUserIds);
+        
+      if (profilesData) {
+        profilesData.forEach((p) => {
+          reporterProfilesByUserId[p.user_id] = { email: p.email };
+        });
+      }
+    }
 
     return { rows, reporterProfilesByUserId };
   },

@@ -170,6 +170,15 @@ export const adminController = {
       reportId: req.params.reportId,
     });
 
+    activityRepository
+      .createActivityLogEntry({
+        accessToken: req.accessToken,
+        adminUserId: req.actor?.id,
+        action: "VIEW_REPORT_PII",
+        detail: `Viewed detailed report and user profile for report ${req.params.reportId}`,
+      })
+      .catch((error) => console.error("Failed to log PII view for report:", error));
+
     return res.status(StatusCodes.OK).json({
       success: true,
       data: result,

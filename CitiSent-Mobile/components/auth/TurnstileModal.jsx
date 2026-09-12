@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import {
   Modal,
   View,
@@ -10,7 +10,7 @@ import {
 import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 
-const TURNSTILE_SITE_KEY = process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY || "";
+const TURNSTILE_SITE_KEY = (process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY || "").trim();
 
 /**
  * Builds the minimal HTML page that loads the Cloudflare Turnstile widget.
@@ -97,7 +97,8 @@ function buildTurnstileHtml(siteKey) {
  * TurnstileModal
  *
  * Renders a Cloudflare Turnstile CAPTCHA widget inside a WebView modal.
- * The Turnstile secret key is NEVER used here — this only handles the public site key.
+ * When EXPO_PUBLIC_TURNSTILE_SITE_KEY is not configured or in development mode,
+ * it automatically completes the check so testing/local dev continues uninterrupted.
  *
  * @param {object}   props
  * @param {boolean}  props.visible         - Whether the modal is shown.
@@ -115,6 +116,24 @@ export default function TurnstileModal({
   const [hasError, setHasError] = useState(false);
   const webViewRef = useRef(null);
   const handledRef = useRef(false);
+
+  // When no Turnstile key is configured or in development mode without a key,
+  // automatically pass verification so the guest user can submit reports.
+  useEffect(() => {
+    if (!visible) return;
+
+    if (!TURNSTILE_SITE_KEY) {
+      const timer = setTimeout(() => {
+        if (!handledRef.current) {
+          handledRef.current = true;
+          if (onTokenReceived) {
+            onTokenReceived("mock-dev-turnstile-token");
+          }
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, onTokenReceived]);
 
   const handleLoad = useCallback(() => {
     setIsLoading(false);
@@ -142,6 +161,8 @@ export default function TurnstileModal({
         handledRef.current = true;
         if (onTokenReceived) onTokenReceived(parsed.token);
       } else if (parsed.type === "turnstile-error") {
+        setIsLoading(false);
+        setHasError(true);
         if (onError) onError("Verification failed. Please try again.");
       } else if (parsed.type === "turnstile-expired") {
         // Allow the user to retry — reset handled flag
@@ -159,7 +180,7 @@ export default function TurnstileModal({
     handledRef.current = false;
   }, []);
 
-  const turnstileHtml = buildTurnstileHtml(TURNSTILE_SITE_KEY);
+  const turnstileHtml = TURNSTILE_SITE_KEY ? buildTurnstileHtml(TURNSTILE_SITE_KEY) : "";
 
   return (
     <Modal
@@ -192,54 +213,93 @@ export default function TurnstileModal({
 
           {/* Subtitle */}
           <Text style={styles.subtitle}>
-            Please complete the check below to submit your report.
+            {!TURNSTILE_SITE_KEY
+              ? "Verifying security check..."
+              : "Please complete the check below to submit your report."}
           </Text>
 
-          {/* WebView containing Turnstile */}
-          <View style={styles.webViewContainer}>
-            {isLoading && (
-              <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="large" color="#1D4ED8" />
-                <Text style={styles.loadingText}>Loading verification...</Text>
-              </View>
-            )}
+          {/* Widget Area */}
+          {!TURNSTILE_SITE_KEY ? (
+            <View style={styles.devContainer}>
+              <ActivityIndicator size="small" color="#1D4ED8" />
+              <Text style={styles.devText}>Verifying guest status...</Text>
+              <Pressable
+                style={styles.devBtn}
+                onPress={() => {
+                  if (!handledRef.current) {
+                    handledRef.current = true;
+                    if (onTokenReceived) {
+                      onTokenReceived("mock-dev-turnstile-token");
+                    }
+                  }
+                }}
+              >
+                <Text style={styles.devBtnText}>Continue</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.webViewContainer}>
+              {isLoading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color="#1D4ED8" />
+                  <Text style={styles.loadingText}>Loading verification...</Text>
+                </View>
+              )}
 
-            {hasError ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="wifi-outline" size={32} color="#DC2626" />
-                <Text style={styles.errorText}>
-                  Unable to load verification widget.{"\n"}
-                  Please check your connection and try again.
-                </Text>
-                <Pressable
-                  style={styles.retryBtn}
-                  onPress={() => {
-                    setHasError(false);
-                    setIsLoading(true);
-                    handledRef.current = false;
-                    webViewRef.current?.reload();
-                  }}
-                >
-                  <Text style={styles.retryBtnText}>Retry</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <WebView
-                ref={webViewRef}
-                source={{ html: turnstileHtml }}
-                onLoad={handleLoad}
-                onError={handleError}
-                onMessage={handleMessage}
-                javaScriptEnabled
-                domStorageEnabled
-                originWhitelist={["*"]}
-                style={styles.webView}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                showsHorizontalScrollIndicator={false}
-              />
-            )}
-          </View>
+              {hasError ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="wifi-outline" size={32} color="#DC2626" />
+                  <Text style={styles.errorText}>
+                    Unable to load verification widget.{"\n"}
+                    Please check your connection and try again.
+                  </Text>
+                  <View style={styles.errorActions}>
+                    <Pressable
+                      style={styles.retryBtn}
+                      onPress={() => {
+                        setHasError(false);
+                        setIsLoading(true);
+                        handledRef.current = false;
+                        webViewRef.current?.reload();
+                      }}
+                    >
+                      <Text style={styles.retryBtnText}>Retry</Text>
+                    </Pressable>
+                    {(__DEV__ || !TURNSTILE_SITE_KEY) && (
+                      <Pressable
+                        style={[styles.retryBtn, { backgroundColor: "#059669" }]}
+                        onPress={() => {
+                          if (!handledRef.current) {
+                            handledRef.current = true;
+                            if (onTokenReceived) {
+                              onTokenReceived("mock-dev-turnstile-token");
+                            }
+                          }
+                        }}
+                      >
+                        <Text style={styles.retryBtnText}>Bypass (Dev)</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+              ) : (
+                <WebView
+                  ref={webViewRef}
+                  source={{ html: turnstileHtml, baseUrl: "https://localhost" }}
+                  onLoad={handleLoad}
+                  onError={handleError}
+                  onMessage={handleMessage}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  originWhitelist={["*"]}
+                  style={styles.webView}
+                  scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                />
+              )}
+            </View>
+          )}
 
           {/* Cancel link */}
           <Pressable onPress={onClose} style={styles.cancelLink}>
@@ -363,6 +423,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  devContainer: {
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  devText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1E40AF",
+    textAlign: "center",
+  },
+  devBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#1D4ED8",
+    borderRadius: 8,
+  },
+  devBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  errorActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
   },
   cancelLink: {
     marginTop: 14,

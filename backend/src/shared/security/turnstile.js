@@ -16,17 +16,18 @@ const TURNSTILE_VERIFY_URL =
 export async function verifyTurnstileToken(token, remoteip = null) {
   const secretKey = env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
 
-  if (!secretKey) {
-    // If no secret key is configured (e.g. local dev without Cloudflare),
-    // skip verification and allow the request through with a warning.
-    // In production, this path should never be hit.
-    if (!env.isProduction) {
+  // In development / non-production mode, accept mock dev tokens or skip if no secret key
+  if (!env.isProduction) {
+    if (!secretKey || token === "mock-dev-turnstile-token") {
       console.warn(
-        "[Turnstile] CLOUDFLARE_TURNSTILE_SECRET_KEY is not set. " +
-          "Skipping CAPTCHA verification in non-production mode."
+        "[Turnstile] Non-production mode: Skipping Cloudflare CAPTCHA verification " +
+          `(${!secretKey ? "no secret key" : "mock dev token"}).`
       );
       return { success: true, errorCodes: [], skipped: true };
     }
+  }
+
+  if (!secretKey) {
     // In production, no secret key is a hard failure.
     return {
       success: false,

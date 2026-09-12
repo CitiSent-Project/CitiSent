@@ -28,9 +28,9 @@ export default function GuestVerificationModal({
   onClose,
   onVerified,
 }) {
-  // Steps: 'email' | 'otp' | 'success'
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
   const inputRefs = useRef([]);
 
@@ -46,6 +46,7 @@ export default function GuestVerificationModal({
   const resetState = useCallback(() => {
     setStep("email");
     setEmail("");
+    setAgreed(false);
     setDigits(Array(OTP_LENGTH).fill(""));
     setError(null);
     setIsLoading(false);
@@ -349,13 +350,32 @@ export default function GuestVerificationModal({
                   </View>
                 ) : null}
 
+                <Pressable 
+                  onPress={() => {
+                    setAgreed(!agreed);
+                    setError(null);
+                  }}
+                  className="mt-2 mb-4 flex-row items-start"
+                  hitSlop={10}
+                >
+                  <Ionicons 
+                    name={agreed ? "checkbox" : "square-outline"} 
+                    size={20} 
+                    color={agreed ? "#2563EB" : "#94A3B8"} 
+                    style={{ marginRight: 8, marginTop: 1 }}
+                  />
+                  <Text className="flex-1 text-xs text-slate-600 leading-4">
+                    I agree to the <Text className="font-bold text-blue-600">Data Privacy Policy</Text> and consent to the processing of my data for this report in compliance with the DPA of 2012.
+                  </Text>
+                </Pressable>
+
                 <Pressable
                   onPress={handleSendOtp}
-                  disabled={isLoading || !email.trim()}
-                  className="mt-4 w-full rounded-xl py-3.5 shadow-sm"
+                  disabled={isLoading || !email.trim() || !agreed}
+                  className="mt-2 w-full rounded-xl py-3.5 shadow-sm"
                   style={{
                     backgroundColor:
-                      isLoading || !email.trim()
+                      isLoading || !email.trim() || !agreed
                         ? "#93C5FD"
                         : Colors.primaryStrong,
                   }}

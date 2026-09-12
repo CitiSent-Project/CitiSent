@@ -8,6 +8,19 @@ function getDbClient(accessToken) {
   return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
 
+async function enrichWithSignedUrl(db, row) {
+  if (!row || !row.attachment_url) return row;
+  
+  const match = row.attachment_url.match(/\/object\/public\/attachments\/(.+)$/);
+  if (match) {
+    const { data } = await db.storage.from("attachments").createSignedUrl(match[1], 3600);
+    if (data?.signedUrl) {
+      return { ...row, attachment_url: data.signedUrl };
+    }
+  }
+  return row;
+}
+
 const REPORT_SELECT_COLUMNS = "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id";
 
 export const reportsRepository = {
@@ -53,9 +66,12 @@ export const reportsRepository = {
       .neq("sender_id", userId);
 
     if (messagesError || !messages?.length) {
-      const enrichedRows = rows.map((r) => ({
-        ...r,
-        has_unread_admin_message: false,
+      const enrichedRows = await Promise.all(rows.map(async (r) => {
+        const enrichedRow = await enrichWithSignedUrl(db, r);
+        return {
+          ...enrichedRow,
+          has_unread_admin_message: false,
+        };
       }));
       return {
         rows: enrichedRows,
@@ -88,9 +104,12 @@ export const reportsRepository = {
       }
     }
 
-    const enrichedRows = rows.map((r) => ({
-      ...r,
-      has_unread_admin_message: unreadByReportId.has(String(r.id)),
+    const enrichedRows = await Promise.all(rows.map(async (r) => {
+      const enrichedRow = await enrichWithSignedUrl(db, r);
+      return {
+        ...enrichedRow,
+        has_unread_admin_message: unreadByReportId.has(String(r.id)),
+      };
     }));
 
     return {
@@ -241,7 +260,7 @@ export const reportsRepository = {
       );
     }
 
-    return data;
+    return enrichWithSignedUrl(db, data);
   },
 
   async getById({ userId, reportId, accessToken }) {
@@ -262,7 +281,7 @@ export const reportsRepository = {
       );
     }
 
-    return data;
+    return enrichWithSignedUrl(db, data);
   },
 
   async updateById({ userId, reportId, payload, accessToken }) {
@@ -284,7 +303,7 @@ export const reportsRepository = {
       );
     }
 
-    return data;
+    return enrichWithSignedUrl(db, data);
   },
 
   async deleteById({ userId, reportId, accessToken }) {

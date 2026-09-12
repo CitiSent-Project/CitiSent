@@ -221,6 +221,18 @@ export const usersRepository = {
       );
     }
 
+    // Right to be forgotten: Anonymize the user's reports before deleting their account
+    // This removes the link between the user and their past reports, keeping the reports for statistics
+    const { error: reportsError } = await adminDb
+      .from("reports")
+      .update({ user_id: null })
+      .eq("user_id", userId);
+
+    if (reportsError) {
+      console.warn("Failed to anonymize reports for user", userId, reportsError);
+      // We log a warning but proceed with account deletion
+    }
+
     const { error: authError } = await adminDb.auth.admin.deleteUser(
       userId,
       false,

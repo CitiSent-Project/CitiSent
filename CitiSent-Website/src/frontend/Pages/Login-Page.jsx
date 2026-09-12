@@ -105,6 +105,10 @@ export function LoginPage({ onLogin, onForgotPassword, rememberedEmail }) {
 	) : (
 		<p className="text-xs text-white/70">
 			Admin accounts are provisioned internally by system administrators.
+			<br />
+			<a href="/privacy-policy" className="mt-2 inline-block font-medium text-white/80 underline decoration-white/30 underline-offset-4 hover:text-white">
+				Data Privacy Policy
+			</a>
 		</p>
 	)
 

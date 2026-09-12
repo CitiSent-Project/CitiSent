@@ -10,10 +10,8 @@ const mocks = vi.hoisted(() => ({
   listConversations: vi.fn(),
   listReportMessages: vi.fn(),
   markReportMessagesRead: vi.fn(),
-  getReportChatSuggestions: vi.fn(),
   mapConversations: vi.fn(),
   mapMessages: vi.fn(),
-  mapSuggestions: vi.fn(),
   notifyChatMessage: vi.fn(),
 }))
 
@@ -26,7 +24,6 @@ vi.mock('../../services/api/admin/reportsApiService', () => ({
     listConversations: mocks.listConversations,
     listReportMessages: mocks.listReportMessages,
     markReportMessagesRead: mocks.markReportMessagesRead,
-    getReportChatSuggestions: mocks.getReportChatSuggestions,
     sendReportMessage: vi.fn(),
   },
 }))
@@ -35,7 +32,6 @@ vi.mock('../../services/api/admin/reportsApiMappers', () => ({
   mapBackendConversationsResponse: mocks.mapConversations,
   mapBackendMessagesResponse: mocks.mapMessages,
   mapBackendMessageToUi: vi.fn(),
-  mapBackendSuggestionsToUi: mocks.mapSuggestions,
 }))
 
 vi.mock('../../services/socket/socketService', () => ({
@@ -79,8 +75,6 @@ describe('useConversationsState', () => {
     mocks.mapConversations.mockReturnValue([])
     mocks.listReportMessages.mockResolvedValue({ data: [] })
     mocks.mapMessages.mockReturnValue([])
-    mocks.getReportChatSuggestions.mockResolvedValue({ data: { suggestedReplies: [] } })
-    mocks.mapSuggestions.mockReturnValue({ suggestedReplies: [] })
   })
 
   afterEach(async () => {
@@ -115,7 +109,6 @@ describe('useConversationsState', () => {
 
     expect(mocks.listReportMessages).toHaveBeenCalledWith('access-token', 'report-1')
     expect(mocks.markReportMessagesRead).toHaveBeenCalledWith('access-token', 'report-1')
-    expect(mocks.getReportChatSuggestions).toHaveBeenCalledWith('access-token', 'report-1', false)
 
     await act(async () => root.unmount())
     root = null

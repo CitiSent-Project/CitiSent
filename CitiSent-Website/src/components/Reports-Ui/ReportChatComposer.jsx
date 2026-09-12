@@ -1,20 +1,10 @@
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { FiSend } from 'react-icons/fi'
 
-export function ReportChatComposer({ onSend, onTyping, disabled, suggestionText, onSuggestionUsed }) {
+export function ReportChatComposer({ onSend, onTyping, disabled }) {
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (suggestionText) {
-      const timer = setTimeout(() => {
-        setContent(suggestionText)
-        onSuggestionUsed?.()
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-  }, [suggestionText, onSuggestionUsed])
 
   async function submit(event) {
     event.preventDefault()

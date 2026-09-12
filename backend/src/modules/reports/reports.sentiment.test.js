@@ -153,60 +153,6 @@ test("reportsSentimentClient.analyzeReport rejects unsupported urgency labels", 
   );
 });
 
-test("reportsSentimentClient.getChatSuggestions posts context data and returns suggestions", async () => {
-  const requests = [];
-
-  const result = await reportsSentimentClient.getChatSuggestions(
-    {
-      latestUserMessage: "Need help immediately",
-      conversationContext: [{ sender: "Citizen", text: "Need help immediately" }],
-      reportCategory: "Flooding",
-      urgency: "Critical",
-      detectedEmotion: "Sad",
-    },
-    {
-      apiUrl: "http://127.0.0.1:8000/analyze",// Hide this
-      fetchImpl: async (url, options) => {
-        requests.push({
-          url,
-          options,
-          payload: JSON.parse(options.body),
-        });
-
-        return {
-          ok: true,
-          json: async () => ({
-            suggestedReplies: [
-              { text: "Reply 1", rank: 1 },
-              { text: "Reply 2", rank: 2 },
-              { text: "Reply 3", rank: 3 },
-              { text: "Reply 4", rank: 4 }
-            ],
-            tone: "urgent",
-            confidence: 0.95,
-            reason: "Flooding urgent context",
-            triggerEmotion: "Sad",
-            fallbackMessage: "Help is on the way"
-          }),
-        };
-      },
-    },
-  );
-
-  assert.equal(requests.length, 1);
-  assert.equal(requests[0].url, "http://127.0.0.1:8000/chat/suggestions"); // Hide this
-  assert.equal(requests[0].options.method, "POST");
-  assert.deepEqual(requests[0].payload, {
-    latestUserMessage: "Need help immediately",
-    conversationContext: [{ sender: "Citizen", text: "Need help immediately" }],
-    reportCategory: "Flooding",
-    urgency: "Critical",
-    detectedEmotion: "Sad",
-  });
-  assert.equal(result.suggestedReplies.length, 4);
-  assert.equal(result.tone, "urgent");
-});
-
 test("reportsSentimentClient.getAdminNoteSuggestions posts the status-aware note context", async () => {
   const requests = [];
   const result = await reportsSentimentClient.getAdminNoteSuggestions(

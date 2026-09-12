@@ -44,18 +44,4 @@ export const reportMessagesController = {
       data: result,
     });
   },
-
-  async getSuggestions(req, res) {
-    const result = await reportMessagesService.getChatSuggestions({
-      actor: req.user,
-      reportId: req.params.reportId,
-      accessToken: req.accessToken,
-      forceRegenerate: req.query.forceRegenerate,
-    });
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
-  },
 };

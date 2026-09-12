@@ -1,14 +1,11 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { FiArrowLeft, FiFileText, FiRefreshCw, FiSearch, FiChevronDown, FiChevronUp, FiFilter } from 'react-icons/fi'
+import { FiArrowLeft, FiFileText, FiRefreshCw, FiSearch, FiFilter } from 'react-icons/fi'
 import { ReportChatComposer } from '../../components/Reports-Ui/ReportChatComposer'
 import { ReportChatThread } from '../../components/Reports-Ui/ReportChatThread'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
 import { useConversationsState } from '../../hooks/useConversationsState'
 import { ConversationEmptyState } from './ConversationEmptyState'
 import { ConversationListItem } from './ConversationListItem'
-
-const MotionDiv = motion.div
 
 function formatLastSeen(dateString) {
   if (!dateString) return 'Offline'
@@ -32,7 +29,6 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     chatLoading,
     conversationsError,
     conversationsLoading,
-    fetchSuggestions,
     filteredConversations,
     handleComposerTyping,
     handleSelectConversation,
@@ -46,19 +42,15 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     sending,
     setMobileShowChat,
     setSearchQuery,
-    showSuggestions,
-    suggestions,
-    suggestionsLoading,
     totalUnread,
   } = useConversationsState({ profile, onSyncConversations })
 
-  const [isSuggestionsMinimized, setIsSuggestionsMinimized] = useState(false)
   const [unreadOnly, setUnreadOnly] = useState(false)
 
   return (
     <main className="mx-auto max-w-400 flex-1 bg-[#eef2f8] dark:bg-slate-950 px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
       <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-7xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm sm:my-4 sm:h-[calc(100vh-6rem)]">
-        
+
         <div className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
           <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
             <div className="flex items-center justify-between">
@@ -164,43 +156,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
               <ReportChatThread messages={messages} loading={chatLoading} error={chatError} profileId={profile?.id} />
               {isUserTyping && <div className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800/80 text-xs italic text-slate-500 dark:text-slate-400 font-medium">{activeConversation.userName} is typing...</div>}
 
-              <AnimatePresence>
-                {showSuggestions && (
-                  <MotionDiv initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                    <div className="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
-                      <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider">
-                        <button 
-                          type="button" 
-                          onClick={() => setIsSuggestionsMinimized(prev => !prev)}
-                          className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition"
-                          aria-label={isSuggestionsMinimized ? "Expand suggestions" : "Minimize suggestions"}
-                        >
-                          {isSuggestionsMinimized ? <FiChevronUp className="text-sm" /> : <FiChevronDown className="text-sm" />}
-                          <span>AI-ASSISTED REPLY SUGGESTIONS</span>
-                        </button>
-                        
-                        {!isSuggestionsMinimized && (
-                          <button type="button" onClick={() => fetchSuggestions(activeConversation.reportId, true)} disabled={suggestionsLoading} className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition disabled:opacity-50 text-[10px] text-slate-500 dark:text-slate-400 font-bold"><FiRefreshCw className={suggestionsLoading ? 'animate-spin' : ''} /> REGENERATE</button>
-                        )}
-                      </div>
-                      
-                      {!isSuggestionsMinimized && (
-                        suggestionsLoading ? <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">Generating suggestions...</div> : suggestions.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {suggestions.map((suggestion, index) => (
-                              <button key={index} type="button" onClick={() => !sending && handleSend(suggestion.text)} disabled={sending} className={`flex flex-col justify-between text-left text-xs p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/20 transition-all text-slate-700 dark:text-slate-300 font-normal wrap-anywhere shadow-2xs ${index === 0 ? 'border-l-4 border-l-blue-600 dark:border-l-blue-500 font-medium text-slate-900 dark:text-white bg-blue-50/10 dark:bg-blue-500/5' : ''}`}>
-                                {index === 0 && <span className="text-[9px] text-blue-600 dark:text-blue-400 font-bold block mb-1 uppercase tracking-wide">Recommended</span>}
-                                <span>{suggestion.text}</span>
-                              </button>
-                            ))}
-                          </div>
-                        ) : <div className="py-2 text-center text-xs text-slate-400 dark:text-slate-500">No suggestions available.</div>
-                      )}
-                    </div>
-                  </MotionDiv>
-                )}
-              </AnimatePresence>
-              <ReportChatComposer onSend={handleSend} onTyping={handleComposerTyping} disabled={sending || chatLoading} suggestionText="" onSuggestionUsed={() => {}} />
+              <ReportChatComposer onSend={handleSend} onTyping={handleComposerTyping} disabled={sending || chatLoading} />
             </>
           ) : <ConversationEmptyState variant="select" />}
         </div>

@@ -7,7 +7,6 @@ const api = vi.hoisted(() => ({
   listReportMessages: vi.fn(),
   sendReportMessage: vi.fn(),
   markReportMessagesRead: vi.fn(),
-  getReportChatSuggestions: vi.fn(),
   getReportAdminNoteSuggestions: vi.fn(),
 }))
 const socket = vi.hoisted(() => ({
@@ -82,16 +81,6 @@ describe('Report chat drawer', () => {
   it('opens from report detail and loads the report conversation', async () => {
     api.listReportMessages.mockResolvedValue({ data: [] })
     api.markReportMessagesRead.mockResolvedValue({ data: [] })
-    api.getReportChatSuggestions.mockResolvedValue({
-      data: {
-        suggestedReplies: [
-          { text: 'Mock Suggestion 1', rank: 1 },
-          { text: 'Mock Suggestion 2', rank: 2 },
-          { text: 'Mock Suggestion 3', rank: 3 },
-          { text: 'Mock Suggestion 4', rank: 4 },
-        ]
-      }
-    })
 
     await render(<ReportDetailPage report={report} profile={profile} onBackToReports={vi.fn()} onUpdateStatus={vi.fn()} />)
     const talkButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent.includes('Talk to User'))
@@ -105,7 +94,6 @@ describe('Report chat drawer', () => {
   it('sends a message and displays it in the thread', async () => {
     api.listReportMessages.mockResolvedValue({ data: [] })
     api.markReportMessagesRead.mockResolvedValue({ data: [] })
-    api.getReportChatSuggestions.mockResolvedValue({ data: { suggestedReplies: [] } })
     api.sendReportMessage.mockResolvedValue({ data: { id: 'message-1', senderId: 'admin-1', senderRole: 'admin', content: 'We are looking into this.', createdAt: '2026-07-25T10:00:00.000Z' } })
 
     await render(<ReportChatDrawer report={report} profile={profile} token="token" onClose={vi.fn()} />)
@@ -123,7 +111,6 @@ describe('Report chat drawer', () => {
 
   it('shows API failures without hiding the composer', async () => {
     api.listReportMessages.mockRejectedValue(new Error('Conversation is unavailable.'))
-    api.getReportChatSuggestions.mockResolvedValue({ data: { suggestedReplies: [] } })
 
     await render(<ReportChatDrawer report={report} profile={profile} token="token" onClose={vi.fn()} />)
 
@@ -134,7 +121,6 @@ describe('Report chat drawer', () => {
   it('updates the conversation when socket receive_message fires', async () => {
     api.listReportMessages.mockResolvedValue({ data: [] })
     api.markReportMessagesRead.mockResolvedValue({ data: [] })
-    api.getReportChatSuggestions.mockResolvedValue({ data: { suggestedReplies: [] } })
 
     await render(<ReportChatDrawer report={report} profile={profile} token="token" onClose={vi.fn()} />)
     const receiveMessageCall = socket.on.mock.calls.find(call => call[0] === 'receive_message')
@@ -155,36 +141,5 @@ describe('Report chat drawer', () => {
     })
 
     expect(container.textContent).toContain('Realtime socket message')
-  })
-
-  it('renders suggested replies and sends direct message on click', async () => {
-    api.listReportMessages.mockResolvedValue({ data: [] })
-    api.markReportMessagesRead.mockResolvedValue({ data: [] })
-    api.getReportChatSuggestions.mockResolvedValue({
-      data: {
-        suggestedReplies: [
-          { text: 'Mock Suggestion 1', rank: 1 },
-          { text: 'Mock Suggestion 2', rank: 2 },
-          { text: 'Mock Suggestion 3', rank: 3 },
-          { text: 'Mock Suggestion 4', rank: 4 },
-        ]
-      }
-    })
-    api.sendReportMessage.mockResolvedValue({ data: { id: 'message-1', senderId: 'admin-1', senderRole: 'admin', content: 'Mock Suggestion 1', createdAt: '2026-07-25T10:00:00.000Z' } })
-
-    await render(<ReportChatDrawer report={report} profile={profile} token="token" onClose={vi.fn()} />)
-    
-    // Check suggestions are rendered
-    expect(container.textContent).toContain('Mock Suggestion 1')
-    expect(container.textContent).toContain('Mock Suggestion 2')
-    expect(container.textContent).toContain('Mock Suggestion 3')
-    expect(container.textContent).toContain('Mock Suggestion 4')
-
-    // Click recommended suggestion chip
-    const suggestionBtn = Array.from(container.querySelectorAll('button')).find((button) => button.textContent.includes('Mock Suggestion 1'))
-    await act(async () => { suggestionBtn.click() })
-
-    // Check that API is called to send suggested text directly
-    expect(api.sendReportMessage).toHaveBeenCalledWith('token', report.id, 'Mock Suggestion 1')
   })
 })

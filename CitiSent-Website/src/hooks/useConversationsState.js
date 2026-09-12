@@ -6,7 +6,6 @@ import {
   mapBackendConversationsResponse,
   mapBackendMessagesResponse,
   mapBackendMessageToUi,
-  mapBackendSuggestionsToUi,
 } from '../services/api/admin/reportsApiMappers'
 import { reportsApiService } from '../services/api/admin/reportsApiService'
 import { loadFromStorageWithSchema } from '../services/storageService'
@@ -19,12 +18,7 @@ import {
   sendSocketTyping,
 } from '../services/socket/socketService'
 
-const FALLBACK_SUGGESTIONS = [
-  { text: 'Thank you for reaching out. We have received your message and are looking into it.', rank: 1 },
-  { text: 'Could you please provide more details or clarify your request?', rank: 2 },
-  { text: 'We are currently reviewing this issue and will update you as soon as possible.', rank: 3 },
-  { text: 'If this is an immediate emergency, please contact our direct hotline or emergency services.', rank: 4 },
-]
+
 
 function readAccessToken() {
   const rule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
@@ -49,8 +43,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
   const [chatError, setChatError] = useState('')
   const [sending, setSending] = useState(false)
   const [isUserTyping, setIsUserTyping] = useState(false)
-  const [suggestions, setSuggestions] = useState([])
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [mobileShowChat, setMobileShowChat] = useState(false)
   const typingTimerRef = useRef(null)
   const activeConversationRef = useRef(activeConversation)
@@ -115,33 +107,17 @@ export function useConversationsState({ profile, onSyncConversations }) {
     }
   }, [token])
 
-  const fetchSuggestions = useCallback(async (reportId, force = false) => {
-    if (!reportId || !token) return
-
-    setSuggestionsLoading(true)
-    try {
-      const response = await reportsApiService.getReportChatSuggestions(token, reportId, force)
-      setSuggestions(mapBackendSuggestionsToUi(response).suggestedReplies || [])
-    } catch {
-      setSuggestions(FALLBACK_SUGGESTIONS)
-    } finally {
-      setSuggestionsLoading(false)
-    }
-  }, [token])
-
   const handleSelectConversation = useCallback((conversation) => {
     setActiveConversation(conversation)
     setMessages([])
-    setSuggestions([])
     setIsUserTyping(false)
     setMobileShowChat(true)
 
     if (conversation.reportId) {
       joinReportRoom(token, conversation.reportId)
       loadMessages(conversation.reportId)
-      fetchSuggestions(conversation.reportId)
     }
-  }, [fetchSuggestions, loadMessages, token])
+  }, [loadMessages, token])
 
   const handleSelectConversationRef = useRef(handleSelectConversation)
   useEffect(() => {
@@ -179,9 +155,7 @@ export function useConversationsState({ profile, onSyncConversations }) {
           )
         })
 
-        if (!isOwn) {
-          fetchSuggestions(reportId, false)
-        }
+
       }
 
       setConversations((current) => {
@@ -253,7 +227,7 @@ export function useConversationsState({ profile, onSyncConversations }) {
       socket.off('typing', handleTyping)
       socket.off('stop_typing', handleStopTyping)
     }
-  }, [fetchSuggestions, profile?.id, token])
+  }, [profile?.id, token])
 
   const handleSend = useCallback(async (content) => {
     if (!content.trim() || !activeConversation?.reportId) return false
@@ -353,7 +327,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
     chatLoading,
     conversationsError,
     conversationsLoading,
-    fetchSuggestions,
     filteredConversations,
     handleComposerTyping,
     handleSelectConversation,
@@ -367,9 +340,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
     sending,
     setMobileShowChat,
     setSearchQuery,
-    showSuggestions: activeConversation && (!lastMessage || lastMessage.senderRole !== 'admin'),
-    suggestions,
-    suggestionsLoading,
     totalUnread,
   }
 }

@@ -181,7 +181,7 @@ export const adminRepository = {
 
     let query = db
       .from(PROFILES_TABLE)
-      .select("*")
+      .select("user_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
       .eq("account_type", "citizen")
       .order("created_at", { ascending: false });
 

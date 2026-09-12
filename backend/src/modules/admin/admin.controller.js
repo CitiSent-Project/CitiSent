@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { adminService } from "./admin.service.js";
+import { activityRepository } from "./activity/activity.repository.js";
 
 export const adminController = {
   async listUsers(req, res) {
@@ -24,6 +25,15 @@ export const adminController = {
       accessToken: req.accessToken,
       userId: req.params.userId,
     });
+
+    activityRepository
+      .createActivityLogEntry({
+        accessToken: req.accessToken,
+        adminUserId: req.actor?.id,
+        action: "VIEW_USER_PII",
+        detail: `Viewed detailed profile of user ${req.params.userId}`,
+      })
+      .catch((error) => console.error("Failed to log PII view:", error));
 
     return res.status(StatusCodes.OK).json({
       success: true,

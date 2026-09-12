@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { reportsApiService } from '../../../services/api/admin/reportsApiService'
+import { usersApiService } from '../../../services/api/admin/usersApiService'
 import { mapBackendReportToUiRow } from '../../../services/api/admin/reportsApiMappers'
+import { mapBackendUserToUiRow } from '../../../services/api/admin/accountsApiMappers'
 import { loadFromStorageWithSchema } from '../../../services/storageService'
 import { ADMIN_STORAGE_KEYS } from '../../../models/data'
 import { getStorageSchemaRule } from '../../../models/storageSchemaModel'
@@ -44,6 +46,23 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
       window.clearTimeout(timeoutId)
     }
   }, [searchTerm])
+
+  // Fetch full user profile (since the list only provides minimized data for DPA compliance)
+  const {
+    data: fullUser,
+    isLoading: isUserLoading,
+  } = useQuery({
+    queryKey: ['admin-user-profile', user?.id, accessToken],
+    enabled: Boolean(accessToken) && Boolean(user?.id),
+    queryFn: async () => {
+      const response = await usersApiService.getUserById(accessToken, user.id)
+      return mapBackendUserToUiRow(response?.data)
+    },
+    retry: false,
+  })
+
+  // Use fullUser if available, fallback to minimized user prop
+  const displayUser = fullUser || user
 
   // Fetch reports submitted by this specific user
   const {
@@ -176,45 +195,52 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">User Profile</h1>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">User ID</p>
-            <p className="text-slate-900 font-numeric dark:text-slate-100">{user.id}</p>
+            <p className="text-slate-900 font-numeric dark:text-slate-100 break-all">{displayUser.id}</p>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Full Name</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.name}</p>
-          </div>
-          <div>
+
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Email</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.email}</p>
+            <p className="text-slate-900 dark:text-slate-100 break-all">{displayUser.email}</p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.status}</p>
+            <p className="text-slate-900 dark:text-slate-100">{displayUser.status}</p>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Phone Number</p>
-            <p className="text-slate-900 dark:text-slate-100">+{user.phoneNumber || 'Not available'}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Gender</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available'}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Barangay</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.barangay || 'Not available'}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">City</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.city || 'Not available'}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Province</p>
-            <p className="text-slate-900 dark:text-slate-100">{user.province || 'Not available'}</p>
-          </div>
+          {isUserLoading || displayUser.phoneNumber ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Phone Number</p>
+              <p className="text-slate-900 dark:text-slate-100">{isUserLoading ? 'Loading...' : `+${displayUser.phoneNumber}`}</p>
+            </div>
+          ) : null}
+          {isUserLoading || displayUser.gender ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Gender</p>
+              <p className="text-slate-900 dark:text-slate-100">{isUserLoading ? 'Loading...' : displayUser.gender.charAt(0).toUpperCase() + displayUser.gender.slice(1)}</p>
+            </div>
+          ) : null}
+          {isUserLoading || displayUser.barangay ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Barangay</p>
+              <p className="text-slate-900 dark:text-slate-100">{isUserLoading ? 'Loading...' : displayUser.barangay}</p>
+            </div>
+          ) : null}
+          {isUserLoading || displayUser.city ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">City</p>
+              <p className="text-slate-900 dark:text-slate-100">{isUserLoading ? 'Loading...' : displayUser.city}</p>
+            </div>
+          ) : null}
+          {isUserLoading || displayUser.province ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Province</p>
+              <p className="text-slate-900 dark:text-slate-100">{isUserLoading ? 'Loading...' : displayUser.province}</p>
+            </div>
+          ) : null}
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Registered At</p>
-            <p className="text-slate-900 font-numeric dark:text-slate-100">{user.registeredAt}</p>
+            <p className="text-slate-900 font-numeric dark:text-slate-100">{displayUser.registeredAt}</p>
           </div>
         </div>
       </section>

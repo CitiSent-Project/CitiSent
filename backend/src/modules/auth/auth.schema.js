@@ -157,39 +157,3 @@ export const resetPasswordWithOtpSchema = z.object({
   }),
 });
 
-const gmailSchema = z
-  .string()
-  .trim()
-  .min(1, "Please enter your Gmail address.")
-  .email("Please enter a valid Gmail address.")
-  .refine(
-    (val) => {
-      const normalized = val.trim().toLowerCase();
-      const atIndex = normalized.lastIndexOf("@");
-      return atIndex > 0 && normalized.slice(atIndex + 1) === "gmail.com";
-    },
-    { message: "Guest verification currently requires a Gmail address." },
-  );
-
-export const sendGuestOtpSchema = z.object({
-  params: z.object({}).optional().default({}),
-  query: z.object({}).optional().default({}),
-  body: z.object({
-    email: gmailSchema,
-  }),
-});
-
-export const verifyGuestOtpSchema = z.object({
-  params: z.object({}).optional().default({}),
-  query: z.object({}).optional().default({}),
-  body: z.object({
-    email: gmailSchema,
-    otp: z
-      .string()
-      .trim()
-      .length(6, "Verification code must be exactly 6 digits.")
-      .regex(/^\d{6}$/, "Verification code must contain digits only."),
-  }),
-});
-
-

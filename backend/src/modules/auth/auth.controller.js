@@ -90,37 +90,12 @@ export const authController = {
     });
   },
 
-  async createGuestSession(_req, res) {
-    const result = await authService.createGuestSession();
+  async createGuestSession(req, res) {
+    const result = await authService.createGuestSession(req.body?.guestId);
 
     return res.status(StatusCodes.CREATED).json({
       success: true,
       data: result,
     });
   },
-
-  async sendGuestOtp(req, res) {
-    const result = await authService.sendGuestOtp(req.body.email);
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
-  },
-
-  async verifyGuestOtp(req, res) {
-    const { email, otp } = req.body;
-    const currentGuestId = req.user?.id || null;
-    const result = await authService.verifyGuestOtp(
-      email,
-      otp,
-      currentGuestId,
-    );
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
-  },
 };
-

@@ -157,6 +157,7 @@ const envSchema = z.object({
   GMAIL_APP_PASSWORD: optionalString(z.string().min(1)),
   INVITATION_JWT_SECRET: optionalString(z.string().min(32)),
   WEB_APP_BASE_URL: optionalString(z.string().url()),
+  CLOUDFLARE_TURNSTILE_SECRET_KEY: optionalString(z.string().min(1)),
   ENABLE_RUNTIME_METRICS: envBoolean.default(false),
   RUNTIME_METRICS_INTERVAL_MS: z.coerce
     .number()

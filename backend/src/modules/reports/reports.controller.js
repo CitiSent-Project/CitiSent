@@ -48,6 +48,8 @@ export const reportsController = {
       userId: req.user.id,
       actor: req.user,
       ...req.body,
+      turnstileToken: req.body.turnstileToken || null,
+      remoteIp: req.ip || null,
       accessToken: req.accessToken,
     });
 

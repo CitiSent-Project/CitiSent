@@ -12,8 +12,6 @@ import {
   requestOtpSchema,
   resetPasswordSchema,
   resetPasswordWithOtpSchema,
-  sendGuestOtpSchema,
-  verifyGuestOtpSchema,
   verifyOtpSchema,
 } from "./auth.schema.js";
 import { authController } from "./auth.controller.js";
@@ -66,7 +64,8 @@ authRouter.post(
   asyncHandler(authController.changePassword),
 );
 
-// OTP-based forgot-password routes (mobile)
+// OTP-based forgot-password routes (mobile) — these are for REGISTERED user password reset,
+// NOT for guest verification (which is now handled by Cloudflare Turnstile at report submission).
 authRouter.post(
   "/request-otp",
   validateRequest(requestOtpSchema),
@@ -85,23 +84,11 @@ authRouter.post(
   asyncHandler(authController.resetPasswordWithOtp),
 );
 
-// Guest authentication & Gmail OTP verification routes
+// Guest session creation — no Gmail verification required.
+// CAPTCHA is verified at report submission time (POST /reports).
 authRouter.post(
   "/guest",
   asyncHandler(authController.createGuestSession),
 );
 
-authRouter.post(
-  "/guest/send-otp",
-  validateRequest(sendGuestOtpSchema),
-  asyncHandler(authController.sendGuestOtp),
-);
-
-authRouter.post(
-  "/guest/verify-otp",
-  validateRequest(verifyGuestOtpSchema),
-  asyncHandler(authController.verifyGuestOtp),
-);
-
 export { authRouter };
-

@@ -16,17 +16,19 @@ export const listReportsSchema = z.object({
 export const createReportSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),
-  body: z
-    .object({
-      issueType: z.string().min(1).max(120),
-      description: z.string().min(10).max(3000),
-      location: z.string().min(1).max(240),
-      latitude: z.number().min(-90).max(90),
-      longitude: z.number().min(-180).max(180),
-      attachmentUrl: z.string().url().optional(),
-    })
-    .strict(),
+  body: z.object({
+    issueType: z.string().min(1).max(120),
+    description: z.string().min(10).max(3000),
+    location: z.string().min(1).max(240),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    attachmentUrl: z.string().url().optional(),
+    // Cloudflare Turnstile token — required for guest users, validated server-side.
+    // Optional here because registered users do not send it.
+    turnstileToken: z.string().min(1).max(4096).optional(),
+  }),
 });
+
 
 export const getReportByIdSchema = z.object({
   params: z.object({

@@ -42,7 +42,6 @@ export async function requireAuth(req, _res, next) {
           id: guestPayload.guestId,
           role: "guest",
           isGuest: true,
-          isVerified: Boolean(guestPayload.isVerified),
           email: guestPayload.email || null,
         };
         req.accessToken = token;

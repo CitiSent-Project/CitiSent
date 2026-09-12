@@ -98,29 +98,4 @@ export const authController = {
       data: result,
     });
   },
-
-  async sendGuestOtp(req, res) {
-    const result = await authService.sendGuestOtp(req.body.email);
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
-  },
-
-  async verifyGuestOtp(req, res) {
-    const { email, otp } = req.body;
-    const currentGuestId = req.user?.id || null;
-    const result = await authService.verifyGuestOtp(
-      email,
-      otp,
-      currentGuestId,
-    );
-
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      data: result,
-    });
-  },
 };
-

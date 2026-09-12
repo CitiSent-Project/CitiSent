@@ -7,15 +7,15 @@ const GUEST_JWT_SECRET =
 
 /**
  * Signs a guest session token (expires in 7 days).
+ * The isVerified field has been removed — guest verification is now done
+ * per-submission via Cloudflare Turnstile CAPTCHA, not per-session via Gmail OTP.
  */
-export function signGuestToken({ guestId, isVerified = false, email = null }) {
+export function signGuestToken({ guestId }) {
   return jwt.sign(
     {
       guestId,
       role: "guest",
       isGuest: true,
-      isVerified: Boolean(isVerified),
-      email: email || null,
       purpose: "guest_session",
     },
     GUEST_JWT_SECRET,

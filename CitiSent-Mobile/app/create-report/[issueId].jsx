@@ -26,7 +26,7 @@ import {
   usePullToRefresh,
 } from "../../modules/shared";
 import { GuestVerificationModal } from "../../modules/auth";
-import { isGuestUser, isGuestVerified } from "../../services/authSession";
+import { isGuestUser } from "../../services/authSession";
 import useDepartments from "../../hooks/useDepartments";
 import { reportsApi } from "../../services/reports";
 
@@ -153,16 +153,16 @@ export default function CreateReportIssueDetailScreen() {
       return;
     }
 
-    // If guest user and not yet phone-verified, intercept and prompt OTP
-    if (isGuestUser() && !isGuestVerified()) {
+    // If guest user, always show Turnstile CAPTCHA before submitting
+    if (isGuestUser()) {
       setIsGuestOtpModalVisible(true);
       return;
     }
 
-    await executeSubmitReport();
+    await executeSubmitReport(null);
   }
 
-  async function executeSubmitReport() {
+  async function executeSubmitReport(turnstileToken) {
     setIsSubmitting(true);
     try {
       let attachmentUrl;
@@ -178,6 +178,7 @@ export default function CreateReportIssueDetailScreen() {
         longitude,
         description: report,
         ...(attachmentUrl ? { attachmentUrl } : {}),
+        ...(turnstileToken ? { turnstileToken } : {}),
       });
       setIsSubmitting(false);
       showModal(
@@ -195,11 +196,16 @@ export default function CreateReportIssueDetailScreen() {
       );
     } catch (error) {
       setIsSubmitting(false);
-      const isGuestRequired =
-        error?.code === "GUEST_VERIFICATION_REQUIRED" ||
-        String(error?.message || "").includes("Guest verification required");
 
-      if (isGuestRequired) {
+      const isCaptchaRequired =
+        error?.code === "CAPTCHA_REQUIRED" ||
+        String(error?.message || "").toLowerCase().includes("complete the verification");
+
+      const isCaptchaInvalid =
+        error?.code === "CAPTCHA_INVALID" ||
+        String(error?.message || "").toLowerCase().includes("verification failed");
+
+      if (isCaptchaRequired || isCaptchaInvalid) {
         setIsGuestOtpModalVisible(true);
         return;
       }
@@ -310,9 +316,9 @@ export default function CreateReportIssueDetailScreen() {
       <GuestVerificationModal
         visible={isGuestOtpModalVisible}
         onClose={() => setIsGuestOtpModalVisible(false)}
-        onVerified={() => {
+        onVerified={(token) => {
           setIsGuestOtpModalVisible(false);
-          executeSubmitReport();
+          executeSubmitReport(token);
         }}
       />
     </View>

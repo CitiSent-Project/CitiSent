@@ -232,6 +232,7 @@ export const reportsApi = {
     longitude,
     description,
     attachmentUrl,
+    turnstileToken,
   }) => {
     const payload = {
       issueType,
@@ -243,6 +244,11 @@ export const reportsApi = {
       typeof attachmentUrl === "string" &&
       attachmentUrl.startsWith("http")
         ? { attachmentUrl }
+        : {}),
+      ...(turnstileToken &&
+      typeof turnstileToken === "string" &&
+      turnstileToken.trim().length > 0
+        ? { turnstileToken: turnstileToken.trim() }
         : {}),
     };
     return api.post("/reports", payload);

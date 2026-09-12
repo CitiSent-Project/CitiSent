@@ -17,6 +17,7 @@ import {
 } from "./reports.sentiment.js";
 import { departmentsService } from "../departments/departments.service.js";
 import { emitReportFeedChanged } from "../../realtime/reportFeedEvents.js";
+import { verifyTurnstileToken } from "../../shared/security/turnstile.js";
 
 const ST_LAT_MIN = 13.9796305;
 const ST_LAT_MAX = 14.1473362;
@@ -193,14 +194,53 @@ export const reportsService = {
     longitude,
     attachmentUrl,
     accessToken,
+    turnstileToken,
+    remoteIp,
   }) {
+    // ── Guest CAPTCHA verification (Cloudflare Turnstile) ───────────────────────
+    // The backend determines guest status from the verified JWT (actor.isGuest).
+    // We never trust is_guest from the request body.
     if (actor?.isGuest) {
-      if (!actor.isVerified) {
+      if (!turnstileToken || typeof turnstileToken !== "string" || !turnstileToken.trim()) {
         const error = new AppError(
-          "Guest verification required. Please verify your Gmail address via OTP before submitting a report.",
+          "Please complete the verification before submitting your report.",
           StatusCodes.FORBIDDEN,
         );
-        error.code = "GUEST_VERIFICATION_REQUIRED";
+        error.code = "CAPTCHA_REQUIRED";
+        throw error;
+      }
+
+      let turnstileResult;
+      try {
+        turnstileResult = await verifyTurnstileToken(turnstileToken, remoteIp);
+      } catch {
+        const error = new AppError(
+          "We couldn't verify your request right now. Please try again.",
+          StatusCodes.BAD_GATEWAY,
+        );
+        error.code = "CAPTCHA_SERVICE_ERROR";
+        throw error;
+      }
+
+      if (!turnstileResult.success) {
+        const errorCodes = turnstileResult.errorCodes || [];
+        const isNetworkError = errorCodes.includes("cloudflare-network-error");
+        const isMissingKey = errorCodes.includes("missing-secret-key");
+
+        if (isNetworkError || isMissingKey) {
+          const error = new AppError(
+            "We couldn't verify your request right now. Please try again.",
+            StatusCodes.BAD_GATEWAY,
+          );
+          error.code = "CAPTCHA_SERVICE_ERROR";
+          throw error;
+        }
+
+        const error = new AppError(
+          "Verification failed. Please try again.",
+          StatusCodes.FORBIDDEN,
+        );
+        error.code = "CAPTCHA_INVALID";
         throw error;
       }
 

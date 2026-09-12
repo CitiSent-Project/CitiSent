@@ -1,4 +1,5 @@
 import { usersRepository } from "./users.repository.js";
+import { reportsRepository } from "../reports/reports.repository.js";
 import { buildActor } from "../../shared/auth/roleAccess.js";
 import { normalizeNamePart } from "../../shared/utils/name.js";
 import { AppError } from "../../shared/errors/appError.js";
@@ -115,6 +116,26 @@ export const usersService = {
     return {
       deleted: true,
       userId: authUser.id,
+    };
+  },
+
+  async exportCurrentUser(authUser, accessToken) {
+    const profile = await usersRepository.getProfileByUserId(
+      authUser.id,
+      accessToken,
+    );
+
+    const reportsResult = await reportsRepository.list({
+      userId: authUser.id,
+      limit: 10000,
+      offset: 0,
+      accessToken,
+    });
+
+    return {
+      user: toCurrentUserResponse(authUser, profile),
+      reports: reportsResult.data,
+      exportedAt: new Date().toISOString(),
     };
   },
 };

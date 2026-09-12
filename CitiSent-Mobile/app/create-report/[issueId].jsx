@@ -25,7 +25,7 @@ import {
   Colors,
   usePullToRefresh,
 } from "../../modules/shared";
-import { GuestVerificationModal } from "../../modules/auth";
+import { GuestVerificationModal, AuthLegalConsent } from "../../modules/auth";
 import { isGuestUser } from "../../services/authSession";
 import useDepartments from "../../hooks/useDepartments";
 import { reportsApi } from "../../services/reports";
@@ -71,6 +71,8 @@ export default function CreateReportIssueDetailScreen() {
     onCloseAction: null,
   });
   const [isGuestOtpModalVisible, setIsGuestOtpModalVisible] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh(reloadDepartments);
   const scrollViewRef = useRef(null);
   const inputPositionsRef = useRef({ issueLocation: 0, report: 0 });
@@ -88,7 +90,8 @@ export default function CreateReportIssueDetailScreen() {
         report.trim().length >= 10 &&
         latitude !== null &&
         longitude !== null &&
-        isWithinStoTomas(Number(latitude), Number(longitude))
+        isWithinStoTomas(Number(latitude), Number(longitude)) &&
+        (!isGuestUser() || (agreeTerms && agreePrivacy))
       : false;
 
   function showModal(type, title, message, onCloseAction = null) {
@@ -294,6 +297,17 @@ export default function CreateReportIssueDetailScreen() {
                   setLongitude(lon);
                 }}
               />
+
+              {isGuestUser() && (
+                <View className="mt-2 w-full">
+                  <AuthLegalConsent
+                    agreeTerms={agreeTerms}
+                    onToggleTerms={() => setAgreeTerms(!agreeTerms)}
+                    agreePrivacy={agreePrivacy}
+                    onTogglePrivacy={() => setAgreePrivacy(!agreePrivacy)}
+                  />
+                </View>
+              )}
 
               <SubmitReportButton
                 onPress={handleSubmitReport}

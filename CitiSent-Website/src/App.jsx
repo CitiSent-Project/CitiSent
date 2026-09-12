@@ -8,6 +8,7 @@ import Toasters from './components/ui/Toasters'
 import { renderActivePage, renderAuthPage } from './controllers/navigation/pageRouterController'
 import { useAppStateOrchestrator } from './hooks/useAppStateOrchestrator'
 import { SetupPasswordPage } from './frontend/Pages/SetupPassword'
+import { PrivacyPolicy } from './frontend/Pages/PrivacyPolicy'
 
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
@@ -155,12 +156,22 @@ function AuthenticatedApp() {
 
 function App() {
   const isAuthView = ['/setup-password', '/reset-password'].includes(window.location.pathname)
+  const isPrivacyPolicy = window.location.pathname === '/privacy-policy'
 
   useEffect(() => {
-    if (isAuthView) {
+    if (isAuthView || isPrivacyPolicy) {
       document.documentElement.dataset.theme = 'light'
     }
-  }, [isAuthView])
+  }, [isAuthView, isPrivacyPolicy])
+
+  if (isPrivacyPolicy) {
+    return (
+      <>
+        <Toasters />
+        <PrivacyPolicy />
+      </>
+    )
+  }
 
   if (isAuthView) {
     return (

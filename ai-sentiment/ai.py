@@ -5,6 +5,7 @@ import collections
 import logging
 import random
 import time
+import re
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -85,6 +86,18 @@ def _get_client():
     return _client
 
 
+def redact_pii(text: str) -> str:
+    """Redacts email addresses and Philippine phone numbers from text."""
+    if not text:
+        return text
+    # Redact email addresses
+    text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[REDACTED]', text)
+    # Redact Philippine phone numbers (e.g. 0917-123-4567, +639171234567, 0917 123 4567, 09171234567)
+    text = re.sub(r'(?:\+63|0)9\d{2}[-\s]?\d{3}[-\s]?\d{4}', '[REDACTED]', text)
+    return text
+
+
+
 # Trimmed prompt — same accuracy, ~30% fewer tokens = more requests fit in free quota
 PROMPT_TEMPLATE = (
     'Classify this LGU citizen report. Return JSON only:\n'
@@ -102,10 +115,12 @@ VALID_EMOTION = ["Sad", "Happy", "Frustrated", "Angry", "Disappointed", "Excited
 async def analyze_report(office: str, location: str, description: str) -> dict:
     client = _get_client()
 
+    sanitized_description = redact_pii(description)
+
     prompt = PROMPT_TEMPLATE.format(
         office=office,
         location=location,
-        description=description,
+        description=sanitized_description,
     )
 
     last_exc = None
@@ -275,17 +290,20 @@ async def generate_admin_note_suggestions(
     """Generate structured, editable internal notes for a report status update."""
     client = _get_client()
     ctx_lines = [
-        f"- {message.get('sender', 'unknown')}: {message.get('text', '')}"
+        f"- {message.get('sender', 'unknown')}: {redact_pii(message.get('text', ''))}"
         for message in conversation_context
     ]
     context_text = "\n".join(ctx_lines) if ctx_lines else "(No conversation is available.)"
+    
+    sanitized_description = redact_pii(report_description)
+    
     prompt = ADMIN_NOTE_SUGGESTIONS_PROMPT_TEMPLATE.format(
         report_status=report_status,
         conversation_context_str=context_text,
         report_category=report_category,
         urgency=urgency,
         detected_emotion=detected_emotion,
-        report_description=report_description,
+        report_description=sanitized_description,
     )
 
     try:

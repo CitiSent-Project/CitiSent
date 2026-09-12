@@ -77,7 +77,7 @@ export function SolidPieChart({ title, total, labels, values, colors, legend = [
                 className="mt-1 h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="break-words leading-tight flex-1">
+              <span className="wrap-break-word leading-tight flex-1">
                 {item.label}
               </span>
             </div>

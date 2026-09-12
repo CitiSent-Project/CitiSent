@@ -20,6 +20,7 @@ import {
   toTransferRequestResponse,
 } from "./admin.mapper.js";
 import { notificationsRepository } from "./notifications/notifications.repository.js";
+import { activityRepository } from "./activity/activity.repository.js";
 import { logger } from "../../config/logger.js";
 import { getStatusNotificationContent } from "../../shared/data/reportStatusNotifications.js";
 import { departmentsService } from "../departments/departments.service.js";
@@ -924,6 +925,25 @@ export const adminService = {
       result.row,
       departmentLookup,
     );
+
+    // [DPA 2012 Compliance: Audit Trails]
+    // We log every time an admin views a specific report's full details. 
+    // This establishes a strict audit trail for access to Personally Identifiable Information (PII).
+    // We run this asynchronously using .catch() so it doesn't block the response if logging fails.
+    activityRepository
+      .createActivityLogEntry({
+        accessToken,
+        adminUserId: actor.id,
+        action: "VIEW_REPORT_PII",
+        detail: `Viewed full PII details for report ID: ${reportId}`,
+      })
+      .catch((error) => {
+        logger.warn("Failed to create VIEW_REPORT_PII audit log", {
+          reportId,
+          adminId: actor.id,
+          error: error?.message,
+        });
+      });
 
     return toAdminReportResponse({
       reportRow,

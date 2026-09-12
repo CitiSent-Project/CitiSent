@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { StatusCodes } from "http-status-codes";
 import {
   createAdminSupabaseClient,
@@ -20,6 +21,12 @@ function normalizeEmail(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(value || ""),
+  );
 }
 
 function isMissingProfilesTable(error) {
@@ -868,6 +875,145 @@ export const authRepository = {
 
     if (updateError) {
       throw toGatewayError("Failed to update password.", updateError);
+    }
+  },
+
+  /**
+   * Finds a guest user profile by ID if it exists and has a guest role/account_type.
+   */
+  async findGuestUserById(guestId) {
+    if (!guestId || typeof guestId !== "string") return null;
+
+    const adminDb = createAdminSupabaseClient();
+    const db = adminDb || getDbClient();
+
+    const { data, error } = await db
+      .from(PROFILES_TABLE)
+      .select("user_id, role, account_type, email, username, fname, lname")
+      .eq("user_id", guestId)
+      .maybeSingle();
+
+    if (error) {
+      if (isMissingProfilesTable(error)) return null;
+      return null;
+    }
+
+    if (data && (data.role === "guest" || data.account_type === "guest")) {
+      return data;
+    }
+
+    return null;
+  },
+
+  /**
+   * Ensures a guest user identity exists in Supabase auth.users and profiles.
+   * If maybeGuestId is provided and already exists in the database, reuses it
+   * to avoid creating duplicate guest accounts.
+   */
+  async ensureGuestUser(maybeGuestId = null) {
+    const validUuid = isUuid(maybeGuestId) ? maybeGuestId : null;
+
+    if (validUuid) {
+      const existing = await this.findGuestUserById(validUuid);
+      if (existing) {
+        return {
+          id: existing.user_id,
+          role: "guest",
+          isGuest: true,
+          username: "Guest",
+        };
+      }
+    }
+
+    const adminDb = createAdminSupabaseClient();
+    if (!adminDb) {
+      // Offline fallback / mock test environment
+      return {
+        id: validUuid || crypto.randomUUID(),
+        role: "guest",
+        isGuest: true,
+        username: "Guest",
+      };
+    }
+
+    const guestId = validUuid || crypto.randomUUID();
+    const shortId = guestId.slice(0, 8);
+    const guestEmail = `guest_${shortId}_${Date.now()}@citisent.guest`;
+
+    try {
+      const { data: createdAuth, error: createError } =
+        await adminDb.auth.admin.createUser({
+          id: guestId,
+          email: guestEmail,
+          email_confirm: true,
+          user_metadata: {
+            role: "guest",
+            is_guest: true,
+            account_type: "guest",
+          },
+        });
+
+      if (createError) {
+        // If user already exists, fetch and return
+        const existing = await this.findGuestUserById(guestId);
+        if (existing) {
+          return {
+            id: existing.user_id,
+            role: "guest",
+            isGuest: true,
+            username: "Guest",
+          };
+        }
+        console.error("[Auth] Failed to create guest auth user:", createError);
+        return {
+          id: guestId,
+          role: "guest",
+          isGuest: true,
+          username: "Guest",
+        };
+      }
+
+      const assignedUserId = createdAuth?.user?.id || guestId;
+
+      try {
+        await adminDb
+          .from(PROFILES_TABLE)
+          .upsert(
+            {
+              user_id: assignedUserId,
+              email: guestEmail,
+              username: `guest_${shortId}`,
+              fname: "Guest",
+              lname: "User",
+              role: "guest",
+              account_type: "guest",
+              app_role: "citizen",
+              account_status: "active",
+              activation_status: "active",
+              city: "Sto. Tomas",
+              province: "Batangas",
+              country: "Philippines",
+            },
+            { onConflict: "user_id" },
+          );
+      } catch (profileErr) {
+        console.warn("[Auth] Non-fatal: failed to update guest profile:", profileErr?.message);
+      }
+
+      return {
+        id: assignedUserId,
+        role: "guest",
+        isGuest: true,
+        username: "Guest",
+      };
+    } catch (err) {
+      console.error("[Auth] Unexpected error ensuring guest user:", err);
+      return {
+        id: guestId,
+        role: "guest",
+        isGuest: true,
+        username: "Guest",
+      };
     }
   },
 };

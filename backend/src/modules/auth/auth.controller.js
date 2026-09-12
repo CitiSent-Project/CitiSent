@@ -90,8 +90,8 @@ export const authController = {
     });
   },
 
-  async createGuestSession(_req, res) {
-    const result = await authService.createGuestSession();
+  async createGuestSession(req, res) {
+    const result = await authService.createGuestSession(req.body?.guestId);
 
     return res.status(StatusCodes.CREATED).json({
       success: true,

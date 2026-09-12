@@ -604,10 +604,13 @@ export const authService = {
     return { changed: true };
   },
 
-  async createGuestSession() {
-    const guestId = crypto.randomUUID();
-    // Guest verification is now per-submission via Cloudflare Turnstile CAPTCHA.
-    // No Gmail or OTP required to create a guest session.
+  async createGuestSession(maybeGuestId = null) {
+    // Ensure the guest user identity exists in auth.users and profiles.
+    // Reuses existing guest if maybeGuestId is already a valid guest in the DB.
+    const guestUser = await authRepository.ensureGuestUser(maybeGuestId);
+    const guestId = guestUser.id;
+
+    // Guest verification is per-submission via Cloudflare Turnstile CAPTCHA.
     const token = signGuestToken({ guestId });
 
     return {

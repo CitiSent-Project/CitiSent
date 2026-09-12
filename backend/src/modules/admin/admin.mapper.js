@@ -142,6 +142,11 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     String(reportRow?.department_name || "").trim() ||
     resolveDepartmentLabel(reportRow?.issue_type);
 
+  const isGuest =
+    reporterProfile?.account_type === "guest" ||
+    reporterProfile?.role === "guest" ||
+    Boolean(reporterProfile?.is_guest);
+
   return {
     id: reportRow?.id,
     reportNumber: reportRow?.report_number || reportRow?.id,
@@ -163,7 +168,7 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     updatedAt: reportRow?.updated_at || null,
     reporter: {
       id: reportRow?.user_id || null,
-      email: reporterProfile?.email || null,
+      email: isGuest ? null : (reporterProfile?.email || null),
       fullName: resolveReporterName(reporterProfile),
     },
   };

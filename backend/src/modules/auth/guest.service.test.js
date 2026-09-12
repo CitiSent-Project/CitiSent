@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { authService } from "./auth.service.js";
+import { authRepository } from "./auth.repository.js";
 import { signGuestToken, tryVerifyGuestToken } from "../../shared/security/guestTokens.js";
 import { reportsService } from "../reports/reports.service.js";
 import { reportsRepository } from "../reports/reports.repository.js";
@@ -455,4 +456,118 @@ test("13. Duplicate report detection still works after CAPTCHA passes", async (t
   );
 
   assert.equal(callCount, 1, "Repository must only be called once — duplicate rejected");
+});
+
+// ─── Test 14: createGuestSession reuses existing guestId ───────────────────────
+test("14. createGuestSession reuses existing guest identity to avoid duplicates", async (t) => {
+  const origFind = authRepository.findGuestUserById;
+  const existingGuestId = "d5c88a1c-d7b0-4972-9c87-5f8222b3f947";
+
+  // Mock finding an existing guest profile in the database
+  authRepository.findGuestUserById = async (id) => {
+    if (id === existingGuestId) {
+      return {
+        user_id: existingGuestId,
+        role: "guest",
+        account_type: "guest",
+        username: "Guest",
+      };
+    }
+    return null;
+  };
+
+  t.after(() => {
+    authRepository.findGuestUserById = origFind;
+  });
+
+  const session = await authService.createGuestSession(existingGuestId);
+  assert.equal(session.user.id, existingGuestId, "Must reuse existing guestId");
+  assert.equal(session.user.role, "guest");
+
+  const payload = tryVerifyGuestToken(session.token);
+  assert.equal(payload.guestId, existingGuestId);
+});
+
+// ─── Test 15: Guest report creation ensures valid DB identity for FK ──────────
+test("15. Guest report creation ensures valid DB identity (reports_user_id_fkey satisfied)", async (t) => {
+  const origEnsure = authRepository.ensureGuestUser;
+  const origCreate = reportsRepository.create;
+  const origDept = departmentsService.getActiveDepartmentByValue;
+  const origDeleteByPrefix = cacheService.deleteByPrefix;
+
+  departmentsService.getActiveDepartmentByValue = async () => null;
+  cacheService.deleteByPrefix = async () => {};
+
+  let capturedUserId = null;
+  reportsRepository.create = async (payload) => {
+    capturedUserId = payload.user_id;
+    return {
+      id: "report-fk-test",
+      report_number: "REP-FK-001",
+      issue_type: payload.issue_type,
+      description: payload.description,
+      location: payload.location,
+      latitude: payload.latitude,
+      longitude: payload.longitude,
+      status: "pending",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: payload.user_id,
+    };
+  };
+
+  const validDbGuestId = "persisted-guest-uuid-999";
+  authRepository.ensureGuestUser = async (id) => ({
+    id: validDbGuestId,
+    role: "guest",
+    isGuest: true,
+    username: "Guest",
+  });
+
+  t.after(() => {
+    authRepository.ensureGuestUser = origEnsure;
+    reportsRepository.create = origCreate;
+    departmentsService.getActiveDepartmentByValue = origDept;
+    cacheService.deleteByPrefix = origDeleteByPrefix;
+  });
+
+  const guestActor = { id: "ephemeral-guest-id", role: "guest", isGuest: true };
+  const created = await reportsService.createReport({
+    userId: guestActor.id,
+    actor: guestActor,
+    issueType: "Streetlight",
+    description: "Broken streetlight causing dark area at night on residential street.",
+    location: "Barangay Poblacion 2, Sto. Tomas",
+    latitude: 14.07,
+    longitude: 121.15,
+    turnstileToken: "mock-dev-turnstile-token",
+  });
+
+  assert.ok(created);
+  assert.equal(capturedUserId, validDbGuestId, "Report must be inserted with verified database guest user_id");
+  assert.equal(created.userId, validDbGuestId);
+});
+
+// ─── Test 16: Guest reporter profile never exposes synthetic email ─────────────
+test("16. toAdminReportResponse strips synthetic email from guest reporter profile", () => {
+  const mapped = toAdminReportResponse({
+    reportRow: {
+      id: "report-privacy-check",
+      report_number: "REP-PRIV-001",
+      issue_type: "Illegal Dumping",
+      user_id: "guest-user-with-email",
+    },
+    reporterProfile: {
+      user_id: "guest-user-with-email",
+      email: "guest_abc123_1789200000000@citisent.guest",
+      username: "guest_abc123",
+      fname: "Guest",
+      lname: "User",
+      account_type: "guest",
+      role: "guest",
+    },
+  });
+
+  assert.equal(mapped.reporter.fullName, "Guest", "Reporter name must be 'Guest'");
+  assert.equal(mapped.reporter.email, null, "Synthetic guest email must NEVER be exposed in report response");
 });

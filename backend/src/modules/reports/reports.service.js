@@ -18,6 +18,7 @@ import {
 import { departmentsService } from "../departments/departments.service.js";
 import { emitReportFeedChanged } from "../../realtime/reportFeedEvents.js";
 import { verifyTurnstileToken } from "../../shared/security/turnstile.js";
+import { authRepository } from "../auth/auth.repository.js";
 
 const ST_LAT_MIN = 13.9796305;
 const ST_LAT_MAX = 14.1473362;
@@ -274,9 +275,20 @@ export const reportsService = {
       location,
     });
 
+    // ── Ensure Guest Database Identity ─────────────────────────────────────────
+    // If the reporter is a guest, ensure their user_id exists in auth.users and profiles
+    // so the foreign-key constraint reports_user_id_fkey is always satisfied.
+    let resolvedUserId = userId;
+    if (actor?.isGuest) {
+      const guestIdentity = await authRepository.ensureGuestUser(userId);
+      if (guestIdentity?.id) {
+        resolvedUserId = guestIdentity.id;
+      }
+    }
+
     const created = await reportsRepository.create(
       buildReportCreatePayload({
-        userId,
+        userId: resolvedUserId,
         issueType: department?.slug || issueType,
         description,
         location,
@@ -291,7 +303,7 @@ export const reportsService = {
     );
 
     await Promise.all([
-      cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId)),
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(resolvedUserId)),
       cacheService.deleteByPrefix("admin:reports:"),
     ]);
 
@@ -301,7 +313,7 @@ export const reportsService = {
     emitReportFeedChanged({
       reportId: response.id,
       changeType: "created",
-      userId,
+      userId: resolvedUserId,
       departmentId: department?.slug || issueType,
     });
 

@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { parseLoginIdentifier } from "../utils/authIdentifier";
-import { clearAuthToken, setAuthToken, setAuthUser } from "./authSession";
+import { clearAuthToken, setAuthToken, setAuthUser, getAuthUser } from "./authSession";
 import { resetAdminMessageState } from "./adminMessageState";
 import { runtimeFlags } from "./runtimeFlags";
 
@@ -144,7 +144,15 @@ export const authApi = {
 
   continueAsGuest: async () => {
     try {
-      const response = await api.post("/auth/guest", {});
+      const existingUser = getAuthUser();
+      const existingGuestId =
+        existingUser?.isGuest && existingUser?.id && !existingUser.id.startsWith("guest-")
+          ? existingUser.id
+          : null;
+
+      const response = await api.post("/auth/guest", {
+        ...(existingGuestId ? { guestId: existingGuestId } : {}),
+      });
       const authPayload = unwrapAuthPayload(response);
       if (authPayload?.token) {
         setAuthToken(authPayload.token);

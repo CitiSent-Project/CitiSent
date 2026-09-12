@@ -25,7 +25,7 @@ This sprint addressed the most urgent (Tier 1) vulnerabilities.
 
 ---
 
-## Sprint 2: Data Portability & Audit Trails (📝 DRAFT)
+## Sprint 2: Data Portability & Audit Trails (✅ COMPLETED)
 
 This sprint focuses on Tier 2 compliance issues: giving users access to their data and tracking who views sensitive information.
 

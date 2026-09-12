@@ -98,7 +98,7 @@ async function getActiveBanByUserId({ db, userId }) {
   return activeBansByUserId[userId] || null;
 }
 
-async function loadReporterProfiles(db, rows = []) {
+async function loadReporterProfiles(db, rows = [], isBulk = false) {
   const reporterIds = Array.from(
     new Set(rows.map((row) => row.user_id).filter(Boolean)),
   );
@@ -140,6 +140,19 @@ async function loadReporterProfiles(db, rows = []) {
   }
 
   return profilesMap;
+}
+
+async function enrichWithSignedUrl(db, row) {
+  if (!row || !row.attachment_url) return row;
+  
+  const match = row.attachment_url.match(/\/object\/public\/attachments\/(.+)$/);
+  if (match) {
+    const { data } = await db.storage.from("attachments").createSignedUrl(match[1], 3600);
+    if (data?.signedUrl) {
+      return { ...row, attachment_url: data.signedUrl };
+    }
+  }
+  return row;
 }
 
 function applyDepartmentScope(query, actor) {
@@ -476,7 +489,7 @@ export const adminRepository = {
 
     let query = db
       .from(REPORTS_TABLE)
-      .select("*", { count: "exact" })
+      .select("id,report_number,issue_type,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -496,7 +509,27 @@ export const adminRepository = {
       throw toGatewayError("Failed to fetch admin reports", error);
     }
 
-    const reporterProfilesByUserId = await loadReporterProfiles(db, data || []);
+    // [DPA 2012 Compliance: Data Minimization]
+    // We pass `isBulk = true` to skip loading full PII profiles (fname, lname, etc).
+    // However, the user specifically requested emails on the table, so we will fetch 
+    // minimal profile data directly here without using cache to avoid poisoning it.
+    const reporterIds = Array.from(
+      new Set((data || []).map((row) => row.user_id).filter(Boolean))
+    );
+    
+    let reporterProfilesByUserId = {};
+    if (reporterIds.length > 0) {
+      const { data: profilesData } = await db
+        .from(PROFILES_TABLE)
+        .select("user_id, email")
+        .in("user_id", reporterIds);
+        
+      if (profilesData) {
+        profilesData.forEach((p) => {
+          reporterProfilesByUserId[p.user_id] = { email: p.email };
+        });
+      }
+    }
 
     return {
       rows: data || [],
@@ -588,9 +621,10 @@ export const adminRepository = {
     }
 
     const reporterProfilesByUserId = await loadReporterProfiles(db, [data]);
+    const enrichedData = await enrichWithSignedUrl(db, data);
 
     return {
-      row: data,
+      row: enrichedData,
       reporterProfile: reporterProfilesByUserId[data.user_id] || null,
     };
   },

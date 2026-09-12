@@ -11,4 +11,8 @@ export const usersApi = {
       newPassword,
     });
   },
+
+  async exportCurrentUser() {
+    return api.get("/users/me/export");
+  },
 };

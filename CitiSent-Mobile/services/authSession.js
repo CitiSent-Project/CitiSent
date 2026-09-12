@@ -264,6 +264,11 @@ export function isGuestUser() {
   return Boolean(sessionUser?.isGuest || sessionUser?.role === "guest");
 }
 
+export function isGuestVerified() {
+  if (!sessionUser) return false;
+  return Boolean(sessionUser?.isVerified);
+}
+
 export function clearAuthToken() {
   sessionToken = "";
   sessionUser = null;

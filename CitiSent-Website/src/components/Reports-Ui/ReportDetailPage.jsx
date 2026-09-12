@@ -44,6 +44,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
     isAdminNoteSuggestionsLoading,
     timeline,
     unreadChatCount,
+    fullReport,
+    isFetchingFullReport,
 
     // Derived values
     currentStatus,
@@ -69,7 +71,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   // ---------------------------------------------------------------------------
   // "Not found" fallback when the report is null/undefined.
   // ---------------------------------------------------------------------------
-  if (!report) {
+  if (!fullReport) {
     return (
       <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900 transition-colors duration-200">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/90">
@@ -98,16 +100,16 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
           <FiChevronRight className="text-xs" />
           <span className="font-medium text-slate-700 dark:text-slate-300">Report Detail</span>
           <FiChevronRight className="text-xs" />
-          <span className="font-numeric text-slate-400">{report.reportNum || report.id}</span>
+          <span className="font-numeric text-slate-400">{fullReport.reportNum || fullReport.id}</span>
         </nav>
 
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Report <span className="font-numeric">{report.reportNum || report.id}</span>
+              Report <span className="font-numeric">{fullReport.reportNum || fullReport.id}</span>
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Submitted on <span className="font-numeric font-medium">{report.date}</span>
+              Submitted on <span className="font-numeric font-medium">{fullReport.date}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -118,14 +120,14 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               {currentStatus}
             </span>
             <span
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold shadow-xs ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'border border-slate-500/30 bg-slate-500/10 text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/20 dark:text-slate-400'}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold shadow-xs ${REPORT_EMOTION_BADGE_CLASSES[fullReport.emotionLevel] || 'border border-slate-500/30 bg-slate-500/10 text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/20 dark:text-slate-400'}`}
             >
-              {report.emotionLevel || 'Neutral'}
+              {fullReport.emotionLevel || 'Neutral'}
             </span>
             <span
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold shadow-xs ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold shadow-xs ${REPORT_URGENCY_BADGE_CLASSES[fullReport.urgency] || 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'}`}
             >
-              {report.urgency}
+              {fullReport.urgency}
             </span>
           </div>
         </header>
@@ -141,49 +143,47 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Report ID</p>
-                  <p className="mt-1 font-numeric font-medium text-slate-900 dark:text-slate-200">{report.reportNum || report.id}</p>
-                </div>
-                <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Reported By</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{report.name}</p>
+                  <p className="mt-1 font-numeric font-medium text-slate-900 dark:text-slate-200">{fullReport.reportNum || fullReport.id}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Email</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{report.email}</p>
+                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.reporter?.email || fullReport.email}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{report.location}</p>
+                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.location}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Category / Agency</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{report.category}</p>
-                </div>
-                <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
-                  <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Source</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{report.source}</p>
+                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.category}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Emotion Status</p>
                   <p className="mt-1">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[report.emotionLevel] || 'border border-slate-500/30 bg-slate-500/10 text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/20 dark:text-slate-400'}`}>
-                      {report.emotionLevel || 'Neutral'}
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[fullReport.emotionLevel] || 'border border-slate-500/30 bg-slate-500/10 text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/20 dark:text-slate-400'}`}>
+                      {fullReport.emotionLevel || 'Neutral'}
                     </span>
                   </p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Urgency Level</p>
                   <p className="mt-1">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[report.urgency] || 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'}`}>
-                      {report.urgency}
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[fullReport.urgency] || 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400'}`}>
+                      {fullReport.urgency}
                     </span>
                   </p>
                 </div>
-                <div className={`group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800 ${report.attachmentUrl ? "" : "sm:col-span-2"}`}>
+                <div className={`group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800 ${fullReport.attachmentUrl ? "" : "sm:col-span-2"}`}>
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Message</p>
-                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">{report.message}</p>
+                  {isFetchingFullReport ? (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+                      <FiRefreshCw className="animate-spin text-blue-500" /> Fetching details...
+                    </div>
+                  ) : (
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">{fullReport.description || fullReport.message || "No description provided."}</p>
+                  )}
                 </div>
-                {report.attachmentUrl ? (
+                {fullReport.attachmentUrl ? (
                   <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                     <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Attachment</p>
                     <button
@@ -200,7 +200,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               </div>
             </section>
 
-            {report.aiSummary ? (
+            {fullReport.aiSummary ? (
               <section className="relative overflow-hidden rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50 to-blue-50 p-6 shadow-sm dark:border-blue-900/50 dark:from-blue-900/20 dark:to-blue-900/20">
                 <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-200/50 blur-3xl dark:bg-blue-700/20" />
                 <div className="relative mb-4 flex items-center gap-2.5">
@@ -209,7 +209,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                   </span>
                   <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100">AI Summary</h2>
                 </div>
-                <p className="relative text-sm leading-relaxed text-slate-800 dark:text-slate-200">{report.aiSummary}</p>
+                <p className="relative text-sm leading-relaxed text-slate-800 dark:text-slate-200">{fullReport.aiSummary}</p>
               </section>
             ) : null}
 
@@ -403,7 +403,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
       </div>
 
       {/* Image Modal Overlay */}
-      {isImageModalOpen && report.attachmentUrl ? (
+      {isImageModalOpen && fullReport.attachmentUrl ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-opacity"
           onClick={() => setIsImageModalOpen(false)}
@@ -422,7 +422,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <FiX className="text-lg" />
             </button>
             <img
-              src={report.attachmentUrl}
+              src={fullReport.attachmentUrl}
               alt="Attached report evidence"
               className="max-h-[85vh] w-auto object-contain"
             />
@@ -475,7 +475,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
         </div>
       ) : null}
       
-      {isChatOpen ? <ReportChatDrawer report={report} profile={profile} token={accessToken} onClose={handleCloseChat} /> : null}
+      {isChatOpen ? <ReportChatDrawer report={fullReport} profile={profile} token={accessToken} onClose={handleCloseChat} /> : null}
     </main>
   )
 }

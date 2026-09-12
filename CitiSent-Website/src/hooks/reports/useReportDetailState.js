@@ -64,6 +64,32 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // ---------------------------------------------------------------------------
+  // Full Report Fetching (Triggers Audit Log & Resolves Data Minimization)
+  // ---------------------------------------------------------------------------
+  const [fullReport, setFullReport] = useState(report || null)
+  const [isFetchingFullReport, setIsFetchingFullReport] = useState(false)
+
+  useEffect(() => {
+    if (!report?.id || !accessToken) return
+    let isMounted = true
+
+    setIsFetchingFullReport(true)
+    reportsApiService.getReportById(accessToken, report.id)
+      .then((res) => {
+        if (isMounted && res.data) {
+          // Merge minimal list data with fetched full details
+          setFullReport((prev) => ({ ...prev, ...res.data }))
+        }
+      })
+      .catch((err) => console.error('Failed to fetch full report details:', err))
+      .finally(() => {
+        if (isMounted) setIsFetchingFullReport(false)
+      })
+
+    return () => { isMounted = false }
+  }, [report?.id, accessToken])
+
+  // ---------------------------------------------------------------------------
   // Admin note suggestions (AI copilot)
   // ---------------------------------------------------------------------------
   const [adminNoteSuggestions, setAdminNoteSuggestions] = useState([])
@@ -145,12 +171,12 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   // ---------------------------------------------------------------------------
   // Derived values
   // ---------------------------------------------------------------------------
-  const currentStatus = normalizeReportStatus(report?.status)
+  const currentStatus = normalizeReportStatus(fullReport?.status)
 
   // A report marked as Rejected or Resolved is permanently locked.
   const isPermanentlyLocked = currentStatus === 'Rejected' || currentStatus === 'Resolved'
-  const canProcessReport = canAdminUpdateReport({ profile, report }) && !isPermanentlyLocked
-  const canChat = canAdminUpdateReport({ profile, report })
+  const canProcessReport = canAdminUpdateReport({ profile, report: fullReport }) && !isPermanentlyLocked
+  const canChat = canAdminUpdateReport({ profile, report: fullReport })
   const isSaveDisabled =
     !canProcessReport || selectedStatus === currentStatus || isSaving || isCooldown || isPermanentlyLocked
 
@@ -276,6 +302,8 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
     isAdminNoteSuggestionsLoading,
     timeline,
     unreadChatCount,
+    fullReport,
+    isFetchingFullReport,
 
     // Derived values
     currentStatus,

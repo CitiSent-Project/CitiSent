@@ -119,13 +119,13 @@ export function ReportHistoryTable({
   const exportToCSV = () => {
     if (filteredRows.length === 0) return;
 
-    const headers = ["Report ID", "Reporter Name", "Location", "Department / Issue Type", "Urgency", "Emotion", "Status", "Date Resolved / Logged"];
+    const headers = ["Report ID", "Reporter Email", "Location", "Department / Issue Type", "Urgency", "Emotion", "Status", "Date Resolved / Logged"];
     const csvLines = [headers.join(",")];
 
     filteredRows.forEach((row) => {
       const line = [
         `"${row.reportNum || row.id}"`,
-        `"${row.name || 'Anonymous'}"`,
+        `"${row.email || 'Anonymous'}"`,
         `"${row.location || ''}"`,
         `"${row.category || row.issueType || ''}"`,
         `"${row.urgency || ''}"`,

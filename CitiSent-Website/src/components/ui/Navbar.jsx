@@ -270,7 +270,7 @@ export function Navbar({
 	}
 
 	return (
-		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+		<div className="flex min-h-screen bg-[#eef2f8] text-slate-900 dark:bg-slate-900 dark:text-slate-100">
 			<AnimatePresence>
 				{mobileOpen && (
 					<MotionButton
@@ -332,7 +332,7 @@ export function Navbar({
 				}`}
 			>
 				<header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-xs backdrop-blur-md px-4 py-3 md:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-900/95">
-					<div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+					<div className="flex w-full items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
 							<button
 								type="button"

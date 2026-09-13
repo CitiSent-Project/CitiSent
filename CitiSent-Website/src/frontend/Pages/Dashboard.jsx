@@ -226,7 +226,7 @@ export function Dashboard() {
     )
 
     return (
-        <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-3.5 py-5 sm:px-6 sm:py-6 lg:px-8 dark:bg-slate-900">
+        <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
             <MotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}

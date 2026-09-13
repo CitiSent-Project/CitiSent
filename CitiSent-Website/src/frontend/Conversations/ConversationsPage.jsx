@@ -47,8 +47,8 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
   const [unreadOnly, setUnreadOnly] = useState(false)
 
   return (
-    <main className="mx-auto max-w-400 flex-1 bg-[#eef2f8] dark:bg-slate-950 px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
-      <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-7xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm sm:my-4 sm:h-[calc(100vh-6rem)]">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
+      <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm sm:my-4 sm:h-[calc(100vh-6rem)]">
 
         <div className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
           <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">

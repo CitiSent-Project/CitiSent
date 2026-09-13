@@ -482,7 +482,7 @@ export function PageSkeleton({ pageKey }) {
       id="page-skeleton"
       aria-busy="true"
       aria-live="polite"
-      className="mx-auto max-w-350 flex-1 bg-[#eef2f8] dark:bg-[#0f172a] px-4 py-6 md:px-6 lg:px-8"
+      className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8"
     >
       <MotionDiv {...motionProps}>
         <span className="sr-only">Loading page content...</span>

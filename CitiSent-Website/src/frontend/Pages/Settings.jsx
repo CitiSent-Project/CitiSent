@@ -86,7 +86,7 @@ export function Settings({
   }
 
   return (
-    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex flex-col gap-5">
         <header>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Settings</h1>

@@ -105,8 +105,19 @@ function getStoredAccessToken() {
     })
 }
 
-export function Dashboard() {
+function getStoredProfile() {
+    const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.profile)
+
+    return loadFromStorageWithSchema(ADMIN_STORAGE_KEYS.profile, null, {
+        schemaVersion: schemaRule.schemaVersion,
+        migrate: schemaRule.migrate,
+        validate: schemaRule.validate,
+    })
+}
+
+export function Dashboard({ profile: propsProfile }) {
     const accessToken = useMemo(() => getStoredAccessToken(), [])
+    const profile = useMemo(() => propsProfile || getStoredProfile(), [propsProfile])
 
     const dashboardQuery = useQuery({
         queryKey: ['dashboard-overview', accessToken],
@@ -181,8 +192,12 @@ export function Dashboard() {
             return EMPTY_CATEGORY_DATA
         }
 
-        return mapDashboardCategoryBreakdown(dashboardQuery.data.category, DASHBOARD_CATEGORY_COLORS)
-    }, [dashboardQuery.data?.category])
+        return mapDashboardCategoryBreakdown(
+            dashboardQuery.data.category,
+            DASHBOARD_CATEGORY_COLORS,
+            profile
+        )
+    }, [dashboardQuery.data?.category, profile])
 
     const statusData = useMemo(() => {
         if (!dashboardQuery.data?.statusBreakdown) {

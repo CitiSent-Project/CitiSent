@@ -1,4 +1,5 @@
 import { composeFullName } from '../../../models/nameModel'
+import { isSuperadmin } from '../../../models/roleAccessModel'
 
 function formatDate(value) {
   if (!value) {
@@ -39,23 +40,59 @@ export function mapDashboardSummaryToStatCards(payload = {}, templateCards = [])
   }))
 }
 
-export function mapDashboardCategoryBreakdown(payload = {}, fallbackColors = []) {
-  const rows = Array.isArray(payload?.breakdown) ? payload.breakdown : []
+export function mapDashboardCategoryBreakdown(payload = {}, fallbackColors = [], profile = null) {
+  let rows = Array.isArray(payload?.breakdown) ? payload.breakdown : []
+
+  const isSuper = profile ? isSuperadmin(profile?.role) : true
+
+  if (!isSuper && rows.length > 1) {
+    const assignedKey = String(profile?.department || profile?.departmentLabel || profile?.departmentId || '')
+      .trim()
+      .toLowerCase()
+
+    const matchingRows = rows.filter((row) => {
+      const rowId = String(row?.id || '').trim().toLowerCase()
+      const rowLabel = String(row?.label || '').trim().toLowerCase()
+      const matchesAssigned =
+        assignedKey &&
+        (rowId === assignedKey ||
+          rowLabel === assignedKey ||
+          rowLabel.includes(assignedKey) ||
+          assignedKey.includes(rowLabel))
+      return matchesAssigned || Number(row?.count) > 0
+    })
+
+    if (matchingRows.length > 0) {
+      rows = matchingRows
+    } else {
+      const fallback =
+        rows.find((r) => {
+          const rLabel = String(r?.label || '').toLowerCase()
+          return assignedKey && rLabel.includes(assignedKey)
+        }) || rows[0]
+      rows = fallback ? [fallback] : []
+    }
+  }
 
   const labels = rows.map((row) => row.label || 'Unknown')
   const values = rows.map((row) => Number(row.count) || 0)
   const colors = labels.map(
-    (_, index) => fallbackColors[index % Math.max(fallbackColors.length, 1)] || '#94a3b8'
+    (_, index) => fallbackColors[index % Math.max(fallbackColors.length, 1)] || '#10b981'
   )
+
+  const totalCalculated = values.reduce((sum, value) => sum + value, 0)
+  const totalReports = !isSuper ? totalCalculated : (payload?.totalReports ?? totalCalculated)
 
   return {
     title: 'Reports by Category',
-    total: formatCompactNumber(payload?.totalReports ?? values.reduce((sum, value) => sum + value, 0)),
+    total: formatCompactNumber(totalReports),
     labels,
     values,
     colors,
     legend: labels.map((label, index) => ({
       label,
+      value: values[index],
+      count: values[index],
       color: colors[index],
     })),
   }

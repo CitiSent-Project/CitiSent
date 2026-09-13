@@ -132,7 +132,7 @@ export default function Profile() {
             <Text className="mt-1 text-xs text-blue-700 leading-4">
               {isVerified
                 ? "Your Gmail address is verified. Create a permanent account anytime to keep your reports saved."
-                : "You are browsing as a guest. When you submit a report, you will verify your Gmail address."}
+                : "You are browsing as a guest. Create a full account to submit reports and access all features."}
             </Text>
             <Pressable
               onPress={() => router.push("/auth/CreateAccount")}

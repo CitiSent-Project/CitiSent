@@ -5,6 +5,7 @@ import { supabase } from "../config/supabase.js";
 import { logger } from "../config/logger.js";
 import { cacheService } from "../shared/cache/cacheService.js";
 import { reportMessagesService } from "../modules/reports/messages.service.js";
+import { reportMessagesRepository } from "../modules/reports/messages.repository.js";
 import { profileRepository } from "../shared/repositories/profileRepository.js";
 import { isSuperadmin, normalizeUserRole, USER_ROLES } from "../shared/auth/roleAccess.js";
 import { tryVerifyGuestToken } from "../shared/security/guestTokens.js";
@@ -179,13 +180,57 @@ export function initSocketIO(httpServer) {
       }
     });
 
-    // Join specific report room
-    socket.on("join_report", (data) => {
-      const reportId = data?.reportId || data;
-      if (reportId) {
-        const roomName = `report:${reportId}`;
+    // Join specific report room (authorized participants only)
+    socket.on("join_report", async (data, callback) => {
+      try {
+        const actorUserId = socket.user?.id;
+        if (!actorUserId) {
+          logger.warn(`[Socket.IO] join_report rejected: unauthenticated socket ${socket.id}`);
+          if (typeof callback === "function") {
+            callback({ success: false, error: "Authentication required" });
+          }
+          return;
+        }
+
+        const reportId = typeof data === "object" && data !== null ? data.reportId : data;
+        if (!reportId || typeof reportId !== "string" || !reportId.trim()) {
+          logger.warn(`[Socket.IO] join_report rejected: missing or invalid reportId from socket ${socket.id}`);
+          if (typeof callback === "function") {
+            callback({ success: false, error: "Invalid report ID" });
+          }
+          return;
+        }
+
+        const normalizedReportId = reportId.trim();
+
+        const access = await reportMessagesRepository.isParticipantForReport({
+          reportId: normalizedReportId,
+          userId: actorUserId,
+          accessToken: socket.accessToken,
+        });
+
+        if (!access?.allowed) {
+          logger.warn(
+            `[Socket.IO] join_report access denied: socket=${socket.id}, userId=${actorUserId}, reportId=${normalizedReportId}`
+          );
+          if (typeof callback === "function") {
+            callback({ success: false, error: "Access denied" });
+          }
+          return;
+        }
+
+        const roomName = `report:${normalizedReportId}`;
         socket.join(roomName);
-        logger.info(`[Socket.IO] Socket ${socket.id} joined room ${roomName}`);
+        logger.info(`[Socket.IO] Socket ${socket.id} (user ${actorUserId}) joined room ${roomName}`);
+
+        if (typeof callback === "function") {
+          callback({ success: true, reportId: normalizedReportId });
+        }
+      } catch (err) {
+        logger.error(`[Socket.IO] Error handling join_report for socket ${socket.id}:`, err);
+        if (typeof callback === "function") {
+          callback({ success: false, error: "Failed to join report room" });
+        }
       }
     });
 

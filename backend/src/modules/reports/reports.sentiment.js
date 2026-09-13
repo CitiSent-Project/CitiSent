@@ -83,6 +83,16 @@ async function parseSentimentResponse(response) {
   }
 }
 
+function buildSentimentHeaders() {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (env.SENTIMENT_API_KEY) {
+    headers["x-api-key"] = env.SENTIMENT_API_KEY;
+  }
+  return headers;
+}
+
 function toSentimentServiceError(message, details) {
   return new AppError(message, StatusCodes.BAD_GATEWAY, details);
 }
@@ -111,9 +121,7 @@ export const reportsSentimentClient = {
     try {
       response = await fetchImpl(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: buildSentimentHeaders(),
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
@@ -192,7 +200,7 @@ export const reportsSentimentClient = {
     try {
       response = await fetchImpl(apiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: buildSentimentHeaders(),
         body: JSON.stringify({
           reportStatus: input.reportStatus || "pending",
           conversationContext: input.conversationContext || [],

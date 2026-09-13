@@ -1,4 +1,4 @@
-import { supabase } from "../../config/supabase.js";
+import { createAdminSupabaseClient, supabase } from "../../config/supabase.js";
 
 function toCompactMessage(value) {
   return String(value || "")
@@ -20,11 +20,16 @@ function sanitizeSupabaseError(error) {
 export const healthService = {
   async getSupabaseReadiness() {
     const start = Date.now();
+    const adminClient = createAdminSupabaseClient();
 
-    const { error } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .limit(1);
+    // Use trusted server-side client when available.
+    // If not configured, fall back to a public reference table (agencies)
+    // rather than querying private user profiles anonymously.
+    const queryPromise = adminClient
+      ? adminClient.from("profiles").select("user_id").limit(1)
+      : supabase.from("agencies").select("id").limit(1);
+
+    const { error } = await queryPromise;
 
     const latencyMs = Date.now() - start;
 

@@ -47,7 +47,7 @@ export function getSocket(options = {}) {
   });
 
   socketInstance.on("connect", () => {
-    // Socket connected successfully
+    socketInstance.emit("join_report_feed", {});
   });
 
   socketInstance.on("connect_error", (error) => {

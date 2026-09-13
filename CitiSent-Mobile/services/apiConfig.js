@@ -82,5 +82,14 @@ export function resolveApiBaseUrl() {
     return normalizeUrl(Config.API_BASE_URL);
   }
 
+  // In production builds, never fall back to localhost or local network IPs.
+  // Production releases must supply EXPO_PUBLIC_API_BASE_URL via EAS environment.
+  if (typeof __DEV__ !== "undefined" && !__DEV__) {
+    console.error(
+      "[CitiSent API] Production build is missing a valid EXPO_PUBLIC_API_BASE_URL. Refusing localhost fallback.",
+    );
+    return "";
+  }
+
   return buildLocalApiUrl();
 }

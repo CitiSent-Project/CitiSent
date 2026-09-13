@@ -265,7 +265,7 @@ export default function TurnstileModal({
                     >
                       <Text style={styles.retryBtnText}>Retry</Text>
                     </Pressable>
-                    {(__DEV__ || !TURNSTILE_SITE_KEY) && (
+                    {__DEV__ && (
                       <Pressable
                         style={[styles.retryBtn, { backgroundColor: "#059669" }]}
                         onPress={() => {

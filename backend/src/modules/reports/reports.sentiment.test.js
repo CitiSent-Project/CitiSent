@@ -188,3 +188,34 @@ test("reportsSentimentClient.getAdminNoteSuggestions posts the status-aware note
   assert.equal(result.suggestedNotes[0].text, "Review started.");
 });
 
+test("reportsSentimentClient attaches x-api-key header when configured in env", async () => {
+  const requests = [];
+  await reportsSentimentClient.analyzeReport(
+    {
+      issueType: "Flooding",
+      location: "Riverside",
+      description: "Water level is rising.",
+    },
+    {
+      apiUrl: "http://127.0.0.1:8000/analyze",
+      fetchImpl: async (url, options) => {
+        requests.push({ url, headers: options.headers });
+        return {
+          ok: true,
+          json: async () => ({
+            urgency: "High",
+            confidence: 0.95,
+          }),
+        };
+      },
+    },
+  );
+
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].headers["Content-Type"], "application/json");
+  // When SENTIMENT_API_KEY is present in env, it is included in headers
+  if (process.env.SENTIMENT_API_KEY) {
+    assert.equal(requests[0].headers["x-api-key"], process.env.SENTIMENT_API_KEY);
+  }
+});
+

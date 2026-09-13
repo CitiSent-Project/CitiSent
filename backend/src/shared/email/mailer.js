@@ -57,27 +57,71 @@ function requireMailConfig() {
   }
 }
 
-function getTransporter() {
+function createTransportInstance(port, secure) {
+  const host = env.SMTP_HOST || "smtp.gmail.com";
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    servername: host,
+    auth: {
+      user: env.GMAIL_USER,
+      pass: env.GMAIL_APP_PASSWORD,
+    },
+    connectionTimeout: 6000,
+    greetingTimeout: 4000,
+    socketTimeout: 6000,
+  });
+}
+
+let primaryTransporter = null;
+let fallbackTransporter = null;
+
+function getPrimaryTransporter() {
+  requireMailConfig();
+  if (!primaryTransporter) {
+    primaryTransporter = createTransportInstance(env.SMTP_PORT || 465, env.SMTP_SECURE !== false);
+  }
+  return primaryTransporter;
+}
+
+function getFallbackTransporter() {
+  requireMailConfig();
+  if (!fallbackTransporter) {
+    const isPrimary465 = (env.SMTP_PORT || 465) === 465;
+    const fallbackPort = isPrimary465 ? 587 : 465;
+    const fallbackSecure = fallbackPort === 465;
+    fallbackTransporter = createTransportInstance(fallbackPort, fallbackSecure);
+  }
+  return fallbackTransporter;
+}
+
+export function getTransporter() {
   requireMailConfig();
 
-  if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      servername: "smtp.gmail.com",
-      auth: {
-        user: env.GMAIL_USER,
-        pass: env.GMAIL_APP_PASSWORD,
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    });
-  }
-
-  return cachedTransporter;
+  return {
+    async sendMail(mailOptions) {
+      const primary = getPrimaryTransporter();
+      const primaryPort = env.SMTP_PORT || 465;
+      try {
+        return await primary.sendMail(mailOptions);
+      } catch (primaryErr) {
+        console.warn(
+          `[MAILER] Primary SMTP attempt failed on port ${primaryPort} (${primaryErr?.message}). Retrying on fallback port...`,
+        );
+        const fallback = getFallbackTransporter();
+        try {
+          return await fallback.sendMail(mailOptions);
+        } catch (fallbackErr) {
+          console.error(
+            `[MAILER] Fallback SMTP attempt also failed:`,
+            fallbackErr?.message || fallbackErr,
+          );
+          throw primaryErr;
+        }
+      }
+    },
+  };
 }
 
 function escapeHtml(value) {

@@ -187,11 +187,21 @@ export const authService = {
 
     const plainOtp = otpStore_.createOtp(normalizedEmail);
 
-    await sendOtpEmail({
-      toEmail: profile.email,
-      recipientName: profile.fname,
-      otp: plainOtp,
-    });
+    try {
+      await sendOtpEmail({
+        toEmail: profile.email,
+        recipientName: profile.fname,
+        otp: plainOtp,
+      });
+    } catch (err) {
+      otpStore_.deleteOtp(normalizedEmail);
+      otpStore_.rollbackSendRateLimit(normalizedEmail);
+      console.error("[AUTH] Failed to send password reset OTP:", err?.message || err);
+      throw new AppError(
+        "Failed to deliver verification code email. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
 
     return { sent: true };
   },

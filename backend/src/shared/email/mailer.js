@@ -1,7 +1,50 @@
+import dns from "node:dns";
 import nodemailer from "nodemailer";
+import shared from "nodemailer/lib/shared/index.js";
 import { StatusCodes } from "http-status-codes";
 import { env } from "../../config/env.js";
 import { AppError } from "../errors/appError.js";
+
+// Ensure IPv4 resolution takes precedence in Node's default resolver
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
+// Strictly enforce IPv4 across Nodemailer.
+// In Linux containers (e.g., Render Docker containers), eth0 has an IPv6 link-local address
+// which tricks Nodemailer's isFamilySupported(6) into returning true. Nodemailer then queries
+// AAAA records and randomly selects an unreachable IPv6 address, failing with ENETUNREACH.
+if (shared && shared.networkInterfaces) {
+  for (const key of Object.keys(shared.networkInterfaces)) {
+    if (Array.isArray(shared.networkInterfaces[key])) {
+      shared.networkInterfaces[key] = shared.networkInterfaces[key].filter(
+        (iface) => iface.family === "IPv4" || iface.family === 4,
+      );
+    }
+  }
+}
+
+// Intercept Nodemailer's hostname resolution to guarantee IPv4-only address selection
+if (shared && typeof shared.resolveHostname === "function") {
+  const originalResolveHostname = shared.resolveHostname;
+  shared.resolveHostname = function (options, callback) {
+    return originalResolveHostname.call(this, options, (err, resolved) => {
+      if (err) return callback(err);
+      if (resolved && Array.isArray(resolved._addresses)) {
+        const ipv4Addresses = resolved._addresses.filter(
+          (addr) => typeof addr === "string" && !addr.includes(":"),
+        );
+        if (ipv4Addresses.length > 0) {
+          resolved._addresses = ipv4Addresses;
+          if (!resolved.host || resolved.host.includes(":")) {
+            resolved.host = ipv4Addresses[Math.floor(Math.random() * ipv4Addresses.length)];
+          }
+        }
+      }
+      return callback(null, resolved);
+    });
+  };
+}
 
 let cachedTransporter = null;
 
@@ -19,11 +62,18 @@ function getTransporter() {
 
   if (!cachedTransporter) {
     cachedTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      servername: "smtp.gmail.com",
       auth: {
         user: env.GMAIL_USER,
         pass: env.GMAIL_APP_PASSWORD,
       },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
 

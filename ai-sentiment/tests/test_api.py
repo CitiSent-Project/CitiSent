@@ -150,3 +150,40 @@ def test_admin_note_suggestions_endpoint(monkeypatch):
 
     assert response.status_code == 200
     assert len(response.json()["suggestedNotes"]) == 4
+
+
+def test_internal_api_key_authentication(monkeypatch):
+    test_key = "test-internal-secret-key-12345"
+    monkeypatch.setenv("SENTIMENT_API_KEY", test_key)
+
+    async def fake_analyze(office, location, description):
+        return {"urgency": "Low", "emotion": "Neutral", "confidence": 0.8, "summary": "ok"}
+
+    monkeypatch.setattr(post_report_module, "analyze_report", fake_analyze)
+
+    payload = {
+        "office": "Engineering",
+        "location": "Main St",
+        "description": "Streetlight flickering",
+    }
+
+    # 1. Missing API key returns 401
+    res_missing = client.post("/analyze", json=payload)
+    assert res_missing.status_code == 401
+    assert "Missing internal API key" in res_missing.json()["detail"]
+
+    # 2. Invalid API key returns 401
+    res_invalid = client.post("/analyze", json=payload, headers={"X-API-Key": "wrong-key"})
+    assert res_invalid.status_code == 401
+    assert "Invalid internal API key" in res_invalid.json()["detail"]
+
+    # 3. Valid API key succeeds (200)
+    res_valid = client.post("/analyze", json=payload, headers={"X-API-Key": test_key})
+    assert res_valid.status_code == 200
+    assert res_valid.json()["urgency"] == "Low"
+
+    # 4. Health check endpoint is public without key
+    res_health = client.get("/health")
+    assert res_health.status_code == 200
+    assert res_health.json()["status"] == "ok"
+

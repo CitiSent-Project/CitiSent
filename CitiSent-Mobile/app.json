@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yoren.CitiSentMobile"
+      "bundleIdentifier": "com.yoren.CitiSentMobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow CitiSent to access your location to attach accurate location data to citizen reports.",
+        "NSCameraUsageDescription": "Allow CitiSent to access your camera so you can take photos to attach to citizen reports.",
+        "NSPhotoLibraryUsageDescription": "Allow CitiSent to access your photos so you can attach images to your citizen reports."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +29,13 @@
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.yoren.CitiSentMobile"
+      "package": "com.yoren.CitiSentMobile",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "androidNavigationBar": {
       "backgroundColor": "#00000000",
@@ -35,7 +46,21 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow CitiSent to access your location to attach accurate location data to citizen reports.",
+          "locationAlwaysAndWhenInUsePermission": "Allow CitiSent to access your location to attach accurate location data to citizen reports."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CitiSent to access your photos so you can attach images to your citizen reports.",
+          "cameraPermission": "Allow CitiSent to access your camera so you can take photos to attach to citizen reports."
+        }
+      ]
     ]
   }
 }

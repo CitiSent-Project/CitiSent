@@ -19,7 +19,7 @@ function parseBooleanEnv(value, defaultValue) {
 export const runtimeFlags = Object.freeze({
   allowTempAuthLogin: parseBooleanEnv(
     process.env.EXPO_PUBLIC_ALLOW_TEMP_AUTH_LOGIN,
-    true,
+    false,
   ),
   allowLocalReportsFallback: parseBooleanEnv(
     process.env.EXPO_PUBLIC_ALLOW_LOCAL_REPORTS_FALLBACK,

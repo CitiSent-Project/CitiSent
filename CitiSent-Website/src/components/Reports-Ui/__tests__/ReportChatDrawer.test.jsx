@@ -8,6 +8,7 @@ const api = vi.hoisted(() => ({
   sendReportMessage: vi.fn(),
   markReportMessagesRead: vi.fn(),
   getReportAdminNoteSuggestions: vi.fn(),
+  getReportById: vi.fn(() => Promise.resolve({ data: {} })),
 }))
 const socket = vi.hoisted(() => ({
   on: vi.fn(),

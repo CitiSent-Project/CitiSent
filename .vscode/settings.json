@@ -26,5 +26,6 @@
         "unban",
         "Villanueva"
     ],
-    "css.lint.unknownAtRules": "ignore"
+    "css.lint.unknownAtRules": "ignore",
+    "folder-color.pathColors": []
 }

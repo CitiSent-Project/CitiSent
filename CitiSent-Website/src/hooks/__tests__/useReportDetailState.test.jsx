@@ -29,6 +29,7 @@ vi.mock('../../services/api/admin/reportsApiService', () => ({
   reportsApiService: {
     listReportMessages: vi.fn(),
     getReportAdminNoteSuggestions: vi.fn(),
+    getReportById: vi.fn(() => Promise.resolve({ data: {} })),
   },
 }))
 

@@ -19,6 +19,7 @@ services:
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8081}
+      - SENTIMENT_API_KEY=${SENTIMENT_API_KEY}
 
   backend:
     build:
@@ -39,11 +40,13 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - REDIS_URL=redis://redis:6379
       - SENTIMENT_API_URL=http://ai-sentiment:8000/analyze
+      - SENTIMENT_API_KEY=${SENTIMENT_API_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:8081}
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
       - INVITATION_JWT_SECRET=${INVITATION_JWT_SECRET}
       - WEB_APP_BASE_URL=${WEB_APP_BASE_URL}
+      - CLOUDFLARE_TURNSTILE_SECRET_KEY=${CLOUDFLARE_TURNSTILE_SECRET_KEY}
 
 volumes:
   redis-data:

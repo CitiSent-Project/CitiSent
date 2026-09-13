@@ -46,7 +46,7 @@ function formatRelativeTime(dateValue) {
   return `${elapsedDays}d ago`;
 }
 
-function mapBackendNotificationToUi(notification, index) {
+export function mapBackendNotificationToUi(notification, index = 0) {
   if (!notification || typeof notification !== "object") {
     return null;
   }

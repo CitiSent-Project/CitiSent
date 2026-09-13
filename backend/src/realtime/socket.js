@@ -277,6 +277,10 @@ export function getIO() {
   return io;
 }
 
+export function setIO(customIO) {
+  io = customIO;
+}
+
 export function isUserConnected(userId) {
   const sockets = userSocketsMap.get(String(userId));
   return Boolean(sockets && sockets.size > 0);

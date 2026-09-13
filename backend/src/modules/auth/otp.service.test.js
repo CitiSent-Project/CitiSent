@@ -230,3 +230,20 @@ test("requestOtp enforces rate limits and returns 429", async (t) => {
     },
   );
 });
+
+test("classifyAndSanitizeSmtpError correctly categorizes HTTP provider errors", () => {
+  const resendAuthErr = classifyAndSanitizeSmtpError({
+    provider: "resend",
+    statusCode: 401,
+    message: "Missing API key",
+  });
+  assert.equal(resendAuthErr.category, "AUTHENTICATION_FAILED");
+  assert.ok(resendAuthErr.diagnostic.includes("RESEND_API_KEY"));
+
+  const brevoRateErr = classifyAndSanitizeSmtpError({
+    provider: "brevo",
+    statusCode: 429,
+    message: "Too many requests",
+  });
+  assert.equal(brevoRateErr.category, "PROVIDER_RATE_LIMITED");
+});

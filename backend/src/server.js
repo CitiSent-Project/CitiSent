@@ -1,6 +1,11 @@
+import dns from "node:dns";
 import { createServer } from "node:http";
 import { app } from "./app.js";
 import { env } from "./config/env.js";
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 import { logger } from "./config/logger.js";
 import { healthService } from "./modules/health/health.service.js";
 import { initSocketIO } from "./realtime/socket.js";

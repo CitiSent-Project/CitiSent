@@ -17,13 +17,6 @@ export function resolveSocketBaseUrl() {
 export function getSocket(options = {}) {
   const token = options.token || getAuthToken();
 
-  // Guest accounts use custom JWTs that are not Supabase tokens;
-  // the backend socket middleware rejects them. Guests do not need
-  // real-time features, so skip socket connection entirely.
-  if (isGuestUser()) {
-    return null;
-  }
-
   if (!token || isJwtExpired(token)) {
     if (socketInstance) {
       disconnectSocket();
@@ -96,11 +89,14 @@ export function disconnectSocket() {
   }
 }
 
-// Automatically react to auth changes (logout, token clear, or guest session)
+// Automatically react to auth changes (logout, token clear, or session end)
 onAuthStateChanged((user) => {
   const token = getAuthToken();
-  if (!user || !token || isJwtExpired(token) || isGuestUser()) {
+  if (!user || !token || isJwtExpired(token)) {
     disconnectSocket();
+  } else {
+    // Re-establish or refresh socket on valid user change
+    getSocket({ token });
   }
 });
 

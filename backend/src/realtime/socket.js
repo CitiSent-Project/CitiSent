@@ -7,6 +7,7 @@ import { cacheService } from "../shared/cache/cacheService.js";
 import { reportMessagesService } from "../modules/reports/messages.service.js";
 import { profileRepository } from "../shared/repositories/profileRepository.js";
 import { isSuperadmin, normalizeUserRole, USER_ROLES } from "../shared/auth/roleAccess.js";
+import { tryVerifyGuestToken } from "../shared/security/guestTokens.js";
 import { initReportFeedEvents } from "./reportFeedEvents.js";
 
 let io = null;
@@ -26,12 +27,31 @@ function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+function isAllowedSocketOrigin(origin) {
+  if (!origin) return true;
+  if (env.corsOrigins.includes(origin)) return true;
+  // Allow mobile Expo Go / local network origins in development
+  if (
+    env.isDev ||
+    /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
+    origin.startsWith("exp://")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function initSocketIO(httpServer) {
   if (io) return io;
 
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: env.corsOrigins,
+      origin(origin, callback) {
+        if (isAllowedSocketOrigin(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+      },
       credentials: true,
       methods: ["GET", "POST"],
     },
@@ -56,6 +76,26 @@ export function initSocketIO(httpServer) {
         socket.user = cachedUser;
         socket.accessToken = token;
         return next();
+      }
+
+      // Check if token is a CitiSent signed guest token
+      try {
+        const guestPayload = tryVerifyGuestToken(token);
+        if (guestPayload) {
+          socket.user = {
+            id: guestPayload.guestId,
+            role: "guest",
+            isGuest: true,
+            email: guestPayload.email || null,
+          };
+          socket.accessToken = token;
+          await cacheService.setJSON(cacheKey, socket.user, 60);
+          return next();
+        }
+      } catch (guestErr) {
+        if (guestErr?.isGuestError) {
+          return next(new Error(guestErr.message || "Invalid guest token"));
+        }
       }
 
       const { data, error } = await supabase.auth.getUser(token);
@@ -277,6 +317,10 @@ export function getIO() {
   return io;
 }
 
+export function setIO(customIO) {
+  io = customIO;
+}
+
 export function isUserConnected(userId) {
   const sockets = userSocketsMap.get(String(userId));
   return Boolean(sockets && sockets.size > 0);
@@ -284,7 +328,11 @@ export function isUserConnected(userId) {
 
 export function emitToUser(userId, event, payload) {
   if (io) {
-    io.to(`user:${userId}`).emit(event, payload);
+    const room = `user:${userId}`;
+    const roomSockets = io.sockets?.adapter?.rooms?.get?.(room);
+    const recipientCount = roomSockets ? roomSockets.size : 0;
+    logger.info(`[Socket.IO] emitToUser: room=${room}, event=${event}, recipients=${recipientCount}`);
+    io.to(room).emit(event, payload);
   }
 }
 

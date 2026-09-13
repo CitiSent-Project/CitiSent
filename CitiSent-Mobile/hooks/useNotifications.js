@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useFocusEffect } from "expo-router";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   ensureNotificationsLoaded,
   getNotificationsSnapshot,
@@ -18,39 +17,17 @@ export default function useNotifications() {
     getNotificationsSnapshot,
   );
 
-  const [focusRefreshing, setFocusRefreshing] = useState(false);
-  const isFetchingRef = useRef(false);
-
   // Initial load on mount (no-op if already hydrated)
   useEffect(() => {
     void ensureNotificationsLoaded();
   }, []);
-
-  // Force-refresh every time this screen gains focus
-  useFocusEffect(
-    useCallback(() => {
-      if (isFetchingRef.current) return;
-
-      isFetchingRef.current = true;
-      setFocusRefreshing(true);
-
-      refreshNotifications()
-        .catch(() => {
-          // Errors are stored in the shared state; nothing extra needed here.
-        })
-        .finally(() => {
-          isFetchingRef.current = false;
-          setFocusRefreshing(false);
-        });
-    }, []),
-  );
 
   return {
     notifications: snapshot.notifications,
     unreadCount: snapshot.unreadCount,
     isLoading: snapshot.isLoading,
     isLoadingMore: snapshot.isLoadingMore,
-    focusRefreshing,
+    focusRefreshing: false,
     totalCount: snapshot.totalCount,
     hasMore: snapshot.hasMore,
     error: snapshot.error,

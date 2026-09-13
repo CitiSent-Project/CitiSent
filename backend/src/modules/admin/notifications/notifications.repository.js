@@ -6,11 +6,13 @@ import {
 } from "../../../config/supabase.js";
 import { AppError } from "../../../shared/errors/appError.js";
 import { cacheService } from "../../../shared/cache/cacheService.js";
+import { emitToUser } from "../../../realtime/socket.js";
+import { toNotificationResponse } from "../../notifications/notifications.mapper.js";
 
 const NOTIFICATIONS_TABLE = "notifications";
 
 function getDb(accessToken) {
-  return createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
+  return notificationsRepository._db || createAdminSupabaseClient() || createUserSupabaseClient(accessToken) || supabase;
 }
 
 function toGatewayError(message, details) {
@@ -28,6 +30,11 @@ function resolveTargetUserId({ adminUserId, userId }) {
 }
 
 export const notificationsRepository = {
+  _db: null,
+  _setDb(db) {
+    this._db = db;
+  },
+
   async listNotifications({
     accessToken,
     adminUserId,
@@ -101,6 +108,14 @@ export const notificationsRepository = {
       // Non-critical cache invalidation fallback
     }
 
+    if (data) {
+      try {
+        emitToUser(targetUserId, "notification_updated", toNotificationResponse(data));
+      } catch {
+        // Non-critical realtime emission fallback
+      }
+    }
+
     return data;
   },
 
@@ -139,6 +154,18 @@ export const notificationsRepository = {
       // Non-critical cache invalidation fallback
     }
 
+    if (data && data.length > 0) {
+      try {
+        emitToUser(targetUserId, "notifications_updated", {
+          notificationIds: data.map((n) => n.id),
+          isRead,
+          items: data.map(toNotificationResponse),
+        });
+      } catch {
+        // Non-critical realtime emission fallback
+      }
+    }
+
     return data || [];
   },
 
@@ -168,6 +195,15 @@ export const notificationsRepository = {
       await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
     } catch {
       // Non-critical cache invalidation fallback
+    }
+
+    try {
+      emitToUser(targetUserId, "notifications_cleared", {
+        notificationIds: (data || []).map((n) => n.id),
+        clearAll: Boolean(clearAll),
+      });
+    } catch {
+      // Non-critical realtime emission fallback
     }
 
     return data || [];
@@ -206,6 +242,14 @@ export const notificationsRepository = {
       await cacheService.deleteByPrefix(`notifications:user:${targetUserId}`);
     } catch {
       // Non-critical cache invalidation fallback
+    }
+
+    if (data) {
+      try {
+        emitToUser(targetUserId, "new_notification", toNotificationResponse(data));
+      } catch {
+        // Non-critical realtime emission fallback
+      }
     }
 
     return data;

@@ -40,7 +40,7 @@ export default function Profile() {
 
   const resolveDisplayPhone = () => {
     if (isGuest) {
-      return isVerified ? (getAuthEmail("") || "Verified Guest (Gmail)") : "Unverified Guest";
+      return getAuthEmail("") || "Guest Account";
     }
     const raw = getAuthPhoneNumber("");
     if (raw) return raw;

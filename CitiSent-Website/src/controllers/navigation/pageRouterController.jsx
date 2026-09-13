@@ -75,7 +75,7 @@ export function renderActivePage({
 
     switch (activePage) {
         case APP_PAGES.DASHBOARD:
-            return <Dashboard />
+            return <Dashboard profile={profile} />
         case APP_PAGES.ADMIN_MANAGEMENT:
             return (
                 <AdminManagement
@@ -187,6 +187,6 @@ export function renderActivePage({
         case APP_PAGES.CONVERSATIONS:
             return <ConversationsPage profile={profile} onViewReport={onViewReport} onSyncConversations={onSyncConversations} />
         default:
-            return <Dashboard />
+            return <Dashboard profile={profile} />
     }
 }

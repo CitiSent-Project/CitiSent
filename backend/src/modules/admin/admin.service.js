@@ -1434,7 +1434,35 @@ export const adminService = {
       }),
     ]);
 
-    const categories = departmentCatalog.map((department) => ({
+    const isSuper = isSuperadmin(actor?.role);
+
+    let targetDepartments = departmentCatalog;
+    if (!isSuper) {
+      const actorDepartmentKey = String(actor?.departmentId || actor?.departmentLabel || actor?.department || "")
+        .trim()
+        .toLowerCase();
+
+      targetDepartments = departmentCatalog.filter((dep) => {
+        const slug = String(dep.slug || "").trim().toLowerCase();
+        const name = String(dep.name || "").trim().toLowerCase();
+        const id = String(dep.id || "").trim().toLowerCase();
+        return (
+          actorDepartmentKey &&
+          (slug === actorDepartmentKey || name === actorDepartmentKey || id === actorDepartmentKey)
+        );
+      });
+
+      if (targetDepartments.length === 0 && (actor?.departmentLabel || actor?.departmentId)) {
+        targetDepartments = [
+          {
+            slug: actor?.departmentId || "assigned-department",
+            name: actor?.departmentLabel || actor?.departmentId || "Assigned Department",
+          },
+        ];
+      }
+    }
+
+    const categories = targetDepartments.map((department) => ({
       id: department.slug,
       label: department.name,
       count: 0,
@@ -1456,6 +1484,10 @@ export const adminService = {
       const categoryId = matchedDepartment?.slug || "";
 
       if (!categoryId || categoryIndex[categoryId] === undefined) {
+        if (!isSuper && categories.length === 1) {
+          categories[0].count += 1;
+          return;
+        }
         unknownCount += 1;
         return;
       }
@@ -1463,7 +1495,7 @@ export const adminService = {
       categories[categoryIndex[categoryId]].count += 1;
     });
 
-    if (unknownCount > 0) {
+    if (unknownCount > 0 && isSuper) {
       categories.push({
         id: "unknown",
         label: "Unknown",

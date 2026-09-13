@@ -17,10 +17,14 @@ import {
   verifyPasswordResetToken,
 } from "../../shared/security/passwordResetTokens.js";
 import {
+  mailerService,
   sendPasswordResetEmail,
   buildResetPasswordUrl,
   sendOtpEmail,
+  maskEmail,
+  classifyAndSanitizeSmtpError,
 } from "../../shared/email/mailer.js";
+import { logger } from "../../config/logger.js";
 import { otpStore_ } from "../../shared/security/otp.store.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
@@ -188,7 +192,7 @@ export const authService = {
     const plainOtp = otpStore_.createOtp(normalizedEmail);
 
     try {
-      await sendOtpEmail({
+      await mailerService.sendOtpEmail({
         toEmail: profile.email,
         recipientName: profile.fname,
         otp: plainOtp,
@@ -196,7 +200,13 @@ export const authService = {
     } catch (err) {
       otpStore_.deleteOtp(normalizedEmail);
       otpStore_.rollbackSendRateLimit(normalizedEmail);
-      console.error("[AUTH] Failed to send password reset OTP:", err?.message || err);
+      const classified = classifyAndSanitizeSmtpError(err);
+      logger.error("[AUTH] Failed to send password reset OTP", {
+        recipient: maskEmail(profile.email),
+        category: classified.category,
+        diagnostic: classified.diagnostic,
+        code: classified.code,
+      });
       throw new AppError(
         "Failed to deliver verification code email. Please try again.",
         StatusCodes.SERVICE_UNAVAILABLE,
@@ -287,11 +297,25 @@ export const authService = {
     });
     const resetUrl = buildResetPasswordUrl(resetToken.token);
 
-    await sendPasswordResetEmail({
-      toEmail: profile.email,
-      recipientName: profile.fname,
-      resetUrl,
-    });
+    try {
+      await mailerService.sendPasswordResetEmail({
+        toEmail: profile.email,
+        recipientName: profile.fname,
+        resetUrl,
+      });
+    } catch (err) {
+      const classified = classifyAndSanitizeSmtpError(err);
+      logger.error("[AUTH] Failed to send password reset email", {
+        recipient: maskEmail(profile.email),
+        category: classified.category,
+        diagnostic: classified.diagnostic,
+        code: classified.code,
+      });
+      throw new AppError(
+        "Failed to deliver password reset email. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
 
     return {
       sent: true,

@@ -25,22 +25,22 @@ function InvitationStatusLog({ metadata }) {
   const isActive = metadata?.status === 'active'
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 px-3.5 py-3 transition-colors">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
             isActive
-              ? 'bg-emerald-100 text-emerald-800 '
-              : 'bg-amber-100 text-amber-800'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
           }`}
         >
           {isActive ? 'Active' : 'Pending'}
         </span>
-        <span className="text-xs font-semibold text-slate-800 font-mono">
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono break-all">
           {metadata?.email || 'Account invitation'}
         </span>
       </div>
-      <p className="mt-1.5 text-xs text-slate-600">
+      <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
         {isActive
           ? 'The user has completed password setup and activated their account.'
           : 'The setup invitation email was sent and is awaiting user account activation.'}
@@ -58,21 +58,21 @@ function MessageContextBadge({ metadata }) {
   const senderName = metadata?.senderName
 
   return (
-    <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-2.5">
+    <div className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-2.5 transition-colors">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200/60 bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800">
+        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200/60 dark:border-blue-800/60 bg-blue-100 dark:bg-blue-900/40 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 dark:text-blue-300">
           <FiMessageSquare className="text-[10px]" />
           Conversation
         </span>
         {reportNumber && (
-          <span className="text-xs font-semibold text-slate-700 font-mono">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-mono">
             #{reportNumber}
           </span>
         )}
       </div>
       {senderName && (
-        <p className="mt-1 text-xs text-slate-500">
-          From <span className="font-semibold text-slate-700">{senderName}</span> — tap to open the conversation thread.
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          From <span className="font-semibold text-slate-800 dark:text-slate-200">{senderName}</span> — tap to open the conversation thread.
         </p>
       )}
     </div>
@@ -153,26 +153,28 @@ export function NotificationsDrawer({
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl"
+        className="relative z-10 flex h-full w-full max-w-md flex-col bg-white dark:bg-slate-900 shadow-2xl dark:border-l dark:border-slate-800"
       >
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">Notifications</h1>
+        <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 py-3.5 sm:px-6 sm:py-4.5 bg-white dark:bg-slate-900 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-2">
+            <h1 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+              Notifications
+            </h1>
             {counts.unread > 0 && (
-              <span className="inline-flex h-5 items-center justify-center rounded-full bg-blue-100 px-2 text-[10px] font-bold text-blue-700">
+              <span className="inline-flex h-5 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950/80 border border-blue-200/50 dark:border-blue-800/50 px-2 text-[10px] font-bold text-blue-700 dark:text-blue-300 shrink-0 whitespace-nowrap">
                 {counts.unread} new
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={onClearAll}
               disabled={isClearDisabled}
               title={clearButtonTooltip}
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap shrink-0"
             >
               {isClearing ? (
                 <>
@@ -189,7 +191,7 @@ export function NotificationsDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+              className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800 transition shrink-0"
               title="Close notifications"
             >
               <FiX className="text-lg" />
@@ -198,7 +200,7 @@ export function NotificationsDrawer({
         </header>
 
         {/* Tabs */}
-        <div className="bg-white">
+        <div className="bg-white dark:bg-slate-900 shrink-0">
           <NotificationFilterChips
             activeFilter={filter}
             onFilterChange={setFilter}
@@ -208,7 +210,7 @@ export function NotificationsDrawer({
         </div>
 
         {/* Content List */}
-        <section className="flex-1 overflow-y-auto bg-white">
+        <section className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/80">
           {isLoading ? (
             <NotificationSkeleton />
           ) : visibleNotifications.length > 0 ? (

@@ -16,41 +16,27 @@ function getNotificationTypeBadge(type = '') {
   if (lower.includes('account') || lower.includes('invitation')) {
     return {
       icon: FiUserCheck,
-      badgeClass: 'bg-emerald-50 text-emerald-600',
+      badgeClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/40',
     }
   }
   if (lower.includes('report') || lower.includes('urgent')) {
     return {
       icon: FiAlertCircle,
-      badgeClass: 'bg-amber-50 text-amber-600',
+      badgeClass: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-100 dark:border-amber-800/40',
     }
   }
   if (lower.includes('chat') || lower.includes('message')) {
     return {
       icon: FiMessageSquare,
-      badgeClass: 'bg-blue-50 text-blue-600',
+      badgeClass: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-100 dark:border-blue-800/40',
     }
   }
   return {
     icon: FiBell,
-    badgeClass: 'bg-slate-100 text-slate-500',
+    badgeClass: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700',
   }
 }
 
-/**
- * Renders a single notification entry in the drawer.
- *
- * @param {object}   props
- * @param {object}   props.notification  - The notification data object.
- * @param {Function} props.onToggleRead  - Callback to mark read/unread.
- * @param {Function} [props.onClick]     - Optional: when provided, makes the
- *                                         card body clickable (e.g. navigate to
- *                                         the Conversations page for message
- *                                         notifications). The read-toggle button
- *                                         always stops propagation so it does not
- *                                         trigger this callback.
- * @param {React.ReactNode} [props.children] - Optional sub-content (e.g. InvitationStatusLog).
- */
 export function NotificationItem({ notification, onToggleRead, onClick, children }) {
   const isUnread = !notification.read
   const isClickable = typeof onClick === 'function'
@@ -58,8 +44,8 @@ export function NotificationItem({ notification, onToggleRead, onClick, children
 
   return (
     <article
-      className={`group relative flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-100 bg-white px-4 py-5 transition-colors hover:bg-slate-50/50 ${
-        isUnread ? 'bg-slate-50/30' : ''
+      className={`group relative flex items-start gap-3 sm:gap-4 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 px-3.5 py-4 sm:px-5 sm:py-4.5 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/50 ${
+        isUnread ? 'bg-slate-50/40 dark:bg-slate-800/40' : ''
       } ${isClickable ? 'cursor-pointer' : ''}`}
       onClick={isClickable ? onClick : undefined}
       role={isClickable ? 'button' : undefined}
@@ -76,65 +62,80 @@ export function NotificationItem({ notification, onToggleRead, onClick, children
       }
       aria-label={isClickable ? `${notification.title} — click to view` : undefined}
     >
-      <div className="flex flex-1 min-w-0 items-start gap-4">
-        <div
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${badgeClass}`}
-        >
-          <TypeIcon className="text-lg" />
-        </div>
+      {/* Icon badge */}
+      <div
+        className={`grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-full shadow-2xs ${badgeClass}`}
+      >
+        <TypeIcon className="text-base sm:text-lg" />
+      </div>
 
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <h4 className={`text-sm text-slate-900 ${isUnread ? 'font-bold' : 'font-medium'}`}>
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        {/* Title and Read Toggle Button row */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 pr-1">
+            <h4
+              className={`text-xs sm:text-sm leading-snug break-words ${
+                isUnread ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-800 dark:text-slate-200'
+              }`}
+            >
               {notification.title}
             </h4>
             {isUnread && (
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600 dark:bg-blue-400" />
             )}
           </div>
 
-          <p className={`text-sm leading-relaxed wrap-break-word ${isUnread ? 'text-slate-700' : 'text-slate-500'}`}>
-            {notification.message}
-          </p>
-
-          <div className="flex items-center gap-1.5 pt-1 text-[11px] font-numeric text-slate-400">
-            <FiClock className="text-xs" />
-            <span>{formatDateTime(notification.createdAt)}</span>
-            <span className="mx-1">•</span>
-            <span>{notification.type || 'Notification'}</span>
-            {isClickable && (
-              <>
-                <span className="mx-1">•</span>
-                <span className="inline-flex items-center gap-0.5 text-blue-500 font-semibold">
-                  View <FiExternalLink className="text-[10px]" />
-                </span>
-              </>
+          {/* Toggle Read Button - pinned at top right */}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleRead(notification.id)
+            }}
+            aria-label={isUnread ? 'Mark notification as read' : 'Mark notification as unread'}
+            className={`inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400/20 shrink-0 ${
+              isUnread ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60' : ''
+            }`}
+            title={isUnread ? 'Mark as read' : 'Mark as unread'}
+          >
+            {isUnread ? (
+              <FiCheck className="text-base sm:text-lg" />
+            ) : (
+              <FiCheckCircle className="text-base sm:text-lg" />
             )}
-          </div>
-          
-          {children ? <div className="mt-4">{children}</div> : null}
+          </button>
         </div>
-      </div>
 
-      <div
-        className="flex items-center sm:self-start shrink-0 ml-14 sm:ml-0"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={() => onToggleRead(notification.id)}
-          aria-label={isUnread ? 'Mark notification as read' : 'Mark notification as unread'}
-          className={`inline-flex items-center justify-center rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200 ${
-            isUnread ? 'text-blue-600 hover:bg-blue-50 hover:text-blue-700' : ''
+        {/* Notification Message */}
+        <p
+          className={`mt-1 text-xs sm:text-sm leading-relaxed break-words ${
+            isUnread ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
           }`}
-          title={isUnread ? 'Mark as read' : 'Mark as unread'}
         >
-          {isUnread ? (
-            <FiCheck className="text-lg" />
-          ) : (
-            <FiCheckCircle className="text-lg" />
+          {notification.message}
+        </p>
+
+        {/* Timestamp and metadata */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-numeric text-slate-400 dark:text-slate-500">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <FiClock className="text-xs shrink-0" />
+            <span>{formatDateTime(notification.createdAt)}</span>
+          </span>
+          <span>•</span>
+          <span className="whitespace-nowrap capitalize">{notification.type || 'Notification'}</span>
+          {isClickable && (
+            <>
+              <span>•</span>
+              <span className="inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400 font-semibold whitespace-nowrap">
+                View <FiExternalLink className="text-[10px]" />
+              </span>
+            </>
           )}
-        </button>
+        </div>
+
+        {/* Subcontent (children) */}
+        {children ? <div className="mt-2.5">{children}</div> : null}
       </div>
     </article>
   )

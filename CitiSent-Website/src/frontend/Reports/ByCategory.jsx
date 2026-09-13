@@ -250,8 +250,8 @@ export function ByCategory({
           <ReportsStatCards stats={reportStats} />
         </section>
 
-        <section className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[1fr_1.45fr] w-full min-w-0">
-          <div className="min-w-0 w-full min-h-90 sm:min-h-100">
+        <section className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2 w-full min-w-0">
+          <div className="h-90 sm:h-100 lg:h-110 min-w-0">
             <SolidPieChart
               title={reportsByStatusData.title}
               total={reportsByStatusData.total}
@@ -261,7 +261,7 @@ export function ByCategory({
               legend={reportsByStatusData.legend}
             />
           </div>
-          <div className="min-w-0 w-full min-h-90 sm:min-h-100">
+          <div className="h-90 sm:h-100 lg:h-110 min-w-0">
             <VerticalChart
               title={reportsThisWeekData.title}
               labels={reportsThisWeekData.labels}

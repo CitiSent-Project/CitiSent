@@ -67,6 +67,7 @@ export function mapDashboardStatusBreakdown(payload = {}) {
   const labelMap = {
     pending: 'Pending',
     'in-progress': 'In Progress',
+    'in_review': 'In Progress',
     resolved: 'Resolved',
     rejected: 'Rejected',
   }
@@ -74,6 +75,7 @@ export function mapDashboardStatusBreakdown(payload = {}) {
   const colorMap = {
     pending: '#f59e0b',     // Amber
     'in-progress': '#3b82f6', // Blue
+    'in_review': '#3b82f6',   // Blue
     resolved: '#10b981',    // Emerald
     rejected: '#ef4444',    // Red
   }

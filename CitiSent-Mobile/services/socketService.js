@@ -39,7 +39,7 @@ export function getSocket(options = {}) {
   socketInstance = io(socketUrl, {
     auth: { token },
     autoConnect: true,
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionAttempts: 20,
     reconnectionDelay: 1000,

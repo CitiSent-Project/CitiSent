@@ -23,7 +23,7 @@ function buildTurnstileHtml(siteKey) {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Verification</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,58 +35,89 @@ function buildTurnstileHtml(siteKey) {
       align-items: center;
       justify-content: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
     }
     .container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      padding: 16px;
-      gap: 12px;
-    }
-    .label {
-      font-size: 13px;
-      color: #64748B;
-      text-align: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
     }
     #cf-turnstile-container {
       display: flex;
       justify-content: center;
+      align-items: center;
+      min-width: 300px;
+      min-height: 65px;
     }
   </style>
+  <script>
+    window.addEventListener('error', function(e) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: 'turnstile-error', message: e.message || 'Script error' })
+        );
+      }
+    });
+  </script>
+  <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+    async
+    defer
+  ></script>
 </head>
 <body>
   <div class="container">
-    <p class="label">Complete the security check to continue</p>
     <div id="cf-turnstile-container"></div>
   </div>
-  <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onCfTurnstileLoad"
-    async defer
-  ></script>
   <script>
-    function onCfTurnstileLoad() {
-      turnstile.render('#cf-turnstile-container', {
-        sitekey: '${siteKey}',
-        theme: 'light',
-        size: 'normal',
-        callback: function(token) {
+    var rendered = false;
+    function tryRender() {
+      if (rendered) return;
+      if (typeof turnstile !== 'undefined' && turnstile.render) {
+        rendered = true;
+        try {
+          turnstile.render('#cf-turnstile-container', {
+            sitekey: '${siteKey}',
+            theme: 'light',
+            size: 'normal',
+            callback: function(token) {
+              window.ReactNativeWebView.postMessage(
+                JSON.stringify({ type: 'turnstile-token', token: token })
+              );
+            },
+            'error-callback': function(code) {
+              window.ReactNativeWebView.postMessage(
+                JSON.stringify({ type: 'turnstile-error', message: code || 'unknown' })
+              );
+            },
+            'expired-callback': function() {
+              window.ReactNativeWebView.postMessage(
+                JSON.stringify({ type: 'turnstile-expired' })
+              );
+            },
+          });
           window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-token', token: token })
+            JSON.stringify({ type: 'turnstile-ready' })
           );
-        },
-        'error-callback': function(code) {
+        } catch (err) {
           window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-error', message: code || 'unknown' })
+            JSON.stringify({ type: 'turnstile-error', message: err.message || 'render error' })
           );
-        },
-        'expired-callback': function() {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-expired' })
-          );
-        },
-      });
+        }
+      }
     }
+
+    document.addEventListener('DOMContentLoaded', tryRender);
+    window.addEventListener('load', tryRender);
+    var pollInterval = setInterval(function() {
+      if (typeof turnstile !== 'undefined' && turnstile.render) {
+        clearInterval(pollInterval);
+        tryRender();
+      }
+    }, 150);
+    setTimeout(function() { clearInterval(pollInterval); }, 8000);
   </script>
 </body>
 </html>
@@ -136,13 +167,13 @@ export default function TurnstileModal({
   }, [visible, onTokenReceived]);
 
   const handleLoad = useCallback(() => {
-    setIsLoading(false);
-    setHasError(false);
+    // Keep showing spinner until turnstile-ready event or fallback timeout
   }, []);
 
-  const handleError = useCallback(() => {
+  const handleError = useCallback((err) => {
     setIsLoading(false);
     setHasError(true);
+    console.warn("[Turnstile] Loading error:", err);
     if (onError) onError("Failed to load verification widget. Please check your connection.");
   }, [onError]);
 
@@ -157,10 +188,15 @@ export default function TurnstileModal({
         return;
       }
 
-      if (parsed.type === "turnstile-token" && parsed.token) {
+      if (parsed.type === "turnstile-ready") {
+        setIsLoading(false);
+        setHasError(false);
+      } else if (parsed.type === "turnstile-token" && parsed.token) {
         handledRef.current = true;
+        setIsLoading(false);
         if (onTokenReceived) onTokenReceived(parsed.token);
       } else if (parsed.type === "turnstile-error") {
+        console.warn("[Turnstile] Error event from widget:", parsed.message);
         setIsLoading(false);
         setHasError(true);
         if (onError) onError("Verification failed. Please try again.");
@@ -172,6 +208,19 @@ export default function TurnstileModal({
     },
     [onTokenReceived, onError],
   );
+
+  // Safety fallback: if widget hasn't responded within 8s, reveal error/bypass
+  useEffect(() => {
+    if (!visible || !TURNSTILE_SITE_KEY) return;
+    const timer = setTimeout(() => {
+      if (!handledRef.current && isLoading) {
+        setIsLoading(false);
+        setHasError(true);
+        console.warn("[Turnstile] Widget load timed out after 8s");
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [visible, isLoading]);
 
   // Reset state when modal opens/closes
   const handleModalShow = useCallback(() => {
@@ -285,12 +334,16 @@ export default function TurnstileModal({
               ) : (
                 <WebView
                   ref={webViewRef}
-                  source={{ html: turnstileHtml, baseUrl: "https://localhost" }}
+                  source={{ html: turnstileHtml, baseUrl: "http://localhost" }}
                   onLoad={handleLoad}
-                  onError={handleError}
+                  onError={(e) => handleError(e?.nativeEvent)}
+                  onHttpError={(e) => handleError(e?.nativeEvent)}
                   onMessage={handleMessage}
                   javaScriptEnabled
                   domStorageEnabled
+                  mixedContentMode="always"
+                  thirdPartyCookiesEnabled
+                  sharedCookiesEnabled
                   originWhitelist={["*"]}
                   style={styles.webView}
                   scrollEnabled={false}
@@ -370,7 +423,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   webViewContainer: {
-    height: 100,
+    height: 110,
     borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#F8FAFC",
@@ -397,7 +450,7 @@ const styles = StyleSheet.create({
   },
   webView: {
     width: "100%",
-    height: 100,
+    height: 110,
     backgroundColor: "transparent",
   },
   errorContainer: {

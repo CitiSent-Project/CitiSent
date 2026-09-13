@@ -26,30 +26,36 @@ export function NotificationsEmptyState({ activeFilter = 'All', onDismiss, onNav
   })
 
   return (
-    <div className="flex flex-col rounded-xl border border-blue-100 bg-blue-50/30 p-6 shadow-sm">
-      <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100/70 text-blue-600">
-          <Icon className="text-xl" />
+    <div className="flex flex-col rounded-2xl border border-slate-100 dark:border-slate-800/90 bg-slate-50/50 dark:bg-slate-800/30 p-4 sm:p-6 shadow-xs">
+      <div className="flex items-start gap-3.5 sm:gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40">
+          <Icon className="text-lg sm:text-xl" />
         </div>
-        <div className="flex-1 space-y-1">
-          <h3 className="text-[15px] font-medium text-slate-900">{title}</h3>
-          <p className="text-xs text-slate-500">{description}</p>
-          <p className="text-[11px] font-semibold text-slate-400 mt-2">{today}</p>
+        <div className="flex-1 min-w-0 space-y-1">
+          <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+            {title}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+            {description}
+          </p>
+          <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2 font-numeric">
+            {today}
+          </p>
           
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:gap-3">
             {activeFilter !== 'All' && (
               <button
                 type="button"
                 onClick={onDismiss}
-                className="rounded-md border border-slate-300 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/80 focus:outline-none focus:ring-2 focus:ring-blue-400/30"
               >
-                Dismiss
+                Show All
               </button>
             )}
             <button
               type="button"
               onClick={onNavigate}
-              className="rounded-md bg-yellow-400 px-4 py-1.5 text-xs font-semibold text-slate-900 transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1"
+              className="rounded-lg bg-blue-600 dark:bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
             >
               Go to Dashboard
             </button>
@@ -59,3 +65,4 @@ export function NotificationsEmptyState({ activeFilter = 'All', onDismiss, onNav
     </div>
   )
 }
+

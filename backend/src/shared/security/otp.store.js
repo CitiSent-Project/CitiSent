@@ -83,6 +83,21 @@ export const otpStore_ = {
   },
 
   /**
+   * Roll back an increment to the send rate limit counter (e.g. if sending failed).
+   * @param {string} email
+   */
+  rollbackSendRateLimit(email) {
+    const key = normalizeEmail(email);
+    const entry = sendRateStore.get(key);
+    if (entry && entry.count > 0) {
+      entry.count -= 1;
+      if (entry.count === 0) {
+        sendRateStore.delete(key);
+      }
+    }
+  },
+
+  /**
    * Create (or replace) an OTP for the given email.
    * Returns the plaintext OTP (to be emailed — never stored).
    * @param {string} email

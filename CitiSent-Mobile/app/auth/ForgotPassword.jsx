@@ -58,15 +58,13 @@ export default function ForgotPasswordScreen() {
 
     try {
       await authApi.requestOtp(trimmed);
-      // Always navigate — do not reveal whether email exists
       router.push({ pathname: "/auth/OtpVerification", params: { email: trimmed } });
     } catch (error) {
-      const msg = error?.message || "";
+      const msg = error?.message || "Unable to send verification code. Please try again.";
       if (msg.toLowerCase().includes("too many")) {
         showModal("error", "Too Many Requests", msg);
       } else {
-        // Even on unexpected errors show a generic message (no enumeration)
-        router.push({ pathname: "/auth/OtpVerification", params: { email: trimmed } });
+        showModal("error", "Request Failed", msg);
       }
     } finally {
       setIsSubmitting(false);

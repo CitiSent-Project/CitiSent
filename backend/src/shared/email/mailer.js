@@ -1,7 +1,13 @@
+import dns from "node:dns";
 import nodemailer from "nodemailer";
 import { StatusCodes } from "http-status-codes";
 import { env } from "../../config/env.js";
 import { AppError } from "../errors/appError.js";
+
+// Ensure IPv4 resolution takes precedence to prevent timeouts in cloud containers (e.g., Render)
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 let cachedTransporter = null;
 
@@ -19,11 +25,17 @@ function getTransporter() {
 
   if (!cachedTransporter) {
     cachedTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: {
         user: env.GMAIL_USER,
         pass: env.GMAIL_APP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
 

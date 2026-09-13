@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component {
     }
 
     return (
-      <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-8 md:px-6 lg:px-8">
+      <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-8 md:px-6 lg:px-8 dark:bg-slate-900">
         <section className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Something went wrong

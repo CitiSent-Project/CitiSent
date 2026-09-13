@@ -172,7 +172,7 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+      <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
           <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
             <button onClick={onBackToUsers} className="hover:text-slate-700 dark:hover:text-slate-200">Users</button> / <span>User Profile</span>
@@ -184,7 +184,7 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
   }
 
   return (
-    <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
         <button onClick={onBackToUsers} className="hover:text-slate-700 dark:hover:text-slate-200">Users</button> / <span className="text-slate-700 dark:text-slate-300">User Profile</span>
       </div>

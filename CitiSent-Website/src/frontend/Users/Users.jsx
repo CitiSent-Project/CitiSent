@@ -7,7 +7,7 @@ const stats = [{ id: 'active-users', label: 'Active Users', icon: 'user', accent
 export function Users({ onViewUserProfile, profile }) {
   const s = useUsersState({ profile, onViewUserProfile })
   return (
-    <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] dark:bg-[#0f172a] px-4 py-6 md:px-6 lg:px-8">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8">
       <div className="flex flex-col gap-5">
         <header className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Users</h1>

@@ -72,7 +72,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   // ---------------------------------------------------------------------------
   if (!fullReport) {
     return (
-      <main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900 transition-colors duration-200">
+      <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900 transition-colors duration-200">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/90">
           <nav className="mb-4 flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
             <button onClick={onBackToReports} className="hover:text-slate-700 transition-colors dark:hover:text-slate-300">
@@ -90,7 +90,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
   const StatusIcon = STATUS_ICONS[currentStatus] || FiClock
 
   return (
-    <main className="mx-auto max-w-7xl flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900 transition-colors duration-200">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900 transition-colors duration-200">
       <div className="flex flex-col gap-6">
         <nav className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
           <button onClick={onBackToReports} className="transition-colors hover:text-slate-700 dark:hover:text-slate-300">

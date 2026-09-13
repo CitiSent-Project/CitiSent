@@ -2,7 +2,7 @@ import { FiLogOut } from 'react-icons/fi'
 
 export function Logout({ onConfirmLogout, onCancel }) {
 	return (
-		<main className="mx-auto max-w-350 flex-1 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+		<main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
 			<section className="mx-auto mt-8 max-w-xl rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
 				<div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
 					<FiLogOut className="text-xl" />

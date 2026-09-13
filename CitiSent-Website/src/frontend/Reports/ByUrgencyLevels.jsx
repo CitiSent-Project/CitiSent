@@ -174,7 +174,7 @@ export function ByUrgencyLevels({
   }, [weeklyTrendData])
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 min-w-0 bg-[#eef2f8] px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
       <div className="flex flex-col gap-4 sm:gap-5 w-full min-w-0">
         <header className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Reports</h1>

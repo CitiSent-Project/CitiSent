@@ -5,7 +5,7 @@ const MotionDiv = motion.div
 
 export function UnderConstruction({ pageName }) {
 	return (
-		<main className="mx-auto max-w-350 flex-1 p-4 md:p-6 lg:p-8 flex items-center justify-center min-h-[80vh]">
+		<main className="w-full flex-1 min-w-0 p-4 md:p-6 lg:p-8 flex items-center justify-center min-h-[80vh]">
 			<MotionDiv
 				initial={{ opacity: 0, scale: 0.95 }}
 				animate={{ opacity: 1, scale: 1 }}

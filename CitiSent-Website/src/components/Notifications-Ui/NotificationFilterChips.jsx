@@ -35,7 +35,7 @@ export function NotificationFilterChips({
             <span>{filter}</span>
             {count > 0 && (
               <span
-                className={`flex h-4.5 sm:h-5 min-w-[1.25rem] px-1.5 items-center justify-center rounded-full text-[10px] font-bold font-numeric transition-colors ${
+                className={`flex h-4.5 sm:h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold font-numeric transition-colors ${
                   isActive
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300'
                     : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'

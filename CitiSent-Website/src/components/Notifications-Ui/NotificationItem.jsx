@@ -75,7 +75,7 @@ export function NotificationItem({ notification, onToggleRead, onClick, children
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 pr-1">
             <h4
-              className={`text-xs sm:text-sm leading-snug break-words ${
+              className={`text-xs sm:text-sm leading-snug wrap-break-word ${
                 isUnread ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-800 dark:text-slate-200'
               }`}
             >
@@ -109,7 +109,7 @@ export function NotificationItem({ notification, onToggleRead, onClick, children
 
         {/* Notification Message */}
         <p
-          className={`mt-1 text-xs sm:text-sm leading-relaxed break-words ${
+          className={`mt-1 text-xs sm:text-sm leading-relaxed wrap-break-word ${
             isUnread ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
           }`}
         >

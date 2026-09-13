@@ -35,7 +35,7 @@ export function NotificationsEmptyState({ activeFilter = 'All', onDismiss, onNav
           <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
             {title}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed wrap-break-word">
             {description}
           </p>
           <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-2 font-numeric">

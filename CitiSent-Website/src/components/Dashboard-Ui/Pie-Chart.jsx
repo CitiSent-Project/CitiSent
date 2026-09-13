@@ -58,7 +58,7 @@ export function PieChart({ title, total, labels, values, colors, legend = [] }) 
                 className="mt-1 h-2 w-2 shrink-0 rounded-full transition-transform duration-200 group-hover:scale-125"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="break-words leading-tight flex-1 font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-200">
+              <span className="wrap-break-word leading-tight flex-1 font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-200">
                 {item.label}
               </span>
             </div>

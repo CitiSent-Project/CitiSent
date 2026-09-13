@@ -153,36 +153,86 @@ let isSubscribingSupabase = false;
 
 /**
  * Fully tears down the existing Supabase channel, calling unsubscribe() first
- * so Supabase considers the channel fully closed before we remove it.
+ * and removing any stale notification channels from the client.
  * This prevents the "cannot add postgres_changes callbacks after subscribe()"
- * error that occurs when a new channel is created with the same name while
- * the old subscription is still active internally.
+ * error that occurs when a new channel is created with the same topic while
+ * the old subscription is still active or cached internally.
  */
 async function teardownSupabaseChannel() {
-  if (!supabaseChannel) return;
   const channelToRemove = supabaseChannel;
-  supabaseChannel = null; // Nullify immediately so concurrent calls don't re-enter
+  supabaseChannel = null;
+
+  let client = null;
   try {
-    await channelToRemove.unsubscribe();
-    const client = getSupabaseClient();
-    if (client) client.removeChannel(channelToRemove);
+    client = getSupabaseClient();
   } catch {}
+
+  if (channelToRemove) {
+    try {
+      await channelToRemove.unsubscribe();
+    } catch {}
+    if (client) {
+      try {
+        client.removeChannel(channelToRemove);
+      } catch {}
+    }
+  }
+
+  // Defensively remove any lingering or stale notification channels from client
+  if (client && typeof client.getChannels === "function") {
+    const staleChannels = client
+      .getChannels()
+      .filter((ch) => ch.topic && ch.topic.startsWith("realtime:notifications_realtime_user_"));
+    for (const ch of staleChannels) {
+      try {
+        await ch.unsubscribe();
+      } catch {}
+      try {
+        client.removeChannel(ch);
+      } catch {}
+    }
+  }
+
+  isSubscribingSupabase = false;
 }
 
-function initSupabaseNotificationListener() {
+async function initSupabaseNotificationListener() {
   const user = getAuthUser();
   const userId = user?.id;
   if (!userId) return;
 
-  // Already subscribed — do not create a duplicate channel.
-  if (supabaseChannel) return;
-  // Prevent a concurrent initialization race (e.g. auth event fires twice quickly).
-  if (isSubscribingSupabase) return;
+  // Already subscribed or actively subscribing — do not create duplicate channel.
+  if (supabaseChannel || isSubscribingSupabase) return;
+
+  let client = null;
+  try {
+    client = getSupabaseClient();
+  } catch {}
+  if (!client) return;
 
   isSubscribingSupabase = true;
+
   try {
-    const client = getSupabaseClient();
-    if (!client) return;
+    const topicName = `realtime:notifications_realtime_user_${userId}`;
+
+    // Ensure any existing channel with the same topic is cleanly removed before creating a new one
+    if (typeof client.getChannels === "function") {
+      const existingChannels = client
+        .getChannels()
+        .filter(
+          (ch) =>
+            ch.topic === topicName ||
+            (ch.topic && ch.topic.startsWith("realtime:notifications_realtime_user_"))
+        );
+      for (const existing of existingChannels) {
+        try {
+          await existing.unsubscribe();
+        } catch {}
+        try {
+          client.removeChannel(existing);
+        } catch {}
+      }
+    }
 
     const token = getAuthToken();
     if (token && client.realtime?.setAuth) {
@@ -191,8 +241,10 @@ function initSupabaseNotificationListener() {
       } catch {}
     }
 
-    supabaseChannel = client
-      .channel(`notifications_realtime_user_${userId}`)
+    const channel = client.channel(`notifications_realtime_user_${userId}`);
+    supabaseChannel = channel;
+
+    channel
       .on(
         "postgres_changes",
         {
@@ -220,8 +272,12 @@ function initSupabaseNotificationListener() {
       )
       .subscribe((status) => {
         isSubscribingSupabase = false;
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          supabaseChannel = null;
+        if (status === "SUBSCRIBED") {
+          console.log(`[notificationState] 🔔 Supabase Realtime connected for user ${userId}`);
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          if (supabaseChannel === channel) {
+            supabaseChannel = null;
+          }
         }
       });
   } catch (err) {
@@ -296,12 +352,11 @@ function initAppStateListener() {
   });
 }
 
-onAuthStateChanged((user) => {
-  // Properly tear down the old channel (unsubscribe + removeChannel) before
-  // attempting to open a new one. Skipping unsubscribe() was what caused
-  // "cannot add postgres_changes callbacks after subscribe()".
-  teardownSupabaseChannel().catch(() => {});
-  isSubscribingSupabase = false;
+onAuthStateChanged(async (user) => {
+  // Properly await tearing down the old channel (unsubscribe + removeChannel)
+  // before attempting to open a new channel. Skipping await previously caused
+  // channel reuse races and "cannot add postgres_changes callbacks after subscribe()".
+  await teardownSupabaseChannel();
 
   // Reset in-memory notification state when user logs out or switches
   notifications = [];
@@ -314,12 +369,20 @@ onAuthStateChanged((user) => {
   if (!user) {
     isSocketInitialized = false;
   } else {
-    initSupabaseNotificationListener();
+    await initSupabaseNotificationListener();
     initSocketNotificationListener();
     initAppStateListener();
     ensureNotificationsLoaded({ force: true }).catch(() => {});
   }
 });
+
+// If an authenticated user is already active on initial module evaluation, initialize listeners
+const initialUser = getAuthUser();
+if (initialUser?.id) {
+  initSupabaseNotificationListener().catch(() => {});
+  initSocketNotificationListener();
+  initAppStateListener();
+}
 
 function getUnreadCount(items = []) {
   return items.filter((item) => !item.read).length;
@@ -381,13 +444,9 @@ function setLastError(error) {
 }
 
 export function subscribeToNotifications(listener) {
-  // NOTE: initSupabaseNotificationListener() is intentionally NOT called here.
-  // Supabase Realtime is initialized exactly once from the auth state change
-  // handler (onAuthStateChanged above). Calling it here on every component
-  // mount races against the existing subscription and causes:
-  //   "cannot add postgres_changes callbacks after subscribe()"
-  // Socket and AppState listeners are safe to init here because they guard
-  // against duplicate registration with their own boolean flags.
+  if (getAuthUser()?.id && !supabaseChannel && !isSubscribingSupabase) {
+    initSupabaseNotificationListener().catch(() => {});
+  }
   initSocketNotificationListener();
   initAppStateListener();
   listeners.add(listener);

@@ -45,6 +45,9 @@ let initializedForUserId = null;
 /** Supabase Realtime channel — kept alive for the app session. */
 let supabaseChannel = null;
 
+/** Guard to prevent concurrent subscription attempts (e.g. rapid auth events or fast refresh). */
+let isSubscribingSupabase = false;
+
 /** Whether the Socket.IO global listener has been attached. */
 let socketListenerAttached = false;
 
@@ -186,16 +189,19 @@ export function resetAdminMessageState() {
 
 // ─── Realtime subscription management ─────────────────────────────────────────
 
-function _teardownSubscriptions() {
+async function _teardownSubscriptions() {
   if (supabaseChannel) {
+    const channelToRemove = supabaseChannel;
+    supabaseChannel = null;
     try {
+      await channelToRemove.unsubscribe();
       const client = getSupabaseClient();
       if (client) {
-        client.removeChannel(supabaseChannel);
+        client.removeChannel(channelToRemove);
       }
     } catch {}
-    supabaseChannel = null;
   }
+  isSubscribingSupabase = false;
   socketListenerAttached = false;
 }
 
@@ -289,26 +295,51 @@ function _handleSocketMessage(data, fallbackUserId) {
 }
 
 function _setupSupabaseChannel(userId) {
-  if (supabaseChannel) return; // already subscribed
+  if (supabaseChannel || isSubscribingSupabase) return; // already subscribed or in progress
+
+  const effectiveUserId = _getEffectiveUserId(userId);
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  const channelName = effectiveUserId
+    ? `admin_msg_state_user_${effectiveUserId}`
+    : "admin_msg_state_global";
+
+  // If a lingering or stale channel already exists on the client for this topic, clean it up first
+  if (typeof client.getChannels === "function") {
+    const existing = client.getChannels().find(
+      (ch) => ch.topic === `realtime:${channelName}` || ch.topic === "realtime:admin_msg_state_global"
+    );
+    if (existing) {
+      try {
+        existing.unsubscribe();
+        client.removeChannel(existing);
+      } catch {}
+    }
+  }
+
+  isSubscribingSupabase = true;
 
   try {
-    const client = getSupabaseClient();
-    if (!client) return;
+    const channel = client.channel(channelName);
+    supabaseChannel = channel;
 
-    supabaseChannel = client
-      .channel("admin_msg_state_global")
+    channel
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "report_messages" },
-        (payload) => _handleRealtimeInsert(payload, userId)
+        (payload) => _handleRealtimeInsert(payload, effectiveUserId)
       )
       .subscribe((status) => {
+        isSubscribingSupabase = false;
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          // Channel failed — clear the reference so the next call will re-subscribe
-          supabaseChannel = null;
+          if (supabaseChannel === channel) {
+            supabaseChannel = null;
+          }
         }
       });
   } catch (err) {
+    isSubscribingSupabase = false;
     console.warn("[adminMessageState] Failed to subscribe to Supabase Realtime:", err?.message);
     supabaseChannel = null;
   }

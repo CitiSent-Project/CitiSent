@@ -35,11 +35,12 @@ export function getSocket(options = {}) {
   }
 
   const socketUrl = resolveSocketBaseUrl();
+  console.log("[socketService] Connecting to Socket.IO at:", socketUrl);
 
   socketInstance = io(socketUrl, {
     auth: { token },
     autoConnect: true,
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionAttempts: 20,
     reconnectionDelay: 1000,
@@ -47,6 +48,7 @@ export function getSocket(options = {}) {
   });
 
   socketInstance.on("connect", () => {
+    console.log("[socketService] Connected successfully to Socket.IO:", socketUrl);
     socketInstance.emit("join_report_feed", {});
   });
 

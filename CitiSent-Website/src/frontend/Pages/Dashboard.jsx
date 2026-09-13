@@ -250,7 +250,7 @@ export function Dashboard() {
 
             {/* Charts Grid */}
             <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
-                <div className="h-[360px] sm:h-[400px] lg:h-110 min-w-0">
+                <div className="h-90 sm:h-100 lg:h-110 min-w-0">
                     <PieChart
                         title={categoryData.title}
                         total={categoryData.total}
@@ -260,7 +260,7 @@ export function Dashboard() {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="h-[360px] sm:h-[400px] lg:h-110 min-w-0">
+                <div className="h-90 sm:h-100 lg:h-110 min-w-0">
                     <SolidPieChart
                         title={statusData.title}
                         total={statusData.total}
@@ -271,7 +271,7 @@ export function Dashboard() {
                     />
                 </div>
             </div>
-            <div className="mb-5 sm:mb-8 w-full h-[320px] sm:h-[380px] lg:h-110 min-w-0">
+            <div className="mb-5 sm:mb-8 w-full h-90 sm:h-100 lg:h-110 min-w-0">
                 <VerticalChart
                     title={weeklyData.title}
                     labels={weeklyData.labels}

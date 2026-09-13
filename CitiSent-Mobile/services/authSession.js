@@ -265,7 +265,8 @@ export function isGuestUser() {
 }
 
 export function isGuestVerified() {
-  return Boolean(sessionUser?.isVerified ?? (!isGuestUser() && sessionUser != null));
+  if (!sessionUser) return false;
+  return Boolean(sessionUser?.isVerified);
 }
 
 export function clearAuthToken() {

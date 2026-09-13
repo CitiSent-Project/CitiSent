@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "expo-router";
+import * as FileSystem from "expo-file-system";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ProfileSubpageLayout,
@@ -85,6 +86,8 @@ export default function SettingsPage() {
     setTimeout(() => { isNavigatingRef.current = false; }, 300);
   }, []);
 
+
+
   return (
     <ProfileSubpageLayout title="Settings">
       <Text className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>Account &amp; Security</Text>
@@ -111,6 +114,7 @@ export default function SettingsPage() {
         label="Community Guidelines"
         onPress={() => router.push("/legal/community-guidelines")}
       />
+
 
       <Text className="mb-2 mt-3 text-xs font-bold uppercase tracking-wide" style={{ color: Colors.text.secondary }}>About</Text>
       <SettingsActionRow

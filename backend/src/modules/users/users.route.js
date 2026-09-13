@@ -7,6 +7,7 @@ import {
   deleteCurrentUserSchema,
   getCurrentUserSchema,
   updateCurrentUserSchema,
+  exportCurrentUserSchema,
 } from "./users.schema.js";
 
 const usersRouter = Router();
@@ -16,6 +17,13 @@ usersRouter.get(
   requireAuth,
   validateRequest(getCurrentUserSchema),
   asyncHandler(usersController.getCurrentUser),
+);
+
+usersRouter.get(
+  "/me/export",
+  requireAuth,
+  validateRequest(exportCurrentUserSchema),
+  asyncHandler(usersController.exportCurrentUser),
 );
 
 usersRouter.patch(

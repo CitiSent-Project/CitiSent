@@ -100,7 +100,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
           <thead>
             <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
               <th className="px-4 py-3 w-24">ID</th>
-              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3 hidden md:table-cell">Location</th>
               <th className="px-4 py-3">Emotion</th>
               <th className="px-4 py-3">Urgency</th>
@@ -149,7 +149,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                   <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24 dark:text-slate-200" title={row.reportNum || row.id}>
                     {row.reportNum || truncateId(row.id)}
                   </td>
-                  <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{row.name}</td>
+                  <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{row.email || "N/A"}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-slate-600 dark:text-slate-300">
                     {row.location}
                   </td>
@@ -215,7 +215,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
                     <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 border border-slate-200/60 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                       {row.reportNum || truncateId(row.id)}
                     </span>
-                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.name}</p>
+                    <p className="mt-1.5 font-semibold text-slate-900 text-sm truncate dark:text-white">{row.email || "N/A"}</p>
                     <p className="mt-0.5 text-[11px] text-slate-500 truncate dark:text-slate-400">{row.location}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">

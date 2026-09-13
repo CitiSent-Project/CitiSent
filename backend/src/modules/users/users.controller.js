@@ -32,4 +32,13 @@ export const usersController = {
       data: result,
     });
   },
+
+  async exportCurrentUser(req, res) {
+    const data = await usersService.exportCurrentUser(req.user, req.accessToken);
+
+    res.setHeader("Content-Disposition", 'attachment; filename="my_citisent_data.json"');
+    res.setHeader("Content-Type", "application/json");
+    
+    return res.status(StatusCodes.OK).send(JSON.stringify(data, null, 2));
+  },
 };

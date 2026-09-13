@@ -42,7 +42,6 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     sending,
     setMobileShowChat,
     setSearchQuery,
-    totalUnread,
   } = useConversationsState({ profile, onSyncConversations })
 
   const [unreadOnly, setUnreadOnly] = useState(false)
@@ -143,7 +142,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                   )}
                   <button
                     type="button"
-                    onClick={() => { loadMessages(activeConversation.reportId); fetchSuggestions(activeConversation.reportId) }}
+                    onClick={() => { loadMessages(activeConversation.reportId) }}
                     className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/15 transition hover:bg-white/10 active:scale-95"
                     aria-label="Refresh chat"
                     title="Refresh chat"

@@ -305,23 +305,85 @@ export function useAppStateOrchestrator() {
   const globalConversationsRef = useRef([])
 
   /**
-   * Global socket listener for incoming chat messages.
+   * Global socket notification listener.
    *
-   * This lives in the orchestrator (always mounted for authenticated sessions)
-   * so message notifications reach the drawer regardless of which page is active.
-   * The ConversationsPage socket handler continues to handle UI updates (message
-   * list, read receipts, typing) independently.
+   * Subscribes to server-persisted notification events so that every notification
+   * displayed in the drawer is backed by a Supabase row with a stable UUID.
+   * The `receive_message` event remains in charge of chat UI updates only.
    */
   useEffect(() => {
-    if (!accessToken || !isAuthenticated) return
+    if (!accessToken || !isAuthenticated || !profile.id) return
 
     const socket = getSocket(accessToken)
     if (!socket) return
 
-    // Ensure the orchestrator joins the feed room to receive feed-wide broadcasts
-    // (like receive_message for all departments) regardless of what page is active.
+    // Join the admin feed room to receive broadcast notifications.
     socket.emit('join_report_feed', {})
 
+    /**
+     * Prepend a new server-backed notification, deduplicating by persisted ID
+     * and also by report conversation (to avoid duplicating when receive_message
+     * also fires for the same incoming message).
+     */
+    function handleNewNotification(data) {
+      if (!data?.notification) return
+
+      const incoming = mapBackendNotification(data.notification)
+      if (!incoming?.id) return
+
+      const targetAdminId = data.adminId || profile.id
+
+      setNotificationsByAdmin((previous) => {
+        const current = previous[targetAdminId] || []
+        // Skip if this UUID is already present (duplicate server emission).
+        if (current.some((n) => n.id === incoming.id)) return previous
+
+        // Also skip if we already have an unread message notification for this
+        // report — the receive_message fallback may have created it first.
+        const reportId = incoming.metadata?.reportId || incoming.meta?.reportId
+        if (
+          reportId &&
+          hasUnreadMessageNotificationForReport({
+            notificationsByAdmin: previous,
+            adminId: targetAdminId,
+            reportId: String(reportId),
+          })
+        ) {
+          // Replace the local placeholder with the authoritative server-UUID version.
+          return {
+            ...previous,
+            [targetAdminId]: current.map((n) => {
+              const nReportId = n.metadata?.reportId || n.meta?.reportId
+              if (
+                !n.read &&
+                String(n.type || '').toLowerCase() === 'message' &&
+                String(nReportId || '') === String(reportId)
+              ) {
+                // Upgrade the placeholder to the server-backed record.
+                return { ...n, ...incoming }
+              }
+              return n
+            }),
+          }
+        }
+
+        return appendNotificationForAdmin({
+          notificationsByAdmin: previous,
+          adminId: targetAdminId,
+          notification: incoming,
+        })
+      })
+    }
+
+    /**
+     * Global receive_message handler — runs in the orchestrator so the admin
+     * receives a drawer notification regardless of which page is active.
+     *
+     * Acts as a fallback when the backend does not (yet) emit new_notification,
+     * and also covers the window between message arrival and the server creating
+     * the persisted notification row. Deduplicated so it never fires when a
+     * matching unread notification already exists for the same report.
+     */
     function handleGlobalReceiveMessage(data) {
       if (!data?.reportId || !data?.message) return
 
@@ -329,31 +391,31 @@ export function useAppStateOrchestrator() {
       const senderId = String(rawMessage.senderId || rawMessage.sender_id || '')
       const isOwn = profile.id && senderId === String(profile.id)
 
-      // Only act on citizen-sent messages
+      // Only act on citizen-sent messages.
       if (isOwn || !senderId) return
 
       const reportId = String(data.reportId)
       const content = rawMessage.message || rawMessage.content || ''
 
-      // Look up conversation metadata from the ref (maintained by ConversationsPage)
+      // Look up conversation metadata from the ref (kept current by ConversationsPage).
       const matchedConversation = globalConversationsRef.current.find(
         (conv) => String(conv.reportId) === reportId
       )
       const senderName = matchedConversation?.userName || 'Citizen'
       const reportNumber = matchedConversation?.reportNumber || ''
 
-      // Only show toast + create notification when not already fired by ConversationsPage
-      // (ConversationsPage handles its own toast; we fire here only when page is inactive).
-      // We detect this by checking whether notifyChatMessage was already called —
-      // since we can't share that state, we guard with the dedup check only.
       setNotificationsByAdmin((previous) => {
-        const alreadyNotified = hasUnreadMessageNotificationForReport({
-          notificationsByAdmin: previous,
-          adminId: profile.id,
-          reportId,
-        })
-
-        if (alreadyNotified) return previous
+        // Deduplicate: don't create a second notification if one already exists
+        // for this report (e.g. new_notification arrived first).
+        if (
+          hasUnreadMessageNotificationForReport({
+            notificationsByAdmin: previous,
+            adminId: profile.id,
+            reportId,
+          })
+        ) {
+          return previous
+        }
 
         return appendNotificationForAdmin({
           notificationsByAdmin: previous,
@@ -368,12 +430,102 @@ export function useAppStateOrchestrator() {
       })
     }
 
+    /**
+     * Replace a single notification with the server version (e.g. read-state update).
+     */
+    function handleNotificationUpdated(data) {
+      if (!data?.notification) return
+
+      const updated = mapBackendNotification(data.notification)
+      if (!updated?.id) return
+
+      const targetAdminId = data.adminId || profile.id
+
+      setNotificationsByAdmin((previous) => ({
+        ...previous,
+        [targetAdminId]: (previous[targetAdminId] || []).map((n) =>
+          n.id === updated.id ? { ...n, ...updated } : n
+        ),
+      }))
+    }
+
+    /**
+     * Merge a batch of updated notifications by ID.
+     */
+    function handleNotificationsUpdated(data) {
+      if (!Array.isArray(data?.notifications)) return
+
+      const updatedMap = new Map(
+        data.notifications
+          .map(mapBackendNotification)
+          .filter((n) => n?.id)
+          .map((n) => [n.id, n])
+      )
+      if (updatedMap.size === 0) return
+
+      const targetAdminId = data.adminId || profile.id
+
+      setNotificationsByAdmin((previous) => ({
+        ...previous,
+        [targetAdminId]: (previous[targetAdminId] || []).map((n) =>
+          updatedMap.has(n.id) ? { ...n, ...updatedMap.get(n.id) } : n
+        ),
+      }))
+    }
+
+    /**
+     * Remove specified notification IDs (or clear the current user's list).
+     */
+    function handleNotificationsCleared(data) {
+      const targetAdminId = data?.adminId || profile.id
+      const idsToRemove = Array.isArray(data?.notificationIds) ? new Set(data.notificationIds) : null
+
+      setNotificationsByAdmin((previous) => ({
+        ...previous,
+        [targetAdminId]: idsToRemove
+          ? (previous[targetAdminId] || []).filter((n) => !idsToRemove.has(n.id))
+          : [],
+      }))
+    }
+
+    /**
+     * On reconnect, refetch the authoritative notification list from the API
+     * to recover any events that arrived while the socket was disconnected.
+     */
+    async function handleReconnect() {
+      try {
+        const response = await notificationsApiService.listNotifications(
+          accessToken,
+          normalizeUserRole(profile.role) === USER_ROLES.SUPERADMIN
+            ? { adminId: profile.id, limit: 200, offset: 0 }
+            : { limit: 200, offset: 0 }
+        )
+        const fetched = (response?.data || []).map(mapBackendNotification)
+        setNotificationsByAdmin((previous) => ({
+          ...previous,
+          [profile.id]: fetched,
+        }))
+      } catch {
+        // Reconnect refetch is best-effort; silently skip on failure.
+      }
+    }
+
     socket.on('receive_message', handleGlobalReceiveMessage)
+    socket.on('new_notification', handleNewNotification)
+    socket.on('notification_updated', handleNotificationUpdated)
+    socket.on('notifications_updated', handleNotificationsUpdated)
+    socket.on('notifications_cleared', handleNotificationsCleared)
+    socket.on('reconnect', handleReconnect)
 
     return () => {
       socket.off('receive_message', handleGlobalReceiveMessage)
+      socket.off('new_notification', handleNewNotification)
+      socket.off('notification_updated', handleNotificationUpdated)
+      socket.off('notifications_updated', handleNotificationsUpdated)
+      socket.off('notifications_cleared', handleNotificationsCleared)
+      socket.off('reconnect', handleReconnect)
     }
-  }, [accessToken, isAuthenticated, profile.id])
+  }, [accessToken, isAuthenticated, profile.id, profile.role])
 
   /**
    * Called by ConversationsPage to keep the orchestrator's conversations ref

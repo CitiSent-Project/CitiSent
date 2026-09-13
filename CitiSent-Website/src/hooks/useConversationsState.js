@@ -38,6 +38,8 @@ export function useConversationsState({ profile, onSyncConversations }) {
   const [conversationsError, setConversationsError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeConversation, setActiveConversation] = useState(null)
+  const conversationsRef = useRef([])
+  const processedMessagesRef = useRef(new Set())
   const [messages, setMessages] = useState([])
   const [chatLoading, setChatLoading] = useState(false)
   const [chatError, setChatError] = useState('')
@@ -50,6 +52,14 @@ export function useConversationsState({ profile, onSyncConversations }) {
   useEffect(() => {
     activeConversationRef.current = activeConversation
   }, [activeConversation])
+
+  useEffect(() => {
+    activeConversationRef.current = activeConversation
+  }, [activeConversation])
+
+  useEffect(() => {
+    conversationsRef.current = conversations
+  }, [conversations])
 
   useEffect(() => {
     if (typeof onSyncConversations === 'function') {
@@ -131,8 +141,18 @@ export function useConversationsState({ profile, onSyncConversations }) {
     const handleReceiveMessage = (data) => {
       if (!data?.reportId || !data?.message) return
 
-      const reportId = String(data.reportId)
       const rawMessage = data.message
+      
+      // Deduplicate: backend emits to both report room and feed room,
+      // so we might receive the exact same message payload twice.
+      if (rawMessage.id && processedMessagesRef.current.has(rawMessage.id)) {
+        return
+      }
+      if (rawMessage.id) {
+        processedMessagesRef.current.add(rawMessage.id)
+      }
+
+      const reportId = String(data.reportId)
       const isOwn = profile?.id && String(rawMessage.senderId || rawMessage.sender_id) === String(profile.id)
       const createdAt = rawMessage.createdAt || rawMessage.created_at || new Date().toISOString()
       const content = rawMessage.message || rawMessage.content || ''
@@ -154,8 +174,17 @@ export function useConversationsState({ profile, onSyncConversations }) {
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           )
         })
+      }
 
+      const targetConversation = conversationsRef.current.find((conv) => String(conv.reportId) === reportId)
 
+      if (targetConversation && !isOwn && !isCurrentActive) {
+        notifyChatMessage({
+          senderName: targetConversation.userName || 'Citizen',
+          messageText: content,
+          reportNumber: targetConversation.reportNumber,
+          onView: () => handleSelectConversationRef.current?.(targetConversation),
+        })
       }
 
       setConversations((current) => {
@@ -172,15 +201,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
         }
         const next = [...current]
         next[index] = updated
-
-        if (!isOwn && !isCurrentActive) {
-          notifyChatMessage({
-            senderName: target.userName || 'Citizen',
-            messageText: content,
-            reportNumber: target.reportNumber,
-            onView: () => handleSelectConversationRef.current?.(updated),
-          })
-        }
 
         return sortConversations(next)
       })
@@ -319,7 +339,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
     () => conversations.reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0),
     [conversations]
   )
-  const lastMessage = messages[messages.length - 1]
 
   return {
     activeConversation,

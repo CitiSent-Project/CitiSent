@@ -194,6 +194,7 @@ export function DepartmentCatalogSection({
             />
 
             <RenameDepartmentModal
+                key={renameModal?.id}
                 department={renameModal}
                 onClose={handleCloseRenameModal}
                 onUpdateDepartment={handleUpdateDepartmentWrapper}
@@ -201,6 +202,7 @@ export function DepartmentCatalogSection({
             />
 
             <DeleteDepartmentModal
+                key={deleteModal?.id}
                 department={deleteModal}
                 onClose={handleCloseDeleteModal}
                 onDeleteDepartment={handleDeleteDepartmentWrapper}
@@ -216,6 +218,7 @@ export function DepartmentCatalogSection({
             />
 
             <ToggleDepartmentActiveModal
+                key={toggleActiveModal?.id}
                 department={toggleActiveModal}
                 onClose={handleCloseToggleActiveModal}
                 onToggleDepartmentActive={handleConfirmToggleDepartmentActive}

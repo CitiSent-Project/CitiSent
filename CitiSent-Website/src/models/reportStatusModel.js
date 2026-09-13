@@ -32,5 +32,18 @@ export function normalizeReportStatus(status) {
     return 'Pending'
   }
 
-  return REPORT_STATUS_OPTIONS.includes(status) ? status : 'Pending'
+  const normalized = String(status).trim().toLowerCase()
+  const matchedOption = REPORT_STATUS_OPTIONS.find(
+    (option) => option.toLowerCase() === normalized
+  )
+
+  if (matchedOption) {
+    return matchedOption
+  }
+
+  if (normalized === 'in_review') {
+    return 'In Progress'
+  }
+
+  return 'Pending'
 }

@@ -4,11 +4,12 @@ import {
   buildPostLoginTransition,
   buildPostLogoutTransition,
 } from '../../controllers/navigation/navigationController'
-import { DEFAULT_ADMIN_PROFILE } from '../../models/data'
+import { ADMIN_STORAGE_KEYS, DEFAULT_ADMIN_PROFILE } from '../../models/data'
 import { APP_PAGES, AUTH_PAGES } from '../../models/pageModel'
 import { composeFullName } from '../../models/nameModel'
 import { USER_ROLES } from '../../models/roleAccessModel'
 import { createLoginPerformance } from '../../services/loginPerformance'
+import { disconnectSocket } from '../../services/socket/socketService'
 
 function normalizeLoginIdentifier(payload = {}) {
   const candidate = String(payload.identifier || payload.email || '').trim()
@@ -151,6 +152,26 @@ export function useAuthSession({
   }
 
   function handleLogout() {
+    // Disconnect the authenticated socket before clearing session state
+    // to prevent the prior user's socket from remaining active after logout.
+    disconnectSocket()
+
+    // Clear sensitive cached application state from localStorage immediately
+    // so a logged-out device does not retain prior administrator data.
+    const SENSITIVE_KEYS = [
+      ADMIN_STORAGE_KEYS.accessToken,
+      ADMIN_STORAGE_KEYS.authSession,
+      ADMIN_STORAGE_KEYS.profile,
+      ADMIN_STORAGE_KEYS.adminAccounts,
+      ADMIN_STORAGE_KEYS.notificationsByAdmin,
+      ADMIN_STORAGE_KEYS.notifications,
+      ADMIN_STORAGE_KEYS.activity,
+      ADMIN_STORAGE_KEYS.transferRequests,
+    ]
+    SENSITIVE_KEYS.forEach((key) => {
+      try { localStorage.removeItem(key) } catch { /* ignore */ }
+    })
+
     const transition = buildPostLogoutTransition()
 
     setAccessToken('')

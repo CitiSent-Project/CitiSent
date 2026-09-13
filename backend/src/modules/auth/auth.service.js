@@ -196,7 +196,11 @@ export const authService = {
     } catch (err) {
       otpStore_.deleteOtp(normalizedEmail);
       otpStore_.rollbackSendRateLimit(normalizedEmail);
-      throw err;
+      console.error("[AUTH] Failed to send password reset OTP:", err?.message || err);
+      throw new AppError(
+        "Failed to deliver verification code email. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
     }
 
     return { sent: true };

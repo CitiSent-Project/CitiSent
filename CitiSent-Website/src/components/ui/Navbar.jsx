@@ -287,7 +287,7 @@ export function Navbar({
 
 			<MotionAside
 				className={`fixed left-0 top-0 z-40 h-full bg-[#2f4f80] text-white shadow-2xl transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 w-72 max-w-[85vw] ${
-					expanded ? 'lg:w-60' : 'lg:w-[4.5rem]'
+					expanded ? 'lg:w-60' : 'lg:w-18'
 				} ${
 					mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'
 				}`}

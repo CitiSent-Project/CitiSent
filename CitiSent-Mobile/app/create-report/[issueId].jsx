@@ -305,6 +305,7 @@ export default function CreateReportIssueDetailScreen() {
                     onToggleTerms={() => setAgreeTerms(!agreeTerms)}
                     agreePrivacy={agreePrivacy}
                     onTogglePrivacy={() => setAgreePrivacy(!agreePrivacy)}
+                    theme="light"
                   />
                 </View>
               )}

@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import shared from "nodemailer/lib/shared/index.js";
 import { StatusCodes } from "http-status-codes";
 import { env } from "../../config/env.js";
+import { logger } from "../../config/logger.js";
 import { AppError } from "../errors/appError.js";
 
 // Ensure IPv4 resolution takes precedence in Node's default resolver
@@ -46,28 +47,141 @@ if (shared && typeof shared.resolveHostname === "function") {
   };
 }
 
-let cachedTransporter = null;
+/**
+ * Masks an email address for safe logging (e.g., m***8@gmail.com).
+ * Never exposes full user identifiers or secrets in application logs.
+ */
+export function maskEmail(email) {
+  if (!email || typeof email !== "string") return "***";
+  const [local, domain] = email.trim().toLowerCase().split("@");
+  if (!domain) return "***";
+  const maskedLocal =
+    local.length <= 2
+      ? `${local[0]}*`
+      : `${local[0]}${"*".repeat(Math.max(1, local.length - 2))}${local[local.length - 1]}`;
+  return `${maskedLocal}@${domain}`;
+}
 
-function requireMailConfig() {
-  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD || !env.WEB_APP_BASE_URL) {
+/**
+ * Classifies underlying mail provider errors into structured diagnostic categories
+ * while ensuring no passwords, tokens, or raw secrets are leaked.
+ */
+export function classifyAndSanitizeSmtpError(err) {
+  const code = String(err?.code || "").toUpperCase();
+  const message = String(err?.message || "");
+  const responseCode = err?.responseCode || null;
+
+  let category = "UNKNOWN_ERROR";
+  let diagnostic = "An unexpected error occurred while communicating with the mail server.";
+
+  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
+    category = "MISSING_ENV_VARS";
+    const missing = [];
+    if (!env.GMAIL_USER) missing.push("GMAIL_USER");
+    if (!env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
+    diagnostic = `Missing required email environment variable(s): ${missing.join(", ")}`;
+  } else if (
+    code === "EAUTH" ||
+    responseCode === 535 ||
+    message.includes("535") ||
+    message.toLowerCase().includes("badcredentials") ||
+    message.toLowerCase().includes("username and password not accepted")
+  ) {
+    category = "AUTHENTICATION_FAILED";
+    diagnostic =
+      "Gmail SMTP authentication failed (535). Verify GMAIL_USER and GMAIL_APP_PASSWORD (must use a 16-character Google App Password without spaces, not your regular account password).";
+  } else if (
+    code === "ETIMEDOUT" ||
+    code === "ESOCKETTIMEDOUT" ||
+    message.toLowerCase().includes("timeout") ||
+    message.toLowerCase().includes("timed out")
+  ) {
+    category = "CONNECTION_TIMEOUT";
+    diagnostic = `SMTP connection timed out connecting to ${env.SMTP_HOST || "smtp.gmail.com"}:${env.SMTP_PORT || 465}. The host or port may be restricted by the platform firewall.`;
+  } else if (
+    code === "ENETUNREACH" ||
+    code === "ECONNREFUSED" ||
+    code === "ECONNRESET" ||
+    code === "ENOTFOUND"
+  ) {
+    category = "NETWORK_UNREACHABLE";
+    diagnostic = `SMTP network error (${code}): unable to establish socket connection with ${env.SMTP_HOST || "smtp.gmail.com"}:${env.SMTP_PORT || 465}.`;
+  } else if (
+    responseCode === 550 ||
+    responseCode === 553 ||
+    message.includes("550") ||
+    message.includes("553")
+  ) {
+    category = "RECIPIENT_REJECTED";
+    diagnostic = `SMTP rejection (${responseCode || code}): recipient or sender address was rejected by the mail server.`;
+  } else if (
+    code === "ESOCKET" ||
+    message.toLowerCase().includes("ssl") ||
+    message.toLowerCase().includes("tls") ||
+    message.toLowerCase().includes("handshake")
+  ) {
+    category = "TLS_HANDSHAKE_ERROR";
+    diagnostic = `TLS handshake failed (${code}): ${message.slice(0, 100)}`;
+  } else if (responseCode === 421 || responseCode === 451 || responseCode === 452) {
+    category = "PROVIDER_RATE_LIMITED";
+    diagnostic = `Mail provider temporary rate limit or quota exceeded (${responseCode}).`;
+  } else {
+    diagnostic = message ? message.slice(0, 150) : "Unknown mail delivery failure";
+  }
+
+  return {
+    category,
+    diagnostic,
+    code: code || null,
+    responseCode: responseCode || null,
+  };
+}
+
+/**
+ * Validates SMTP environment variables needed to connect and send emails.
+ * Distinct from web URL validation so OTP flows are never blocked by WEB_APP_BASE_URL.
+ */
+export function requireSmtpConfig() {
+  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
+    const missing = [];
+    if (!env.GMAIL_USER) missing.push("GMAIL_USER");
+    if (!env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
     throw new AppError(
-      "Account invitation email is not configured. Set GMAIL_USER, GMAIL_APP_PASSWORD, and WEB_APP_BASE_URL.",
+      `Email delivery is not configured. Missing environment variable(s): ${missing.join(", ")}.`,
       StatusCodes.SERVICE_UNAVAILABLE,
     );
   }
 }
 
+/**
+ * Validates Web App URL needed only for web-based activation/reset password links.
+ */
+export function requireWebUrlConfig() {
+  if (!env.WEB_APP_BASE_URL) {
+    throw new AppError(
+      "Web application URL is not configured. Set WEB_APP_BASE_URL.",
+      StatusCodes.SERVICE_UNAVAILABLE,
+    );
+  }
+}
+
+function getCleanCredentials() {
+  requireSmtpConfig();
+  return {
+    user: String(env.GMAIL_USER || "").trim(),
+    pass: String(env.GMAIL_APP_PASSWORD || "").trim().replace(/\s+/g, ""),
+  };
+}
+
 function createTransportInstance(port, secure) {
+  const credentials = getCleanCredentials();
   const host = env.SMTP_HOST || "smtp.gmail.com";
   return nodemailer.createTransport({
     host,
     port,
     secure,
     servername: host,
-    auth: {
-      user: env.GMAIL_USER,
-      pass: env.GMAIL_APP_PASSWORD,
-    },
+    auth: credentials,
     connectionTimeout: 6000,
     greetingTimeout: 4000,
     socketTimeout: 6000,
@@ -77,8 +191,13 @@ function createTransportInstance(port, secure) {
 let primaryTransporter = null;
 let fallbackTransporter = null;
 
+export function resetTransportersForTesting() {
+  primaryTransporter = null;
+  fallbackTransporter = null;
+}
+
 function getPrimaryTransporter() {
-  requireMailConfig();
+  requireSmtpConfig();
   if (!primaryTransporter) {
     primaryTransporter = createTransportInstance(env.SMTP_PORT || 465, env.SMTP_SECURE !== false);
   }
@@ -86,7 +205,7 @@ function getPrimaryTransporter() {
 }
 
 function getFallbackTransporter() {
-  requireMailConfig();
+  requireSmtpConfig();
   if (!fallbackTransporter) {
     const isPrimary465 = (env.SMTP_PORT || 465) === 465;
     const fallbackPort = isPrimary465 ? 587 : 465;
@@ -97,7 +216,7 @@ function getFallbackTransporter() {
 }
 
 export function getTransporter() {
-  requireMailConfig();
+  requireSmtpConfig();
 
   return {
     async sendMail(mailOptions) {
@@ -106,17 +225,23 @@ export function getTransporter() {
       try {
         return await primary.sendMail(mailOptions);
       } catch (primaryErr) {
-        console.warn(
-          `[MAILER] Primary SMTP attempt failed on port ${primaryPort} (${primaryErr?.message}). Retrying on fallback port...`,
-        );
+        const primaryClassified = classifyAndSanitizeSmtpError(primaryErr);
+        logger.warn(`[MAILER] Primary SMTP attempt failed on port ${primaryPort}`, {
+          category: primaryClassified.category,
+          diagnostic: primaryClassified.diagnostic,
+          code: primaryClassified.code,
+        });
+
         const fallback = getFallbackTransporter();
         try {
           return await fallback.sendMail(mailOptions);
         } catch (fallbackErr) {
-          console.error(
-            `[MAILER] Fallback SMTP attempt also failed:`,
-            fallbackErr?.message || fallbackErr,
-          );
+          const fallbackClassified = classifyAndSanitizeSmtpError(fallbackErr);
+          logger.error(`[MAILER] Fallback SMTP attempt also failed`, {
+            category: fallbackClassified.category,
+            diagnostic: fallbackClassified.diagnostic,
+            code: fallbackClassified.code,
+          });
           throw primaryErr;
         }
       }
@@ -133,14 +258,14 @@ function escapeHtml(value) {
 }
 
 export function buildSetupPasswordUrl(token) {
-  requireMailConfig();
+  requireWebUrlConfig();
   const url = new URL("/setup-password", env.WEB_APP_BASE_URL);
   url.searchParams.set("token", token);
   return url.toString();
 }
 
 export function buildResetPasswordUrl(token) {
-  requireMailConfig();
+  requireWebUrlConfig();
   const url = new URL("/reset-password", env.WEB_APP_BASE_URL);
   url.searchParams.set("token", token);
   return url.toString();
@@ -268,6 +393,9 @@ export async function sendOtpEmail({ toEmail, recipientName, otp }) {
 }
 
 export const mailerService = {
+  sendOtpEmail: async (args) => sendOtpEmail(args),
+  sendPasswordResetEmail: async (args) => sendPasswordResetEmail(args),
+  sendAccountInvitationEmail: async (args) => sendAccountInvitationEmail(args),
   sendGuestVerificationOtpEmail: async ({ toEmail, otp }) => {
     const safeOtp = escapeHtml(String(otp));
 

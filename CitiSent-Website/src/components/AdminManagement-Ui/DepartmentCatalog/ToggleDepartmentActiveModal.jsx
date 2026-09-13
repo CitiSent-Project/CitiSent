@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 
 export function ToggleDepartmentActiveModal({ department, onClose, onToggleDepartmentActive, isBusy }) {
@@ -10,12 +10,6 @@ export function ToggleDepartmentActiveModal({ department, onClose, onToggleDepar
         onClose: onClose,
         containerRef: modalRef,
     })
-
-    useEffect(() => {
-        if (department) {
-            setToggleError('')
-        }
-    }, [department])
 
     if (!department) return null
 

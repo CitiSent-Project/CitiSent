@@ -15,6 +15,7 @@ import { APP_PAGES } from '../../models/pageModel'
 import { DEFAULT_ADMIN_PROFILE } from '../../models/data'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
 import { runWithConcurrencyLimit } from '../../utils/concurrencyLimiter'
+import { disconnectSocket } from '../../services/socket/socketService'
 
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
@@ -198,6 +199,9 @@ export function useSessionHydration({
 
           return
         }
+
+        // Disconnect socket when session is rejected (invalid/expired token).
+        disconnectSocket()
 
         setAccessToken('')
         setIsAuthenticated(false)

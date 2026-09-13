@@ -4,7 +4,7 @@ import { Pie } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export function SolidPieChart({ title, total: _total, labels, values, colors, legend = [] }) {
+export function SolidPieChart({ title, labels, values, colors, legend = [] }) {
   const data = {
     labels,
     datasets: [

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiBell, FiLoader, FiMessageSquare, FiTrash2, FiX } from 'react-icons/fi'
+import { FiLoader, FiMessageSquare, FiTrash2, FiX } from 'react-icons/fi'
 import { APP_PAGES } from '../../models/pageModel'
 import {
   NotificationFilterChips,
@@ -136,10 +136,13 @@ export function NotificationsDrawer({
     }
   }
 
+  const MotionBackdrop = motion.div
+  const MotionDrawer = motion.div
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
-      <motion.div
+      <MotionBackdrop
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -148,7 +151,7 @@ export function NotificationsDrawer({
       />
 
       {/* Drawer */}
-      <motion.div
+      <MotionDrawer
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
@@ -249,7 +252,7 @@ export function NotificationsDrawer({
           )}
         </section>
 
-      </motion.div>
+      </MotionDrawer>
     </div>
   )
 }

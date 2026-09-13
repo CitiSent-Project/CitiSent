@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 import { getStructuredInputError } from '../../../utils/structuredInputValidation'
 import { toSlug } from './utils'
 
 export function RenameDepartmentModal({ department, onClose, onUpdateDepartment, isBusy }) {
-    const [renameName, setRenameName] = useState('')
-    const [renameSlug, setRenameSlug] = useState('')
+    const [renameName, setRenameName] = useState(() => department?.label ?? '')
+    const [renameSlug, setRenameSlug] = useState(() => department?.slug ?? department?.id ?? '')
     const [renameError, setRenameError] = useState('')
     const renameModalRef = useRef(null)
 
@@ -14,14 +14,6 @@ export function RenameDepartmentModal({ department, onClose, onUpdateDepartment,
         onClose: onClose,
         containerRef: renameModalRef,
     })
-
-    useEffect(() => {
-        if (department) {
-            setRenameName(department.label)
-            setRenameSlug(department.slug || department.id)
-            setRenameError('')
-        }
-    }, [department])
 
     if (!department) return null
 

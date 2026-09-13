@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { useModalAccessibility } from '../../../hooks/shared/useModalAccessibility'
 import { formatReferenceBreakdownMessage } from './utils'
 
@@ -12,13 +12,6 @@ export function DeleteDepartmentModal({ department, onClose, onDeleteDepartment,
         onClose: onClose,
         containerRef: deleteModalRef,
     })
-
-    useEffect(() => {
-        if (department) {
-            setDeleteError('')
-            setDeleteWithCleanup(false)
-        }
-    }, [department])
 
     if (!department) return null
 

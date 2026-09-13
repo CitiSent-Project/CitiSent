@@ -21,7 +21,7 @@ export default defineConfig({
             return 'motion-vendor'
           }
 
-          if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+          if (id.includes('chart.js') || id.includes('react-chartjs-2') || id.includes('chartjs-plugin-datalabels')) {
             return 'charts-vendor'
           }
 

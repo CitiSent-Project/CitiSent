@@ -65,7 +65,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
     handleOpenChat,
     handleCloseChat,
     handleCloseVerification,
-    loadAdminNoteSuggestions,
   } = useReportDetailState({ report, profile, onUpdateStatus })
 
   // ---------------------------------------------------------------------------
@@ -143,19 +142,19 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Report ID</p>
-                  <p className="mt-1 font-numeric font-medium text-slate-900 dark:text-slate-200">{fullReport.reportNum || fullReport.id}</p>
+                  <p className="mt-1 break-words font-numeric font-medium text-slate-900 dark:text-slate-200">{fullReport.reportNum || fullReport.id}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Email</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.reporter?.email || fullReport.email}</p>
+                  <p className="mt-1 break-all font-medium text-slate-900 dark:text-slate-200">{fullReport.reporter?.email || fullReport.email}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.location}</p>
+                  <p className="mt-1 break-words font-medium text-slate-900 dark:text-slate-200">{fullReport.location}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Category / Agency</p>
-                  <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{fullReport.category}</p>
+                  <p className="mt-1 break-words font-medium text-slate-900 dark:text-slate-200">{fullReport.category}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Emotion Status</p>
@@ -180,7 +179,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                       <FiRefreshCw className="animate-spin text-blue-500" /> Fetching details...
                     </div>
                   ) : (
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">{fullReport.description || fullReport.message || "No description provided."}</p>
+                    <p className="mt-1.5 break-words whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-200">{fullReport.description || fullReport.message || "No description provided."}</p>
                   )}
                 </div>
                 {fullReport.attachmentUrl ? (
@@ -230,11 +229,11 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                       </span>
                       <div className="ml-2">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">{entry.action}</p>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                          <span className="font-numeric">{entry.date}</span> - by {entry.actor}
+                        <p className="mt-0.5 break-words text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-numeric">{entry.date}</span> - by <span className="break-all">{entry.actor}</span>
                         </p>
                         {entry.note ? (
-                          <p className="mt-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300 border border-slate-100 dark:border-slate-700/50">
+                          <p className="mt-2 break-words rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-slate-300">
                             {entry.note}
                           </p>
                         ) : null}

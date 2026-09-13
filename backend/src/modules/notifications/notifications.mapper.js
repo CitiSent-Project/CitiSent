@@ -17,6 +17,7 @@ export function toNotificationResponse(row) {
 
   return {
     id: row?.id || "",
+    userId: row?.user_id || null,
     type: normalizedType,
     title: row?.title || "",
     message: row?.message || "",

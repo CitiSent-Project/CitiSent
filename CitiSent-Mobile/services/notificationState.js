@@ -56,6 +56,7 @@ function handleNewNotificationPayload(rawPayload) {
   }
 
   // Prepend new notification to state immediately
+  console.log("[notificationState] 🔔 Realtime notification arrived:", mapped.id, mapped.title);
   notifications = [mapped, ...notifications];
   totalCount = Math.max(totalCount + 1, notifications.length);
   emitChange();
@@ -210,6 +211,7 @@ function initSocketNotificationListener() {
     isSocketInitialized = true;
 
     socket.on("connect", () => {
+      console.log("[notificationState] 🔌 Socket connected for realtime:", socket.id);
       // Reconnected: catch up on any missed notifications while disconnected
       if (isHydrated) {
         ensureNotificationsLoaded({ force: true }).catch(() => {});

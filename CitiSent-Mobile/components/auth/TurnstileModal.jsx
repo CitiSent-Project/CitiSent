@@ -14,12 +14,12 @@ import { Ionicons } from "@expo/vector-icons";
 const TURNSTILE_SITE_KEY = (process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY || "").trim();
 
 /**
- * Builds the minimal HTML page that loads the Cloudflare Turnstile widget.
- * On success, postMessage fires with { type: 'turnstile-token', token: '...' }.
- * On error, postMessage fires with { type: 'turnstile-error', message: '...' }.
- *
- * Internal status messages are emitted via { type: 'turnstile-log', message: '...' }
- * so the React Native side can trace the widget lifecycle without guessing.
+ * Builds the HTML document that loads and renders the Cloudflare Turnstile widget.
+ * Emits postMessage events back to React Native WebView:
+ * - { type: 'turnstile-ready' }
+ * - { type: 'turnstile-token', token: '...' }
+ * - { type: 'turnstile-error', message: '...' }
+ * - { type: 'turnstile-expired' }
  */
 function buildTurnstileHtml(siteKey) {
   return `
@@ -55,79 +55,10 @@ function buildTurnstileHtml(siteKey) {
       margin: 0 auto;
     }
   </style>
-  <script>
-    function rnLog(msg) {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ type: 'turnstile-log', message: msg })
-        );
-      }
-    }
-    window.addEventListener('error', function(e) {
-      rnLog('JS error: ' + (e.message || 'unknown'));
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ type: 'turnstile-error', message: e.message || 'Script error' })
-        );
-      }
-    });
-    window.addEventListener('securitypolicyviolation', function(e) {
-      rnLog('CSP violation: ' + e.blockedURI);
-    });
-
-    // Monitor when Cloudflare injects the challenge iframe
-    try {
-      var observer = new MutationObserver(function(mutations) {
-        for (var i = 0; i < mutations.length; i++) {
-          var added = mutations[i].addedNodes;
-          for (var j = 0; j < added.length; j++) {
-            var node = added[j];
-            if (node.tagName === 'IFRAME') {
-              rnLog('Iframe added: src=' + (node.src || '').substring(0, 80));
-              node.addEventListener('load', function() {
-                rnLog('Iframe load completed! size=' + node.offsetWidth + 'x' + node.offsetHeight);
-                inspectDom();
-              });
-            }
-          }
-        }
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-    } catch (e) {
-      rnLog('Observer error: ' + e.message);
-    }
-
-    function inspectDom() {
-      try {
-        var c = document.getElementById('cf-turnstile-container');
-        var iframes = document.querySelectorAll('iframe');
-        var details = [];
-        for (var i = 0; i < iframes.length; i++) {
-          var f = iframes[i];
-          var cs = window.getComputedStyle(f);
-          details.push({
-            src: (f.src || '').substring(0, 60),
-            w: f.offsetWidth,
-            h: f.offsetHeight,
-            vis: cs.visibility,
-            disp: cs.display,
-            op: cs.opacity
-          });
-        }
-        rnLog('DOM: win=' + window.innerWidth + 'x' + window.innerHeight +
-              ', body=' + document.body.offsetWidth + 'x' + document.body.offsetHeight +
-              ', iframes=' + iframes.length +
-              ', details=' + JSON.stringify(details));
-      } catch (err) {
-        rnLog('DOM check err: ' + (err.message || err));
-      }
-    }
-  </script>
   <script
     src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoaded"
     async
     defer
-    onerror="rnLog('Failed to load Turnstile script from Cloudflare CDN')"
   ></script>
 </head>
 <body>
@@ -137,10 +68,10 @@ function buildTurnstileHtml(siteKey) {
   <script>
     var rendered = false;
 
-    // Called by the Turnstile script's ?onload= parameter
-    function onTurnstileLoaded() {
-      rnLog('Turnstile API script loaded (onload callback)');
-      tryRender();
+    function post(data) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(data));
+      }
     }
 
     function tryRender() {
@@ -148,71 +79,42 @@ function buildTurnstileHtml(siteKey) {
       if (typeof turnstile !== 'undefined' && turnstile.render) {
         rendered = true;
         try {
-          rnLog('Origin: ' + window.location.origin + ' | Hostname: ' + window.location.hostname);
-        } catch (_) {}
-        rnLog('Calling turnstile.render()');
-        try {
           turnstile.render('#cf-turnstile-container', {
             sitekey: '${siteKey}',
             theme: 'light',
             size: 'normal',
             callback: function(token) {
-              rnLog('Token received from widget');
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-token', token: token })
-              );
+              post({ type: 'turnstile-token', token: token });
             },
             'error-callback': function(code) {
-              rnLog('Widget error-callback fired: ' + (code || 'unknown'));
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-error', message: String(code || 'unknown') })
-              );
+              post({ type: 'turnstile-error', message: String(code || 'unknown') });
             },
             'expired-callback': function() {
-              rnLog('Widget expired-callback fired');
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-expired' })
-              );
+              post({ type: 'turnstile-expired' });
             },
           });
-          rnLog('turnstile.render() completed — widget should be visible');
-          inspectDom();
-          setTimeout(inspectDom, 1000);
-          setTimeout(inspectDom, 2500);
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-ready' })
-          );
+          post({ type: 'turnstile-ready' });
         } catch (err) {
-          rnLog('turnstile.render() threw: ' + (err.message || err));
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-error', message: err.message || 'render error' })
-          );
+          post({ type: 'turnstile-error', message: err.message || 'render error' });
         }
-      } else {
-        rnLog('turnstile API not yet available');
       }
     }
 
-    // Fallback polling in case onload fires before our script runs
-    rnLog('Starting poll for turnstile API...');
-    var pollCount = 0;
+    function onTurnstileLoaded() {
+      tryRender();
+    }
+
     var pollInterval = setInterval(function() {
-      pollCount++;
       if (typeof turnstile !== 'undefined' && turnstile.render) {
         clearInterval(pollInterval);
-        rnLog('turnstile API found via polling (attempt ' + pollCount + ')');
         tryRender();
       }
     }, 200);
 
-    // Stop polling after 15s
     setTimeout(function() {
       clearInterval(pollInterval);
       if (!rendered) {
-        rnLog('Polling stopped after 15s — turnstile API never became available');
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ type: 'turnstile-error', message: 'Turnstile script did not load within 15s' })
-        );
+        post({ type: 'turnstile-error', message: 'Verification load timed out.' });
       }
     }, 15000);
   </script>
@@ -222,16 +124,8 @@ function buildTurnstileHtml(siteKey) {
 }
 
 /**
- * The base URL used as the WebView's document origin.
- *
- * Cloudflare Turnstile validates the page origin against the widget's allowed
- * domains list configured in the Cloudflare dashboard. Using "http://localhost"
- * causes a silent render failure if localhost is not in that list.
- *
- * We use the production backend URL so the origin matches a real domain that
- * should be whitelisted in Cloudflare. If the env variable is not set, fall
- * back to "https://challenges.cloudflare.com" which Cloudflare always allows
- * for its own Turnstile widget resources.
+ * Base URL used as the WebView origin. Matches the backend domain whitelisted
+ * in Cloudflare Turnstile Hostname Management.
  */
 const WEBVIEW_BASE_URL =
   (process.env.EXPO_PUBLIC_TURNSTILE_BASE_URL || "").trim() ||
@@ -241,16 +135,16 @@ const WEBVIEW_BASE_URL =
 function getHumanErrorMessage(code) {
   switch (String(code)) {
     case "110200":
-      return "Domain not authorized (110200). Add 'citisent-backend.onrender.com' to Hostname Management in your Cloudflare Turnstile settings.";
+      return "Domain not authorized (110200). Ensure your backend domain is added in Cloudflare Turnstile settings.";
     case "110100":
     case "110110":
     case "400020":
-      return `Invalid Turnstile site key (${code}). Please verify your Cloudflare configuration.`;
+      return `Invalid Turnstile site key (${code}). Please check configuration.`;
     case "110600":
     case "110620":
       return `Verification timed out (${code}). Please tap Retry.`;
     case "200500":
-      return "Unable to connect to Cloudflare verification service. Please check your network.";
+      return "Unable to connect to verification service. Please check your connection.";
     default:
       return `Verification failed (${code}). Please try again.`;
   }
@@ -259,15 +153,7 @@ function getHumanErrorMessage(code) {
 /**
  * TurnstileModal
  *
- * Renders a Cloudflare Turnstile CAPTCHA widget inside a WebView modal.
- * When EXPO_PUBLIC_TURNSTILE_SITE_KEY is not configured, it shows a
- * development bypass so testing/local dev continues uninterrupted.
- *
- * @param {object}   props
- * @param {boolean}  props.visible         - Whether the modal is shown.
- * @param {function} props.onClose         - Called when user cancels.
- * @param {function} props.onTokenReceived - Called with (token: string) on success.
- * @param {function} props.onError         - Called with (message: string) on failure.
+ * Renders the Cloudflare Turnstile CAPTCHA widget in a clean modal dialog.
  */
 export default function TurnstileModal({
   visible,
@@ -287,32 +173,14 @@ export default function TurnstileModal({
   const webViewRef = useRef(null);
   const handledRef = useRef(false);
 
-  // ── Lifecycle logging ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (visible) {
-      console.warn(
-        `[Turnstile] Component mounted — site key configured: ${Boolean(TURNSTILE_SITE_KEY)}, ` +
-        `baseUrl: ${WEBVIEW_BASE_URL}`
-      );
-    }
-    return () => {
-      if (visible) {
-        console.warn("[Turnstile] Component unmounting");
-      }
-    };
-  }, [visible]);
-
-  // When no Turnstile key is configured, automatically pass verification
-  // so the guest user can submit reports in development.
+  // Development bypass if no site key is configured
   useEffect(() => {
     if (!visible) return;
 
     if (!TURNSTILE_SITE_KEY) {
-      console.warn("[Turnstile] No site key — using development bypass (mock token in 500ms)");
       const timer = setTimeout(() => {
         if (!handledRef.current) {
           handledRef.current = true;
-          console.warn("[Turnstile] Development bypass: sending mock token");
           if (onTokenReceived) {
             onTokenReceived("mock-dev-turnstile-token");
           }
@@ -322,37 +190,20 @@ export default function TurnstileModal({
     }
   }, [visible, onTokenReceived]);
 
-  const handleLoadStart = useCallback(() => {
-    console.warn("[Turnstile] WebView loading started");
-  }, []);
-
-  const handleLoad = useCallback(() => {
-    console.warn("[Turnstile] WebView loaded (onLoad)");
-    // Keep showing spinner until turnstile-ready event
-  }, []);
-
-  const handleLoadEnd = useCallback(() => {
-    console.warn("[Turnstile] WebView load ended (onLoadEnd)");
-  }, []);
-
   const handleError = useCallback((err) => {
     const description = err?.description || err?.message || "unknown";
-    const code = err?.code || "N/A";
-    console.warn(`[Turnstile] WebView error — code: ${code}, description: ${description}`);
     setIsLoading(false);
     setHasError(true);
-    setErrorDetail(`WebView error: ${description}`);
+    setErrorDetail(`Connection error: ${description}`);
     if (onError) onError("Failed to load verification widget. Please check your connection.");
   }, [onError]);
 
   const handleHttpError = useCallback((syntheticEvent) => {
     const { nativeEvent } = syntheticEvent || {};
     const statusCode = nativeEvent?.statusCode || "unknown";
-    const description = nativeEvent?.description || "unknown";
-    console.warn(`[Turnstile] WebView HTTP error — status: ${statusCode}, description: ${description}`);
     setIsLoading(false);
     setHasError(true);
-    setErrorDetail(`HTTP error ${statusCode}: ${description}`);
+    setErrorDetail(`HTTP error (${statusCode})`);
     if (onError) onError("Failed to load verification widget. Please check your connection.");
   }, [onError]);
 
@@ -364,37 +215,25 @@ export default function TurnstileModal({
       try {
         parsed = JSON.parse(event.nativeEvent.data);
       } catch {
-        console.warn("[Turnstile] Received unparseable postMessage:", event.nativeEvent.data?.slice(0, 100));
-        return;
-      }
-
-      if (parsed.type === "turnstile-log") {
-        // Relay internal widget lifecycle messages to the RN console
-        console.warn(`[Turnstile] Widget: ${parsed.message}`);
         return;
       }
 
       if (parsed.type === "turnstile-ready") {
-        console.warn("[Turnstile] Widget rendered (turnstile-ready) — waiting for user interaction");
         setIsLoading(false);
         setHasError(false);
         setErrorDetail("");
       } else if (parsed.type === "turnstile-token" && parsed.token) {
         handledRef.current = true;
-        console.warn(`[Turnstile] Token received (length=${parsed.token.length})`);
         setIsLoading(false);
         if (onTokenReceived) onTokenReceived(parsed.token);
       } else if (parsed.type === "turnstile-error") {
         const errorMsg = parsed.message || "unknown";
         const humanMsg = getHumanErrorMessage(errorMsg);
-        console.warn(`[Turnstile] Error event from widget: ${errorMsg} (${humanMsg})`);
         setIsLoading(false);
         setHasError(true);
         setErrorDetail(humanMsg);
         if (onError) onError(humanMsg);
       } else if (parsed.type === "turnstile-expired") {
-        console.warn("[Turnstile] Token expired — user can retry");
-        // Allow the user to retry — reset handled flag
         handledRef.current = false;
         if (onError) onError("Verification expired. Please try again.");
       }
@@ -402,31 +241,20 @@ export default function TurnstileModal({
     [onTokenReceived, onError],
   );
 
-  // Safety timeout: if widget hasn't responded within 15s, show descriptive error
+  // Safety timeout: 15s
   useEffect(() => {
     if (!visible || !TURNSTILE_SITE_KEY) return;
     const timer = setTimeout(() => {
       if (!handledRef.current && isLoading) {
-        console.warn(
-          "[Turnstile] Widget load timed out after 15s. " +
-          "This usually means the Turnstile script failed to load or the widget's " +
-          "allowed domain list in Cloudflare does not include the WebView origin. " +
-          `Current baseUrl: ${WEBVIEW_BASE_URL}`
-        );
         setIsLoading(false);
         setHasError(true);
-        setErrorDetail(
-          "The verification widget did not load within 15 seconds. " +
-          "This may be a network issue or a domain configuration problem."
-        );
+        setErrorDetail("Verification timed out. Please check your connection and retry.");
       }
     }, 15000);
     return () => clearTimeout(timer);
   }, [visible, isLoading]);
 
-  // Reset state when modal opens/closes
   const handleModalShow = useCallback(() => {
-    console.warn("[Turnstile] Modal opened — resetting state");
     setIsLoading(true);
     setHasError(false);
     setErrorDetail("");
@@ -481,7 +309,6 @@ export default function TurnstileModal({
                 onPress={() => {
                   if (!handledRef.current) {
                     handledRef.current = true;
-                    console.warn("[Turnstile] Manual dev bypass pressed");
                     if (onTokenReceived) {
                       onTokenReceived("mock-dev-turnstile-token");
                     }
@@ -502,10 +329,9 @@ export default function TurnstileModal({
 
               {hasError ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="wifi-outline" size={32} color="#DC2626" />
+                  <Ionicons name="wifi-outline" size={28} color="#DC2626" />
                   <Text style={styles.errorText}>
-                    Unable to load verification widget.{"\n"}
-                    Please check your connection and try again.
+                    Unable to load verification widget.
                   </Text>
                   {errorDetail ? (
                     <Text style={styles.errorDetailText}>{errorDetail}</Text>
@@ -514,7 +340,6 @@ export default function TurnstileModal({
                     <Pressable
                       style={styles.retryBtn}
                       onPress={() => {
-                        console.warn("[Turnstile] Retry pressed — remounting WebView");
                         setHasError(false);
                         setErrorDetail("");
                         setIsLoading(true);
@@ -530,7 +355,6 @@ export default function TurnstileModal({
                         onPress={() => {
                           if (!handledRef.current) {
                             handledRef.current = true;
-                            console.warn("[Turnstile] DEV bypass pressed (error state)");
                             if (onTokenReceived) {
                               onTokenReceived("mock-dev-turnstile-token");
                             }
@@ -547,9 +371,6 @@ export default function TurnstileModal({
                   key={`turnstile-wv-${reloadKey}`}
                   ref={webViewRef}
                   source={{ html: turnstileHtml, baseUrl: WEBVIEW_BASE_URL }}
-                  onLoadStart={handleLoadStart}
-                  onLoad={handleLoad}
-                  onLoadEnd={handleLoadEnd}
                   onError={(e) => handleError(e?.nativeEvent)}
                   onHttpError={handleHttpError}
                   onMessage={handleMessage}
@@ -665,34 +486,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
   },
-  webView: {
-    backgroundColor: "#FFFFFF",
-  },
   errorContainer: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 16,
-    gap: 8,
+    padding: 12,
+    gap: 6,
   },
   errorText: {
     fontSize: 12,
+    fontWeight: "600",
     color: "#DC2626",
     textAlign: "center",
-    lineHeight: 18,
   },
   errorDetailText: {
     fontSize: 10,
     color: "#94A3B8",
     textAlign: "center",
-    lineHeight: 14,
-    marginTop: 2,
+    lineHeight: 13,
   },
   retryBtn: {
     marginTop: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     backgroundColor: "#1D4ED8",
-    borderRadius: 8,
+    borderRadius: 6,
   },
   retryBtnText: {
     fontSize: 12,
@@ -733,8 +550,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cancelLink: {
-    marginTop: 14,
-    paddingVertical: 8,
+    marginTop: 12,
+    paddingVertical: 6,
     alignItems: "center",
   },
   cancelLinkText: {

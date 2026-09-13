@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,9 +14,12 @@ import { Ionicons } from "@expo/vector-icons";
 const TURNSTILE_SITE_KEY = (process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY || "").trim();
 
 /**
- * Builds the minimal HTML page that loads the Cloudflare Turnstile widget.
- * On success, postMessage fires with { type: 'turnstile-token', token: '...' }.
- * On error, postMessage fires with { type: 'turnstile-error', message: '...' }.
+ * Builds the HTML document that loads and renders the Cloudflare Turnstile widget.
+ * Emits postMessage events back to React Native WebView:
+ * - { type: 'turnstile-ready' }
+ * - { type: 'turnstile-token', token: '...' }
+ * - { type: 'turnstile-error', message: '...' }
+ * - { type: 'turnstile-expired' }
  */
 function buildTurnstileHtml(siteKey) {
   return `
@@ -30,12 +34,13 @@ function buildTurnstileHtml(siteKey) {
     html, body {
       width: 100%;
       height: 100%;
-      background: transparent;
+      margin: 0;
+      padding: 0;
+      background: #FFFFFF;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
     }
     .container {
       display: flex;
@@ -45,24 +50,13 @@ function buildTurnstileHtml(siteKey) {
       height: 100%;
     }
     #cf-turnstile-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-width: 300px;
-      min-height: 65px;
+      width: 300px;
+      height: 65px;
+      margin: 0 auto;
     }
   </style>
-  <script>
-    window.addEventListener('error', function(e) {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(
-          JSON.stringify({ type: 'turnstile-error', message: e.message || 'Script error' })
-        );
-      }
-    });
-  </script>
   <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoaded"
     async
     defer
   ></script>
@@ -73,6 +67,13 @@ function buildTurnstileHtml(siteKey) {
   </div>
   <script>
     var rendered = false;
+
+    function post(data) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(data));
+      }
+    }
+
     function tryRender() {
       if (rendered) return;
       if (typeof turnstile !== 'undefined' && turnstile.render) {
@@ -83,41 +84,39 @@ function buildTurnstileHtml(siteKey) {
             theme: 'light',
             size: 'normal',
             callback: function(token) {
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-token', token: token })
-              );
+              post({ type: 'turnstile-token', token: token });
             },
             'error-callback': function(code) {
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-error', message: code || 'unknown' })
-              );
+              post({ type: 'turnstile-error', message: String(code || 'unknown') });
             },
             'expired-callback': function() {
-              window.ReactNativeWebView.postMessage(
-                JSON.stringify({ type: 'turnstile-expired' })
-              );
+              post({ type: 'turnstile-expired' });
             },
           });
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-ready' })
-          );
+          post({ type: 'turnstile-ready' });
         } catch (err) {
-          window.ReactNativeWebView.postMessage(
-            JSON.stringify({ type: 'turnstile-error', message: err.message || 'render error' })
-          );
+          post({ type: 'turnstile-error', message: err.message || 'render error' });
         }
       }
     }
 
-    document.addEventListener('DOMContentLoaded', tryRender);
-    window.addEventListener('load', tryRender);
+    function onTurnstileLoaded() {
+      tryRender();
+    }
+
     var pollInterval = setInterval(function() {
       if (typeof turnstile !== 'undefined' && turnstile.render) {
         clearInterval(pollInterval);
         tryRender();
       }
-    }, 150);
-    setTimeout(function() { clearInterval(pollInterval); }, 8000);
+    }, 200);
+
+    setTimeout(function() {
+      clearInterval(pollInterval);
+      if (!rendered) {
+        post({ type: 'turnstile-error', message: 'Verification load timed out.' });
+      }
+    }, 15000);
   </script>
 </body>
 </html>
@@ -125,17 +124,36 @@ function buildTurnstileHtml(siteKey) {
 }
 
 /**
+ * Base URL used as the WebView origin. Matches the backend domain whitelisted
+ * in Cloudflare Turnstile Hostname Management.
+ */
+const WEBVIEW_BASE_URL =
+  (process.env.EXPO_PUBLIC_TURNSTILE_BASE_URL || "").trim() ||
+  (process.env.EXPO_PUBLIC_API_BASE_URL || "").replace(/\/api\/v1\/?$/, "").trim() ||
+  "https://challenges.cloudflare.com";
+
+function getHumanErrorMessage(code) {
+  switch (String(code)) {
+    case "110200":
+      return "Domain not authorized (110200). Ensure your backend domain is added in Cloudflare Turnstile settings.";
+    case "110100":
+    case "110110":
+    case "400020":
+      return `Invalid Turnstile site key (${code}). Please check configuration.`;
+    case "110600":
+    case "110620":
+      return `Verification timed out (${code}). Please tap Retry.`;
+    case "200500":
+      return "Unable to connect to verification service. Please check your connection.";
+    default:
+      return `Verification failed (${code}). Please try again.`;
+  }
+}
+
+/**
  * TurnstileModal
  *
- * Renders a Cloudflare Turnstile CAPTCHA widget inside a WebView modal.
- * When EXPO_PUBLIC_TURNSTILE_SITE_KEY is not configured or in development mode,
- * it automatically completes the check so testing/local dev continues uninterrupted.
- *
- * @param {object}   props
- * @param {boolean}  props.visible         - Whether the modal is shown.
- * @param {function} props.onClose         - Called when user cancels.
- * @param {function} props.onTokenReceived - Called with (token: string) on success.
- * @param {function} props.onError         - Called with (message: string) on failure.
+ * Renders the Cloudflare Turnstile CAPTCHA widget in a clean modal dialog.
  */
 export default function TurnstileModal({
   visible,
@@ -143,13 +161,19 @@ export default function TurnstileModal({
   onTokenReceived,
   onError,
 }) {
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.min(Math.max(screenWidth - 32, 320), 380);
+  const webViewWidth = Math.max(300, Math.min(cardWidth - 24, 320));
+  const webViewHeight = 90;
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const webViewRef = useRef(null);
   const handledRef = useRef(false);
 
-  // When no Turnstile key is configured or in development mode without a key,
-  // automatically pass verification so the guest user can submit reports.
+  // Development bypass if no site key is configured
   useEffect(() => {
     if (!visible) return;
 
@@ -166,14 +190,20 @@ export default function TurnstileModal({
     }
   }, [visible, onTokenReceived]);
 
-  const handleLoad = useCallback(() => {
-    // Keep showing spinner until turnstile-ready event or fallback timeout
-  }, []);
-
   const handleError = useCallback((err) => {
+    const description = err?.description || err?.message || "unknown";
     setIsLoading(false);
     setHasError(true);
-    console.warn("[Turnstile] Loading error:", err);
+    setErrorDetail(`Connection error: ${description}`);
+    if (onError) onError("Failed to load verification widget. Please check your connection.");
+  }, [onError]);
+
+  const handleHttpError = useCallback((syntheticEvent) => {
+    const { nativeEvent } = syntheticEvent || {};
+    const statusCode = nativeEvent?.statusCode || "unknown";
+    setIsLoading(false);
+    setHasError(true);
+    setErrorDetail(`HTTP error (${statusCode})`);
     if (onError) onError("Failed to load verification widget. Please check your connection.");
   }, [onError]);
 
@@ -191,17 +221,19 @@ export default function TurnstileModal({
       if (parsed.type === "turnstile-ready") {
         setIsLoading(false);
         setHasError(false);
+        setErrorDetail("");
       } else if (parsed.type === "turnstile-token" && parsed.token) {
         handledRef.current = true;
         setIsLoading(false);
         if (onTokenReceived) onTokenReceived(parsed.token);
       } else if (parsed.type === "turnstile-error") {
-        console.warn("[Turnstile] Error event from widget:", parsed.message);
+        const errorMsg = parsed.message || "unknown";
+        const humanMsg = getHumanErrorMessage(errorMsg);
         setIsLoading(false);
         setHasError(true);
-        if (onError) onError("Verification failed. Please try again.");
+        setErrorDetail(humanMsg);
+        if (onError) onError(humanMsg);
       } else if (parsed.type === "turnstile-expired") {
-        // Allow the user to retry — reset handled flag
         handledRef.current = false;
         if (onError) onError("Verification expired. Please try again.");
       }
@@ -209,23 +241,23 @@ export default function TurnstileModal({
     [onTokenReceived, onError],
   );
 
-  // Safety fallback: if widget hasn't responded within 8s, reveal error/bypass
+  // Safety timeout: 15s
   useEffect(() => {
     if (!visible || !TURNSTILE_SITE_KEY) return;
     const timer = setTimeout(() => {
       if (!handledRef.current && isLoading) {
         setIsLoading(false);
         setHasError(true);
-        console.warn("[Turnstile] Widget load timed out after 8s");
+        setErrorDetail("Verification timed out. Please check your connection and retry.");
       }
-    }, 8000);
+    }, 15000);
     return () => clearTimeout(timer);
   }, [visible, isLoading]);
 
-  // Reset state when modal opens/closes
   const handleModalShow = useCallback(() => {
     setIsLoading(true);
     setHasError(false);
+    setErrorDetail("");
     handledRef.current = false;
   }, []);
 
@@ -240,7 +272,7 @@ export default function TurnstileModal({
       onShow={handleModalShow}
     >
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View style={[styles.card, { width: cardWidth }]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -264,12 +296,12 @@ export default function TurnstileModal({
           <Text style={styles.subtitle}>
             {!TURNSTILE_SITE_KEY
               ? "Verifying security check..."
-              : "Please complete the check below to submit your report."}
+              : "Please complete the check below to continue."}
           </Text>
 
           {/* Widget Area */}
           {!TURNSTILE_SITE_KEY ? (
-            <View style={styles.devContainer}>
+            <View style={[styles.devContainer, { width: webViewWidth }]}>
               <ActivityIndicator size="small" color="#1D4ED8" />
               <Text style={styles.devText}>Verifying guest status...</Text>
               <Pressable
@@ -287,9 +319,9 @@ export default function TurnstileModal({
               </Pressable>
             </View>
           ) : (
-            <View style={styles.webViewContainer}>
+            <View style={[styles.webViewContainer, { width: webViewWidth, height: webViewHeight }]}>
               {isLoading && (
-                <View style={styles.loadingOverlay}>
+                <View style={[styles.loadingOverlay, { width: webViewWidth, height: webViewHeight }]}>
                   <ActivityIndicator size="large" color="#1D4ED8" />
                   <Text style={styles.loadingText}>Loading verification...</Text>
                 </View>
@@ -297,19 +329,22 @@ export default function TurnstileModal({
 
               {hasError ? (
                 <View style={styles.errorContainer}>
-                  <Ionicons name="wifi-outline" size={32} color="#DC2626" />
+                  <Ionicons name="wifi-outline" size={28} color="#DC2626" />
                   <Text style={styles.errorText}>
-                    Unable to load verification widget.{"\n"}
-                    Please check your connection and try again.
+                    Unable to load verification widget.
                   </Text>
+                  {errorDetail ? (
+                    <Text style={styles.errorDetailText}>{errorDetail}</Text>
+                  ) : null}
                   <View style={styles.errorActions}>
                     <Pressable
                       style={styles.retryBtn}
                       onPress={() => {
                         setHasError(false);
+                        setErrorDetail("");
                         setIsLoading(true);
                         handledRef.current = false;
-                        webViewRef.current?.reload();
+                        setReloadKey((k) => k + 1);
                       }}
                     >
                       <Text style={styles.retryBtnText}>Retry</Text>
@@ -333,11 +368,11 @@ export default function TurnstileModal({
                 </View>
               ) : (
                 <WebView
+                  key={`turnstile-wv-${reloadKey}`}
                   ref={webViewRef}
-                  source={{ html: turnstileHtml, baseUrl: "http://localhost" }}
-                  onLoad={handleLoad}
+                  source={{ html: turnstileHtml, baseUrl: WEBVIEW_BASE_URL }}
                   onError={(e) => handleError(e?.nativeEvent)}
-                  onHttpError={(e) => handleError(e?.nativeEvent)}
+                  onHttpError={handleHttpError}
                   onMessage={handleMessage}
                   javaScriptEnabled
                   domStorageEnabled
@@ -345,7 +380,11 @@ export default function TurnstileModal({
                   thirdPartyCookiesEnabled
                   sharedCookiesEnabled
                   originWhitelist={["*"]}
-                  style={styles.webView}
+                  androidLayerType="software"
+                  opaque={false}
+                  javaScriptCanOpenWindowsAutomatically={true}
+                  setSupportMultipleWindows={false}
+                  style={{ width: webViewWidth, height: webViewHeight, backgroundColor: "#FFFFFF" }}
                   scrollEnabled={false}
                   showsVerticalScrollIndicator={false}
                   showsHorizontalScrollIndicator={false}
@@ -370,25 +409,25 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   card: {
-    width: "100%",
-    maxWidth: 380,
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   header: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   headerLeft: {
     flexDirection: "row",
@@ -396,37 +435,38 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   shieldIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     backgroundColor: "#EFF6FF",
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: "#0F172A",
   },
   closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
   },
   subtitle: {
+    width: "100%",
     fontSize: 12,
     color: "#64748B",
-    lineHeight: 18,
-    marginBottom: 16,
+    lineHeight: 16,
+    marginBottom: 14,
+    textAlign: "left",
   },
   webViewContainer: {
-    height: 110,
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E2E8F0",
     alignItems: "center",
@@ -436,11 +476,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#FFFFFF",
     gap: 8,
     zIndex: 10,
   },
@@ -448,29 +486,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
   },
-  webView: {
-    width: "100%",
-    height: 110,
-    backgroundColor: "transparent",
-  },
   errorContainer: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 16,
-    gap: 8,
+    padding: 12,
+    gap: 6,
   },
   errorText: {
     fontSize: 12,
+    fontWeight: "600",
     color: "#DC2626",
     textAlign: "center",
-    lineHeight: 18,
+  },
+  errorDetailText: {
+    fontSize: 10,
+    color: "#94A3B8",
+    textAlign: "center",
+    lineHeight: 13,
   },
   retryBtn: {
     marginTop: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     backgroundColor: "#1D4ED8",
-    borderRadius: 8,
+    borderRadius: 6,
   },
   retryBtnText: {
     fontSize: 12,
@@ -511,8 +550,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cancelLink: {
-    marginTop: 14,
-    paddingVertical: 8,
+    marginTop: 12,
+    paddingVertical: 6,
     alignItems: "center",
   },
   cancelLinkText: {

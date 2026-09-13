@@ -19,10 +19,8 @@ export default function GuestVerificationModal({ visible, onClose, onVerified })
     }
   }
 
-  function handleError(message) {
+  function handleError() {
     // Errors are displayed inside TurnstileModal itself.
-    // The parent screen handles the case where the user closes or retries.
-    console.warn("[GuestVerification] CAPTCHA error:", message);
   }
 
   return (

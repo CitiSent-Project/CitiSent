@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import { logger } from "../../config/logger.js";
 
 const TURNSTILE_VERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
@@ -16,12 +17,18 @@ const TURNSTILE_VERIFY_URL =
 export async function verifyTurnstileToken(token, remoteip = null) {
   const secretKey = env.CLOUDFLARE_TURNSTILE_SECRET_KEY;
 
+  logger.info("[Turnstile] Verification request received", {
+    tokenPresent: Boolean(token && typeof token === "string" && token.trim().length > 0),
+    environment: env.isProduction ? "production" : "development",
+    secretKeyConfigured: Boolean(secretKey),
+  });
+
   // In development / non-production mode, accept mock dev tokens or skip if no secret key
   if (!env.isProduction) {
     if (!secretKey || token === "mock-dev-turnstile-token") {
-      console.warn(
-        "[Turnstile] Non-production mode: Skipping Cloudflare CAPTCHA verification " +
-          `(${!secretKey ? "no secret key" : "mock dev token"}).`
+      logger.warn(
+        "[Turnstile] Non-production mode: Skipping Cloudflare CAPTCHA verification",
+        { reason: !secretKey ? "no secret key" : "mock dev token" },
       );
       return { success: true, errorCodes: [], skipped: true };
     }
@@ -29,6 +36,7 @@ export async function verifyTurnstileToken(token, remoteip = null) {
 
   if (!secretKey) {
     // In production, no secret key is a hard failure.
+    logger.error("[Turnstile] Secret key is not configured — cannot verify token");
     return {
       success: false,
       errorCodes: ["missing-secret-key"],
@@ -37,6 +45,7 @@ export async function verifyTurnstileToken(token, remoteip = null) {
   }
 
   if (!token || typeof token !== "string" || token.trim().length === 0) {
+    logger.warn("[Turnstile] Token is missing or empty — rejecting");
     return { success: false, errorCodes: ["missing-input-response"], skipped: false };
   }
 
@@ -50,6 +59,7 @@ export async function verifyTurnstileToken(token, remoteip = null) {
   }
 
   try {
+    logger.info("[Turnstile] Sending verification request to Cloudflare");
     const response = await fetch(TURNSTILE_VERIFY_URL, {
       method: "POST",
       headers: {
@@ -60,6 +70,9 @@ export async function verifyTurnstileToken(token, remoteip = null) {
     });
 
     if (!response.ok) {
+      logger.error("[Turnstile] Cloudflare returned HTTP error", {
+        statusCode: response.status,
+      });
       return {
         success: false,
         errorCodes: [`cloudflare-http-${response.status}`],
@@ -68,14 +81,26 @@ export async function verifyTurnstileToken(token, remoteip = null) {
     }
 
     const json = await response.json();
+    const errorCodes = Array.isArray(json["error-codes"]) ? json["error-codes"] : [];
+
+    if (json.success) {
+      logger.info("[Turnstile] Cloudflare verification succeeded");
+    } else {
+      logger.warn("[Turnstile] Cloudflare verification failed", {
+        errorCodes,
+      });
+    }
 
     return {
       success: Boolean(json.success),
-      errorCodes: Array.isArray(json["error-codes"]) ? json["error-codes"] : [],
+      errorCodes,
       skipped: false,
     };
   } catch (error) {
     // Network/timeout errors — do not silently allow through in production
+    logger.error("[Turnstile] Network/timeout error contacting Cloudflare", {
+      error: error?.message || String(error),
+    });
     return {
       success: false,
       errorCodes: ["cloudflare-network-error"],

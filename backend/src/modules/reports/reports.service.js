@@ -202,7 +202,16 @@ export const reportsService = {
     // The backend determines guest status from the verified JWT (actor.isGuest).
     // We never trust is_guest from the request body.
     if (actor?.isGuest) {
-      if (!turnstileToken || typeof turnstileToken !== "string" || !turnstileToken.trim()) {
+      const hasToken = Boolean(turnstileToken && typeof turnstileToken === "string" && turnstileToken.trim());
+      logger.info("[Turnstile] Guest report submission", {
+        tokenPresent: hasToken,
+        userId: actor.id,
+      });
+
+      if (!hasToken) {
+        logger.warn("[Turnstile] Guest report rejected — no CAPTCHA token provided", {
+          userId: actor.id,
+        });
         const error = new AppError(
           "Please complete the verification before submitting your report.",
           StatusCodes.FORBIDDEN,
@@ -215,6 +224,7 @@ export const reportsService = {
       try {
         turnstileResult = await verifyTurnstileToken(turnstileToken, remoteIp);
       } catch {
+        logger.error("[Turnstile] Exception during Cloudflare verification call");
         const error = new AppError(
           "We couldn't verify your request right now. Please try again.",
           StatusCodes.BAD_GATEWAY,
@@ -223,12 +233,19 @@ export const reportsService = {
         throw error;
       }
 
+      logger.info("[Turnstile] Verification result", {
+        success: turnstileResult.success,
+        skipped: turnstileResult.skipped || false,
+        errorCodes: turnstileResult.errorCodes || [],
+      });
+
       if (!turnstileResult.success) {
         const errorCodes = turnstileResult.errorCodes || [];
         const isNetworkError = errorCodes.includes("cloudflare-network-error");
         const isMissingKey = errorCodes.includes("missing-secret-key");
 
         if (isNetworkError || isMissingKey) {
+          logger.error("[Turnstile] Infrastructure failure — cannot verify", { errorCodes });
           const error = new AppError(
             "We couldn't verify your request right now. Please try again.",
             StatusCodes.BAD_GATEWAY,
@@ -237,6 +254,10 @@ export const reportsService = {
           throw error;
         }
 
+        logger.warn("[Turnstile] Guest report rejected — CAPTCHA verification failed", {
+          errorCodes,
+          userId: actor.id,
+        });
         const error = new AppError(
           "Verification failed. Please try again.",
           StatusCodes.FORBIDDEN,

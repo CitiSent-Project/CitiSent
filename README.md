@@ -184,3 +184,5 @@ Each component requires its respective `.env` file for local development. Templa
 - Web: Copy [`CitiSent-Website/.env.example`](./CitiSent-Website/.env.example) to `CitiSent-Website/.env`
 - Mobile: Copy [`CitiSent-Mobile/.env.local.example`](./CitiSent-Mobile/.env.local.example) to `CitiSent-Mobile/.env`
 - AI Sentiment: Copy [`ai-sentiment/.env.example`](./ai-sentiment/.env.example) to `ai-sentiment/.env`
+
+test again

@@ -129,12 +129,166 @@ export function classifyAndSanitizeSmtpError(err) {
     diagnostic = message ? message.slice(0, 150) : "Unknown mail delivery failure";
   }
 
+  if (err?.provider === "resend" || err?.provider === "brevo") {
+    const provName = err.provider === "resend" ? "Resend" : "Brevo";
+    if (err.statusCode === 401 || err.statusCode === 403) {
+      return {
+        category: "AUTHENTICATION_FAILED",
+        diagnostic: `${provName} API authentication failed (${err.statusCode}). Check your ${err.provider === "resend" ? "RESEND_API_KEY" : "BREVO_API_KEY"}.`,
+        code: String(err.statusCode),
+        responseCode: err.statusCode,
+      };
+    }
+    if (err.statusCode === 429) {
+      return {
+        category: "PROVIDER_RATE_LIMITED",
+        diagnostic: `${provName} API rate limit exceeded (429).`,
+        code: "429",
+        responseCode: 429,
+      };
+    }
+    return {
+      category: "PROVIDER_API_ERROR",
+      diagnostic: `${provName} API error: ${message.slice(0, 150)}`,
+      code: String(err.statusCode || code || "API_ERROR"),
+      responseCode: err.statusCode || responseCode || null,
+    };
+  }
+
   return {
     category,
     diagnostic,
     code: code || null,
     responseCode: responseCode || null,
   };
+}
+
+/**
+ * Returns the active email delivery provider based on available configuration.
+ * Prioritizes HTTP APIs (Resend, Brevo) to avoid Render's SMTP port restrictions.
+ */
+export function getActiveEmailProvider() {
+  if (env.RESEND_API_KEY) return "resend";
+  if (env.BREVO_API_KEY) return "brevo";
+  return "smtp";
+}
+
+/**
+ * Validates that at least one email delivery mechanism is configured.
+ */
+export function requireEmailConfig() {
+  const provider = getActiveEmailProvider();
+  if (provider === "resend" || provider === "brevo") {
+    return;
+  }
+  requireSmtpConfig();
+}
+
+/**
+ * Sends an email via Resend's HTTPS REST API (Port 443).
+ * Immune to cloud firewall blocks on ports 25, 465, and 587.
+ */
+export async function sendViaResend({ to, subject, html, text, from }) {
+  const fromAddress = env.RESEND_FROM_EMAIL || from || "CitiSent <onboarding@resend.dev>";
+  const toList = Array.isArray(to) ? to : [to];
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: toList,
+        subject,
+        html,
+        text,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const err = new Error(data?.message || `Resend API returned status ${response.status}`);
+      err.provider = "resend";
+      err.statusCode = response.status;
+      err.responseCode = response.status;
+      throw err;
+    }
+
+    return { messageId: data?.id, provider: "resend" };
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      const timeoutErr = new Error("Resend HTTP request timed out after 8000ms");
+      timeoutErr.code = "ETIMEDOUT";
+      timeoutErr.provider = "resend";
+      throw timeoutErr;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Sends an email via Brevo's (formerly Sendinblue) HTTPS REST API (Port 443).
+ * Immune to cloud firewall blocks on ports 25, 465, and 587.
+ */
+export async function sendViaBrevo({ to, subject, html, text, recipientName }) {
+  const senderEmail = env.GMAIL_USER || "citisent.app@gmail.com";
+  const toList = Array.isArray(to)
+    ? to.map((email) => ({ email, name: recipientName || "CitiSent User" }))
+    : [{ email: to, name: recipientName || "CitiSent User" }];
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: { email: senderEmail, name: "CitiSent" },
+        to: toList,
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const err = new Error(data?.message || `Brevo API returned status ${response.status}`);
+      err.provider = "brevo";
+      err.statusCode = response.status;
+      err.responseCode = response.status;
+      throw err;
+    }
+
+    return { messageId: data?.messageId, provider: "brevo" };
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      const timeoutErr = new Error("Brevo HTTP request timed out after 8000ms");
+      timeoutErr.code = "ETIMEDOUT";
+      timeoutErr.provider = "brevo";
+      throw timeoutErr;
+    }
+    throw err;
+  }
 }
 
 /**
@@ -147,7 +301,7 @@ export function requireSmtpConfig() {
     if (!env.GMAIL_USER) missing.push("GMAIL_USER");
     if (!env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
     throw new AppError(
-      `Email delivery is not configured. Missing environment variable(s): ${missing.join(", ")}.`,
+      `Email delivery is not configured. Missing environment variable(s): ${missing.join(", ")} (or configure RESEND_API_KEY / BREVO_API_KEY).`,
       StatusCodes.SERVICE_UNAVAILABLE,
     );
   }
@@ -216,10 +370,40 @@ function getFallbackTransporter() {
 }
 
 export function getTransporter() {
-  requireSmtpConfig();
-
   return {
     async sendMail(mailOptions) {
+      // 1. If Resend HTTP API is configured, use it (runs over HTTPS Port 443, never blocked by Render)
+      if (env.RESEND_API_KEY) {
+        try {
+          return await sendViaResend(mailOptions);
+        } catch (resendErr) {
+          const classified = classifyAndSanitizeSmtpError(resendErr);
+          logger.error("[MAILER] Resend HTTP send failed", {
+            category: classified.category,
+            diagnostic: classified.diagnostic,
+            code: classified.code,
+          });
+          throw resendErr;
+        }
+      }
+
+      // 2. If Brevo HTTP API is configured, use it (runs over HTTPS Port 443, never blocked by Render)
+      if (env.BREVO_API_KEY) {
+        try {
+          return await sendViaBrevo(mailOptions);
+        } catch (brevoErr) {
+          const classified = classifyAndSanitizeSmtpError(brevoErr);
+          logger.error("[MAILER] Brevo HTTP send failed", {
+            category: classified.category,
+            diagnostic: classified.diagnostic,
+            code: classified.code,
+          });
+          throw brevoErr;
+        }
+      }
+
+      // 3. Fallback to direct SMTP (for local development or environments with unblocked SMTP ports)
+      requireSmtpConfig();
       const primary = getPrimaryTransporter();
       const primaryPort = env.SMTP_PORT || 465;
       try {

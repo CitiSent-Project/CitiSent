@@ -83,7 +83,7 @@ export function PieChart({ title, total, labels = [], values = [], colors = [], 
                 Department
               </span>
             </div>
-            <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug break-words">
+            <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug wrap-break-word">
               {legend[0]?.label}
             </p>
             <div className="mt-1 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between w-full">

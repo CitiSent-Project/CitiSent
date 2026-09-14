@@ -42,7 +42,7 @@
     "vitest": "^4.1.0"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "allowScripts": {
     "esbuild": true

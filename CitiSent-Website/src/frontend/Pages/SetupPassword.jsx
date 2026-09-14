@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FiCheckCircle, FiLock } from 'react-icons/fi'
 import { authApiService } from '../../services/api/auth/authApiService'
+import { AuthPasswordField } from '../../components/Auth-Ui'
 
 const initialForm = {
   password: '',
@@ -34,6 +35,7 @@ export function SetupPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const hasMissingResetToken = isResetMode && !token
 
   function updateField(field, value) {
     setForm((previous) => ({ ...previous, [field]: value }))
@@ -73,16 +75,15 @@ export function SetupPasswordPage() {
       )
       setForm(initialForm)
     } catch (error) {
-      setErrorMessage(
-        error.message ||
-          `Unable to ${isResetMode ? 'reset password' : 'activate this account'}. Please try again.`
-      )
+      setErrorMessage(isResetMode
+        ? 'This reset link is invalid, expired, or has already been used. Request a new password reset to continue.'
+        : error.message || 'Unable to activate this account. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const title = isResetMode ? 'Reset your password' : 'Set up your password'
+  const title = hasMissingResetToken ? 'Invalid reset link' : isResetMode ? 'Create a new password' : 'Set up your password'
   const subtitle = isResetMode
     ? 'Choose a new password for your CitiSent account.'
     : 'Choose a password for your CitiSent account.'
@@ -101,7 +102,13 @@ export function SetupPasswordPage() {
             </div>
           </div>
 
-          {successMessage ? (
+          {hasMissingResetToken ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900" role="alert">
+              <p className="font-semibold">Reset link expired or invalid</p>
+              <p className="mt-2 text-sm">This link is missing or no longer available. Request a new reset link to continue.</p>
+              <a href="/" className="mt-4 inline-block text-sm font-semibold text-blue-700 underline underline-offset-4">Request a new reset link</a>
+            </div>
+          ) : successMessage ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <FiCheckCircle />
@@ -119,33 +126,8 @@ export function SetupPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="setup-password" className="mb-1 block text-sm text-slate-700">
-                  New Password
-                </label>
-                <input
-                  id="setup-password"
-                  type="password"
-                  value={form.password}
-                  onChange={(event) => updateField('password', event.target.value)}
-                  autoComplete="new-password"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="setup-confirm-password" className="mb-1 block text-sm text-slate-700">
-                  Confirm Password
-                </label>
-                <input
-                  id="setup-confirm-password"
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={(event) => updateField('confirmPassword', event.target.value)}
-                  autoComplete="new-password"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500"
-                />
-              </div>
+              <AuthPasswordField id="setup-password" label="New Password" value={form.password} onChange={(value) => updateField('password', value)} placeholder="At least 8 characters" />
+              <AuthPasswordField id="setup-confirm-password" label="Confirm Password" value={form.confirmPassword} onChange={(value) => updateField('confirmPassword', value)} placeholder="Repeat your new password" />
 
               {errorMessage ? (
                 <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

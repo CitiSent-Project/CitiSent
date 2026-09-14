@@ -240,7 +240,6 @@ export function useAppStateOrchestrator() {
     handleRegister,
     handleLogin,
     handleLogout,
-    handleForgotPassword,
   } = useAuthSession({
     setAccessToken,
     setProfile,
@@ -669,7 +668,6 @@ export function useAppStateOrchestrator() {
   const appActions = {
     onRegister: handleRegister,
     onLogin: handleLogin,
-    onForgotPassword: handleForgotPassword,
     onLogout: handleLogout,
     onRetrySessionBootstrap: handleRetrySessionBootstrap,
     onNavigate: handleNavigate,

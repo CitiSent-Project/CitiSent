@@ -18,13 +18,11 @@ const ConversationsPage = lazy(() => import('../../frontend/Conversations/Conver
 
 export function renderAuthPage({
     onLogin,
-    onForgotPassword,
     rememberedEmail,
 }) {
     return (
         <LoginPage
             onLogin={onLogin}
-            onForgotPassword={onForgotPassword}
             rememberedEmail={rememberedEmail}
         />
     )

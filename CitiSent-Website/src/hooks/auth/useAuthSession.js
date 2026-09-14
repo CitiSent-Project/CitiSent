@@ -187,23 +187,9 @@ export function useAuthSession({
     notifySuccess('Logout successful.')
   }
 
-  async function handleForgotPassword(payload) {
-    try {
-      await authApiService.forgotPassword({
-        email: payload.email,
-      })
-      notifySuccess('Reset link sent. Please check your email inbox.')
-      return { ok: true }
-    } catch (error) {
-      notifyError('Request failed.', error.message)
-      return { ok: false, message: error.message }
-    }
-  }
-
   return {
     handleRegister,
     handleLogin,
     handleLogout,
-    handleForgotPassword,
   }
 }

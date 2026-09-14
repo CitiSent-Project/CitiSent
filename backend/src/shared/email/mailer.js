@@ -533,44 +533,27 @@ export async function sendOtpEmail({ toEmail, recipientName, otp }) {
       "If you did not request this, you can safely ignore this email.",
     ].join("\n"),
     html: `
-      <div style="font-family: 'Poppins', Helvetica, Arial, sans-serif; background-color: #eef2f8; padding: 40px 20px; color: #1f2937; line-height: 1.6;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-          
-          <div style="background-color: #1d4ed8; padding: 30px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">CitiSent</h1>
-          </div>
-          
-          <div style="padding: 40px 30px;">
-            <h2 style="margin-top: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Hello ${safeName},</h2>
-            <p style="color: #4b5563; font-size: 16px; margin-bottom: 24px;">
-              We received a request to reset your CitiSent account password.
-            </p>
-            <p style="color: #4b5563; font-size: 15px; margin-bottom: 20px;">
-              Use the verification code below to continue:
-            </p>
-            
-            <div style="text-align: center; margin: 32px 0;">
-              <div style="display: inline-block; background-color: #f0f4ff; border: 2px dashed #a5b4fc; border-radius: 12px; padding: 20px 40px;">
-                <span style="font-size: 40px; font-weight: 800; letter-spacing: 10px; color: #1d4ed8; font-family: monospace;">${safeOtp}</span>
-              </div>
+      <div style="margin:0; padding:32px 16px; background:#edf5f7; color:#183042; font-family:Arial,Helvetica,sans-serif; line-height:1.5;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; margin:0 auto; background:#ffffff; border:1px solid #dce8ec; border-radius:18px; overflow:hidden;">
+          <tr><td style="padding:28px 32px; background:#173f75; text-align:left;">
+            <div style="color:#ffffff; font-size:24px; font-weight:700; letter-spacing:.2px;">CitiSent</div>
+            <div style="margin-top:5px; color:#c9e9ef; font-size:13px;">Secure account recovery</div>
+          </td></tr>
+          <tr><td style="padding:36px 32px 32px;">
+            <p style="margin:0 0 8px; color:#173f75; font-size:14px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;">Password reset</p>
+            <h1 style="margin:0 0 16px; color:#152b3b; font-size:26px; line-height:1.2; font-weight:700;">Hello ${safeName},</h1>
+            <p style="margin:0 0 12px; color:#4c6270; font-size:16px;">We received a request to reset your CitiSent account password.</p>
+            <p style="margin:0; color:#4c6270; font-size:16px;">Enter this one-time verification code to continue:</p>
+            <div style="margin:28px 0; padding:22px 16px; border:1px solid #cfe1ea; border-radius:14px; background:#f2f8fb; text-align:center;">
+              <div style="color:#173f75; font-family:Consolas,'Courier New',monospace; font-size:34px; font-weight:700; letter-spacing:8px; line-height:1.2;">${safeOtp}</div>
             </div>
-            
-            <p style="color: #6b7280; font-size: 14px; text-align: center; margin-bottom: 0;">
-              <strong>This code expires in 5 minutes.</strong><br/>
-              Do not share this code with anyone.
-            </p>
-          </div>
-          
-          <div style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-            <p style="color: #94a3b8; font-size: 13px; margin: 0;">
-              If you did not request this reset, you can safely ignore this email.
-            </p>
-            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
-              &copy; ${new Date().getFullYear()} CitiSent. All rights reserved.
-            </p>
-          </div>
-          
-        </div>
+            <p style="margin:0; color:#536b78; font-size:14px; text-align:center;"><strong>This code expires in 5 minutes.</strong><br/>Never share it with anyone.</p>
+          </td></tr>
+          <tr><td style="padding:22px 32px; border-top:1px solid #e5eef1; background:#f8fbfc;">
+            <p style="margin:0; color:#6b7f89; font-size:13px; line-height:1.6;">If you did not request this reset, you can safely ignore this email.</p>
+            <p style="margin:10px 0 0; color:#91a3ab; font-size:12px;">&copy; ${new Date().getFullYear()} CitiSent. All rights reserved.</p>
+          </td></tr>
+        </table>
       </div>
     `,
   });

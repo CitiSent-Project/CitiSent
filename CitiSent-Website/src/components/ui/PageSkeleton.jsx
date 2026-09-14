@@ -8,7 +8,7 @@ function SkeletonBlock({ className = '', style }) {
     <div
       aria-hidden="true"
       style={style}
-      className={`animate-pulse rounded-xl bg-slate-200/80 dark:bg-slate-700/80 ${className}`.trim()}
+      className={`animate-shimmer rounded-xl bg-slate-200/80 dark:bg-slate-700/80 ${className}`.trim()}
     />
   )
 }
@@ -46,7 +46,7 @@ function DonutChartSkeleton({ className = '' }) {
     <CardSkeleton className={`p-5 flex flex-col ${className}`}>
       <SkeletonBlock className="mb-8 h-5 w-40" />
       <div className="mb-8 flex flex-1 items-center justify-center">
-        <div className="relative h-56 w-56 sm:h-64 sm:w-64 animate-pulse rounded-full border-24 sm:border-32 border-slate-200/80 dark:border-slate-700/80" />
+        <div className="relative h-56 w-56 sm:h-64 sm:w-64 animate-shimmer rounded-full border-24 sm:border-32 border-slate-200/80 dark:border-slate-700/80" />
       </div>
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {renderRepeated(6, (i) => (

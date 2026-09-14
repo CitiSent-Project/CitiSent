@@ -196,7 +196,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
       <div className="block md:hidden space-y-3 mt-4">
         {isInitialLoading && (
           [1, 2, 3].map((i) => (
-            <div key={i} className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700 dark:bg-slate-800/50" />
+            <div key={i} className="h-32 w-full animate-shimmer rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700 dark:bg-slate-800/50" />
           ))
         )}
         {!isInitialLoading && rows.length === 0 && (

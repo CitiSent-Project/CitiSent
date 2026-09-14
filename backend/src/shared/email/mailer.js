@@ -1,10 +1,13 @@
 import dns from "node:dns";
+import { createRequire } from "node:module";
 import nodemailer from "nodemailer";
-import shared from "nodemailer/lib/shared/index.js";
 import { StatusCodes } from "http-status-codes";
 import { env } from "../../config/env.js";
 import { logger } from "../../config/logger.js";
 import { AppError } from "../errors/appError.js";
+
+const require = createRequire(import.meta.url);
+const shared = require("nodemailer/lib/shared/index.js");
 
 // Ensure IPv4 resolution takes precedence in Node's default resolver
 if (typeof dns.setDefaultResultOrder === "function") {

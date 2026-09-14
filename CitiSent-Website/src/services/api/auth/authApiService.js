@@ -16,6 +16,7 @@ export const authApiService = {
     }),
   requestOtp: (payload) => apiClient.post('/auth/request-otp', payload),
   verifyOtp: (payload) => apiClient.post('/auth/verify-otp', payload),
+  resetPasswordWithOtp: (payload) => apiClient.post('/auth/reset-password-otp', payload),
   changePassword: (token, payload) =>
     apiClient.post('/auth/change-password', payload, {
       token,

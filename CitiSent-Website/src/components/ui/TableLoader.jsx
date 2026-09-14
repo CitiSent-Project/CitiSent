@@ -4,7 +4,7 @@ function SkeletonBlock({ className = '' }) {
 	return (
 		<div
 			aria-hidden="true"
-			className={`animate-pulse motion-reduce:animate-none rounded-xl bg-slate-200/80 dark:bg-slate-700/80 ${className}`.trim()}
+			className={`animate-shimmer rounded-xl bg-slate-200/80 dark:bg-slate-700/80 ${className}`.trim()}
 		/>
 	)
 }

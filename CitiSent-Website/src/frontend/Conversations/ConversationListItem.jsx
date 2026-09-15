@@ -9,16 +9,32 @@ const AVATAR_COLORS = [
   'bg-rose-600', 'bg-cyan-600', 'bg-blue-600', 'bg-teal-600',
 ]
 
-function getAvatarColor(name = '') {
+function getAvatarColor(key = '') {
   let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < key.length; i++) {
+    hash = key.charCodeAt(i) + ((hash << 5) - hash)
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-function getInitial(name = '') {
-  return name.trim().charAt(0).toUpperCase() || '?'
+function formatReportTitle(conversation = {}) {
+  const { reportNumber, reportNum, reportId, id } = conversation
+  const rawId = String(reportNumber || reportNum || reportId || id || '').trim()
+  if (!rawId) return 'Report'
+  if (rawId.toLowerCase().startsWith('report')) return rawId
+  if (rawId.startsWith('#')) return `Report ${rawId}`
+  const displayId = rawId.length > 12 ? `${rawId.slice(0, 8)}…` : rawId
+  return `Report #${displayId}`
+}
+
+function getInitial(conversation = {}) {
+  const { reportNumber, reportNum, reportId, userName } = conversation
+  const idStr = String(reportNumber || reportNum || reportId || '').trim()
+  if (idStr) {
+    const match = idStr.match(/[a-zA-Z0-9]/)
+    if (match) return match[0].toUpperCase()
+  }
+  return userName?.trim().charAt(0).toUpperCase() || '#'
 }
 
 /**
@@ -54,16 +70,20 @@ function formatConversationTime(dateString) {
 export function ConversationListItem({ conversation, isActive, onClick }) {
   const {
     userName,
+    reportId,
+    reportNumber,
     lastMessage,
     lastMessageAt,
     lastMessageSenderRole,
     unreadCount = 0,
     isOnline,
     category,
-  } = conversation
+  } = conversation || {}
 
-  const colorClass = getAvatarColor(userName)
-  const initial = getInitial(userName)
+  const reportTitle = formatReportTitle(conversation)
+  const avatarKey = String(reportNumber || reportId || userName || '')
+  const colorClass = getAvatarColor(avatarKey)
+  const initial = getInitial(conversation)
   const timeLabel = formatConversationTime(lastMessageAt)
   const hasUnread = unreadCount > 0
 
@@ -74,8 +94,8 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
   }
 
   const ariaLabel = hasUnread
-    ? `Conversation with ${userName} — ${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}`
-    : `Conversation with ${userName}`
+    ? `${reportTitle}${userName ? ` from ${userName}` : ''} — ${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}`
+    : `${reportTitle}${userName ? ` from ${userName}` : ''}`
 
   return (
     <button
@@ -111,15 +131,15 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
         )}
       </div>
 
-      {/* Content: name, preview, timestamp, unread badge */}
+      {/* Content: Report title, preview, timestamp, unread badge, category & reporter */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span
-            className={`truncate text-sm ${
+            className={`truncate text-sm font-numeric ${
               hasUnread ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'
             }`}
           >
-            {userName}
+            {reportTitle}
           </span>
           <span
             className={`shrink-0 text-[11px] font-numeric ${
@@ -132,7 +152,7 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
 
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p
-            className={`truncate text-xs leading-relaxed  ${
+            className={`truncate text-xs leading-relaxed ${
               hasUnread ? 'font-medium text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -151,12 +171,19 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
           )}
         </div>
 
-        {/* Category tag */}
-        {category && (
-          <span className="mt-1 inline-block max-w-full truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-            {category}
-          </span>
-        )}
+        {/* Category tag & Reporter info */}
+        <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-[10px]">
+          {category && (
+            <span className="inline-block max-w-[55%] truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-medium text-slate-500 dark:text-slate-400">
+              {category}
+            </span>
+          )}
+          {userName && (
+            <span className="truncate text-slate-400 dark:text-slate-500" title={userName}>
+              {category ? '· ' : ''}{userName}
+            </span>
+          )}
+        </div>
       </div>
     </button>
   )

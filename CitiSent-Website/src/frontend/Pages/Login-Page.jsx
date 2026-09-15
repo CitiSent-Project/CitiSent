@@ -1,6 +1,17 @@
 import { useState } from 'react'
-import { AuthInputField, AuthPageShell, AuthPasswordField } from '../../components/Auth-Ui'
-import { PASSWORD_RESET_STEPS, PasswordResetCheckEmailStep, PasswordResetEmailStep, PasswordResetNewPasswordStep, PasswordResetOtpStep, PasswordResetSuccessStep, usePasswordResetFlow } from '../../features/auth/passwordReset'
+import {
+  AuthInputField,
+  AuthPageShell,
+  AuthPasswordField,
+  PasswordResetCheckEmailStep,
+  PasswordResetEmailStep,
+  PasswordResetNewPasswordStep,
+  PasswordResetOtpStep,
+  PasswordResetSuccessStep,
+} from '../../components/Auth-Ui'
+import { PASSWORD_RESET_STEPS } from '../../models/passwordResetModel'
+import { usePasswordResetFlow } from '../../hooks/auth/usePasswordResetFlow'
+
 
 function PasswordRecovery({ onReturnToLogin }) {
   const flow = usePasswordResetFlow()

@@ -23,3 +23,8 @@ export function validatePassword(password, confirmation) {
   if (password !== confirmation) return 'Your passwords do not match.'
   return ''
 }
+
+export function resolveSafeErrorMessage(error, fallback) {
+  if (error?.status === 429 && error?.userMessage) return error.userMessage
+  return fallback
+}

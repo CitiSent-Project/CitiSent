@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { authApiService } from '../../../services/api/auth/authApiService'
-import { PASSWORD_RESET_RESEND_COOLDOWN_MS, PASSWORD_RESET_STEPS, initialPasswordResetState } from './passwordResetFlowModel'
-import { normalizeEmail, normalizeOtp, validateEmail, validateOtp, validatePassword } from './passwordResetValidation'
+import { authApiService } from '../../services/api/auth/authApiService'
+import {
+  PASSWORD_RESET_RESEND_COOLDOWN_MS,
+  PASSWORD_RESET_STEPS,
+  initialPasswordResetState,
+} from '../../models/passwordResetModel'
+import {
+  normalizeEmail,
+  normalizeOtp,
+  resolveSafeErrorMessage,
+  validateEmail,
+  validateOtp,
+  validatePassword,
+} from '../../controllers/auth/passwordResetController'
 
 const GENERIC_SEND_MESSAGE = 'If an account matches this email, a verification code has been sent.'
-
-function safeErrorMessage(error, fallback) {
-  if (error?.status === 429 && error?.userMessage) return error.userMessage
-  return fallback
-}
 
 export function usePasswordResetFlow() {
   const [state, setState] = useState(initialPasswordResetState)
@@ -56,7 +62,10 @@ export function usePasswordResetFlow() {
       })
       return true
     } catch (error) {
-      update({ isSubmitting: false, errorMessage: safeErrorMessage(error, 'Unable to send a verification code. Please try again.') })
+      update({
+        isSubmitting: false,
+        errorMessage: resolveSafeErrorMessage(error, 'Unable to send a verification code. Please try again.'),
+      })
       return false
     }
   }
@@ -78,7 +87,10 @@ export function usePasswordResetFlow() {
       if (!resetToken) throw new Error('Missing reset token')
       update({ step: PASSWORD_RESET_STEPS.PASSWORD, otp: '', resetToken, isSubmitting: false })
     } catch {
-      update({ isSubmitting: false, errorMessage: 'That verification code is invalid or expired. Please try again or request a new code.' })
+      update({
+        isSubmitting: false,
+        errorMessage: 'That verification code is invalid or expired. Please try again or request a new code.',
+      })
     }
   }
 

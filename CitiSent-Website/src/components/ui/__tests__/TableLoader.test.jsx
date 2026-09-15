@@ -88,4 +88,23 @@ describe('TableLoader', () => {
     expect(document.body.textContent).toContain('Refreshing...')
     expect(document.body.querySelector('[role="status"]')).toBeTruthy()
   })
+
+  it('renders users-grid layout with status accessibility role', async () => {
+    await act(async () => {
+      root.render(
+        <TableLoader
+          isLoading
+          delayMs={0}
+          layout="users-grid"
+          rows={3}
+          label="Loading users..."
+        />,
+      )
+    })
+
+    expect(document.body.textContent).toContain('Loading users...')
+    const statusContainer = document.body.querySelector('[role="status"]')
+    expect(statusContainer).toBeTruthy()
+    expect(statusContainer.getAttribute('aria-busy')).toBe('true')
+  })
 })

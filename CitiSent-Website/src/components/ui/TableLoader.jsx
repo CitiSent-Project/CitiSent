@@ -45,27 +45,45 @@ function TableBodyLoader({ rows, columns, rowClassName = '', cellClassName = '' 
 	))
 }
 
-function UsersGridLoader({ rows, gridTemplateColumnsClass, rowClassName = '' }) {
+function UsersGridLoader({ rows, gridTemplateColumnsClass = '', rowClassName = '' }) {
+	const desktopGridClass = gridTemplateColumnsClass.includes('grid-cols-')
+		? gridTemplateColumnsClass.split(' ').map((c) => (c.startsWith('grid-cols-') ? `lg:${c}` : c)).join(' ')
+		: gridTemplateColumnsClass || 'lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px]'
+
 	return Array.from({ length: rows }).map((_, rowIndex) => (
 		<div
 			key={rowIndex}
-			className={`grid items-center gap-3 border-b border-slate-200 dark:border-slate-700/50 px-4 py-3 ${gridTemplateColumnsClass} ${rowClassName}`.trim()}
+			className={`relative border-b border-slate-100 px-4 py-4 dark:border-slate-700/50 lg:grid ${desktopGridClass} lg:items-center lg:gap-4 lg:px-5 lg:py-3.5 ${rowClassName}`.trim()}
 		>
-			<div className="flex justify-center">
+			{/* Checkbox skeleton — top-left on mobile, static cell on desktop */}
+			<div className="absolute left-4 top-4.5 lg:static lg:flex lg:items-center lg:justify-center">
 				<SkeletonBlock className="h-4 w-4 rounded-sm" />
 			</div>
-			<div className="flex items-center gap-3">
-				<SkeletonBlock className="h-9 w-9 rounded-full" />
-				<div className="min-w-0 space-y-2">
-					<SkeletonBlock className="h-4 w-28" />
-					<SkeletonBlock className="h-3 w-36" />
+
+			{/* User Details skeleton — avatar + name & email */}
+			<div className="flex min-w-0 items-center gap-3 ml-8 pr-11 lg:ml-0 lg:pr-0">
+				<SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
+				<div className="min-w-0 flex-1 space-y-1.5">
+					<SkeletonBlock className="h-4 w-32 max-w-full sm:w-44" />
+					<SkeletonBlock className="h-3 w-20 max-w-full sm:w-28" />
 				</div>
 			</div>
-			<SkeletonBlock className="h-4 w-32" />
-			<SkeletonBlock className="h-6 w-20 rounded-full" />
-			<SkeletonBlock className="h-4 w-24" />
-			<div className="flex justify-end">
-				<SkeletonBlock className="h-9 w-9 rounded-full" />
+
+			{/* Account Status skeleton */}
+			<div className="mt-2.5 ml-11 lg:mt-0 lg:ml-0 flex items-center gap-2">
+				<SkeletonBlock className="h-3 w-10 lg:hidden" />
+				<SkeletonBlock className="h-6 w-20 rounded-full" />
+			</div>
+
+			{/* Registered Date skeleton */}
+			<div className="mt-2 ml-11 lg:mt-0 lg:ml-0 flex items-center gap-2">
+				<SkeletonBlock className="h-3 w-16 lg:hidden" />
+				<SkeletonBlock className="h-3.5 w-24" />
+			</div>
+
+			{/* Action button skeleton — top-right on mobile, flex-end on desktop */}
+			<div className="absolute right-4 top-4 lg:static lg:flex lg:items-center lg:justify-end">
+				<SkeletonBlock className="h-8.5 w-8.5 rounded-full" />
 			</div>
 		</div>
 	))

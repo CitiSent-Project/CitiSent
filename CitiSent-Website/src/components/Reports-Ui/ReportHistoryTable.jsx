@@ -389,10 +389,41 @@ export function ReportHistoryTable({
       </div>
 
       {/* Mobile Card List View */}
-      <div className="block md:hidden space-y-3">
+      <div className="block md:hidden space-y-3" aria-busy={isLoading} aria-live="polite" role={isLoading ? 'status' : undefined}>
+        {isLoading && <span className="sr-only">Loading history logs...</span>}
+        {isRefreshing && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-500 dark:border-slate-700/50 dark:bg-slate-800/50 dark:text-slate-400">
+            <span>Refreshing history logs...</span>
+            <div aria-hidden="true" className="h-2 w-16 animate-shimmer rounded-full bg-slate-200/80 dark:bg-slate-700/80" />
+          </div>
+        )}
         {isInitialLoading && (
-          [1, 2, 3].map((i) => (
-            <div key={i} className="h-32 w-full animate-shimmer rounded-xl border border-slate-200 bg-slate-50/50 shadow-sm dark:border-slate-700/80 dark:bg-slate-800/50" />
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800"
+              aria-hidden="true"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-5 w-20 animate-shimmer rounded bg-slate-200/80 dark:bg-slate-700/80" />
+                  <div className="h-4 w-36 animate-shimmer rounded-md bg-slate-200/80 dark:bg-slate-700/80" />
+                  <div className="h-3 w-48 max-w-full animate-shimmer rounded bg-slate-200/80 dark:bg-slate-700/80" />
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className="h-5 w-18 animate-shimmer rounded-full bg-slate-200/80 dark:bg-slate-700/80" />
+                  <div className="h-5 w-14 animate-shimmer rounded-full bg-slate-200/80 dark:bg-slate-700/80" />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
+                <div className="space-y-1">
+                  <div className="h-3 w-32 animate-shimmer rounded bg-slate-200/80 dark:bg-slate-700/80" />
+                  <div className="h-3 w-28 animate-shimmer rounded bg-slate-200/80 dark:bg-slate-700/80" />
+                </div>
+                <div className="h-7 w-20 animate-shimmer rounded-lg bg-slate-200/80 dark:bg-slate-700/80" />
+              </div>
+            </div>
           ))
         )}
         {!isInitialLoading && visibleRows.length === 0 && (

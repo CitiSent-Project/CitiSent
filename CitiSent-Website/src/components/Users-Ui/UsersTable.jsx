@@ -258,7 +258,7 @@ export function UsersTable({
             label="Refreshing users..."
             refreshText="Refreshing users..."
             rows={1}
-            gridTemplateColumnsClass="grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px]"
+            gridTemplateColumnsClass="lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px]"
             className="bg-transparent dark:text-slate-400"
           />
 
@@ -270,7 +270,7 @@ export function UsersTable({
             variant="skeleton"
             label="Loading users..."
             rows={5}
-            gridTemplateColumnsClass="grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px]"
+            gridTemplateColumnsClass="lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px]"
             className="bg-transparent dark:text-slate-400"
           />
 

@@ -293,37 +293,167 @@ function ReportDetailSkeleton() {
   )
 }
 
-/** Admin Management: Catalog Cards + Admin Accounts Table */
+/** Admin Management: Header + Office Admin Assignments (Mobile Cards / Desktop Table) + Department Catalog + Transfer Queue */
 function AdminManagementSkeleton() {
   return (
     <div className="space-y-6">
-      <HeaderSkeleton titleWidth="w-52" actionWidth="w-36" />
-
-      {/* Department Catalog Cards */}
-      <section aria-hidden="true" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {renderRepeated(3, (index) => (
-          <CardSkeleton key={index} className="p-5">
-            <div className="flex items-center gap-3">
-              <SkeletonBlock className="h-12 w-12 rounded-xl" />
-              <div className="flex-1 space-y-1.5">
-                <SkeletonBlock className="h-4 w-32" />
-                <SkeletonBlock className="h-3 w-20" />
-              </div>
-              <SkeletonBlock className="h-6 w-11 rounded-full" />
-            </div>
-          </CardSkeleton>
-        ))}
-      </section>
-
-      {/* Admin Users Table */}
-      <CardSkeleton className="p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <SkeletonBlock className="h-5 w-44" />
-          <SkeletonBlock className="h-9 w-64 rounded-xl" />
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800">
+        <div className="space-y-1.5">
+          <SkeletonBlock className="h-7 w-52 sm:w-60" />
+          <SkeletonBlock className="h-3.5 w-64 max-w-full sm:w-96" />
         </div>
-        <div className="space-y-3">
-          {renderRepeated(5, (index) => (
-            <SkeletonBlock key={index} className="h-14 w-full rounded-xl" />
+        <SkeletonBlock className="h-10 w-full sm:w-32 rounded-xl" />
+      </div>
+
+      {/* Office Admin Assignments Section */}
+      <CardSkeleton className="p-5 sm:p-6">
+        {/* Section Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <SkeletonBlock className="h-5 w-48" />
+            <SkeletonBlock className="h-3.5 w-64 max-w-full" />
+          </div>
+          <SkeletonBlock className="h-6 w-36 rounded-full" />
+        </div>
+
+        {/* Search & Filter Toolbar */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/70 p-3 rounded-xl border border-slate-100 dark:bg-slate-900/40 dark:border-slate-700/60">
+          <div className="space-y-1">
+            <SkeletonBlock className="h-3 w-20" />
+            <SkeletonBlock className="h-8.5 w-full rounded-lg" />
+          </div>
+          <div className="space-y-1">
+            <SkeletonBlock className="h-3 w-28" />
+            <SkeletonBlock className="h-8.5 w-full rounded-lg" />
+          </div>
+        </div>
+
+        {/* Mobile Cards List View (lg:hidden) */}
+        <div className="mt-4 space-y-3 lg:hidden">
+          {renderRepeated(3, (index) => (
+            <div
+              key={index}
+              className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-700 dark:bg-slate-800"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <SkeletonBlock className="h-4 w-32 max-w-full" />
+                    <SkeletonBlock className="h-3 w-40 max-w-full" />
+                  </div>
+                </div>
+                <SkeletonBlock className="h-5 w-18 shrink-0 rounded-full" />
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <SkeletonBlock className="h-3 w-12" />
+                <SkeletonBlock className="h-5 w-24 rounded-md" />
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <SkeletonBlock className="h-3 w-32" />
+                <SkeletonBlock className="h-9 w-full rounded-lg" />
+                <div className="flex items-center gap-2 pt-1">
+                  <SkeletonBlock className="h-8 flex-1 rounded-lg" />
+                  <SkeletonBlock className="h-8 w-20 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View (hidden lg:block) */}
+        <div className="mt-5 hidden overflow-hidden rounded-xl border border-slate-200/80 shadow-2xs lg:block dark:border-slate-700">
+          <div className="border-b border-slate-200 bg-slate-50/80 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/80">
+            <div className="grid grid-cols-[18%_20%_17%_13%_17%_15%] gap-3 items-center">
+              <SkeletonBlock className="h-3.5 w-16" />
+              <SkeletonBlock className="h-3.5 w-16" />
+              <SkeletonBlock className="h-3.5 w-28" />
+              <SkeletonBlock className="h-3.5 w-20 mx-auto" />
+              <SkeletonBlock className="h-3.5 w-28" />
+              <SkeletonBlock className="h-3.5 w-16 mx-auto" />
+            </div>
+          </div>
+          <div className="divide-y divide-slate-100 bg-white p-2 dark:divide-slate-700/60 dark:bg-slate-800">
+            {renderRepeated(4, (index) => (
+              <div key={index} className="grid grid-cols-[18%_20%_17%_13%_17%_15%] gap-3 items-center px-4 py-3">
+                <div className="flex items-center gap-2.5">
+                  <SkeletonBlock className="h-8 w-8 shrink-0 rounded-full" />
+                  <SkeletonBlock className="h-3.5 w-24" />
+                </div>
+                <SkeletonBlock className="h-3.5 w-32" />
+                <SkeletonBlock className="h-6 w-28 rounded-md" />
+                <SkeletonBlock className="h-5 w-20 rounded-full mx-auto" />
+                <SkeletonBlock className="h-8 w-full rounded-lg" />
+                <div className="flex items-center justify-center gap-2">
+                  <SkeletonBlock className="h-7 w-16 rounded-lg" />
+                  <SkeletonBlock className="h-7 w-16 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardSkeleton>
+
+      {/* Department Catalog Section */}
+      <CardSkeleton className="p-5 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <SkeletonBlock className="h-5 w-44" />
+            <SkeletonBlock className="h-3.5 w-60 max-w-full" />
+          </div>
+          <SkeletonBlock className="h-9 w-36 rounded-xl" />
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {renderRepeated(3, (index) => (
+            <div key={index} className="rounded-xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <SkeletonBlock className="h-11 w-11 rounded-xl" />
+                  <div className="space-y-1.5">
+                    <SkeletonBlock className="h-4 w-28" />
+                    <SkeletonBlock className="h-3 w-16" />
+                  </div>
+                </div>
+                <SkeletonBlock className="h-6 w-12 rounded-full" />
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/60">
+                <SkeletonBlock className="h-3.5 w-24" />
+                <SkeletonBlock className="h-7 w-16 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardSkeleton>
+
+      {/* Transfer Request Queue Section */}
+      <CardSkeleton className="p-5 sm:p-6">
+        <div className="space-y-1">
+          <SkeletonBlock className="h-5 w-48" />
+          <SkeletonBlock className="h-3.5 w-64 max-w-full" />
+        </div>
+        <div className="mt-4 space-y-3">
+          {renderRepeated(2, (index) => (
+            <div key={index} className="rounded-xl border border-slate-200/80 bg-white p-4.5 dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <SkeletonBlock className="h-4 w-36" />
+                <div className="flex items-center gap-2">
+                  <SkeletonBlock className="h-5 w-18 rounded-full" />
+                  <SkeletonBlock className="h-5 w-28 rounded-full" />
+                </div>
+              </div>
+              <div className="mt-2.5 flex items-center gap-2">
+                <SkeletonBlock className="h-6 w-24 rounded-md" />
+                <SkeletonBlock className="h-3 w-4" />
+                <SkeletonBlock className="h-6 w-28 rounded-md" />
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <SkeletonBlock className="h-7 w-28 rounded-lg" />
+                <SkeletonBlock className="h-7 w-24 rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
       </CardSkeleton>
@@ -371,7 +501,226 @@ function GridReportsSkeleton() {
   )
 }
 
-/** List / Table Heavy Pages (Users, Notifications, History) */
+/** Users Page Skeleton: Header + 3 KPI Stat Cards + Toolbar + Responsive User Cards / Table */
+function UsersPageSkeleton() {
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <SkeletonBlock className="h-7 w-32" />
+        <SkeletonBlock className="h-6 w-6 rounded-full" />
+      </div>
+
+      {/* 3 KPI Stat Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {renderRepeated(3, (index) => (
+          <CardSkeleton key={index} className="flex items-center gap-4 p-5">
+            <SkeletonBlock className="h-12 w-12 shrink-0 rounded-xl" />
+            <div className="space-y-1.5 flex-1">
+              <SkeletonBlock className="h-3.5 w-24" />
+              <SkeletonBlock className="h-8 w-14" />
+            </div>
+          </CardSkeleton>
+        ))}
+      </div>
+
+      {/* Main Users Card */}
+      <CardSkeleton className="overflow-hidden p-0">
+        {/* Users Toolbar */}
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700/50">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <SkeletonBlock className="h-10 w-full md:max-w-xs rounded-xl" />
+            <div className="flex flex-wrap items-center gap-2">
+              <SkeletonBlock className="h-10 w-28 rounded-xl" />
+              <SkeletonBlock className="h-10 w-24 rounded-xl" />
+              <SkeletonBlock className="h-10 w-full md:w-28 rounded-xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile User Rows (lg:hidden) */}
+        <div className="divide-y divide-slate-100 dark:divide-slate-700/50 lg:hidden">
+          {renderRepeated(5, (index) => (
+            <div key={index} className="relative p-4">
+              {/* Checkbox */}
+              <div className="absolute left-4 top-4.5">
+                <SkeletonBlock className="h-4 w-4 rounded-sm" />
+              </div>
+              {/* User Details */}
+              <div className="flex min-w-0 items-center gap-3 ml-8 pr-11">
+                <SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <SkeletonBlock className="h-4 w-36 max-w-full" />
+                  <SkeletonBlock className="h-3 w-20 max-w-full" />
+                </div>
+              </div>
+              {/* Account Status */}
+              <div className="mt-2.5 ml-11 flex items-center gap-2">
+                <SkeletonBlock className="h-3 w-10" />
+                <SkeletonBlock className="h-6 w-20 rounded-full" />
+              </div>
+              {/* Registered Date */}
+              <div className="mt-2 ml-11 flex items-center gap-2">
+                <SkeletonBlock className="h-3 w-16" />
+                <SkeletonBlock className="h-3.5 w-24" />
+              </div>
+              {/* Action button */}
+              <div className="absolute right-4 top-4">
+                <SkeletonBlock className="h-8.5 w-8.5 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View (hidden lg:block) */}
+        <div className="hidden lg:block overflow-x-auto">
+          <div className="grid grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px] items-center gap-4 border-b border-slate-200 bg-slate-50/50 px-5 py-3.5 text-xs font-semibold dark:border-slate-700/80 dark:bg-slate-800/50">
+            <div className="flex justify-center">
+              <SkeletonBlock className="h-4 w-4 rounded-sm" />
+            </div>
+            <SkeletonBlock className="h-3.5 w-24" />
+            <SkeletonBlock className="h-3.5 w-24" />
+            <SkeletonBlock className="h-3.5 w-28" />
+            <div className="flex justify-end">
+              <SkeletonBlock className="h-3.5 w-12" />
+            </div>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            {renderRepeated(5, (index) => (
+              <div
+                key={index}
+                className="grid grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px] items-center gap-4 px-5 py-3.5"
+              >
+                <div className="flex justify-center">
+                  <SkeletonBlock className="h-4 w-4 rounded-sm" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
+                  <div className="space-y-1.5">
+                    <SkeletonBlock className="h-4 w-40" />
+                    <SkeletonBlock className="h-3 w-24" />
+                  </div>
+                </div>
+                <SkeletonBlock className="h-6 w-20 rounded-full" />
+                <SkeletonBlock className="h-3.5 w-28" />
+                <div className="flex justify-end">
+                  <SkeletonBlock className="h-8.5 w-8.5 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pagination placeholder */}
+        <div className="flex justify-center p-4 border-t border-slate-100 dark:border-slate-700/50">
+          <SkeletonBlock className="h-9 w-52 rounded-xl" />
+        </div>
+      </CardSkeleton>
+    </div>
+  )
+}
+
+/** History Page Skeleton: Header + 3 KPI Stat Cards + Filter Bar + Responsive History Cards / Table */
+function HistoryPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <SkeletonBlock className="h-8 w-52" />
+        <SkeletonBlock className="h-7 w-7 rounded-full" />
+      </div>
+
+      {/* 3 KPI Stat Cards */}
+      <div className="rounded-2xl bg-[#5f82bd] p-4 md:p-6 shadow-sm dark:bg-slate-800">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {renderRepeated(3, (index) => (
+            <div key={index} className="flex items-center gap-3 sm:gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-5 sm:py-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+              <SkeletonBlock className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl" />
+              <div className="space-y-1.5 flex-1">
+                <SkeletonBlock className="h-3.5 w-28" />
+                <SkeletonBlock className="h-8 sm:h-9 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          <SkeletonBlock className="h-8.5 w-36 rounded-lg" />
+          <SkeletonBlock className="h-8.5 w-60 rounded-lg" />
+          <SkeletonBlock className="h-8.5 w-32 rounded-lg" />
+          <SkeletonBlock className="h-8.5 w-28 rounded-lg" />
+        </div>
+        <SkeletonBlock className="h-8.5 w-full lg:w-36 rounded-lg" />
+      </div>
+
+      {/* Mobile Card List View (md:hidden) */}
+      <div className="block md:hidden space-y-3">
+        {renderRepeated(4, (index) => (
+          <div key={index} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <SkeletonBlock className="h-5 w-20 rounded" />
+                <SkeletonBlock className="h-4 w-36" />
+                <SkeletonBlock className="h-3 w-48 max-w-full" />
+              </div>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <SkeletonBlock className="h-5 w-18 rounded-full" />
+                <SkeletonBlock className="h-5 w-14 rounded-full" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
+              <div className="space-y-1">
+                <SkeletonBlock className="h-3 w-32" />
+                <SkeletonBlock className="h-3 w-28" />
+              </div>
+              <SkeletonBlock className="h-7 w-20 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View (hidden md:block) */}
+      <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
+        <div className="border-b border-slate-200 bg-slate-100/80 px-4 py-3.5 dark:border-slate-700 dark:bg-slate-800/80">
+          <div className="grid grid-cols-[12%_18%_18%_12%_12%_12%_14%] gap-2 items-center text-xs">
+            <SkeletonBlock className="h-3.5 w-16" />
+            <SkeletonBlock className="h-3.5 w-24" />
+            <SkeletonBlock className="h-3.5 w-20" />
+            <SkeletonBlock className="h-3.5 w-16" />
+            <SkeletonBlock className="h-3.5 w-16" />
+            <SkeletonBlock className="h-3.5 w-20" />
+            <SkeletonBlock className="h-3.5 w-14 ml-auto" />
+          </div>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          {renderRepeated(6, (index) => (
+            <div key={index} className="grid grid-cols-[12%_18%_18%_12%_12%_12%_14%] gap-2 items-center px-4 py-3.5">
+              <SkeletonBlock className="h-5 w-16 rounded font-mono" />
+              <SkeletonBlock className="h-4 w-28" />
+              <SkeletonBlock className="h-3.5 w-32" />
+              <SkeletonBlock className="h-6 w-16 rounded-full" />
+              <SkeletonBlock className="h-6 w-20 rounded-full" />
+              <SkeletonBlock className="h-3.5 w-20" />
+              <div className="flex justify-end">
+                <SkeletonBlock className="h-7 w-18 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination placeholder */}
+      <div className="flex justify-center pt-2">
+        <SkeletonBlock className="h-9 w-52 rounded-xl" />
+      </div>
+    </div>
+  )
+}
+
+/** Generic List Heavy Pages (Notifications) */
 function ListHeavySkeleton() {
   return (
     <div className="space-y-5">
@@ -386,7 +735,24 @@ function ListHeavySkeleton() {
           </div>
         </div>
 
-        <div aria-hidden="true" className="space-y-3">
+        {/* Mobile View: Cards */}
+        <div aria-hidden="true" className="space-y-3 sm:hidden">
+          {renderRepeated(5, (index) => (
+            <div key={index} className="rounded-xl border border-slate-100 p-3.5 bg-slate-50/50 dark:border-slate-700/50 dark:bg-slate-800/50">
+              <div className="flex items-start gap-3">
+                <SkeletonBlock className="h-9 w-9 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <SkeletonBlock className="h-4 w-32" />
+                  <SkeletonBlock className="h-3 w-48 max-w-full" />
+                  <SkeletonBlock className="h-3 w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Rows */}
+        <div aria-hidden="true" className="hidden sm:block space-y-3">
           {/* Table Header row */}
           <div className="flex items-center gap-4 border-b border-slate-100 px-3 py-2 dark:border-slate-700/50">
             <SkeletonBlock className="h-4 w-4 rounded-sm" />
@@ -464,10 +830,9 @@ export function PageSkeleton({ pageKey }) {
     pageKey === APP_PAGES.REPORTS ||
     pageKey === APP_PAGES.REPORTS_BY_CATEGORY ||
     pageKey === APP_PAGES.REPORTS_BY_URGENCY
-  const isListHeavy =
-    pageKey === APP_PAGES.USERS ||
-    pageKey === APP_PAGES.NOTIFICATIONS ||
-    pageKey === APP_PAGES.REPORTS_HISTORY
+  const isUsers = pageKey === APP_PAGES.USERS
+  const isHistory = pageKey === APP_PAGES.REPORTS_HISTORY
+  const isListHeavy = pageKey === APP_PAGES.NOTIFICATIONS
 
   const motionProps = prefersReducedMotion
     ? { initial: false, animate: { opacity: 1 }, transition: { duration: 0 } }
@@ -482,6 +847,7 @@ export function PageSkeleton({ pageKey }) {
       id="page-skeleton"
       aria-busy="true"
       aria-live="polite"
+      role="status"
       className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8"
     >
       <MotionDiv {...motionProps}>
@@ -492,12 +858,16 @@ export function PageSkeleton({ pageKey }) {
         {isReportDetail ? <ReportDetailSkeleton /> : null}
         {isAdminManagement ? <AdminManagementSkeleton /> : null}
         {isReportsGrid ? <GridReportsSkeleton /> : null}
+        {isUsers ? <UsersPageSkeleton /> : null}
+        {isHistory ? <HistoryPageSkeleton /> : null}
         {isListHeavy ? <ListHeavySkeleton /> : null}
         {!isDashboard &&
         !isConversations &&
         !isReportDetail &&
         !isAdminManagement &&
         !isReportsGrid &&
+        !isUsers &&
+        !isHistory &&
         !isListHeavy ? (
           <FormPageSkeleton />
         ) : null}

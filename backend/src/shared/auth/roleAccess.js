@@ -99,9 +99,19 @@ export function canAccessDepartment({
 }
 
 export function buildActor({ authUser, profile }) {
-  const fname = profile?.fname ?? authUser?.user_metadata?.fname ?? null;
-  const mname = profile?.mname ?? authUser?.user_metadata?.mname ?? null;
-  const lname = profile?.lname ?? authUser?.user_metadata?.lname ?? null;
+  const hasProfile = Boolean(profile && typeof profile === "object");
+  const fname =
+    hasProfile && "fname" in profile && profile.fname !== undefined
+      ? profile.fname
+      : (authUser?.user_metadata?.fname ?? null);
+  const mname =
+    hasProfile && "mname" in profile && profile.mname !== undefined
+      ? profile.mname
+      : (authUser?.user_metadata?.mname ?? null);
+  const lname =
+    hasProfile && "lname" in profile && profile.lname !== undefined
+      ? profile.lname
+      : (authUser?.user_metadata?.lname ?? null);
   const profileName = composeFullName({
     fname,
     mname,
@@ -113,8 +123,8 @@ export function buildActor({ authUser, profile }) {
     lname: authUser?.user_metadata?.lname,
   });
   const fullName =
-    profileName ||
-    metadataName ||
+    (hasProfile && profileName) ||
+    (!hasProfile && (metadataName || profileName)) ||
     profile?.fullName ||
     authUser?.user_metadata?.fullName ||
     profile?.username ||
@@ -130,6 +140,9 @@ export function buildActor({ authUser, profile }) {
     fname,
     mname,
     lname,
+    first_name: fname,
+    middle_name: mname,
+    surname: lname,
     username: profile?.username || authUser?.user_metadata?.username || null,
     phoneNumber:
       profile?.phone_number ||

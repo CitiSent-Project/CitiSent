@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -14,11 +14,14 @@ import {
   getAuthPhoneNumber,
   getAuthEmail,
   getAuthUsername,
+  getAuthFullName,
   getAuthGender,
   getAuthProfileImage,
   isGuestUser,
   isGuestVerified,
+  setAuthUser,
 } from "../../services/authSession";
+import { api } from "../../services/api";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
 export default function Profile() {
@@ -35,6 +38,8 @@ export default function Profile() {
 
   const resolveDisplayName = () => {
     if (isGuest) return "Guest User";
+    const fullName = getAuthFullName();
+    if (fullName) return fullName;
     return getAuthUsername("");
   };
 
@@ -47,7 +52,7 @@ export default function Profile() {
     return "";
   };
 
-  const [displayUsername, setDisplayUsername] = useState(resolveDisplayName);
+  const [displayName, setDisplayName] = useState(resolveDisplayName);
   const [displayPhoneNumber, setDisplayPhoneNumber] = useState(resolveDisplayPhone);
   const [displayGender, setDisplayGender] = useState(() => getAuthGender());
   const [displayProfileImage, setDisplayProfileImage] = useState(() => getAuthProfileImage());
@@ -56,18 +61,48 @@ export default function Profile() {
   // edits are immediately reflected in the header.
   useFocusEffect(
     useCallback(() => {
-      setDisplayUsername(resolveDisplayName());
+      setDisplayName(resolveDisplayName());
       setDisplayPhoneNumber(resolveDisplayPhone());
       setDisplayGender(getAuthGender());
       setDisplayProfileImage(getAuthProfileImage());
     }, [isGuest, isVerified])
   );
 
-  const { refreshing, onRefresh } = usePullToRefresh(() => {
+  // If the cached session is missing the registered full name (e.g. older session format),
+  // fetch /users/me in the background to hydrate it seamlessly.
+  useEffect(() => {
+    if (!isGuest && !getAuthFullName()) {
+      api.get("/users/me")
+        .then((res) => {
+          const user = res?.data || res;
+          if (user && typeof user === "object") {
+            setAuthUser(user, {
+              fallbackUsername: user.username,
+              fallbackPhoneNumber: user.phoneNumber,
+            });
+            setDisplayName(resolveDisplayName());
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isGuest]);
+
+  const { refreshing, onRefresh } = usePullToRefresh(async () => {
     setIsLogoutVisible(false);
-    // Refresh session-derived display values on pull-to-refresh too
-    setDisplayUsername(getAuthUsername(""));
-    setDisplayPhoneNumber(getAuthPhoneNumber(""));
+    if (!isGuest) {
+      try {
+        const res = await api.get("/users/me");
+        const user = res?.data || res;
+        if (user && typeof user === "object") {
+          setAuthUser(user, {
+            fallbackUsername: user.username,
+            fallbackPhoneNumber: user.phoneNumber,
+          });
+        }
+      } catch {}
+    }
+    setDisplayName(resolveDisplayName());
+    setDisplayPhoneNumber(resolveDisplayPhone());
     setDisplayGender(getAuthGender());
     setDisplayProfileImage(getAuthProfileImage());
     refreshNotifications().catch(() => {});
@@ -113,7 +148,7 @@ export default function Profile() {
         onRefresh={onRefresh}
       >
         <ProfileHeader
-          name={displayUsername}
+          name={displayName}
           phone={displayPhoneNumber}
           gender={displayGender}
           profileImage={displayProfileImage}

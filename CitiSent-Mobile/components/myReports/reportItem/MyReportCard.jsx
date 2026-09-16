@@ -22,7 +22,7 @@ export default function MyReportCard({
     <View className={`${containerClassName} rounded-2xl border px-4 py-4 shadow-sm`} style={{ borderColor: Colors.border, backgroundColor: Colors.background }}>
       <View className="mb-3 flex-row items-start justify-between gap-3">
         <View className="flex-1">
-          <FieldLabel text="Issue Type" />
+          <FieldLabel text="Selected Department" />
           <Text className="mt-1 text-base font-extrabold" style={{ color: Colors.text.issueType }}>{report.issueType}</Text>
         </View>
         <ReportStatusBadge status={report.status} />

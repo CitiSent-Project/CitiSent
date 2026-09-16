@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  requiredNameSchema,
+  optionalNameSchema,
+} from "../../shared/utils/nameValidation.js";
 
 const usernameSchema = z
   .string()
@@ -53,9 +57,9 @@ export const updateCurrentUserSchema = z.object({
       gender: z.string().trim().min(1).max(24).optional(),
       clientType: z.string().trim().min(1).max(32).optional(),
       avatarUrl: z.string().url().optional(),
-      fname: z.string().trim().min(1).max(120).optional(),
-      mname: z.string().trim().min(1).max(120).nullable().optional(),
-      lname: z.string().trim().min(1).max(120).optional(),
+      fname: requiredNameSchema("First name").optional(),
+      mname: optionalNameSchema("Middle name"),
+      lname: requiredNameSchema("Last name").optional(),
       email: z.string().trim().email().optional(),
       barangay: z.string().trim().min(1).optional(),
       city: citySchema.optional(),

@@ -9,6 +9,7 @@ import { Colors, FeedbackModal, SkeletonBlock, usePullToRefresh } from "../../mo
 import { getAuthUser, setAuthUser } from "../../services/authSession";
 import { api } from "../../services/api";
 import { fetchStoTomasBatangasBarangays } from "../../services/locationData";
+import { validateNameInput } from "../../utils/authValidation";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -61,10 +62,27 @@ function buildInitialProfile(sourceUser = getAuthUser()) {
     asText(metadata.fullName) || asText(metadata.name);
   const fallbackParts = splitFullName(fullNameCandidate);
 
+  const explicitFname =
+    asText(authUser.fname) || asText(authUser.first_name) ||
+    asText(profile.fname) || asText(profile.first_name) ||
+    asText(metadata.fname) || asText(metadata.first_name);
+
+  const explicitMname =
+    asText(authUser.mname) || asText(authUser.middle_name) ||
+    asText(profile.mname) || asText(profile.middle_name) ||
+    asText(metadata.mname) || asText(metadata.middle_name);
+
+  const explicitLname =
+    asText(authUser.lname) || asText(authUser.surname) || asText(authUser.last_name) ||
+    asText(profile.lname) || asText(profile.surname) || asText(profile.last_name) ||
+    asText(metadata.lname) || asText(metadata.surname) || asText(metadata.last_name);
+
+  const hasStructuredName = Boolean(explicitFname || explicitLname);
+
   return {
-    fname: asText(authUser.fname) || asText(profile.fname) || asText(metadata.fname) || fallbackParts.fname,
-    mname: asText(authUser.mname) || asText(profile.mname) || asText(metadata.mname) || fallbackParts.mname,
-    lname: asText(authUser.lname) || asText(profile.lname) || asText(metadata.lname) || fallbackParts.lname,
+    fname: explicitFname || (hasStructuredName ? "" : fallbackParts.fname),
+    mname: explicitMname || (hasStructuredName ? "" : fallbackParts.mname),
+    lname: explicitLname || (hasStructuredName ? "" : fallbackParts.lname),
     username: asText(authUser.username) || asText(profile.username) || asText(metadata.username),
     email: asText(authUser.email) || asText(profile.email) || asText(metadata.email),
     phoneNumber: parsePhoneNumberToLocal(
@@ -94,6 +112,7 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/;
 
 const INITIAL_FIELD_ERRORS = {
   fname: "",
+  mname: "",
   lname: "",
   username: "",
   email: "",
@@ -125,9 +144,15 @@ function mapServerErrorToFieldErrors(errorMessage) {
     nextErrors.email = raw;
   } else if (lower.includes("phone")) {
     nextErrors.phoneNumber = raw;
+  } else if (lower.includes("first name") || lower.includes("fname")) {
+    nextErrors.fname = raw;
+  } else if (lower.includes("middle name") || lower.includes("mname")) {
+    nextErrors.mname = raw;
+  } else if (lower.includes("last name") || lower.includes("surname") || lower.includes("lname")) {
+    nextErrors.lname = raw;
   } else {
-    // Unknown conflict field — surface on username as a safe default
-    nextErrors.username = raw || "A field value is already in use by another account.";
+    // Unknown conflict or validation field — surface on username as a safe default
+    nextErrors.username = raw || "A field value is invalid or already in use.";
   }
 
   return nextErrors;
@@ -246,12 +271,19 @@ export default function EditProfilePage() {
   const validateProfile = () => {
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
-    if (!profileDraft.fname.trim()) {
-      nextErrors.fname = "First name is required.";
+    const fnameError = validateNameInput(profileDraft.fname, "First name");
+    if (fnameError) {
+      nextErrors.fname = fnameError;
     }
 
-    if (!profileDraft.lname.trim()) {
-      nextErrors.lname = "Last name is required.";
+    const mnameError = validateNameInput(profileDraft.mname, "Middle name", { isOptional: true });
+    if (mnameError) {
+      nextErrors.mname = mnameError;
+    }
+
+    const lnameError = validateNameInput(profileDraft.lname, "Last name");
+    if (lnameError) {
+      nextErrors.lname = lnameError;
     }
 
     const trimmedUsername = profileDraft.username.trim();
@@ -318,9 +350,9 @@ export default function EditProfilePage() {
 
     try {
       const response = await api.patch("/users/me", {
-        fname: profileDraft.fname.trim(),
-        mname: profileDraft.mname.trim() || undefined,
-        lname: profileDraft.lname.trim(),
+        fname: profileDraft.fname,
+        mname: profileDraft.mname ? profileDraft.mname : null,
+        lname: profileDraft.lname,
         username: profileDraft.username.trim(),
         email: profileDraft.email.trim(),
         phoneNumber: `+63${profileDraft.phoneNumber}`,
@@ -350,9 +382,8 @@ export default function EditProfilePage() {
 
       const errorMessage = err?.message || "Failed to update profile. Please try again.";
 
-      // 409 Conflict — always a duplicate field (username / email / phone).
-      // api.js sets err.status = response.status, so this is reliable.
-      if (err?.status === 409) {
+      // 400 Bad Request (validation) or 409 Conflict (duplicate)
+      if (err?.status === 400 || err?.status === 409) {
         const mappedErrors = mapServerErrorToFieldErrors(errorMessage);
         setFieldErrors(mappedErrors);
         const firstErrorMessage = Object.values(mappedErrors).find(Boolean) || errorMessage;
@@ -443,6 +474,7 @@ export default function EditProfilePage() {
           placeholder="e.g., Santos (Optional)"
           autoComplete="name-middle"
           textContentType="middleName"
+          error={fieldErrors.mname}
         />
 
         <EditProfileTextField

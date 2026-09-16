@@ -15,6 +15,7 @@ import {
 } from "../../modules/auth";
 import { RefreshableScrollView, usePullToRefresh, AppKeyboardAvoidingView } from "../../modules/shared";
 import { fetchStoTomasBatangasBarangays } from "../../services/locationData";
+import { validateNameInput } from "../../utils/authValidation";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -225,9 +226,6 @@ export default function CreateAccountScreen() {
   };
 
   const validateFields = () => {
-    const trimmedFname = fname.trim();
-    const trimmedMname = mname.trim();
-    const trimmedLname = lname.trim();
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhoneNumber = phoneNumber.replace(/\D/g, "");
@@ -235,12 +233,19 @@ export default function CreateAccountScreen() {
     const parsedAge = Number.parseInt(age.trim(), 10);
     const nextErrors = { ...INITIAL_FIELD_ERRORS };
 
-    if (!trimmedFname) {
-      nextErrors.fname = "First name is required.";
+    const fnameError = validateNameInput(fname, "First name");
+    if (fnameError) {
+      nextErrors.fname = fnameError;
     }
 
-    if (!trimmedLname) {
-      nextErrors.lname = "Last name is required.";
+    const mnameError = validateNameInput(mname, "Middle name", { isOptional: true });
+    if (mnameError) {
+      nextErrors.mname = mnameError;
+    }
+
+    const lnameError = validateNameInput(lname, "Last name");
+    if (lnameError) {
+      nextErrors.lname = lnameError;
     }
 
     if (!trimmedUsername) {
@@ -324,9 +329,9 @@ export default function CreateAccountScreen() {
         !nextErrors.confirmPassword &&
         !nextErrors.agreeTerms &&
         !nextErrors.agreePrivacy,
-      trimmedFname,
-      trimmedMname,
-      trimmedLname,
+      fname,
+      mname,
+      lname,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
@@ -342,9 +347,9 @@ export default function CreateAccountScreen() {
 
     const {
       isValid,
-      trimmedFname,
-      trimmedMname,
-      trimmedLname,
+      fname: validatedFname,
+      mname: validatedMname,
+      lname: validatedLname,
       trimmedUsername,
       trimmedEmail,
       trimmedPhoneNumber,
@@ -362,9 +367,9 @@ export default function CreateAccountScreen() {
 
     try {
       await authApi.register({
-        fname: trimmedFname,
-        mname: trimmedMname || null,
-        lname: trimmedLname,
+        fname: validatedFname,
+        mname: validatedMname ? validatedMname : null,
+        lname: validatedLname,
         username: trimmedUsername,
         email: trimmedEmail,
         phoneNumber: `+63${trimmedPhoneNumber}`,

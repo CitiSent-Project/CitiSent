@@ -48,3 +48,39 @@ export const getLoginErrorMessage = (error) => {
     "Unable to login right now. Please try again."
   );
 };
+
+export function validateNameInput(value, fieldLabel, { isOptional = false } = {}) {
+  const str = value === undefined || value === null ? "" : String(value);
+
+  if (str === "") {
+    if (isOptional) return "";
+    return `${fieldLabel} is required.`;
+  }
+
+  if (str.trim().length === 0) {
+    return `${fieldLabel} cannot be only spaces.`;
+  }
+
+  if (/^\s/.test(str) && /\s$/.test(str)) {
+    return `${fieldLabel} cannot have leading or trailing spaces.`;
+  }
+
+  if (/^\s/.test(str)) {
+    return `${fieldLabel} cannot start with a space.`;
+  }
+
+  if (/\s$/.test(str)) {
+    return `${fieldLabel} cannot end with a space.`;
+  }
+
+  if (/\s{2,}/.test(str)) {
+    return `${fieldLabel} cannot contain consecutive spaces.`;
+  }
+
+  if (str.length > 120) {
+    return `${fieldLabel} must not exceed 120 characters.`;
+  }
+
+  return "";
+}
+

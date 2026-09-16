@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  requiredNameSchema,
+  optionalNameSchema,
+} from "../../shared/utils/nameValidation.js";
 
 function optionalTrimmedString(schema) {
   return z.preprocess((value) => {
@@ -35,9 +39,9 @@ export const registerSchema = z.object({
     username: usernameSchema,
     email: z.string().trim().email(),
     password: z.string().min(8).max(128),
-    fname: z.string().trim().min(1).max(120),
-    mname: z.string().trim().min(1).max(120).nullish(),
-    lname: z.string().trim().min(1).max(120),
+    fname: requiredNameSchema("First name"),
+    mname: optionalNameSchema("Middle name"),
+    lname: requiredNameSchema("Last name"),
     phoneNumber: phoneSchema.nullish(),
     role: z.string().trim().min(1).max(40).nullish(),
     accountType: z.string().trim().min(1).max(24).nullish(),

@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { USER_ROLES } from "../../shared/auth/roleAccess.js";
+import {
+  requiredNameSchema,
+  optionalNameSchema,
+} from "../../shared/utils/nameValidation.js";
 
 const reportIdSchema = z.string().uuid();
 const userIdSchema = z.string().uuid();
@@ -71,9 +75,9 @@ export const createAdminUserSchema = z.object({
   query: z.object({}).optional().default({}),
   body: z.object({
     email: z.string().trim().email().max(254),
-    fname: z.string().trim().min(1).max(120),
-    mname: z.string().trim().min(1).max(120).nullable().optional(),
-    lname: z.string().trim().min(1).max(120),
+    fname: requiredNameSchema("First name"),
+    mname: optionalNameSchema("Middle name"),
+    lname: requiredNameSchema("Last name"),
     // A manual account needs a known mobile-login credential. Requiring this
     // prevents silently generated usernames that neither admin nor user sees.
     username: usernameSchema,
@@ -104,9 +108,9 @@ export const updateAdminUserSchema = z.object({
   }),
   body: z
     .object({
-      fname: z.string().trim().min(1).max(120).optional(),
-      mname: z.string().trim().min(1).max(120).nullable().optional(),
-      lname: z.string().trim().min(1).max(120).optional(),
+      fname: requiredNameSchema("First name").optional(),
+      mname: optionalNameSchema("Middle name"),
+      lname: requiredNameSchema("Last name").optional(),
       username: usernameSchema.optional(),
       phoneNumber: phoneNumberSchema.optional(),
       barangay: z.string().trim().min(1).max(160).optional(),

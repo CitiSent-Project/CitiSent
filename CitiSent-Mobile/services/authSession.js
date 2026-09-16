@@ -78,6 +78,103 @@ function resolvePhoneNumber(user, fallbackPhoneNumber) {
   );
 }
 
+function resolveFirstName(user) {
+  return pickFirstText([
+    user?.first_name,
+    user?.fname,
+    user?.firstName,
+    user?.profile?.first_name,
+    user?.profile?.fname,
+    user?.profile?.firstName,
+    user?.user_metadata?.first_name,
+    user?.user_metadata?.fname,
+    user?.user_metadata?.firstName,
+    user?.userMetadata?.first_name,
+    user?.userMetadata?.fname,
+    user?.metadata?.first_name,
+    user?.metadata?.fname,
+  ]);
+}
+
+function resolveMiddleName(user) {
+  return pickFirstText([
+    user?.middle_name,
+    user?.mname,
+    user?.middleName,
+    user?.profile?.middle_name,
+    user?.profile?.mname,
+    user?.profile?.middleName,
+    user?.user_metadata?.middle_name,
+    user?.user_metadata?.mname,
+    user?.user_metadata?.middleName,
+    user?.userMetadata?.middle_name,
+    user?.userMetadata?.mname,
+    user?.metadata?.middle_name,
+    user?.metadata?.mname,
+  ]);
+}
+
+function resolveSurname(user) {
+  return pickFirstText([
+    user?.surname,
+    user?.last_name,
+    user?.lname,
+    user?.lastName,
+    user?.profile?.surname,
+    user?.profile?.last_name,
+    user?.profile?.lname,
+    user?.profile?.lastName,
+    user?.user_metadata?.surname,
+    user?.user_metadata?.last_name,
+    user?.user_metadata?.lname,
+    user?.user_metadata?.lastName,
+    user?.userMetadata?.surname,
+    user?.userMetadata?.last_name,
+    user?.userMetadata?.lname,
+    user?.metadata?.surname,
+    user?.metadata?.last_name,
+    user?.metadata?.lname,
+  ]);
+}
+
+export function composeFullName({ firstName, middleName, surname } = {}) {
+  const parts = [firstName, middleName, surname]
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter(Boolean);
+
+  return parts.join(" ");
+}
+
+function resolveFullName(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  const firstName = resolveFirstName(user);
+  const middleName = resolveMiddleName(user);
+  const surname = resolveSurname(user);
+
+  const builtFullName = composeFullName({ firstName, middleName, surname });
+  if (builtFullName) {
+    return builtFullName;
+  }
+
+  const directFullName = pickFirstText([
+    user?.fullName,
+    user?.name,
+    user?.profile?.fullName,
+    user?.profile?.name,
+    user?.user_metadata?.fullName,
+    user?.user_metadata?.name,
+  ]);
+
+  if (directFullName && !isRoleLabel(directFullName)) {
+    return directFullName;
+  }
+
+  return "";
+}
+
 function normalizeUser(user, options = {}) {
   if (!user || typeof user !== "object") {
     return null;
@@ -85,6 +182,10 @@ function normalizeUser(user, options = {}) {
 
   const username = resolveUsername(user, options.fallbackUsername);
   const phoneNumber = resolvePhoneNumber(user, options.fallbackPhoneNumber);
+  const firstName = resolveFirstName(user);
+  const middleName = resolveMiddleName(user);
+  const surname = resolveSurname(user);
+  const fullName = resolveFullName(user);
   const gender =
     user.gender || user.profile?.gender || user.user_metadata?.gender || "";
   const profileImage =
@@ -106,6 +207,14 @@ function normalizeUser(user, options = {}) {
     profileImage,
     isGuest,
     isVerified,
+    fname: firstName,
+    first_name: firstName,
+    mname: middleName,
+    middle_name: middleName,
+    lname: surname,
+    surname: surname,
+    last_name: surname,
+    fullName,
   };
 }
 
@@ -243,6 +352,42 @@ export function getAuthGender() {
 
 export function getAuthProfileImage() {
   return sessionUser?.profileImage || null;
+}
+
+export function getAuthFirstName() {
+  return normalizeText(
+    sessionUser?.first_name ||
+    sessionUser?.fname ||
+    sessionUser?.firstName ||
+    resolveFirstName(sessionUser)
+  );
+}
+
+export function getAuthMiddleName() {
+  return normalizeText(
+    sessionUser?.middle_name ||
+    sessionUser?.mname ||
+    sessionUser?.middleName ||
+    resolveMiddleName(sessionUser)
+  );
+}
+
+export function getAuthSurname() {
+  return normalizeText(
+    sessionUser?.surname ||
+    sessionUser?.lname ||
+    sessionUser?.last_name ||
+    sessionUser?.lastName ||
+    resolveSurname(sessionUser)
+  );
+}
+
+export function getAuthFullName(fallbackValue = "") {
+  const fullName = normalizeText(
+    sessionUser?.fullName ||
+    resolveFullName(sessionUser)
+  );
+  return fullName || normalizeText(fallbackValue);
 }
 
 export function getAuthUsername(fallbackValue = "") {

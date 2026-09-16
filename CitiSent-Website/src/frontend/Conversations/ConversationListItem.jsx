@@ -28,13 +28,14 @@ function formatReportTitle(conversation = {}) {
 }
 
 function getInitial(conversation = {}) {
-  const { reportNumber, reportNum, reportId, userName } = conversation
+  const { reportNumber, reportNum, reportId, userEmail, userName } = conversation
   const idStr = String(reportNumber || reportNum || reportId || '').trim()
   if (idStr) {
     const match = idStr.match(/[a-zA-Z0-9]/)
     if (match) return match[0].toUpperCase()
   }
-  return userName?.trim().charAt(0).toUpperCase() || '#'
+  const emailStr = String(userEmail || userName || '').trim()
+  return emailStr ? emailStr.charAt(0).toUpperCase() : 'U'
 }
 
 /**
@@ -70,6 +71,7 @@ function formatConversationTime(dateString) {
 export function ConversationListItem({ conversation, isActive, onClick }) {
   const {
     userName,
+    userEmail,
     reportId,
     reportNumber,
     lastMessage,
@@ -80,8 +82,9 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
     category,
   } = conversation || {}
 
+  const userDisplay = userEmail || userName || ''
   const reportTitle = formatReportTitle(conversation)
-  const avatarKey = String(reportNumber || reportId || userName || '')
+  const avatarKey = String(reportNumber || reportId || userDisplay || 'User')
   const colorClass = getAvatarColor(avatarKey)
   const initial = getInitial(conversation)
   const timeLabel = formatConversationTime(lastMessageAt)
@@ -94,8 +97,8 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
   }
 
   const ariaLabel = hasUnread
-    ? `${reportTitle}${userName ? ` from ${userName}` : ''} — ${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}`
-    : `${reportTitle}${userName ? ` from ${userName}` : ''}`
+    ? `${reportTitle}${userDisplay ? ` from ${userDisplay}` : ''} — ${unreadCount} unread ${unreadCount === 1 ? 'message' : 'messages'}`
+    : `${reportTitle}${userDisplay ? ` from ${userDisplay}` : ''}`
 
   return (
     <button
@@ -116,53 +119,48 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
         <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-blue-600" />
       )}
 
-      {/* Avatar with online dot indicator */}
+      {/* Avatar with Report Initial */}
       <div className="relative shrink-0">
         <div
-          className={`grid h-11 w-11 place-items-center rounded-full text-sm font-semibold text-white ${colorClass}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-sm shadow-xs transition-transform duration-200 group-hover:scale-105 ${colorClass}`}
+          aria-hidden="true"
         >
           {initial}
         </div>
         {isOnline && (
           <span
-            className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500"
+            className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500 ring-1 ring-emerald-400/30"
             title="Online"
+            aria-label="Online"
           />
         )}
       </div>
 
-      {/* Content: Report title, preview, timestamp, unread badge, category & reporter */}
+      {/* Main content */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={`truncate text-sm font-numeric ${
-              hasUnread ? 'font-bold text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'
-            }`}
-          >
+        {/* Top line: Report title & timestamp */}
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {reportTitle}
           </span>
-          <span
-            className={`shrink-0 text-[11px] font-numeric ${
-              hasUnread ? 'font-bold text-blue-600 dark:text-blue-400' : 'font-medium text-slate-400 dark:text-slate-500'
-            }`}
-          >
-            {timeLabel}
-          </span>
+          {timeLabel && (
+            <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
+              {timeLabel}
+            </span>
+          )}
         </div>
 
+        {/* Middle line: Message preview & unread badge */}
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p
-            className={`truncate text-xs leading-relaxed ${
-              hasUnread ? 'font-medium text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'
+            className={`truncate text-xs ${
+              hasUnread
+                ? 'font-semibold text-slate-900 dark:text-slate-50'
+                : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {previewText}
-            {lastMessageSenderRole === 'admin' && !hasUnread && lastMessage && (
-              <FiCheck className="ml-1 inline text-blue-500 dark:text-blue-400 text-[11px]" aria-label="Sent" />
-            )}
           </p>
-
-          {/* Subtle Unread Badge */}
           {hasUnread && (
             <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white font-numeric">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
@@ -171,16 +169,16 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
           )}
         </div>
 
-        {/* Category tag & Reporter info */}
+        {/* Bottom line: Category & Reporter */}
         <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-[10px]">
           {category && (
             <span className="inline-block max-w-[55%] truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-medium text-slate-500 dark:text-slate-400">
               {category}
             </span>
           )}
-          {userName && (
-            <span className="truncate text-slate-400 dark:text-slate-500" title={userName}>
-              {category ? '· ' : ''}{userName}
+          {userDisplay && (
+            <span className="truncate text-slate-400 dark:text-slate-500" title={userDisplay}>
+              {category ? '· ' : ''}{userDisplay}
             </span>
           )}
         </div>

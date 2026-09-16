@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiArrowLeft, FiFileText, FiRefreshCw, FiSearch, FiFilter } from 'react-icons/fi'
+import { FiArrowLeft, FiFileText, FiExternalLink, FiRefreshCw, FiSearch, FiFilter } from 'react-icons/fi'
 import { ReportChatComposer } from '../../components/Reports-Ui/ReportChatComposer'
 import { ReportChatThread } from '../../components/Reports-Ui/ReportChatThread'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
@@ -110,7 +110,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <h2 className="font-semibold text-sm sm:text-base truncate text-white">
-                        {activeConversation.userName}
+                        {activeConversation.userEmail || activeConversation.userName || 'User'}
                       </h2>
                       {activeConversation.isOnline ? (
                         <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-300">
@@ -118,45 +118,47 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                           Online
                         </span>
                       ) : (
-                        <span className="shrink-0 text-[10px] sm:text-[11px] font-medium text-blue-200 truncate max-w-28">
+                        <span className="shrink-0 text-[10px] sm:text-[11px] text-blue-200">
                           {formatLastSeen(activeConversation.lastMessageAt)}
                         </span>
                       )}
                     </div>
-                    <p className="truncate text-[11px] sm:text-xs text-blue-100/90 font-medium">
+                    <p className="text-xs text-blue-100 truncate flex items-center gap-1.5">
                       Report {activeConversation.reportNumber || (activeConversation.reportId ? `${String(activeConversation.reportId).slice(0, 8)}…` : '')}
                       {activeConversation.category ? ` · ${activeConversation.category}` : ''}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {onViewReport && (
+
+                <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                  {onViewReport && activeConversation.rawReport && (
                     <button
                       type="button"
                       onClick={() => onViewReport(mapBackendReportToUiRow(activeConversation.rawReport))}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-medium transition hover:bg-white/10 active:scale-95"
-                      aria-label="View full report"
-                      title="View full report"
+                      className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors border border-white/15"
+                      title="View full report details"
                     >
-                      <FiFileText className="text-sm shrink-0" />
-                      <span className="hidden sm:inline">View Report</span>
-                      <span className="sm:hidden text-[11px]">Report</span>
+                      <FiExternalLink className="text-xs" />
+                      View Report
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => { loadMessages(activeConversation.reportId) }}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/15 transition hover:bg-white/10 active:scale-95"
-                    aria-label="Refresh chat"
-                    title="Refresh chat"
+                    className="p-1.5 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Refresh messages"
                   >
-                    <FiRefreshCw className="text-xs" />
+                    <FiRefreshCw className="text-sm" />
                   </button>
                 </div>
               </header>
 
               <ReportChatThread messages={messages} loading={chatLoading} error={chatError} profileId={profile?.id} />
-              {isUserTyping && <div className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800/80 text-xs italic text-slate-500 dark:text-slate-400 font-medium">{activeConversation.userName} is typing...</div>}
+              {isUserTyping && (
+                <div className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800/80 text-xs italic text-slate-500 dark:text-slate-400 font-medium">
+                  {activeConversation.userEmail || activeConversation.userName || 'User'} is typing...
+                </div>
+              )}
 
               <ReportChatComposer onSend={handleSend} onTyping={handleComposerTyping} disabled={sending || chatLoading} />
             </>

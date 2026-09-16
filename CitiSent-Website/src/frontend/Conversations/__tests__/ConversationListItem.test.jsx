@@ -40,7 +40,7 @@ describe('ConversationListItem', () => {
 
     // Report ID should be the title
     expect(container.textContent).toContain('Report #cvc-0012')
-    // User email should still be displayed as secondary metadata
+    // Mobile user email is displayed
     expect(container.textContent).toContain('janedoe@gmail.com')
     // Category should be rendered
     expect(container.textContent).toContain('Civic Issues')

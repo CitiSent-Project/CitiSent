@@ -8,4 +8,6 @@ export {
   PasswordResetNewPasswordStep,
   PasswordResetSuccessStep,
 } from './PasswordReset'
+export { LoginOtpStep } from './LoginOtpStep'
+
 

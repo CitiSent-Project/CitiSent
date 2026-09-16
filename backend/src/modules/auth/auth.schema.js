@@ -161,3 +161,57 @@ export const resetPasswordWithOtpSchema = z.object({
   }),
 });
 
+export const adminLoginChallengeSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z
+    .object({
+      identifier: optionalTrimmedString(z.string().min(1, "Identifier is required.")),
+      email: optionalTrimmedString(z.string().email("Please enter a valid email address.")),
+      password: z.string().min(1, "Password is required."),
+    })
+    .superRefine((payload, ctx) => {
+      const candidate = payload.email || payload.identifier;
+      if (!candidate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["identifier"],
+          message: "Email or username is required.",
+        });
+        return;
+      }
+      if (candidate.includes("@")) {
+        const emailResult = z.string().email().safeParse(candidate);
+        if (!emailResult.success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["identifier"],
+            message: "Please enter a valid email address.",
+          });
+        }
+      }
+    }),
+});
+
+export const adminLoginVerifyOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    tempToken: z.string().trim().min(1, "Login challenge token is required."),
+    otp: z
+      .string()
+      .trim()
+      .length(6, "Verification code must be exactly 6 digits.")
+      .regex(/^\d{6}$/, "Verification code must contain digits only."),
+  }),
+});
+
+export const adminResendOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    tempToken: z.string().trim().min(1, "Login challenge token is required."),
+  }),
+});
+
+

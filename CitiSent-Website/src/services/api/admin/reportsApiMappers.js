@@ -135,17 +135,20 @@ export function mapBackendAdminNoteSuggestionsToUi(response = {}) {
 export function mapBackendConversationToUi(payload = {}) {
   const reporter = payload.reporter || payload.user || {}
   const lastMsg = payload.lastMessage || {}
+  const reporterEmail = reporter.email || payload.email || payload.userEmail || ''
   const reporterName =
+    reporterEmail ||
     composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
     reporter.fullName ||
     reporter.name ||
-    'Unknown User'
+    'User'
 
   return {
     reportId: payload.reportId || payload.id || '',
     reportNumber: payload.reportNumber || payload.reportNum || '',
     userId: reporter.id || payload.userId || '',
-    userName: reporterName,
+    userName: reporterEmail || reporterName,
+    userEmail: reporterEmail,
     userAvatar: reporter.avatar || reporter.avatarUrl || null,
     lastMessage: lastMsg.content || lastMsg.message || '',
     lastMessageAt: lastMsg.createdAt || lastMsg.timestamp || payload.updatedAt || '',

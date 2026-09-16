@@ -21,7 +21,7 @@ export function ReportChatMessageItem({ message, isOwnMessage }) {
     dateClass = 'text-slate-300 dark:text-slate-400';
   }
 
-  let senderLabel = message.senderName || 'User';
+  let senderLabel = 'User';
   if (isOwnMessage) {
     senderLabel = 'You';
   } else if (isAdminRole) {

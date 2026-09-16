@@ -16,7 +16,7 @@ export function AuthPageShell({
 
   return (
     <main
-      className={`relative flex min-h-screen items-center justify-center overflow-hidden p-4 ${
+      className={`relative flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-6 ${
         isAdminLogin
           ? "bg-linear-to-br from-[#9cbce0] via-[#5f8fd3] to-[#84a8d1]"
           : "bg-linear-to-br from-[#dbe9ff] via-[#a8c5f1] to-[#87ade4]"
@@ -45,11 +45,11 @@ export function AuthPageShell({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={`relative w-full rounded-3xl backdrop-blur ${
+        className={`relative w-full rounded-2xl backdrop-blur-sm sm:rounded-3xl ${
           isSplitLayout
             ? "max-w-6xl overflow-hidden border border-white/72 bg-[#3c73c8]/52 text-white shadow-[0_18px_50px_rgba(23,56,110,0.28)]"
             : isAdminLogin
-              ? "max-w-lg border border-white/72 bg-[#3c73c8]/52 p-7 text-white shadow-[0_18px_50px_rgba(23,56,110,0.28)] md:p-9 md:pb-12"
+              ? "max-w-lg border border-white/72 bg-[#3c73c8]/58 p-6 text-white shadow-[0_18px_50px_rgba(23,56,110,0.32)] sm:p-8 md:p-9 md:pb-10"
               : "max-w-xl border border-white/60 bg-white/86 p-7 shadow-xl md:p-9"
         }`}
       >
@@ -101,20 +101,20 @@ export function AuthPageShell({
         ) : (
           <>
             <div
-              className={`mb-6 ${isAdminLogin ? "flex justify-center" : "flex items-center gap-3"}`}
+              className={`mb-8 ${isAdminLogin ? "flex justify-center" : "flex items-center gap-3"}`}
             >
               <div
                 className={`flex items-center ${isAdminLogin ? "gap-4 md:gap-5" : "gap-3"}`}
               >
                 <p
-                  className={`text-2xl font-bold ${isAdminLogin ? "text-[#1f3f73] md:text-[52px]" : "text-slate-900"}`}
+                  className={`text-3xl font-bold tracking-[-0.035em] ${isAdminLogin ? "text-[#1f3f73] sm:text-4xl md:text-[52px]" : "text-slate-900"}`}
                 >
                   CitiSent
                 </p>
                 <img
                   src={CitiSentLogo}
                   alt="CitiSent"
-                  className={`${isAdminLogin ? "h-19 w-19 md:h-21 md:w-21" : "h-13 w-13"}`}
+                  className={`${isAdminLogin ? "h-16 w-16 sm:h-19 sm:w-19 md:h-21 md:w-21" : "h-13 w-13"}`}
                 />
               </div>
 
@@ -127,14 +127,14 @@ export function AuthPageShell({
               ) : null}
             </div>
 
-            <header className={`mb-6 ${isAdminLogin ? "mt-2 md:mt-4" : ""}`}>
+            <header className={`mb-8 ${isAdminLogin ? "mt-1 sm:mt-2 md:mt-4" : ""}`}>
               <h1
-                className={`font-semibold ${isAdminLogin ? "text-5xl text-white md:text-[54px]" : "text-3xl text-slate-900"}`}
+                className={`font-semibold tracking-[-0.035em] ${isAdminLogin ? "max-w-[10ch] text-4xl leading-[0.98] text-white sm:text-5xl md:text-[54px]" : "text-3xl text-slate-900"}`}
               >
                 {title}
               </h1>
               <p
-                className={`mt-1 text-sm ${isAdminLogin ? "text-white/85" : "text-slate-600"}`}
+                className={`mt-3 max-w-md text-base leading-6 ${isAdminLogin ? "text-white/90" : "text-slate-600"}`}
               >
                 {subtitle}
               </p>
@@ -144,7 +144,7 @@ export function AuthPageShell({
 
             {footer ? (
               <footer
-                className={`mt-6 text-sm ${isAdminLogin ? "text-white/90" : "text-slate-600"}`}
+                className={`mt-7 border-t pt-5 text-sm ${isAdminLogin ? "border-white/20 text-white/90" : "border-slate-200 text-slate-600"}`}
               >
                 {footer}
               </footer>

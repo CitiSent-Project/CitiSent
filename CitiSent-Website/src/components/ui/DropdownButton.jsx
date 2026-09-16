@@ -56,6 +56,7 @@ export function DropdownButton({
 	className = '',
 	placeholder = 'Select an option',
 	ariaLabel,
+	ariaInvalid = false,
 	disabled = false,
 	id,
 	name,
@@ -279,6 +280,7 @@ export function DropdownButton({
 				aria-expanded={open}
 				aria-controls={listboxId}
 				aria-label={ariaLabel || label || 'Dropdown'}
+				aria-invalid={ariaInvalid || undefined}
 				className={`group inline-flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:focus:ring-blue-500/20 ${
 					disabled
 						? 'cursor-not-allowed opacity-70'

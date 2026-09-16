@@ -65,6 +65,11 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
     event.preventDefault()
     if (isSubmitting) return
 
+    if (!form.departmentId) {
+      setInputError('Select a department before saving this admin account.')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const submitted = await onSubmit(form)
@@ -183,16 +188,22 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300">Department</label>
+            <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300" htmlFor="new-admin-department">
+              Department <span aria-hidden="true">*</span>
+            </label>
             <DropdownButton
               className="w-full"
-              ariaLabel="Select department"
+              id="new-admin-department"
+              name="departmentId"
+              ariaLabel="Select department (required)"
+              ariaInvalid={!form.departmentId && Boolean(inputError)}
               value={form.departmentId}
               onChange={(value) => updateField('departmentId', value)}
               options={departmentDropdownOptions}
               placeholder="Select a department"
               disabled={isSubmitting}
             />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Each office admin must be assigned to an active department.</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">

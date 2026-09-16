@@ -86,6 +86,14 @@ export const createAdminUserSchema = z.object({
     departmentId: z.string().trim().min(1).max(64).optional(),
     departmentLabel: z.string().trim().min(1).max(160).optional(),
     status: profileStatusSchema.optional().default("active"),
+  }).superRefine((payload, ctx) => {
+    if (payload.accountType === "admin" && !payload.departmentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["departmentId"],
+        message: "Department is required for admin accounts.",
+      });
+    }
   }),
 });
 

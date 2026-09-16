@@ -176,6 +176,7 @@ export function renderActivePage({
         case APP_PAGES.REPORT_DETAIL:
             return (
                 <ReportDetailPage
+                    key={selectedReport?.id || 'report-detail'}
                     report={selectedReport}
                     profile={profile}
                     onBackToReports={onBackToReports}

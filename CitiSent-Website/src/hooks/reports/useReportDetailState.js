@@ -25,6 +25,7 @@ import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import {
   mapBackendAdminNoteSuggestionsToUi,
   mapBackendMessagesResponse,
+  mapBackendReportToUiRow,
   mapUiStatusToBackendStatus,
 } from '../../services/api/admin/reportsApiMappers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
@@ -69,6 +70,23 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   const [fullReport, setFullReport] = useState(report || null)
   const [isFetchingFullReport, setIsFetchingFullReport] = useState(false)
 
+  // Synchronize fullReport and selectedStatus when report prop changes from parent
+  useEffect(() => {
+    if (report) {
+      setFullReport((prev) => {
+        if (!prev) return report
+        return {
+          ...prev,
+          ...report,
+          status: report.status || prev.status,
+        }
+      })
+      if (report.status) {
+        setSelectedStatus(normalizeReportStatus(report.status))
+      }
+    }
+  }, [report])
+
   useEffect(() => {
     if (!report?.id || !accessToken) return
     let isMounted = true
@@ -76,9 +94,20 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
     setIsFetchingFullReport(true)
     reportsApiService.getReportById(accessToken, report.id)
       .then((res) => {
-        if (isMounted && res.data) {
-          // Merge minimal list data with fetched full details
-          setFullReport((prev) => ({ ...prev, ...res.data }))
+        if (isMounted && res.data && Object.keys(res.data).length > 0) {
+          const mapped = mapBackendReportToUiRow(res.data)
+          // Filter out unassigned/empty fallback fields if the backend payload didn't supply them
+          const cleanedMapped = {}
+          for (const [key, value] of Object.entries(mapped)) {
+            if (value !== '' && value !== null && value !== undefined && value !== 'unassigned' && value !== 'Unassigned') {
+              cleanedMapped[key] = value
+            }
+          }
+          setFullReport((prev) => ({
+            ...prev,
+            ...cleanedMapped,
+            status: prev?.status ? normalizeReportStatus(prev.status) : (cleanedMapped.status || prev?.status),
+          }))
         }
       })
       .catch((err) => console.error('Failed to fetch full report details:', err))
@@ -98,16 +127,32 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   // ---------------------------------------------------------------------------
   // Timeline
   // ---------------------------------------------------------------------------
-  const [timeline, setTimeline] = useState(() => [
-    {
-      id: 1,
-      action: 'Report Submitted',
-      status: 'Pending',
-      note: 'Report was submitted by the citizen.',
-      date: report?.date || 'N/A',
-      actor: report?.name || 'Citizen',
-    },
-  ])
+  const [timeline, setTimeline] = useState(() => {
+    const entries = [
+      {
+        id: 1,
+        action: 'Report Submitted',
+        status: 'Pending',
+        note: 'Report was submitted by the citizen.',
+        date: report?.date || 'N/A',
+        actor: report?.name || 'Citizen',
+      },
+    ]
+
+    const initialStatus = normalizeReportStatus(report?.status)
+    if (initialStatus && initialStatus !== 'Pending') {
+      entries.push({
+        id: 2,
+        action: `Status changed to ${initialStatus}`,
+        status: initialStatus,
+        note: `Report was marked as ${initialStatus}.`,
+        date: report?.resolvedAt || report?.date || 'N/A',
+        actor: 'Admin',
+      })
+    }
+
+    return entries
+  })
 
   // ---------------------------------------------------------------------------
   // Unread chat count
@@ -244,20 +289,28 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
         return
       }
 
+      const nextStatus = validation.nextStatus
+
+      setFullReport((previous) => ({
+        ...previous,
+        ...(result?.report || {}),
+        status: nextStatus,
+      }))
+
       setTimeline((previous) => [
         ...previous,
         {
           id: previous.length + 1,
           ...createReportTimelineEntry({
-            nextStatus: validation.nextStatus,
+            nextStatus,
             adminNotes,
           }),
         },
       ])
 
-      notifySuccess(`Report ${report.id} marked as ${validation.nextStatus}.`)
+      notifySuccess(`Report ${report.id} marked as ${nextStatus}.`)
       setAdminNotes('')
-      setSelectedStatus(validation.nextStatus)
+      setSelectedStatus(nextStatus)
 
       // Clear modal state on success
       setIsVerificationModalOpen(false)

@@ -212,6 +212,51 @@ describe('useReportDetailState', () => {
     expect(notifySuccess).toHaveBeenCalledWith('Report report-001 marked as In Progress.')
   })
 
+  it('updates currentStatus and locks report when status is changed to Rejected', async () => {
+    const onUpdateStatus = vi.fn().mockResolvedValue({
+      ok: true,
+      report: { ...MOCK_REPORT, status: 'Rejected' },
+    })
+
+    await act(async () => {
+      root.render(
+        <HookHarness report={MOCK_REPORT} profile={SUPERADMIN_PROFILE} onUpdateStatus={onUpdateStatus} />
+      )
+      await flushMicrotasks()
+    })
+
+    // Change the selected status to "Rejected"
+    act(() => {
+      latestState.setSelectedStatus('Rejected')
+      latestState.setAdminNotes('Citizen inquiry outside civic scope.')
+    })
+
+    // Trigger save (which sets verification modal for Rejected)
+    await act(async () => {
+      await latestState.handleStatusSave()
+    })
+
+    expect(latestState.isVerificationModalOpen).toBe(true)
+    expect(latestState.pendingValidation).toBeTruthy()
+
+    // Confirm verification modal
+    await act(async () => {
+      await latestState.executeStatusSave(latestState.pendingValidation)
+    })
+
+    expect(onUpdateStatus).toHaveBeenCalledWith(
+      'report-001',
+      'Rejected',
+      'Citizen inquiry outside civic scope.'
+    )
+    expect(latestState.timeline).toHaveLength(2)
+    expect(latestState.timeline[1].action).toBe('Status changed to Rejected')
+    expect(latestState.currentStatus).toBe('Rejected')
+    expect(latestState.isPermanentlyLocked).toBe(true)
+    expect(latestState.canProcessReport).toBe(false)
+    expect(latestState.isSaveDisabled).toBe(true)
+  })
+
   // -------------------------------------------------------------------------
   // Permanently locked report
   // -------------------------------------------------------------------------
@@ -229,6 +274,8 @@ describe('useReportDetailState', () => {
     expect(latestState.isPermanentlyLocked).toBe(true)
     expect(latestState.canProcessReport).toBe(false)
     expect(latestState.isSaveDisabled).toBe(true)
+    expect(latestState.timeline).toHaveLength(2)
+    expect(latestState.timeline[1].action).toBe('Status changed to Resolved')
   })
 
   it('treats a Rejected report as permanently locked', async () => {
@@ -244,6 +291,73 @@ describe('useReportDetailState', () => {
 
     expect(latestState.isPermanentlyLocked).toBe(true)
     expect(latestState.canProcessReport).toBe(false)
+    expect(latestState.isSaveDisabled).toBe(true)
+    expect(latestState.timeline).toHaveLength(2)
+    expect(latestState.timeline[1].action).toBe('Status changed to Rejected')
+  })
+
+  it('updates currentStatus and locks report when status is changed to Resolved', async () => {
+    const onUpdateStatus = vi.fn().mockResolvedValue({
+      ok: true,
+      report: { ...MOCK_REPORT, status: 'Resolved' },
+    })
+
+    await act(async () => {
+      root.render(
+        <HookHarness report={MOCK_REPORT} profile={SUPERADMIN_PROFILE} onUpdateStatus={onUpdateStatus} />
+      )
+      await flushMicrotasks()
+    })
+
+    act(() => {
+      latestState.setSelectedStatus('Resolved')
+      latestState.setAdminNotes('Fixed the streetlight issue.')
+    })
+
+    await act(async () => {
+      await latestState.handleStatusSave()
+    })
+
+    expect(latestState.isVerificationModalOpen).toBe(true)
+
+    await act(async () => {
+      await latestState.executeStatusSave(latestState.pendingValidation)
+    })
+
+    expect(latestState.currentStatus).toBe('Resolved')
+    expect(latestState.isPermanentlyLocked).toBe(true)
+    expect(latestState.canProcessReport).toBe(false)
+    expect(latestState.isSaveDisabled).toBe(true)
+    expect(latestState.timeline).toHaveLength(2)
+    expect(latestState.timeline[1].action).toBe('Status changed to Resolved')
+  })
+
+  it('synchronizes fullReport when report prop updates from parent', async () => {
+    const onUpdateStatus = vi.fn()
+
+    await act(async () => {
+      root.render(
+        <HookHarness report={MOCK_REPORT} profile={SUPERADMIN_PROFILE} onUpdateStatus={onUpdateStatus} />
+      )
+      await flushMicrotasks()
+    })
+
+    expect(latestState.currentStatus).toBe('Pending')
+
+    // Simulate parent updating the report prop
+    await act(async () => {
+      root.render(
+        <HookHarness
+          report={{ ...MOCK_REPORT, status: 'In Progress', message: 'Updated description' }}
+          profile={SUPERADMIN_PROFILE}
+          onUpdateStatus={onUpdateStatus}
+        />
+      )
+      await flushMicrotasks()
+    })
+
+    expect(latestState.currentStatus).toBe('In Progress')
+    expect(latestState.fullReport.status).toBe('In Progress')
   })
 
   // -------------------------------------------------------------------------

@@ -40,16 +40,41 @@ export function LoginOtpStep({
   function handleDigitChange(index, value) {
     const cleaned = value.replace(/\D/g, '')
 
-    // If user typed/pasted a single digit
-    if (cleaned.length <= 1) {
+    // User cleared the box (e.g. via mobile virtual keyboard)
+    if (!cleaned) {
+      const nextDigits = [...digits]
+      nextDigits[index] = ''
+      setDigits(nextDigits)
+      setErrorMessage('')
+      return
+    }
+
+    // If user typed a single digit
+    if (cleaned.length === 1) {
       const nextDigits = [...digits]
       nextDigits[index] = cleaned
       setDigits(nextDigits)
       setErrorMessage('')
 
       // Auto-advance to next input
-      if (cleaned && index < 5) {
+      if (index < 5) {
         inputRefs.current[index + 1]?.focus()
+        inputRefs.current[index + 1]?.select()
+      }
+      return
+    }
+
+    // If typed into a box that already had a digit (length 2, e.g. "58")
+    if (cleaned.length === 2 && digits[index]) {
+      const newChar = cleaned.slice(-1)
+      const nextDigits = [...digits]
+      nextDigits[index] = newChar
+      setDigits(nextDigits)
+      setErrorMessage('')
+
+      if (index < 5) {
+        inputRefs.current[index + 1]?.focus()
+        inputRefs.current[index + 1]?.select()
       }
       return
     }
@@ -80,22 +105,34 @@ export function LoginOtpStep({
 
   function handleKeyDown(index, event) {
     if (event.key === 'Backspace') {
-      if (!digits[index] && index > 0) {
-        // Current box is empty, jump to previous box and clear it
-        const nextDigits = [...digits]
+      event.preventDefault()
+      const nextDigits = [...digits]
+
+      if (digits[index]) {
+        // If current box has a value, clear it
+        nextDigits[index] = ''
+        setDigits(nextDigits)
+      } else if (index > 0) {
+        // Current box is already empty: clear previous box and jump back to it
         nextDigits[index - 1] = ''
         setDigits(nextDigits)
         inputRefs.current[index - 1]?.focus()
-      } else {
-        const nextDigits = [...digits]
-        nextDigits[index] = ''
-        setDigits(nextDigits)
       }
       setErrorMessage('')
     } else if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault()
       inputRefs.current[index - 1]?.focus()
+      inputRefs.current[index - 1]?.select()
     } else if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault()
       inputRefs.current[index + 1]?.focus()
+      inputRefs.current[index + 1]?.select()
+    } else if (event.key === 'Delete') {
+      event.preventDefault()
+      const nextDigits = [...digits]
+      nextDigits[index] = ''
+      setDigits(nextDigits)
+      setErrorMessage('')
     }
   }
 
@@ -217,7 +254,8 @@ export function LoginOtpStep({
                 aria-label={`Digit ${idx + 1} of 6`}
                 value={digit}
                 onChange={(e) => handleDigitChange(idx, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(idx, e.key)}
+                onKeyDown={(e) => handleKeyDown(idx, e)}
+                onFocus={(e) => e.target.select()}
                 disabled={isSubmitting}
                 className={`h-12 w-11 sm:h-14 sm:w-13 text-center text-xl sm:text-2xl font-bold rounded-xl border transition-all duration-150 shadow-inner ${
                   digit

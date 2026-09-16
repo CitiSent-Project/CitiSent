@@ -36,6 +36,24 @@ test("createAdminUserSchema accepts a valid username", () => {
   assert.equal(parsed.body.username, "jane_doe");
 });
 
+test("createAdminUserSchema requires a department for office-admin invitations", () => {
+  assert.throws(() =>
+    createAdminUserSchema.parse(
+      createPayload({ accountType: "admin", role: "Office Admin" }),
+    ),
+  );
+
+  const parsed = createAdminUserSchema.parse(
+    createPayload({
+      accountType: "admin",
+      role: "Office Admin",
+      departmentId: "bplo",
+    }),
+  );
+
+  assert.equal(parsed.body.departmentId, "bplo");
+});
+
 test("deleteAdminUserSchema requires a valid user id", () => {
   assert.throws(() =>
     deleteAdminUserSchema.parse({

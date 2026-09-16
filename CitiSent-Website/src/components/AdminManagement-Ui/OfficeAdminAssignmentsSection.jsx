@@ -205,19 +205,17 @@ export function OfficeAdminAssignmentsSection({
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-245 table-fixed text-left text-xs">
             <colgroup>
-              <col className="w-[18%]" />
+              <col className="w-[21%]" />
+              <col className="w-[22%]" />
+              <col className="w-[21%]" />
               <col className="w-[20%]" />
-              <col className="w-[17%]" />
-              <col className="w-[13%]" />
-              <col className="w-[17%]" />
-              <col className="w-[15%]" />
+              <col className="w-[16%]" />
             </colgroup>
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
                 <th className="pl-6 pr-3 py-3">Admin</th>
                 <th className="px-3 py-3">Email</th>
                 <th className="px-3 py-3">Current Department</th>
-                <th className="px-3 py-3 text-center">Notifications</th>
                 <th className="px-3 py-3">Assign Department</th>
                 <th className="pl-3 pr-6 py-3 text-center">Actions</th>
               </tr>
@@ -247,18 +245,6 @@ export function OfficeAdminAssignmentsSection({
                     <td className="px-3 py-3.5">
                       <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-42.5 truncate dark:bg-slate-700 dark:text-slate-300" title={admin.department}>
                         {admin.department}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                          unreadByAdminId[admin.id] > 0
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50'
-                            : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${unreadByAdminId[admin.id] > 0 ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                        {unreadByAdminId[admin.id] || 0} unread
                       </span>
                     </td>
                     <td className="px-3 py-3.5">

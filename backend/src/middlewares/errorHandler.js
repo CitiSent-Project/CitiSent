@@ -26,6 +26,24 @@ export function errorHandler(err, req, res, _next) {
       details: err.details,
       stack: err.stack,
     });
+  } else if (statusCode >= StatusCodes.BAD_REQUEST && statusCode < 500) {
+    const invalidFields = Array.from(
+      new Set(
+        (Array.isArray(err.details) ? err.details : [])
+          .map((detail) => String(detail?.path || "").trim())
+          .filter(Boolean),
+      ),
+    );
+
+    logger.warn("Request rejected", {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      statusCode,
+      errorName: err.name,
+      errorCode: err.code,
+      invalidFields,
+    });
   }
 
   res.status(statusCode).json({

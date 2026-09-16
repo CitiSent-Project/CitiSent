@@ -117,6 +117,14 @@ export function AdminManagement({
       return false
     }
 
+    if (!selectedDepartment) {
+      notifyError(
+        'Failed to create admin account.',
+        'Select an active department before sending an invitation.'
+      )
+      return false
+    }
+
     try {
       await usersApiService.createUser(token, {
         ...form,

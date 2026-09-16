@@ -79,13 +79,34 @@ function resolvePhoneNumber(user, fallbackPhoneNumber) {
 }
 
 function resolveFirstName(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  if ("first_name" in user && user.first_name !== undefined) {
+    return normalizeText(user.first_name);
+  }
+  if ("fname" in user && user.fname !== undefined) {
+    return normalizeText(user.fname);
+  }
+  if ("firstName" in user && user.firstName !== undefined) {
+    return normalizeText(user.firstName);
+  }
+
+  const profile = user.profile;
+  if (profile && typeof profile === "object") {
+    if ("first_name" in profile && profile.first_name !== undefined) {
+      return normalizeText(profile.first_name);
+    }
+    if ("fname" in profile && profile.fname !== undefined) {
+      return normalizeText(profile.fname);
+    }
+    if ("firstName" in profile && profile.firstName !== undefined) {
+      return normalizeText(profile.firstName);
+    }
+  }
+
   return pickFirstText([
-    user?.first_name,
-    user?.fname,
-    user?.firstName,
-    user?.profile?.first_name,
-    user?.profile?.fname,
-    user?.profile?.firstName,
     user?.user_metadata?.first_name,
     user?.user_metadata?.fname,
     user?.user_metadata?.firstName,
@@ -97,13 +118,34 @@ function resolveFirstName(user) {
 }
 
 function resolveMiddleName(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  if ("middle_name" in user && user.middle_name !== undefined) {
+    return normalizeText(user.middle_name);
+  }
+  if ("mname" in user && user.mname !== undefined) {
+    return normalizeText(user.mname);
+  }
+  if ("middleName" in user && user.middleName !== undefined) {
+    return normalizeText(user.middleName);
+  }
+
+  const profile = user.profile;
+  if (profile && typeof profile === "object") {
+    if ("middle_name" in profile && profile.middle_name !== undefined) {
+      return normalizeText(profile.middle_name);
+    }
+    if ("mname" in profile && profile.mname !== undefined) {
+      return normalizeText(profile.mname);
+    }
+    if ("middleName" in profile && profile.middleName !== undefined) {
+      return normalizeText(profile.middleName);
+    }
+  }
+
   return pickFirstText([
-    user?.middle_name,
-    user?.mname,
-    user?.middleName,
-    user?.profile?.middle_name,
-    user?.profile?.mname,
-    user?.profile?.middleName,
     user?.user_metadata?.middle_name,
     user?.user_metadata?.mname,
     user?.user_metadata?.middleName,
@@ -115,15 +157,40 @@ function resolveMiddleName(user) {
 }
 
 function resolveSurname(user) {
+  if (!user || typeof user !== "object") {
+    return "";
+  }
+
+  if ("surname" in user && user.surname !== undefined) {
+    return normalizeText(user.surname);
+  }
+  if ("last_name" in user && user.last_name !== undefined) {
+    return normalizeText(user.last_name);
+  }
+  if ("lname" in user && user.lname !== undefined) {
+    return normalizeText(user.lname);
+  }
+  if ("lastName" in user && user.lastName !== undefined) {
+    return normalizeText(user.lastName);
+  }
+
+  const profile = user.profile;
+  if (profile && typeof profile === "object") {
+    if ("surname" in profile && profile.surname !== undefined) {
+      return normalizeText(profile.surname);
+    }
+    if ("last_name" in profile && profile.last_name !== undefined) {
+      return normalizeText(profile.last_name);
+    }
+    if ("lname" in profile && profile.lname !== undefined) {
+      return normalizeText(profile.lname);
+    }
+    if ("lastName" in profile && profile.lastName !== undefined) {
+      return normalizeText(profile.lastName);
+    }
+  }
+
   return pickFirstText([
-    user?.surname,
-    user?.last_name,
-    user?.lname,
-    user?.lastName,
-    user?.profile?.surname,
-    user?.profile?.last_name,
-    user?.profile?.lname,
-    user?.profile?.lastName,
     user?.user_metadata?.surname,
     user?.user_metadata?.last_name,
     user?.user_metadata?.lname,

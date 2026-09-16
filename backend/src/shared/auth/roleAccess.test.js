@@ -85,3 +85,61 @@ test("buildActor prefers profile role and profile metadata", () => {
   assert.equal(actor.departmentLabel, "City Treasury Office");
   assert.equal(actor.hasProfile, true);
 });
+
+test("buildActor treats profile mname: null as authoritative and does not resurrect stale user_metadata mname", () => {
+  const actor = buildActor({
+    authUser: {
+      id: "user-2",
+      email: "juan@example.com",
+      role: "citizen",
+      user_metadata: {
+        fname: "Juan",
+        mname: "Pedro",
+        lname: "Dela Cruz",
+      },
+    },
+    profile: {
+      user_id: "user-2",
+      email: "juan@example.com",
+      fname: "Juan",
+      mname: null,
+      lname: "Dela Cruz",
+      role: "citizen",
+      account_type: ACCOUNT_TYPES.CITIZEN,
+    },
+  });
+
+  assert.equal(actor.fname, "Juan");
+  assert.equal(actor.mname, null);
+  assert.equal(actor.middle_name, null);
+  assert.equal(actor.lname, "Dela Cruz");
+  assert.equal(actor.fullName, "Juan Dela Cruz");
+});
+
+test("buildActor reflects updated middle name from profile", () => {
+  const actor = buildActor({
+    authUser: {
+      id: "user-3",
+      email: "juan@example.com",
+      role: "citizen",
+      user_metadata: {
+        fname: "Juan",
+        mname: "Pedro",
+        lname: "Dela Cruz",
+      },
+    },
+    profile: {
+      user_id: "user-3",
+      email: "juan@example.com",
+      fname: "Juan",
+      mname: "Santos",
+      lname: "Dela Cruz",
+      role: "citizen",
+      account_type: ACCOUNT_TYPES.CITIZEN,
+    },
+  });
+
+  assert.equal(actor.mname, "Santos");
+  assert.equal(actor.middle_name, "Santos");
+  assert.equal(actor.fullName, "Juan Santos Dela Cruz");
+});

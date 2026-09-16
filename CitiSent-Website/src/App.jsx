@@ -112,6 +112,8 @@ function AuthenticatedApp() {
         <ErrorBoundary resetKeys={[appState.authPage]}>
           {renderAuthPage({
             onLogin: appActions.onLogin,
+            onVerifyOtp: appActions.onVerifyOtp,
+            onResendOtp: appActions.onResendOtp,
             rememberedEmail: appState.rememberedEmail,
           })}
         </ErrorBoundary>

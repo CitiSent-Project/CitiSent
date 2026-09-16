@@ -562,8 +562,69 @@ export async function sendOtpEmail({ toEmail, recipientName, otp }) {
   });
 }
 
+export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
+  const safeName = escapeHtml(recipientName || "Administrator");
+  const safeOtp = escapeHtml(String(otp));
+
+  if (!env.GMAIL_USER && !env.RESEND_API_KEY && !env.BREVO_API_KEY) {
+    if (!env.isProduction) {
+      console.log(`[ADMIN LOGIN OTP EMAIL] Verification code for ${toEmail}: ${otp}`);
+    }
+    return { sent: true, mode: "mock" };
+  }
+
+  await getTransporter().sendMail({
+    from: `"CitiSent Security" <${env.GMAIL_USER || "noreply@citisent.gov.ph"}>`,
+    to: toEmail,
+    subject: "CitiSent Admin Portal — 2FA Verification Code",
+    text: [
+      `Hello ${recipientName || "Administrator"},`,
+      "",
+      "A sign-in attempt was initiated for your CitiSent administrator account.",
+      "",
+      `Your one-time verification code is: ${otp}`,
+      "",
+      "This code expires in 5 minutes.",
+      "",
+      "If you did not initiate this sign-in attempt, please notify your Superadmin or IT department immediately.",
+    ].join("\n"),
+    html: `
+      <div style="margin:0; padding:32px 16px; background:#edf5f7; color:#183042; font-family:Arial,Helvetica,sans-serif; line-height:1.5;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; margin:0 auto; background:#ffffff; border:1px solid #dce8ec; border-radius:18px; overflow:hidden; box-shadow:0 10px 25px rgba(23,63,117,0.08);">
+          <tr><td style="padding:28px 32px; background:#173f75; text-align:left;">
+            <div style="color:#ffffff; font-size:24px; font-weight:700; letter-spacing:.2px;">CitiSent</div>
+            <div style="margin-top:5px; color:#c9e9ef; font-size:13px;">Administrative Portal Security</div>
+          </td></tr>
+          <tr><td style="padding:36px 32px 32px;">
+            <p style="margin:0 0 8px; color:#173f75; font-size:13px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;">Two-Factor Authentication</p>
+            <h1 style="margin:0 0 16px; color:#152b3b; font-size:24px; line-height:1.2; font-weight:700;">Hello ${safeName},</h1>
+            <p style="margin:0 0 12px; color:#4c6270; font-size:15px;">A sign-in attempt was initiated for your CitiSent administrator account.</p>
+            <p style="margin:0; color:#4c6270; font-size:15px;">Enter this 6-digit verification code to complete your login:</p>
+            <div style="margin:26px 0; padding:20px 16px; border:2px dashed #9bc3e2; border-radius:14px; background:#f2f8fb; text-align:center;">
+              <div style="color:#173f75; font-family:Consolas,'Courier New',monospace; font-size:36px; font-weight:800; letter-spacing:10px; line-height:1.2;">${safeOtp}</div>
+            </div>
+            <p style="margin:0; color:#536b78; font-size:13px; text-align:center;">
+              <strong>This code expires in 5 minutes.</strong><br/>
+              Never share this code with anyone.
+            </p>
+          </td></tr>
+          <tr><td style="padding:20px 32px; border-top:1px solid #e5eef1; background:#f8fbfc;">
+            <p style="margin:0; color:#e02424; font-size:12px; line-height:1.5;">
+              <strong>Security Notice:</strong> If you did not initiate this sign-in attempt, please notify your Superadmin or IT department immediately.
+            </p>
+            <p style="margin:10px 0 0; color:#91a3ab; font-size:12px;">&copy; ${new Date().getFullYear()} CitiSent. All rights reserved.</p>
+          </td></tr>
+        </table>
+      </div>
+    `,
+  });
+
+  return { sent: true };
+}
+
 export const mailerService = {
   sendOtpEmail: async (args) => sendOtpEmail(args),
+  sendLoginOtpEmail: async (args) => sendLoginOtpEmail(args),
   sendPasswordResetEmail: async (args) => sendPasswordResetEmail(args),
   sendAccountInvitationEmail: async (args) => sendAccountInvitationEmail(args),
   sendGuestVerificationOtpEmail: async ({ toEmail, otp }) => {

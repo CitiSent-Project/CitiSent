@@ -5,6 +5,8 @@ import {
   buildActor,
   normalizeAccountType,
   normalizeUserRole,
+  isAdminRole,
+  ACCOUNT_TYPES,
 } from "../../shared/auth/roleAccess.js";
 import { departmentsService } from "../departments/departments.service.js";
 import { normalizeNamePart } from "../../shared/utils/name.js";
@@ -45,6 +47,15 @@ function normalizePhoneNumber(value) {
 function normalizeOptionalString(value) {
   const normalizedValue = String(value || "").trim();
   return normalizedValue || null;
+}
+
+function getAdminAuthJwtSecret() {
+  return (
+    env.INVITATION_JWT_SECRET ||
+    env.SUPABASE_SERVICE_ROLE_KEY ||
+    env.SUPABASE_ANON_KEY ||
+    "citisent_admin_2fa_secret_fallback_key_at_least_32_chars"
+  );
 }
 
 async function resolveProfileEmailFromCandidates(candidates) {
@@ -168,6 +179,259 @@ async function resolveLoginContext({ identifier, email, username, phoneNumber })
 }
 
 export const authService = {
+  /**
+   * Admin Login 2FA: Step 1 - Validate credentials & roles, then send OTP
+   */
+  async initiateAdminLogin(payload, perf) {
+    const track = (name, operation) =>
+      perf?.trackStage ? perf.trackStage(name, operation) : operation();
+
+    const candidateIdentifier = String(payload.identifier || payload.email || "").trim();
+    if (!candidateIdentifier) {
+      throw new AppError("Email or username is required.", StatusCodes.BAD_REQUEST);
+    }
+
+    if (candidateIdentifier.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(candidateIdentifier)) {
+        throw new AppError("Please enter a valid email address.", StatusCodes.BAD_REQUEST);
+      }
+    }
+
+    // Resolve profile
+    let profile = null;
+    if (candidateIdentifier.includes("@")) {
+      profile = await track("adminProfileLookup", () =>
+        authRepository.getProfileByEmail(normalizeEmail(candidateIdentifier)),
+      );
+    } else {
+      profile = await track("adminProfileLookup", () =>
+        authRepository.getProfileByIdentifier(candidateIdentifier),
+      );
+    }
+
+    if (!profile || !profile.email) {
+      throw new AppError(
+        "This account does not exist as an office admin or super admin.",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    // Strict role validation: must be Superadmin or Office Admin
+    const role = normalizeUserRole(profile.role);
+    const accountType = normalizeAccountType(profile.account_type, role);
+    if (!isAdminRole(role) || accountType !== ACCOUNT_TYPES.ADMIN) {
+      throw new AppError(
+        "This account does not exist as an office admin or super admin.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    // Check account status (banned, pending activation)
+    assertAccountIsActive(profile);
+
+    // Verify password with Supabase Auth
+    let authResult;
+    try {
+      authResult = await track("supabaseAuth", () =>
+        authRepository.loginWithEmailPassword({
+          email: profile.email,
+          password: payload.password,
+        }),
+      );
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
+      }
+      throw new AppError("Incorrect password. Please try again.", StatusCodes.UNAUTHORIZED);
+    }
+
+    // Rate-limit OTP sends
+    try {
+      otpStore_.checkSendRateLimit(profile.email);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
+    }
+
+    // Generate OTP
+    const plainOtp = otpStore_.createOtp(profile.email);
+
+    // Send email
+    try {
+      await mailerService.sendLoginOtpEmail({
+        toEmail: profile.email,
+        recipientName: profile.fname || profile.fullName || "Administrator",
+        otp: plainOtp,
+      });
+    } catch (err) {
+      otpStore_.deleteOtp(profile.email);
+      otpStore_.rollbackSendRateLimit(profile.email);
+      const classified = classifyAndSanitizeSmtpError(err);
+      logger.error("[AUTH] Failed to send admin login OTP", {
+        recipient: maskEmail(profile.email),
+        category: classified.category,
+        diagnostic: classified.diagnostic,
+        code: classified.code,
+      });
+      throw new AppError(
+        "Failed to deliver verification code email. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    // Create signed temporary challenge token (valid 5m)
+    const secret = getAdminAuthJwtSecret();
+    const tempToken = jwt.sign(
+      {
+        purpose: "admin_login_2fa",
+        email: profile.email,
+        userId: profile.user_id,
+        role,
+        sessionToken: authResult?.session?.access_token || null,
+        authUser: authResult?.user || null,
+      },
+      secret,
+      { expiresIn: "5m" },
+    );
+
+    return {
+      requireOtp: true,
+      tempToken,
+      email: profile.email,
+      maskedEmail: maskEmail(profile.email),
+      expiresInSeconds: 300,
+      resendCooldownSeconds: 60,
+    };
+  },
+
+  /**
+   * Admin Login 2FA: Step 2 - Verify OTP & return authenticated session
+   */
+  async verifyAdminLoginOtp({ tempToken, otp }) {
+    const secret = getAdminAuthJwtSecret();
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, secret);
+    } catch (err) {
+      const isExpired = err?.name === "TokenExpiredError";
+      throw new AppError(
+        isExpired
+          ? "Your verification code session has expired. Please sign in again."
+          : "Invalid verification session. Please sign in again.",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    if (decoded?.purpose !== "admin_login_2fa" || !decoded?.email) {
+      throw new AppError("Invalid verification session.", StatusCodes.UNAUTHORIZED);
+    }
+
+    const normalizedEmail = normalizeEmail(decoded.email);
+
+    try {
+      otpStore_.verifyOtp(normalizedEmail, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    // Re-verify profile is active
+    const profile = await authRepository.getProfileByEmail(normalizedEmail);
+    if (!profile) {
+      throw new AppError("Admin account not found.", StatusCodes.NOT_FOUND);
+    }
+    assertAccountIsActive(profile);
+
+    const role = normalizeUserRole(profile.role);
+    if (!isAdminRole(role)) {
+      throw new AppError(
+        "This account does not exist as an office admin or super admin.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    // Priming cache for user
+    if (decoded.userId && profile) {
+      try {
+        await cacheService.setJSON(`profile:user:${decoded.userId}`, profile, 120);
+      } catch {
+        // Non-critical cache priming
+      }
+    }
+
+    return {
+      token: decoded.sessionToken,
+      user: buildActor({
+        authUser: decoded.authUser || { id: decoded.userId, email: normalizedEmail },
+        profile,
+      }),
+    };
+  },
+
+  /**
+   * Admin Login 2FA: Resend OTP
+   */
+  async resendAdminLoginOtp({ tempToken }) {
+    const secret = getAdminAuthJwtSecret();
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, secret);
+    } catch (err) {
+      const isExpired = err?.name === "TokenExpiredError";
+      throw new AppError(
+        isExpired
+          ? "Your verification code session has expired. Please sign in again."
+          : "Invalid verification session. Please sign in again.",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
+
+    if (decoded?.purpose !== "admin_login_2fa" || !decoded?.email) {
+      throw new AppError("Invalid verification session.", StatusCodes.UNAUTHORIZED);
+    }
+
+    const normalizedEmail = normalizeEmail(decoded.email);
+
+    try {
+      otpStore_.checkSendRateLimit(normalizedEmail);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
+    }
+
+    const profile = await authRepository.getProfileByEmail(normalizedEmail);
+    if (!profile) {
+      throw new AppError("Admin account not found.", StatusCodes.NOT_FOUND);
+    }
+
+    const plainOtp = otpStore_.createOtp(normalizedEmail);
+
+    try {
+      await mailerService.sendLoginOtpEmail({
+        toEmail: profile.email,
+        recipientName: profile.fname || profile.fullName || "Administrator",
+        otp: plainOtp,
+      });
+    } catch (err) {
+      otpStore_.deleteOtp(normalizedEmail);
+      otpStore_.rollbackSendRateLimit(normalizedEmail);
+      const classified = classifyAndSanitizeSmtpError(err);
+      logger.error("[AUTH] Failed to resend admin login OTP", {
+        recipient: maskEmail(profile.email),
+        category: classified.category,
+        diagnostic: classified.diagnostic,
+        code: classified.code,
+      });
+      throw new AppError(
+        "Failed to deliver verification code email. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    return {
+      sent: true,
+      maskedEmail: maskEmail(normalizedEmail),
+      resendCooldownSeconds: 60,
+    };
+  },
   /**
    * OTP-based forgot password: Step 1 — request OTP.
    * Always responds with { sent: true } to prevent email enumeration.

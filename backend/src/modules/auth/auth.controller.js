@@ -20,6 +20,33 @@ export const authController = {
     });
   },
 
+  async adminLoginChallenge(req, res) {
+    const result = await authService.initiateAdminLogin(req.body, req.perf);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async adminLoginVerifyOtp(req, res) {
+    const result = await authService.verifyAdminLoginOtp(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async adminResendOtp(req, res) {
+    const result = await authService.resendAdminLoginOtp(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async forgotPassword(req, res) {
     const result = await authService.forgotPassword(req.body.email);
 

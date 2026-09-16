@@ -4,6 +4,9 @@ import { validateRequest } from "../../middlewares/validateRequest.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import {
   activateAccountSchema,
+  adminLoginChallengeSchema,
+  adminLoginVerifyOtpSchema,
+  adminResendOtpSchema,
   changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
@@ -28,6 +31,24 @@ authRouter.post(
   "/login",
   validateRequest(loginSchema),
   asyncHandler(authController.login),
+);
+
+authRouter.post(
+  "/admin/challenge",
+  validateRequest(adminLoginChallengeSchema),
+  asyncHandler(authController.adminLoginChallenge),
+);
+
+authRouter.post(
+  "/admin/verify-otp",
+  validateRequest(adminLoginVerifyOtpSchema),
+  asyncHandler(authController.adminLoginVerifyOtp),
+);
+
+authRouter.post(
+  "/admin/resend-otp",
+  validateRequest(adminResendOtpSchema),
+  asyncHandler(authController.adminResendOtp),
 );
 
 authRouter.post(

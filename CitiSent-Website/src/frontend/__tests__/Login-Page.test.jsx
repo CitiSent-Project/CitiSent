@@ -23,6 +23,11 @@ vi.mock('../../components/Auth-Ui', () => ({
       <input id={id} type="password" defaultValue={value} placeholder={placeholder} />
     </label>
   ),
+  LoginOtpStep: ({ maskedEmail, email }) => (
+    <div data-testid="login-otp-step">
+      <span>OTP sent to: {maskedEmail || email}</span>
+    </div>
+  ),
 }))
 
 describe('LoginPage', () => {

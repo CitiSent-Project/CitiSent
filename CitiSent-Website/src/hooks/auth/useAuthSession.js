@@ -105,6 +105,26 @@ export function useAuthSession({
     try {
       const loginIdentifier = normalizeLoginIdentifier(payload)
       performance.mark('requestStarted')
+
+      if (typeof authApiService.adminChallenge === 'function') {
+        const challengeResponse = await authApiService.adminChallenge({
+          identifier: loginIdentifier,
+          password: payload.password,
+        })
+
+        if (challengeResponse?.data?.requireOtp) {
+          performance.finish()
+          return {
+            ok: true,
+            requireOtp: true,
+            tempToken: challengeResponse.data.tempToken,
+            email: challengeResponse.data.email,
+            maskedEmail: challengeResponse.data.maskedEmail,
+            resendCooldownSeconds: challengeResponse.data.resendCooldownSeconds || 60,
+          }
+        }
+      }
+
       const response = await authApiService.login({
         ...(loginIdentifier.includes('@') ? { email: loginIdentifier } : {}),
         identifier: loginIdentifier,
@@ -151,6 +171,63 @@ export function useAuthSession({
     }
   }
 
+  async function handleVerifyOtp({ tempToken, otp, rememberMe, loginIdentifier }) {
+    const performance = createLoginPerformance()
+    try {
+      performance.mark('requestStarted')
+      const response = await authApiService.adminVerifyOtp({ tempToken, otp })
+      const nextProfile = mapBackendProfileToAdminProfile(response?.data?.user)
+      const token = response?.data?.token || ''
+      performance.mark('authenticationCompleted')
+      performance.mark('sessionObtained')
+
+      if (!token) {
+        throw new Error('Verification succeeded but no session token was returned.')
+      }
+
+      if (nextProfile.accountType !== 'admin' || !nextProfile.role) {
+        throw new Error('This account does not have admin workspace access.')
+      }
+
+      const transition = buildPostLoginTransition({ nextActivePage: APP_PAGES.DASHBOARD })
+
+      setAccessToken(token)
+      setProfile(nextProfile)
+      setPreferences((previous) => ({
+        ...previous,
+        displayName: nextProfile.fullName || previous.displayName,
+        department: nextProfile.department || previous.department,
+      }))
+      setIsAuthenticated(transition.isAuthenticated)
+      setActivePage(transition.nextActivePage)
+      performance.mark('navigationCompleted')
+      performance.finish()
+      setRememberedEmail(rememberMe ? (loginIdentifier || nextProfile.email) : '')
+      addActivity('Login', `Signed in as ${loginIdentifier || nextProfile.email}`)
+
+      notifySuccess('Login successful. Welcome back.')
+      return { ok: true, message: 'Welcome back. Redirecting to dashboard.' }
+    } catch (error) {
+      performance.finish()
+      return {
+        ok: false,
+        message: error.message || 'Verification failed. Please try again.',
+      }
+    }
+  }
+
+  async function handleResendOtp({ tempToken }) {
+    try {
+      await authApiService.adminResendOtp({ tempToken })
+      return { ok: true, message: 'Verification code resent successfully.' }
+    } catch (error) {
+      return {
+        ok: false,
+        message: error.message || 'Failed to resend verification code.',
+      }
+    }
+  }
+
   function handleLogout() {
     // Disconnect the authenticated socket before clearing session state
     // to prevent the prior user's socket from remaining active after logout.
@@ -190,6 +267,8 @@ export function useAuthSession({
   return {
     handleRegister,
     handleLogin,
+    handleVerifyOtp,
+    handleResendOtp,
     handleLogout,
   }
 }

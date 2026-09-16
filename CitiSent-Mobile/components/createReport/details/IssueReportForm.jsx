@@ -267,7 +267,7 @@ export default function IssueReportForm({
     <View>
       <View className="mb-5">
         <Text className="mb-2 text-sm font-semibold" style={{ color: Colors.text.fieldLabel }}>
-          Issue Type
+          Selected Department
         </Text>
         <View
           className="rounded-lg border px-3 py-3"

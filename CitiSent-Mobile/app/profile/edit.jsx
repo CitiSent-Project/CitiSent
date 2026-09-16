@@ -61,10 +61,27 @@ function buildInitialProfile(sourceUser = getAuthUser()) {
     asText(metadata.fullName) || asText(metadata.name);
   const fallbackParts = splitFullName(fullNameCandidate);
 
+  const explicitFname =
+    asText(authUser.fname) || asText(authUser.first_name) ||
+    asText(profile.fname) || asText(profile.first_name) ||
+    asText(metadata.fname) || asText(metadata.first_name);
+
+  const explicitMname =
+    asText(authUser.mname) || asText(authUser.middle_name) ||
+    asText(profile.mname) || asText(profile.middle_name) ||
+    asText(metadata.mname) || asText(metadata.middle_name);
+
+  const explicitLname =
+    asText(authUser.lname) || asText(authUser.surname) || asText(authUser.last_name) ||
+    asText(profile.lname) || asText(profile.surname) || asText(profile.last_name) ||
+    asText(metadata.lname) || asText(metadata.surname) || asText(metadata.last_name);
+
+  const hasStructuredName = Boolean(explicitFname || explicitLname);
+
   return {
-    fname: asText(authUser.fname) || asText(profile.fname) || asText(metadata.fname) || fallbackParts.fname,
-    mname: asText(authUser.mname) || asText(profile.mname) || asText(metadata.mname) || fallbackParts.mname,
-    lname: asText(authUser.lname) || asText(profile.lname) || asText(metadata.lname) || fallbackParts.lname,
+    fname: explicitFname || (hasStructuredName ? "" : fallbackParts.fname),
+    mname: explicitMname || (hasStructuredName ? "" : fallbackParts.mname),
+    lname: explicitLname || (hasStructuredName ? "" : fallbackParts.lname),
     username: asText(authUser.username) || asText(profile.username) || asText(metadata.username),
     email: asText(authUser.email) || asText(profile.email) || asText(metadata.email),
     phoneNumber: parsePhoneNumberToLocal(
@@ -319,7 +336,7 @@ export default function EditProfilePage() {
     try {
       const response = await api.patch("/users/me", {
         fname: profileDraft.fname.trim(),
-        mname: profileDraft.mname.trim() || undefined,
+        mname: profileDraft.mname.trim() ? profileDraft.mname.trim() : null,
         lname: profileDraft.lname.trim(),
         username: profileDraft.username.trim(),
         email: profileDraft.email.trim(),

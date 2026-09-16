@@ -49,7 +49,7 @@ function toConflictError(message, details) {
 function buildAuthUserMetadata(payload = {}) {
   const userMetadata = {
     ...(payload.fname !== undefined ? { fname: payload.fname } : {}),
-    ...(payload.mname !== undefined ? { mname: payload.mname } : {}),
+    ...(payload.mname !== undefined ? { mname: payload.mname ?? null } : {}),
     ...(payload.lname !== undefined ? { lname: payload.lname } : {}),
     ...(payload.username ? { username: payload.username } : {}),
     ...(payload.phone_number
@@ -62,7 +62,9 @@ function buildAuthUserMetadata(payload = {}) {
   };
 
   return Object.fromEntries(
-    Object.entries(userMetadata).filter(([_, value]) => value != null),
+    Object.entries(userMetadata).filter(
+      ([key, value]) => key === "mname" || value != null,
+    ),
   );
 }
 

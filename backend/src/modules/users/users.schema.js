@@ -54,7 +54,11 @@ export const updateCurrentUserSchema = z.object({
       clientType: z.string().trim().min(1).max(32).optional(),
       avatarUrl: z.string().url().optional(),
       fname: z.string().trim().min(1).max(120).optional(),
-      mname: z.string().trim().min(1).max(120).nullable().optional(),
+      mname: z
+        .preprocess(
+          (val) => (typeof val === "string" && val.trim() === "" ? null : val),
+          z.string().trim().min(1).max(120).nullable().optional(),
+        ),
       lname: z.string().trim().min(1).max(120).optional(),
       email: z.string().trim().email().optional(),
       barangay: z.string().trim().min(1).optional(),

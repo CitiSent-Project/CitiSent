@@ -130,6 +130,9 @@ export function buildActor({ authUser, profile }) {
     fname,
     mname,
     lname,
+    first_name: fname,
+    middle_name: mname,
+    surname: lname,
     username: profile?.username || authUser?.user_metadata?.username || null,
     phoneNumber:
       profile?.phone_number ||

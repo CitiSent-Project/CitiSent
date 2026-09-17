@@ -32,6 +32,25 @@ describe('reportsApiMappers', () => {
       status: 'Pending',
       categoryId: 'bfp',
       category: 'Bureau of Fire Protection (BFP) Processing Area',
+      resolvedAt: null,
     })
+  })
+
+  it('maps resolvedAt when present, and falls back to updatedAt for resolved reports', () => {
+    const rowWithResolvedAt = mapBackendReportToUiRow({
+      id: 'report-102',
+      status: 'resolved',
+      resolvedAt: '2026-09-17T04:38:40.769Z',
+      updatedAt: '2026-09-17T04:38:42.025Z',
+    })
+    expect(rowWithResolvedAt.resolvedAt).toBe('2026-09-17T04:38:40.769Z')
+
+    const rowWithFallback = mapBackendReportToUiRow({
+      id: 'report-103',
+      status: 'rejected',
+      resolvedAt: null,
+      updatedAt: '2026-09-17T04:33:51.202Z',
+    })
+    expect(rowWithFallback.resolvedAt).toBe('2026-09-17T04:33:51.202Z')
   })
 })

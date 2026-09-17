@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CitiSent-Mobile",
+    "name": "CitiSent",
     "slug": "CitiSent-Mobile",
     "scheme": "citisent",
     "version": "1.0.0",
@@ -25,7 +25,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1B2C4F"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "pan",

@@ -9,7 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Keyboard,
+  StatusBar as RNStatusBar,
+  LayoutAnimation,
+  UIManager,
+  Dimensions,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../modules/shared";
 import { discussionService, mapRawRow } from "../../services/discussionService";
@@ -63,13 +70,24 @@ function formatIncomingMessage(raw, userId) {
   };
 }
 
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  try {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  } catch {}
+}
+
 export default function ReportDiscussionModal({ visible, report, onClose, onMarkRead }) {
+  const insets = useSafeAreaInsets();
+  const topInset = Math.max(insets.top, Platform.OS === "android" ? (RNStatusBar.currentHeight || 0) : 0);
+
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [isAdminTyping, setIsAdminTyping] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const scrollViewRef = useRef(null);
   const typingTimerRef = useRef(null);
@@ -79,6 +97,72 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
 
   // Shared notification state — so opening this modal clears badges globally
   const { setReportRead: setReportReadGlobal } = useAdminMessageState();
+
+  // Listen to keyboard show/hide events for accurate Android & iOS keyboard avoidance in Modal
+  useEffect(() => {
+    const handleKeyboardShow = (e) => {
+      const endCoords = e?.endCoordinates;
+      if (!endCoords) return;
+
+      const rawHeight = endCoords.height || 0;
+      const screenY = endCoords.screenY;
+      const screenH = Math.max(
+        Dimensions.get("screen").height,
+        Dimensions.get("window").height
+      );
+
+      // Compute exact overlap:
+      // On Android full-screen translucent modals, screenY is the absolute Y coordinate
+      // where the keyboard begins. The distance from screenH to screenY is the exact keyboard coverage.
+      // If screenY is not available, fallback to rawHeight + insets.bottom to ensure the system nav bar is accounted for.
+      let computedOffset = 0;
+      if (typeof screenY === "number" && screenY > 0 && screenY < screenH) {
+        computedOffset = Math.max(0, screenH - screenY);
+      } else if (rawHeight > 0) {
+        computedOffset = rawHeight + (insets.bottom || 0);
+      }
+
+      if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+        try {
+          UIManager.setLayoutAnimationEnabledExperimental(true);
+        } catch {}
+      }
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(true);
+      setKeyboardOffset(computedOffset);
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 80);
+    };
+
+    const handleKeyboardHide = () => {
+      if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+        try {
+          UIManager.setLayoutAnimationEnabledExperimental(true);
+        } catch {}
+      }
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(false);
+      setKeyboardOffset(0);
+    };
+
+    const subscriptions = [
+      Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", handleKeyboardShow),
+      Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide", handleKeyboardHide),
+    ];
+
+    if (Platform.OS === "android") {
+      try {
+        subscriptions.push(Keyboard.addListener("keyboardWillShow", handleKeyboardShow));
+        subscriptions.push(Keyboard.addListener("keyboardWillHide", handleKeyboardHide));
+      } catch {}
+    }
+
+    return () => {
+      subscriptions.forEach((sub) => sub.remove());
+    };
+  }, [insets.bottom]);
 
   /**
    * Guard ref to prevent setState calls after the component unmounts.
@@ -107,6 +191,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
       setInputText("");
       setError(null);
       setIsAdminTyping(false);
+      setKeyboardVisible(false);
+      setKeyboardOffset(0);
+      Keyboard.dismiss();
     }
   }, [visible, report?.id]);
 
@@ -364,37 +451,64 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   if (!report) return null;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      statusBarTranslucent={true}
+      onRequestClose={() => {
+        Keyboard.dismiss();
+        onClose?.();
+      }}
+    >
+      <StatusBar style="light" translucent backgroundColor="transparent" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         className="flex-1"
         style={{ backgroundColor: Colors.background }}
       >
-        <View className="flex-1 w-full" style={{ backgroundColor: Colors.background }}>
-          {/* Header */}
+        <View
+          className="flex-1 w-full"
+          style={{
+            backgroundColor: Colors.background,
+            paddingBottom: Platform.OS === "android" ? keyboardOffset : 0,
+          }}
+        >
+          {/* Header Container with Safe Area Status Bar spacing */}
           <View
-            className="flex-row items-center justify-between border-b px-5 py-4"
-            style={{ backgroundColor: Colors.ui.headerDark, borderColor: Colors.ui.headerAvatarDark }}
+            style={{
+              backgroundColor: Colors.ui.headerDark,
+              paddingTop: topInset,
+            }}
           >
-            <View className="flex-1 pr-2">
-              <View className="flex-row items-center gap-2 mb-0.5">
-                <Ionicons name="chatbubbles" size={20} color={Colors.icon.primary} />
-                <Text className="text-lg font-bold" style={{ color: Colors.text.inverse }}>
-                  Admin Discussion
+            <View
+              className="flex-row items-center justify-between border-b px-5 py-4"
+              style={{ borderColor: Colors.ui.headerAvatarDark }}
+            >
+              <View className="flex-1 pr-2">
+                <View className="flex-row items-center gap-2 mb-0.5">
+                  <Ionicons name="chatbubbles" size={20} color={Colors.icon.primary} />
+                  <Text className="text-lg font-bold" style={{ color: Colors.text.inverse }}>
+                    Admin Discussion
+                  </Text>
+                </View>
+                <Text className="text-xs font-semibold" style={{ color: Colors.ui.heroSoft }}>
+                  Report Ref: #{String(report.id).slice(-8).toUpperCase()} • {report.issueType}
                 </Text>
               </View>
-              <Text className="text-xs font-semibold" style={{ color: Colors.ui.heroSoft }}>
-                Report Ref: #{String(report.id).slice(-8).toUpperCase()} • {report.issueType}
-              </Text>
-            </View>
 
-            <Pressable
-              onPress={onClose}
-              className="h-9 w-9 items-center justify-center rounded-full"
-              style={{ backgroundColor: Colors.ui.headerAvatarDark }}
-            >
-              <Ionicons name="close" size={22} color={Colors.icon.light} />
-            </Pressable>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  onClose?.();
+                }}
+                className="h-9 w-9 items-center justify-center rounded-full"
+                style={{ backgroundColor: Colors.ui.headerAvatarDark }}
+              >
+                <Ionicons name="close" size={22} color={Colors.icon.light} />
+              </Pressable>
+            </View>
           </View>
 
           {/* Report Details Brief Summary */}
@@ -454,6 +568,8 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               className="flex-1 px-4 py-4"
               style={{ backgroundColor: Colors.screen.profileSubpage }}
               contentContainerStyle={{ paddingBottom: 16 }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
               {messages.map((item, index) => {
@@ -526,7 +642,9 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
             style={{
               backgroundColor: Colors.surface,
               borderColor: Colors.borderSoft,
-              paddingBottom: Platform.OS === 'ios' ? 24 : 12
+              paddingBottom: keyboardVisible
+                ? 10
+                : Math.max(insets.bottom, 12),
             }}
           >
             <TextInput
@@ -534,11 +652,12 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               onChangeText={handleInputChange}
               placeholder="Type your message to admin..."
               placeholderTextColor={Colors.icon.muted}
-              className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-full"
+              className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-2xl"
               style={{
                 backgroundColor: Colors.ui.slateSoft,
                 borderColor: Colors.borderSoft,
-                color: Colors.text.primary
+                color: Colors.text.primary,
+                textAlignVertical: "center",
               }}
               multiline
             />

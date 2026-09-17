@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { adminService } from "./admin.service.js";
 import { adminRepository } from "./admin.repository.js";
+import { departmentsService } from "../departments/departments.service.js";
 import { reportMessagesRepository } from "../reports/messages.repository.js";
 import { reportsSentimentClient } from "../reports/reports.sentiment.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
@@ -133,3 +134,50 @@ test("adminService.listReports uses Redis cache when present", async () => {
     cacheService.setJSON = originals.setJSON;
   }
 });
+
+test("adminService.listReports includes resolvedAt on mapped report items", async () => {
+  const originals = {
+    listReports: adminRepository.listReports,
+    listDepartments: departmentsService.listDepartments,
+    getJSON: cacheService.getJSON,
+    setJSON: cacheService.setJSON,
+  };
+
+  try {
+    cacheService.getJSON = async () => null;
+    cacheService.setJSON = async () => {};
+    departmentsService.listDepartments = async () => [];
+
+    adminRepository.listReports = async () => ({
+      rows: [
+        {
+          id: "rep-1",
+          report_number: "bfp-0023",
+          status: "resolved",
+          resolved_at: "2026-09-17T04:38:40.769Z",
+          user_id: "u1",
+        },
+      ],
+      count: 1,
+      reporterProfilesByUserId: {
+        u1: { email: "u1@test.com" },
+      },
+    });
+
+    const result = await adminService.listReports({
+      actor: { role: "superadmin" },
+      accessToken: "token",
+      limit: 50,
+      offset: 0,
+    });
+
+    assert.equal(result.data.length, 1);
+    assert.equal(result.data[0].resolvedAt, "2026-09-17T04:38:40.769Z");
+  } finally {
+    adminRepository.listReports = originals.listReports;
+    departmentsService.listDepartments = originals.listDepartments;
+    cacheService.getJSON = originals.getJSON;
+    cacheService.setJSON = originals.setJSON;
+  }
+});
+

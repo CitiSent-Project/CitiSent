@@ -489,7 +489,7 @@ export const adminRepository = {
 
     let query = db
       .from(REPORTS_TABLE)
-      .select("id,report_number,issue_type,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id", { count: "exact" })
+      .select("id,report_number,issue_type,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,resolved_at,updated_at,user_id", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 

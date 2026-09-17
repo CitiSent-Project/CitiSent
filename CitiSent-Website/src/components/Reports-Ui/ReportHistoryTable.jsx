@@ -17,6 +17,18 @@ function formatReportId(reportNum, id) {
   return value.length > 12 ? `${value.slice(0, 8)}…` : value
 }
 
+function formatCompletedDate(resolvedAt, updatedAt) {
+  const value = resolvedAt || updatedAt
+  if (!value) return 'N/A'
+  const parsed = new Date(value)
+  if (isNaN(parsed.getTime())) return 'N/A'
+  return parsed.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 const URGENCY_OPTIONS = ['All Urgencies', 'Critical', 'High', 'Medium', 'Low'];
 const EMOTION_OPTIONS = ['All Emotions', ...REPORT_EMOTION_OPTIONS];
 
@@ -87,8 +99,8 @@ export function ReportHistoryTable({
       }
 
       // Date / Month Filter
-      if (selectedMonth && (row.resolvedAt || row.createdAt || row.date)) {
-        const dateStr = row.resolvedAt || row.createdAt || row.date;
+      if (selectedMonth && (row.resolvedAt || row.updatedAt || row.createdAt || row.date)) {
+        const dateStr = row.resolvedAt || row.updatedAt || row.createdAt || row.date;
         const dateObj = new Date(dateStr);
         if (!isNaN(dateObj.getTime())) {
           const yearMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
@@ -99,8 +111,8 @@ export function ReportHistoryTable({
       return true;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.resolvedAt || a.createdAt || a.date || 0).getTime();
-      const dateB = new Date(b.resolvedAt || b.createdAt || b.date || 0).getTime();
+      const dateA = new Date(a.resolvedAt || a.updatedAt || a.createdAt || a.date || 0).getTime();
+      const dateB = new Date(b.resolvedAt || b.updatedAt || b.createdAt || b.date || 0).getTime();
       return dateB - dateA; // latest first
     });
   }, [rows, selectedMonth, statusFilter, departmentFilter, urgencyFilter, emotionFilter]);
@@ -131,7 +143,7 @@ export function ReportHistoryTable({
         `"${row.urgency || ''}"`,
         `"${row.emotionLevel || 'Neutral'}"`,
         `"${normalizeReportStatus(row.status)}"`,
-        `"${row.resolvedAt || row.date || ''}"`,
+        `"${formatCompletedDate(row.resolvedAt, row.updatedAt)}"`,
       ];
       csvLines.push(line.join(","));
     });
@@ -367,7 +379,7 @@ export function ReportHistoryTable({
                       {row.date || 'N/A'}
                     </td>
                     <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
-                      {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                      {formatCompletedDate(row.resolvedAt, row.updatedAt)}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <button
@@ -461,7 +473,7 @@ export function ReportHistoryTable({
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700/50">
                   <div className="flex flex-col gap-0.5 text-[11px] text-slate-400 font-numeric dark:text-slate-500">
                     <p>Submitted: {row.date || 'N/A'}</p>
-                    <p>Completed: {row.resolvedAt ? new Date(row.resolvedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</p>
+                    <p>Completed: {formatCompletedDate(row.resolvedAt, row.updatedAt)}</p>
                   </div>
                   <button
                     type="button"

@@ -41,6 +41,29 @@ test("toAdminReportResponse enriches report data for the admin website", () => {
   assert.equal(response.statusLabel, "In Progress");
   assert.equal(response.urgency, "High");
   assert.equal(response.reporter.fullName, "Citizen One");
+  assert.equal(response.resolvedAt, null);
+});
+
+test("toAdminReportResponse correctly sets resolvedAt and falls back to updated_at for resolved/rejected reports", () => {
+  const resolvedWithDate = toAdminReportResponse({
+    reportRow: {
+      id: "report-2",
+      status: "resolved",
+      resolved_at: "2026-09-17T04:38:40.769Z",
+      updated_at: "2026-09-17T04:38:42.025Z",
+    },
+  });
+  assert.equal(resolvedWithDate.resolvedAt, "2026-09-17T04:38:40.769Z");
+
+  const rejectedWithFallback = toAdminReportResponse({
+    reportRow: {
+      id: "report-3",
+      status: "rejected",
+      resolved_at: null,
+      updated_at: "2026-09-17T04:33:51.202Z",
+    },
+  });
+  assert.equal(rejectedWithFallback.resolvedAt, "2026-09-17T04:33:51.202Z");
 });
 
 test("toTransferRequestResponse matches frontend transfer request shape", () => {

@@ -43,6 +43,9 @@ export function mapBackendReportToUiRow(payload = {}) {
     composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
     reporter.fullName ||
     ''
+  const normalizedReportStatusVal = normalizeReportStatus(
+    REPORT_STATUS_LABEL_MAP[payload.status] || payload.statusLabel || payload.status
+  )
 
   return {
     id: payload.id || '',
@@ -61,14 +64,17 @@ export function mapBackendReportToUiRow(payload = {}) {
     urgency: payload.urgency || payload.sentimentLabel || 'Low',
     emotionLevel: payload.emotionLevel || 'Neutral',
     aiSummary: payload.aiSummary || null,
-    status: normalizeReportStatus(
-      REPORT_STATUS_LABEL_MAP[payload.status] || payload.statusLabel || payload.status
-    ),
+    status: normalizedReportStatusVal,
     issueType: payload.issueType || department.label,
     attachmentUrl: payload.attachmentUrl || null,
     backendStatus: payload.status || 'pending',
     createdAt: createdAtVal,
-    resolvedAt: payload.resolvedAt || payload.resolved_at || null,
+    resolvedAt:
+      payload.resolvedAt ||
+      payload.resolved_at ||
+      (normalizedReportStatusVal === 'Resolved' || normalizedReportStatusVal === 'Rejected'
+        ? payload.updatedAt || payload.updated_at || null
+        : null),
     updatedAt: payload.updatedAt || payload.updated_at || '',
   }
 }

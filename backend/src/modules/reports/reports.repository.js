@@ -243,47 +243,6 @@ export const reportsRepository = {
     };
   },
 
-  /**
-   * Check if the same user submitted an identical report recently.
-   * Used as a DB-level guard against the timeout-retry duplication bug:
-   * if a request timed out but the insert already committed, a retry
-   * within the window will be caught here regardless of cache state.
-   *
-   * @param {object} params
-   * @param {string} params.userId
-   * @param {string} params.issueType
-   * @param {string} params.location
-   * @param {string} params.description
-   * @param {number} params.withinSeconds - Lookback window in seconds
-   * @param {string} [params.accessToken]
-   * @returns {Promise<object|null>} The duplicate row, or null if none found
-   */
-  async findRecentDuplicate({ userId, issueType, location, description, withinSeconds, accessToken }) {
-    const db = getDbClient(accessToken);
-
-    const since = new Date(Date.now() - withinSeconds * 1000).toISOString();
-
-    const { data, error } = await db
-      .from(TABLE_NAME)
-      .select("id, created_at")
-      .eq("user_id", userId)
-      .eq("issue_type", issueType)
-      .eq("location", location)
-      .eq("description", description)
-      .gte("created_at", since)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      // Non-fatal: log and return null so the insert can proceed.
-      // We prefer a rare duplicate over blocking a legitimate submission.
-      return null;
-    }
-
-    return data ?? null;
-  },
-
   async create(payload, accessToken) {
     const db = getDbClient(accessToken);
 

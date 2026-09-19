@@ -266,16 +266,18 @@ export const reportsService = {
         throw error;
       }
 
-      // Anti-spam duplicate check: reject exact same report from guest within 60s
+      // Fast-path cache check: if we already know this exact submission was
+      // recently processed successfully, reject immediately without a DB round-trip.
+      // NOTE: The cache key is only written AFTER a successful DB insert (below),
+      // so this will never block a legitimate retry following a failed/timed-out request.
       const duplicateKey = `guest:report:dupe:${actor.id}:${issueType}:${location}:${description}`.slice(0, 150);
-      const isDuplicate = await cacheService.getJSON(duplicateKey);
-      if (isDuplicate) {
+      const isCacheDuplicate = await cacheService.getJSON(duplicateKey);
+      if (isCacheDuplicate) {
         throw new AppError(
           "Duplicate report detected. Please wait a moment before submitting again.",
           StatusCodes.TOO_MANY_REQUESTS,
         );
       }
-      await cacheService.setJSON(duplicateKey, true, 60);
     }
 
     if (latitude === undefined || longitude === undefined) {
@@ -285,10 +287,41 @@ export const reportsService = {
       throw new AppError("The selected location is outside Sto. Tomas City, Batangas.", StatusCodes.BAD_REQUEST);
     }
 
+    // ── Resolve department slug before duplicate check ─────────────────────────
+    // The DB stores the slugified issue_type (e.g. "road-damage"), not the raw
+    // display name sent by the client. We must resolve the slug first so the
+    // duplicate check matches the value that was actually stored on the first submission.
     const department = await resolveActiveDepartment({
       accessToken,
       value: issueType,
     });
+    const storedIssueType = department?.slug || issueType;
+
+    // ── Universal DB-level recent-duplicate guard ──────────────────────────────
+    // Applies to ALL users (guests and registered citizens). This is the primary
+    // fix for the timeout-retry bug: if a request timed out *after* the DB insert
+    // committed, the duplicate row is already in the database. A retry within the
+    // 5-minute window will be caught here regardless of cache state or TTL expiry.
+    const DUPLICATE_WINDOW_SECONDS = 300; // 5 minutes — matches the cache TTL below
+    const recentDuplicate = await reportsRepository.findRecentDuplicate({
+      userId,
+      issueType: storedIssueType,
+      location,
+      description,
+      withinSeconds: DUPLICATE_WINDOW_SECONDS,
+      accessToken,
+    });
+    if (recentDuplicate) {
+      logger.warn("[Reports] Duplicate report submission blocked by DB recency check", {
+        userId,
+        existingReportId: recentDuplicate.id,
+        existingCreatedAt: recentDuplicate.created_at,
+      });
+      throw new AppError(
+        "A similar report was already submitted recently. Please check your reports before submitting again.",
+        StatusCodes.TOO_MANY_REQUESTS,
+      );
+    }
 
     const { urgency, emotionLevel, aiSummary } = await resolveAnalysisWithFallback({
       issueType: department?.name || issueType,
@@ -310,7 +343,7 @@ export const reportsService = {
     const created = await reportsRepository.create(
       buildReportCreatePayload({
         userId: resolvedUserId,
-        issueType: department?.slug || issueType,
+        issueType: storedIssueType,
         description,
         location,
         latitude,
@@ -322,6 +355,17 @@ export const reportsService = {
       }),
       accessToken,
     );
+
+    // ── Write the guest duplicate-prevention cache key AFTER successful insert ──
+    // By writing the key here (post-insert) rather than before the DB insert,
+    // we ensure: (a) if the insert fails, the user can retry immediately;
+    // (b) if a request times out AFTER the insert commits, the key is set and
+    // a retry within 5 minutes will be blocked by the cache fast-path above.
+    // TTL of 300s matches the DB-level DUPLICATE_WINDOW_SECONDS above.
+    if (actor?.isGuest) {
+      const duplicateKey = `guest:report:dupe:${actor.id}:${issueType}:${location}:${description}`.slice(0, 150);
+      await cacheService.setJSON(duplicateKey, true, 300);
+    }
 
     await Promise.all([
       cacheService.deleteByPrefix(buildReportsUserCachePrefix(resolvedUserId)),
@@ -335,7 +379,7 @@ export const reportsService = {
       reportId: response.id,
       changeType: "created",
       userId: resolvedUserId,
-      departmentId: department?.slug || issueType,
+      departmentId: storedIssueType,
     });
 
     return response;

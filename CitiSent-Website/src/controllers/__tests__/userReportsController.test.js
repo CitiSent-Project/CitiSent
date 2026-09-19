@@ -4,8 +4,10 @@ import {
   REPORT_SORTING_OPTIONS,
   buildUserReportRows,
   buildVisiblePages,
+  filterReportsBySearch,
   filterUserReportsByCategory,
   filterUserReportsByUrgency,
+  matchesReportSearch,
   paginateReports,
   sortReports,
   sortReportsByLatest,
@@ -134,5 +136,89 @@ describe('userReportsController', () => {
     expect(page.safeCurrentPage).toBe(2)
     expect(page.visibleRows.map((row) => row.id)).toEqual(['R-3'])
     expect(page.visiblePages).toEqual([1, 2])
+  })
+
+  describe('report search filtering', () => {
+    const sampleReports = [
+      {
+        id: 'rep-uuid-001',
+        reportNum: 'BFP-2026-001',
+        reportNumber: 'BFP-2026-001',
+        email: 'juan.delacruz@gmail.com',
+        location: 'Barangay San Rafael, Sto. Tomas',
+        date: 'September 17, 2026',
+        createdAt: '2026-09-17T04:38:40.769Z',
+        resolvedAt: '2026-09-18T10:00:00.000Z',
+        name: 'Juan Dela Cruz',
+        category: 'Bureau of Fire Protection',
+      },
+      {
+        id: 'rep-uuid-002',
+        reportNum: 'PNP-2026-042',
+        reportNumber: 'PNP-2026-042',
+        email: 'maria.santos@yahoo.com',
+        location: 'Poblacion Market, Riverside',
+        date: 'April 16, 2026',
+        createdAt: '2026-04-16T08:15:00.000Z',
+        resolvedAt: null,
+        name: 'Maria Santos',
+        category: 'Philippine National Police',
+      },
+      {
+        id: 'rep-uuid-003',
+        reportNum: 'CSWDO-2026-105',
+        reportNumber: 'CSWDO-2026-105',
+        email: 'alex.tan@outlook.com',
+        location: 'Santa Anastacia High School',
+        date: 'December 05, 2025',
+        createdAt: '2025-12-05T14:30:00.000Z',
+        resolvedAt: null,
+        name: 'Alex Tan',
+        category: 'City Social Welfare and Development Office',
+      },
+    ]
+
+    it('filters by user email address (case-insensitive and domain substring)', () => {
+      expect(filterReportsBySearch(sampleReports, 'juan.delacruz@gmail.com').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      expect(filterReportsBySearch(sampleReports, 'MARIA.SANTOS').map((r) => r.id)).toEqual(['rep-uuid-002'])
+      expect(filterReportsBySearch(sampleReports, 'outlook.com').map((r) => r.id)).toEqual(['rep-uuid-003'])
+    })
+
+    it('filters by report ID (internal id, reportNum, and reportNumber)', () => {
+      expect(filterReportsBySearch(sampleReports, 'rep-uuid-001').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      expect(filterReportsBySearch(sampleReports, 'BFP-2026-001').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      expect(filterReportsBySearch(sampleReports, 'pnp-2026').map((r) => r.id)).toEqual(['rep-uuid-002'])
+      expect(filterReportsBySearch(sampleReports, '042').map((r) => r.id)).toEqual(['rep-uuid-002'])
+    })
+
+    it('filters by location of the report', () => {
+      expect(filterReportsBySearch(sampleReports, 'San Rafael').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      expect(filterReportsBySearch(sampleReports, 'riverside').map((r) => r.id)).toEqual(['rep-uuid-002'])
+      expect(filterReportsBySearch(sampleReports, 'Santa Anastacia').map((r) => r.id)).toEqual(['rep-uuid-003'])
+    })
+
+    it('filters by date of the report (full month, short month, day, year, ISO format)', () => {
+      // Month name
+      expect(filterReportsBySearch(sampleReports, 'September').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      // Short month
+      expect(filterReportsBySearch(sampleReports, 'Sep 17').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      // ISO date format YYYY-MM-DD
+      expect(filterReportsBySearch(sampleReports, '2026-09-17').map((r) => r.id)).toEqual(['rep-uuid-001'])
+      // Another month
+      expect(filterReportsBySearch(sampleReports, 'April').map((r) => r.id)).toEqual(['rep-uuid-002'])
+      // Year
+      expect(filterReportsBySearch(sampleReports, '2025').map((r) => r.id)).toEqual(['rep-uuid-003'])
+    })
+
+    it('returns all reports when search query is empty or only whitespace', () => {
+      expect(filterReportsBySearch(sampleReports, '')).toEqual(sampleReports)
+      expect(filterReportsBySearch(sampleReports, '   ')).toEqual(sampleReports)
+      expect(filterReportsBySearch(sampleReports, null)).toEqual(sampleReports)
+      expect(filterReportsBySearch(sampleReports, undefined)).toEqual(sampleReports)
+    })
+
+    it('returns empty array when no report matches query', () => {
+      expect(filterReportsBySearch(sampleReports, 'nonexistent-term-xyz')).toEqual([])
+    })
   })
 })

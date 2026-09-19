@@ -181,3 +181,150 @@ export function buildWeeklyReportTrend(rows = []) {
   }
 }
 
+export function getReportSearchableDateStrings(report = {}) {
+  const dateStrings = new Set()
+
+  if (report.date) {
+    dateStrings.add(String(report.date).trim())
+  }
+  if (report.createdAt) {
+    dateStrings.add(String(report.createdAt).trim())
+  }
+  if (report.resolvedAt) {
+    dateStrings.add(String(report.resolvedAt).trim())
+  }
+  if (report.updatedAt) {
+    dateStrings.add(String(report.updatedAt).trim())
+  }
+
+  const candidates = [
+    report.dateValue,
+    report.createdAt,
+    report.resolvedAt,
+    report.updatedAt,
+    report.date,
+  ]
+
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    const dateObj = candidate instanceof Date ? candidate : new Date(candidate)
+    if (!Number.isNaN(dateObj.getTime())) {
+      // "Sep 17, 2026"
+      dateStrings.add(
+        dateObj.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      )
+      // "September 17, 2026"
+      dateStrings.add(
+        dateObj.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      )
+      // "09/17/2026"
+      dateStrings.add(
+        dateObj.toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric',
+        })
+      )
+      // "9/17/2026"
+      dateStrings.add(
+        dateObj.toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      )
+      // "2026-09-17"
+      try {
+        const isoDate = dateObj.toISOString().slice(0, 10)
+        dateStrings.add(isoDate)
+        dateStrings.add(isoDate.replace(/-/g, '/'))
+      } catch {
+        // ignore Date bounds / ISO conversion errors
+      }
+    }
+  }
+
+  return Array.from(dateStrings)
+}
+
+export function matchesReportSearch(report = {}, searchTerm = '') {
+  const query = String(searchTerm || '').trim().toLowerCase()
+  if (!query) {
+    return true
+  }
+
+  // 1. Email Address of the user
+  const email = String(
+    report.email ||
+    report.userEmail ||
+    report.reporter?.email ||
+    ''
+  ).toLowerCase()
+  if (email.includes(query)) {
+    return true
+  }
+
+  // 2. Report ID (internal id, reportNum, reportNumber)
+  const id = String(report.id || '').toLowerCase()
+  const reportNum = String(report.reportNum || '').toLowerCase()
+  const reportNumber = String(report.reportNumber || '').toLowerCase()
+  if (id.includes(query) || reportNum.includes(query) || reportNumber.includes(query)) {
+    return true
+  }
+
+  // 3. Location of the report
+  const location = String(
+    report.location ||
+    report.reportLocation ||
+    ''
+  ).toLowerCase()
+  if (location.includes(query)) {
+    return true
+  }
+
+  // 4. Date of the report
+  const dateStrings = getReportSearchableDateStrings(report)
+  if (dateStrings.some((dStr) => dStr.toLowerCase().includes(query))) {
+    return true
+  }
+
+  // Supplementary fields: Name, Category/IssueType, Message
+  const name = String(report.name || report.userName || '').toLowerCase()
+  if (name.includes(query)) {
+    return true
+  }
+
+  const category = String(
+    report.category ||
+    report.issueType ||
+    report.title ||
+    ''
+  ).toLowerCase()
+  if (category.includes(query)) {
+    return true
+  }
+
+  const message = String(report.message || report.reportDescription || '').toLowerCase()
+  if (message.includes(query)) {
+    return true
+  }
+
+  return false
+}
+
+export function filterReportsBySearch(reports = [], searchTerm = '') {
+  if (!String(searchTerm || '').trim()) {
+    return reports
+  }
+
+  return reports.filter((report) => matchesReportSearch(report, searchTerm))
+}
+

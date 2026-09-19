@@ -24,7 +24,8 @@ export function UrgencyFilterChips({
           <FiSearch className="text-slate-400 shrink-0 dark:text-slate-500" />
           <input
             className="w-full bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none min-w-0 dark:text-slate-200 dark:placeholder:text-slate-500"
-            placeholder="Search reports by ID, user, or issue..."
+            placeholder="Search reports by ID, email, location, or date..."
+            aria-label="Search reports by ID, email, location, or date"
             type="text"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}

@@ -15,6 +15,7 @@ import {
   ALL_URGENCY_FILTER,
   filterUserReportsByUrgency,
   buildWeeklyReportTrend,
+  matchesReportSearch,
 } from '../../controllers/reports/userReportsController'
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 
@@ -61,13 +62,7 @@ export function ByUrgencyLevels({
 
     // Apply search filtering
     if (debouncedSearchTerm) {
-      const low = debouncedSearchTerm.toLowerCase()
-      result = result.filter((r) =>
-        String(r.id || '')?.toLowerCase().includes(low) ||
-        String(r.title || '')?.toLowerCase().includes(low) ||
-        String(r.userName || '')?.toLowerCase().includes(low) ||
-        String(r.issueType || '')?.toLowerCase().includes(low),
-      )
+      result = result.filter((r) => matchesReportSearch(r, debouncedSearchTerm))
     }
 
     // Apply status filter

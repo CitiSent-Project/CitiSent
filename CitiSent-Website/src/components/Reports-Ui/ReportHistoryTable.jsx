@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle } from "react-icons/fi";
+import React, { useState, useMemo, useEffect } from 'react';
+import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle, FiSearch } from "react-icons/fi";
 import { TableLoader } from '../ui/TableLoader';
 import { Pagination } from '../ui/Pagination';
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState';
@@ -10,6 +10,7 @@ import {
   REPORT_EMOTION_OPTIONS,
   normalizeReportStatus,
 } from "../../models/reportStatusModel";
+import { matchesReportSearch } from "../../controllers/reports/userReportsController";
 
 function formatReportId(reportNum, id) {
   const value = String(reportNum || id || '').trim()
@@ -45,11 +46,20 @@ export function ReportHistoryTable({
   isLoading = false,
   pageSize = 8,
 }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'resolved', 'rejected'
   const [departmentFilter, setDepartmentFilter] = useState('All');
   const [emotionFilter, setEmotionFilter] = useState('All');
   const [urgencyFilter, setUrgencyFilter] = useState('All');
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Derive department list from passed options or rows
   const availableDepartments = useMemo(() => {
@@ -98,6 +108,11 @@ export function ReportHistoryTable({
         if (rowEmotion !== emotionFilter) return false;
       }
 
+      // Search Filter (ID, Email, Location, Date)
+      if (debouncedSearchTerm && !matchesReportSearch(row, debouncedSearchTerm)) {
+        return false;
+      }
+
       // Date / Month Filter
       if (selectedMonth && (row.resolvedAt || row.updatedAt || row.createdAt || row.date)) {
         const dateStr = row.resolvedAt || row.updatedAt || row.createdAt || row.date;
@@ -115,7 +130,7 @@ export function ReportHistoryTable({
       const dateB = new Date(b.resolvedAt || b.updatedAt || b.createdAt || b.date || 0).getTime();
       return dateB - dateA; // latest first
     });
-  }, [rows, selectedMonth, statusFilter, departmentFilter, urgencyFilter, emotionFilter]);
+  }, [rows, selectedMonth, statusFilter, departmentFilter, urgencyFilter, emotionFilter, debouncedSearchTerm]);
 
   const {
     totalPages,
@@ -166,6 +181,29 @@ export function ReportHistoryTable({
       {/* Filters Bar */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
         <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          {/* Search Input */}
+          <div className="flex flex-1 sm:flex-initial sm:w-64 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:bg-white transition-colors dark:border-slate-700 dark:bg-slate-900/50 dark:focus-within:bg-slate-900">
+            <FiSearch className="text-slate-400 shrink-0 dark:text-slate-500 text-xs" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by ID, email, location, or date..."
+              aria-label="Search history by ID, email, location, or date"
+              className="w-full bg-transparent text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none min-w-0 dark:text-slate-200 dark:placeholder:text-slate-500"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
           {/* Month Selector */}
           <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
             <FiCalendar className="text-slate-500 text-sm dark:text-slate-400" />

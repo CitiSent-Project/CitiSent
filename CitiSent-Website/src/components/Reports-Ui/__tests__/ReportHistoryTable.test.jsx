@@ -52,4 +52,26 @@ describe('ReportHistoryTable', () => {
     // Should fall back to updatedAt instead of rendering N/A
     expect(html).not.toMatch(/<td[^>]*>N\/A<\/td>/)
   })
+
+  it('renders search input for filtering history by ID, email, location, or date', () => {
+    const html = renderToStaticMarkup(
+      <ReportHistoryTable
+        rows={[
+          {
+            id: 'report-101',
+            reportNum: 'bfp-0023',
+            category: 'Bureau of Fire Protection',
+            location: 'San Rafael',
+            urgency: 'Medium',
+            status: 'Resolved',
+            date: 'September 17, 2026',
+            resolvedAt: '2026-09-17T04:38:40.769Z',
+          },
+        ]}
+      />,
+    )
+
+    expect(html).toContain('placeholder="Search by ID, email, location, or date..."')
+    expect(html).toContain('aria-label="Search history by ID, email, location, or date"')
+  })
 })

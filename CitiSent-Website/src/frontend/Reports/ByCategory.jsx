@@ -4,7 +4,7 @@ import { VerticalChart } from '../../components/Dashboard-Ui/Vertical-Chart'
 import { DepartmentCardsGrid, Pagination, ReportsStatCards, UrgencyFeedTable, UrgencyFilterChips, EmotionFilterChips } from '../../components/Reports-Ui'
 import { REPORT_EMOTION_OPTIONS } from '../../models/reportStatusModel'
 import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/reports/reportAccessController'
-import { filterUserReportsByCategory, buildWeeklyReportTrend } from '../../controllers/reports/userReportsController'
+import { filterUserReportsByCategory, buildWeeklyReportTrend, matchesReportSearch } from '../../controllers/reports/userReportsController'
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
 
@@ -103,13 +103,7 @@ export function ByCategory({
 
     // Apply Search Filter
     if (debouncedSearchTerm) {
-      const lowSearch = debouncedSearchTerm.toLowerCase()
-      result = result.filter(r =>
-        r.id?.toString().toLowerCase().includes(lowSearch) ||
-        r.title?.toLowerCase().includes(lowSearch) ||
-        r.userName?.toLowerCase().includes(lowSearch) ||
-        r.issueType?.toLowerCase().includes(lowSearch)
-      )
+      result = result.filter((r) => matchesReportSearch(r, debouncedSearchTerm))
     }
 
     // Apply Status Filter

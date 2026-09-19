@@ -9,8 +9,6 @@ export default function FeedbackModal({ visible, title, message, type = "info", 
         return Colors.ui?.successText || "#15803D"; // Tailwind green-700
       case "error":
         return Colors.ui?.dangerText || "#B91C1C"; // Tailwind red-700
-      case "warning":
-        return Colors.ui?.warningText || "#B45309"; // Tailwind amber-700
       default:
         return Colors.primaryStrong;
     }
@@ -22,8 +20,6 @@ export default function FeedbackModal({ visible, title, message, type = "info", 
         return Colors.ui?.successSurface || "#DCFCE7"; // Tailwind green-100
       case "error":
         return Colors.ui?.dangerSurface || "#FEE2E2"; // Tailwind red-100
-      case "warning":
-        return Colors.ui?.warningSurface || "#FEF3C7"; // Tailwind amber-100
       default:
         return Colors.ui?.infoSurface || "#EFF6FF"; // Tailwind blue-100
     }
@@ -38,7 +34,7 @@ export default function FeedbackModal({ visible, title, message, type = "info", 
             style={{ backgroundColor: getBackgroundColor() }}
           >
             <Text className="text-2xl font-bold" style={{ color: getIconColor() }}>
-              {type === "success" ? "✓" : type === "error" ? "!" : type === "warning" ? "⚠" : "i"}
+              {type === "success" ? "✓" : type === "error" ? "!" : "i"}
             </Text>
           </View>
           

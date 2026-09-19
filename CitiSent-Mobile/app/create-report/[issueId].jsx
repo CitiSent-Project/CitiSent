@@ -63,10 +63,6 @@ export default function CreateReportIssueDetailScreen() {
   const [report, setReport] = useState("");
   const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Timestamp (ms) until which resubmission is blocked after a network/server timeout.
-  // Matches the backend's 5-minute duplicate window so the user cannot accidentally
-  // create a duplicate by retrying immediately after a slow-network timeout.
-  const timeoutCooldownUntilRef = useRef(0);
   const [modalConfig, setModalConfig] = useState({
     visible: false,
     type: "info",
@@ -88,18 +84,15 @@ export default function CreateReportIssueDetailScreen() {
   };
 
   // Enforce backend validation: location min 1, description min 10, issueType min 1, coordinates within Sto. Tomas
-  // Also block submission during the post-timeout cooldown window.
-  const isInTimeoutCooldown = Date.now() < timeoutCooldownUntilRef.current;
   const canSubmit =
-    !isInTimeoutCooldown &&
-    (issue
+    issue
       ? issueLocation.trim().length > 0 &&
         report.trim().length >= 10 &&
         latitude !== null &&
         longitude !== null &&
         isWithinStoTomas(Number(latitude), Number(longitude)) &&
         (!isGuestUser() || (agreeTerms && agreePrivacy))
-      : false);
+      : false;
 
   function showModal(type, title, message, onCloseAction = null) {
     setModalConfig({ visible: true, type, title, message, onCloseAction });
@@ -220,30 +213,6 @@ export default function CreateReportIssueDetailScreen() {
         return;
       }
 
-      // Detect network timeout or server-side 504 Gateway Timeout.
-      // In these cases the backend may have already committed the report to the
-      // database before the timeout fired. Show a warning instead of a generic
-      // error, and disable the Submit button for 5 minutes (matching the backend's
-      // duplicate detection window) to prevent the user from creating a duplicate.
-      const isTimeout =
-        error?.code === "REQUEST_TIMEOUT" ||
-        error?.status === 504 ||
-        String(error?.message || "").toLowerCase().includes("timed out") ||
-        String(error?.name || "").toLowerCase().includes("aborterror") ||
-        String(error?.message || "").toLowerCase().includes("network request failed");
-
-      if (isTimeout) {
-        const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
-        timeoutCooldownUntilRef.current = Date.now() + COOLDOWN_MS;
-        showModal(
-          "warning",
-          "Submission may have been received",
-          "Your report may have already been submitted successfully. Please check My Reports before trying again to avoid creating a duplicate."
-        );
-        return;
-      }
-
-      // Generic error (validation, auth, etc.)
       showModal(
         "error",
         "Submission failed",

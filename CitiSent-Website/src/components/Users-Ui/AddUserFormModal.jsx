@@ -185,25 +185,35 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="new-user-city">
+                City
+              </label>
               <input
+                id="new-user-city"
                 type="text"
                 value={form.city}
-                onChange={(event) => updateField('city', event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                readOnly
+                disabled
+                aria-disabled="true"
+                tabIndex={-1}
+                className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm font-medium text-slate-500 cursor-not-allowed select-none transition focus:outline-none dark:border-slate-700/80 dark:bg-slate-800/50 dark:text-slate-400"
                 placeholder="Sto. Tomas"
-                disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Province</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="new-user-province">
+                Province
+              </label>
               <input
+                id="new-user-province"
                 type="text"
                 value={form.province}
-                onChange={(event) => updateField('province', event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                readOnly
+                disabled
+                aria-disabled="true"
+                tabIndex={-1}
+                className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm font-medium text-slate-500 cursor-not-allowed select-none transition focus:outline-none dark:border-slate-700/80 dark:bg-slate-800/50 dark:text-slate-400"
                 placeholder="Batangas"
-                disabled={isSubmitting}
               />
             </div>
           </div>

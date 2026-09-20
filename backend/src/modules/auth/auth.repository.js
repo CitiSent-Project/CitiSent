@@ -6,6 +6,7 @@ import {
   supabase,
 } from "../../config/supabase.js";
 import { AppError } from "../../shared/errors/appError.js";
+import { generate6DigitId } from "../../shared/utils/idGenerator.js";
 
 const PROFILES_TABLE = "profiles";
 
@@ -784,18 +785,28 @@ export const authRepository = {
 
   async upsertProfileByUserId(userId, payload, accessToken) {
     const db = getDbClient(accessToken);
+    const insertPayload = {
+      user_id: userId,
+      display_id: payload.display_id || generate6DigitId(),
+      ...payload,
+    };
 
-    const { data, error } = await db
+    let { data, error } = await db
       .from(PROFILES_TABLE)
-      .upsert(
-        {
-          user_id: userId,
-          ...payload,
-        },
-        { onConflict: "user_id" },
-      )
+      .upsert(insertPayload, { onConflict: "user_id" })
       .select("*")
       .maybeSingle();
+
+    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+      delete insertPayload.display_id;
+      const retry = await db
+        .from(PROFILES_TABLE)
+        .upsert(insertPayload, { onConflict: "user_id" })
+        .select("*")
+        .maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       if (isMissingProfilesTable(error)) {
@@ -815,17 +826,28 @@ export const authRepository = {
       return null;
     }
 
-    const { data, error } = await adminDb
+    const insertPayload = {
+      user_id: userId,
+      display_id: payload.display_id || generate6DigitId(),
+      ...payload,
+    };
+
+    let { data, error } = await adminDb
       .from(PROFILES_TABLE)
-      .upsert(
-        {
-          user_id: userId,
-          ...payload,
-        },
-        { onConflict: "user_id" },
-      )
+      .upsert(insertPayload, { onConflict: "user_id" })
       .select("*")
       .maybeSingle();
+
+    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+      delete insertPayload.display_id;
+      const retry = await adminDb
+        .from(PROFILES_TABLE)
+        .upsert(insertPayload, { onConflict: "user_id" })
+        .select("*")
+        .maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       if (isMissingProfilesTable(error)) {
@@ -976,26 +998,31 @@ export const authRepository = {
       const assignedUserId = createdAuth?.user?.id || guestId;
 
       try {
-        await adminDb
+        const guestPayload = {
+          user_id: assignedUserId,
+          display_id: generate6DigitId(),
+          email: guestEmail,
+          username: `guest_${shortId}`,
+          fname: "Guest",
+          lname: "User",
+          role: "guest",
+          account_type: "guest",
+          app_role: "citizen",
+          account_status: "active",
+          activation_status: "active",
+          city: "Sto. Tomas",
+          province: "Batangas",
+          country: "Philippines",
+        };
+
+        const { error: guestError } = await adminDb
           .from(PROFILES_TABLE)
-          .upsert(
-            {
-              user_id: assignedUserId,
-              email: guestEmail,
-              username: `guest_${shortId}`,
-              fname: "Guest",
-              lname: "User",
-              role: "guest",
-              account_type: "guest",
-              app_role: "citizen",
-              account_status: "active",
-              activation_status: "active",
-              city: "Sto. Tomas",
-              province: "Batangas",
-              country: "Philippines",
-            },
-            { onConflict: "user_id" },
-          );
+          .upsert(guestPayload, { onConflict: "user_id" });
+
+        if (guestError && (guestError.code === "42703" || guestError.message?.includes("display_id"))) {
+          delete guestPayload.display_id;
+          await adminDb.from(PROFILES_TABLE).upsert(guestPayload, { onConflict: "user_id" });
+        }
       } catch (profileErr) {
         console.warn("[Auth] Non-fatal: failed to update guest profile:", profileErr?.message);
       }

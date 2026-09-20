@@ -94,6 +94,7 @@ export function toAdminUserResponse({ profile, activeBan }) {
 
   return {
     id: profile?.user_id || "",
+    displayId: profile?.display_id ? String(profile.display_id) : null,
     email: profile?.email || null,
     username: profile?.username || null,
     fname: profile?.fname ?? null,
@@ -172,6 +173,7 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
     updatedAt: reportRow?.updated_at || null,
     reporter: {
       id: reportRow?.user_id || null,
+      displayId: reporterProfile?.display_id ? String(reporterProfile.display_id) : null,
       email: isGuest ? null : (reporterProfile?.email || null),
       fullName: resolveReporterName(reporterProfile),
     },
@@ -183,6 +185,7 @@ export function toOfficeAdminResponse(profile) {
 
   return {
     id: profile?.user_id || "",
+    displayId: profile?.display_id ? String(profile.display_id) : null,
     email: profile?.email || null,
     fname: profile?.fname ?? null,
     mname: profile?.mname ?? null,

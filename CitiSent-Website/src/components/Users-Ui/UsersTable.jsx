@@ -153,7 +153,7 @@ function UsersTableRow({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user.email || user.username || 'No Email'}</p>
-          <p className="truncate text-xs font-numeric text-slate-500 dark:text-slate-400 lg:text-sm">ID: {user.id}</p>
+          <p className="truncate text-xs font-numeric text-slate-500 dark:text-slate-400 lg:text-sm">ID: {user.displayId || user.id}</p>
         </div>
       </div>
 

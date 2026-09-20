@@ -197,7 +197,7 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">User ID</p>
-            <p className="text-slate-900 font-numeric dark:text-slate-100 break-all">{displayUser.id}</p>
+            <p className="text-slate-900 font-numeric dark:text-slate-100 break-all">{displayUser.displayId || displayUser.id}</p>
           </div>
 
           <div className="min-w-0">

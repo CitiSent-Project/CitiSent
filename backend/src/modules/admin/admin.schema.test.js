@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   createAdminUserSchema,
   deleteAdminUserSchema,
+  getAdminUserByIdSchema,
   bulkBanUsersSchema,
   bulkUnbanUsersSchema,
 } from "./admin.schema.js";
@@ -120,4 +121,24 @@ test("bulkUnbanUsersSchema requires an array of valid UUIDs", () => {
   });
 
   assert.equal(parsed.body.userIds.length, 1);
+});
+
+test("getAdminUserByIdSchema accepts either a UUID or a 6-digit User ID", () => {
+  assert.doesNotThrow(() =>
+    getAdminUserByIdSchema.parse({
+      params: { userId: "c37b76eb-1461-49ee-9c2b-8e8bdcbbe45d" },
+    }),
+  );
+
+  assert.doesNotThrow(() =>
+    getAdminUserByIdSchema.parse({
+      params: { userId: "849201" },
+    }),
+  );
+
+  assert.throws(() =>
+    getAdminUserByIdSchema.parse({
+      params: { userId: "not-a-valid-id" },
+    }),
+  );
 });

@@ -43,6 +43,7 @@ export function mapBackendProfileToAdminProfile(payload = {}) {
 
   return {
     id: payload.id || '',
+    displayId: payload.displayId || payload.display_id || '',
     fname,
     mname,
     lname,
@@ -72,6 +73,7 @@ export function mapBackendUserToUiRow(payload = {}) {
 
   return {
     id: payload.id || '',
+    displayId: payload.displayId || payload.display_id || '',
     name:
       derivedFullName || payload.fullName || payload.username || payload.email || 'Unknown User',
     fname: payload.fname || '',
@@ -110,6 +112,7 @@ export function mapBackendOfficeAdmin(payload = {}) {
 
   return {
     id: payload.id || '',
+    displayId: payload.displayId || payload.display_id || '',
     fname: payload.fname || '',
     mname: payload.mname || '',
     lname: payload.lname || '',

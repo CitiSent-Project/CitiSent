@@ -6,7 +6,12 @@ import {
 } from "../../shared/utils/nameValidation.js";
 
 const reportIdSchema = z.string().uuid();
-const userIdSchema = z.string().uuid();
+const userIdSchema = z.union([
+  z.string().uuid(),
+  z.string().regex(/^\d{6}$/, {
+    message: "User ID must be a valid UUID or 6-digit number",
+  }),
+]);
 const transferRequestIdSchema = z.string().uuid();
 const persistedStatusSchema = z.enum([
   "pending",

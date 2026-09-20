@@ -1,9 +1,11 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { FiMoreHorizontal } from 'react-icons/fi'
 import { TableLoader } from '../ui/TableLoader'
 import { UserStatusPill } from './UserStatusPill'
 import { Spinner } from '../ui/Spinner'
+import { getMotionVariants, tableRowVariants } from '../../utils/motionVariants'
 
 function UserInitialsAvatar({ name }) {
   const displayString = name || '?'
@@ -51,6 +53,7 @@ function UsersTableRow({
   onDeleteUser,
   canToggleBan,
   isProcessing = false,
+  prefersReduced = false,
 }) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState(null)
@@ -124,7 +127,14 @@ function UsersTableRow({
   }
 
   return (
-    <div className="group relative border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-800/50 lg:grid lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px] lg:items-center lg:gap-4 lg:px-5 lg:py-3.5">
+    <motion.div
+      layout={prefersReduced ? false : 'position'}
+      variants={getMotionVariants(tableRowVariants, prefersReduced)}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="group relative border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-800/50 lg:grid lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_80px] lg:items-center lg:gap-4 lg:px-5 lg:py-3.5"
+    >
       {/* Checkbox — anchored to top on mobile, grid cell on desktop */}
       <div className="absolute left-4 top-4.5 lg:static lg:flex lg:items-center lg:justify-center">
         <input
@@ -163,23 +173,30 @@ function UsersTableRow({
 
       {/* Action button — anchored to top on mobile (top-right), flex-end in grid on desktop */}
       <div className="absolute right-4 top-4 lg:static lg:flex lg:items-center lg:justify-end">
-        <button
+        <motion.button
           type="button"
           ref={triggerRef}
           disabled={isProcessing}
           onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-          className="grid h-8.5 w-8.5 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+          whileHover={{ scale: isProcessing ? 1 : 1.06 }}
+          whileTap={{ scale: isProcessing ? 1 : 0.94 }}
+          className="grid h-8.5 w-8.5 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700 cursor-pointer"
         >
           {isProcessing ? <Spinner size="sm" /> : <FiMoreHorizontal />}
-        </button>
+        </motion.button>
 
-        {isActionMenuOpen && popoverStyle && typeof document !== 'undefined'
-          ? createPortal(
-              <div
-                ref={popoverRef}
-                style={popoverStyle}
-                className="animate-in fade-in zoom-in-95 overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95"
-              >
+        <AnimatePresence>
+          {isActionMenuOpen && popoverStyle && typeof document !== 'undefined'
+            ? createPortal(
+                <motion.div
+                  ref={popoverRef}
+                  style={popoverStyle}
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95"
+                >
                 <button
                   type="button"
                   onClick={() => handleAction('view')}
@@ -216,12 +233,13 @@ function UsersTableRow({
                     Delete User
                   </button>
                 ) : null}
-              </div>,
+              </motion.div>,
               document.body
             )
           : null}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -238,6 +256,7 @@ export function UsersTable({
   isLoading = false,
   processingUserIds = new Set(),
 }) {
+  const prefersReduced = useReducedMotion()
   const selectedSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds])
   const allSelected = users.length > 0 && users.every((user) => selectedSet.has(user.id))
   
@@ -274,24 +293,27 @@ export function UsersTable({
             className="bg-transparent dark:text-slate-400"
           />
 
-          {!isInitialLoading && (users.length > 0 ? (
-            users.map((user) => (
-              <UsersTableRow
-                key={user.id}
-                user={user}
-                isSelected={selectedSet.has(user.id)}
-                onToggleSelected={onToggleSelectUser}
-                onViewUser={onViewUser}
-                onEditUser={onEditUser}
-                onToggleBanUser={onToggleBanUser}
-                onDeleteUser={onDeleteUser}
-                canToggleBan={canToggleBan}
-                isProcessing={processingUserIds.has(user.id)}
-              />
-            ))
-          ) : (
-            <div className="px-4 py-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No users found.</div>
-          ))}
+          <AnimatePresence initial={false}>
+            {!isInitialLoading && (users.length > 0 ? (
+              users.map((user) => (
+                <UsersTableRow
+                  key={user.id}
+                  user={user}
+                  isSelected={selectedSet.has(user.id)}
+                  onToggleSelected={onToggleSelectUser}
+                  onViewUser={onViewUser}
+                  onEditUser={onEditUser}
+                  onToggleBanUser={onToggleBanUser}
+                  onDeleteUser={onDeleteUser}
+                  canToggleBan={canToggleBan}
+                  isProcessing={processingUserIds.has(user.id)}
+                  prefersReduced={prefersReduced}
+                />
+              ))
+            ) : (
+              <div className="px-4 py-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">No users found.</div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>

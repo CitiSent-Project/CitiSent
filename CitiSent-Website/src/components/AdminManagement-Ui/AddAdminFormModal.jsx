@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 import { Spinner } from '../ui/Spinner'
+import { ModalShell } from '../ui/ModalShell'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 const initialForm = {
@@ -34,10 +36,6 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
     onClose: handleClose,
     containerRef: dialogRef,
   })
-
-  if (!isOpen) {
-    return null
-  }
 
   function updateField(field, value) {
     const ruleByField = {
@@ -87,29 +85,22 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
   }))
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 sm:p-4"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          handleClose()
-        }
-      }}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={handleClose}
+      dialogRef={dialogRef}
+      role="dialog"
+      ariaLabel="Add admin form"
+      maxWidth="max-w-lg"
+      closeOnBackdropClick={!isSubmitting}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add admin form"
-        tabIndex={-1}
-        className="max-h-[calc(100vh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl dark:border dark:border-slate-700 dark:bg-slate-800"
-      >
-        <div className="border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add New Admin</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Fill in the required details below. An activation email will be sent to the admin's
-            email address.
-          </p>
-        </div>
+      <div className="border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-slate-700">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add New Admin</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Fill in the required details below. An activation email will be sent to the admin's
+          email address.
+        </p>
+      </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-4 py-4 sm:px-5">
           {inputError ? (
@@ -220,42 +211,56 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300">City</label>
+              <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300" htmlFor="new-admin-city">
+                City
+              </label>
               <input
+                id="new-admin-city"
                 type="text"
                 value={form.city}
-                onChange={(event) => updateField('city', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
+                readOnly
+                disabled
+                aria-disabled="true"
+                tabIndex={-1}
+                className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-500 cursor-not-allowed select-none focus:outline-none dark:border-slate-700/80 dark:bg-slate-900/40 dark:text-slate-400"
                 placeholder="Sto. Tomas"
-                disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300">Province</label>
+              <label className="mb-1 block text-sm text-slate-700 dark:text-slate-300" htmlFor="new-admin-province">
+                Province
+              </label>
               <input
+                id="new-admin-province"
                 type="text"
                 value={form.province}
-                onChange={(event) => updateField('province', event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
+                readOnly
+                disabled
+                aria-disabled="true"
+                tabIndex={-1}
+                className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-500 cursor-not-allowed select-none focus:outline-none dark:border-slate-700/80 dark:bg-slate-900/40 dark:text-slate-400"
                 placeholder="Batangas"
-                disabled={isSubmitting}
               />
             </div>
           </div>
 
           <div className="grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end dark:border-slate-700">
-            <button
+            <motion.button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700 transition duration-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.96 }}
+              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700 transition duration-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-70 sm:py-2"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.96 }}
+              className="flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-70 sm:py-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -265,10 +270,9 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
               ) : (
                 'Save Admin'
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   )
 }

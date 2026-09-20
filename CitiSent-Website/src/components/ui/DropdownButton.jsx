@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { FiChevronDown } from 'react-icons/fi'
+import { dropdownItemVariants, dropdownMenuVariants, getMotionVariants } from '../../utils/motionVariants'
 
 function normalizeOption(option, index) {
 	if (option && typeof option === 'object') {
@@ -66,10 +68,9 @@ export function DropdownButton({
 	const triggerRef = useRef(null)
 	const popoverRef = useRef(null)
 	const [open, setOpen] = useState(false)
-	const [rendered, setRendered] = useState(false)
-	const [isVisible, setIsVisible] = useState(false)
 	const [activeIndex, setActiveIndex] = useState(-1)
 	const [popoverStyle, setPopoverStyle] = useState(null)
+	const prefersReduced = useReducedMotion()
 
 	const normalizedOptions = useMemo(
 		() => options.map((option, index) => normalizeOption(option, index)),
@@ -122,7 +123,6 @@ export function DropdownButton({
 	}, [normalizedOptions.length])
 
 	function closePopover({ restoreFocus = true } = {}) {
-		setIsVisible(false)
 		setOpen(false)
 		setActiveIndex(-1)
 		if (restoreFocus) {
@@ -132,7 +132,7 @@ export function DropdownButton({
 
 	function openPopover() {
 		if (disabled) return
-		setRendered(true)
+		updatePopoverPosition()
 		setOpen(true)
 		const selectedIndex = normalizedOptions.findIndex(
 			(option) => toComparableValue(option.value) === comparableValue,
@@ -175,31 +175,8 @@ export function DropdownButton({
 
 	useLayoutEffect(() => {
 		if (!open) return
-
-		const animationFrame = window.requestAnimationFrame(() => {
-			setIsVisible(true)
-		})
-
 		updatePopoverPosition()
-
-		return () => {
-			window.cancelAnimationFrame(animationFrame)
-		}
 	}, [open, comparableValue, updatePopoverPosition])
-
-	useEffect(() => {
-		if (open) return undefined
-
-		if (!rendered) return undefined
-
-		const timeoutId = window.setTimeout(() => {
-			setRendered(false)
-		}, 160)
-
-		return () => {
-			window.clearTimeout(timeoutId)
-		}
-	}, [open, rendered])
 
 	useEffect(() => {
 		if (!open) return
@@ -307,92 +284,96 @@ export function DropdownButton({
 				/>
 			</button>
 
-			{rendered && popoverStyle && typeof document !== 'undefined'
+			{typeof document !== 'undefined'
 				? createPortal(
-					<div
-						ref={popoverRef}
-						style={popoverStyle}
-						className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl transition-all duration-150 ease-out dark:border-slate-700 dark:bg-slate-800 ${
-							isVisible
-								? 'opacity-100 translate-y-0 scale-100'
-								: 'opacity-0 -translate-y-1 scale-[0.98]'
-						}`}
-					>
-					<div
-						id={listboxId}
-						role="listbox"
-						aria-label={ariaLabel || label || 'Dropdown options'}
-						tabIndex={-1}
-						className="max-h-72 overflow-auto py-1"
-						onKeyDown={(event) => {
-							if (event.key === 'ArrowDown') {
-								event.preventDefault()
-								moveActive(1)
-								return
-							}
-
-							if (event.key === 'ArrowUp') {
-								event.preventDefault()
-								moveActive(-1)
-								return
-							}
-
-							if (event.key === 'Enter' && activeIndex >= 0) {
-								event.preventDefault()
-								const option = normalizedOptions[activeIndex]
-								if (option && !option.disabled) {
-									commitValue(option.value)
-								}
-								return
-							}
-						}}
-					>
-						{normalizedOptions.length ? (
-							normalizedOptions.map((option, index) => {
-								const selected =
-									toComparableValue(option.value) === comparableValue
-								const active = index === activeIndex
-								const optionDisabled = Boolean(option.disabled)
-
-								return (
-									<button
-										type="button"
-										key={option.key}
-										role="option"
-										aria-selected={selected}
-										disabled={optionDisabled}
-										onMouseEnter={() => setActiveIndex(index)}
-										onMouseDown={(event) => {
-											// prevent focus leaving the trigger before we commit
+					<AnimatePresence>
+						{open && popoverStyle ? (
+							<motion.div
+								ref={popoverRef}
+								style={popoverStyle}
+								variants={getMotionVariants(dropdownMenuVariants, prefersReduced)}
+								initial="initial"
+								animate="animate"
+								exit="exit"
+								className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
+							>
+								<div
+									id={listboxId}
+									role="listbox"
+									aria-label={ariaLabel || label || 'Dropdown options'}
+									tabIndex={-1}
+									className="max-h-72 overflow-auto py-1"
+									onKeyDown={(event) => {
+										if (event.key === 'ArrowDown') {
 											event.preventDefault()
-										}}
-										onClick={() => {
-											if (optionDisabled) return
-											commitValue(option.value)
-										}}
-										className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors ${
-											optionDisabled
-												? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
-												: active
-													? 'bg-slate-50 text-slate-900 dark:bg-slate-700 dark:text-white'
-													: 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700'
-										} ${selected ? 'font-medium' : 'font-normal'}`}
-									>
-										<span className="min-w-0 flex-1 truncate">{option.label}</span>
-										{selected ? (
-											<span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
-										) : null}
-									</button>
-								)
-							})
-						) : (
-							<div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">No options</div>
-						)}
-					</div>
-				</div>,
-				document.body,
-			)
-			: null}
+											moveActive(1)
+											return
+										}
+
+										if (event.key === 'ArrowUp') {
+											event.preventDefault()
+											moveActive(-1)
+											return
+										}
+
+										if (event.key === 'Enter' && activeIndex >= 0) {
+											event.preventDefault()
+											const option = normalizedOptions[activeIndex]
+											if (option && !option.disabled) {
+												commitValue(option.value)
+											}
+											return
+										}
+									}}
+								>
+									{normalizedOptions.length ? (
+										normalizedOptions.map((option, index) => {
+											const selected =
+												toComparableValue(option.value) === comparableValue
+											const active = index === activeIndex
+											const optionDisabled = Boolean(option.disabled)
+
+											return (
+												<motion.button
+													type="button"
+													key={option.key}
+													role="option"
+													aria-selected={selected}
+													disabled={optionDisabled}
+													variants={getMotionVariants(dropdownItemVariants, prefersReduced)}
+													onMouseEnter={() => setActiveIndex(index)}
+													onMouseDown={(event) => {
+														event.preventDefault()
+													}}
+													onClick={() => {
+														if (optionDisabled) return
+														commitValue(option.value)
+													}}
+													className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
+														optionDisabled
+															? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
+															: active
+																? 'bg-slate-50 text-slate-900 dark:bg-slate-700 dark:text-white'
+																: 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700'
+													} ${selected ? 'font-medium' : 'font-normal'}`}
+												>
+													<span className="min-w-0 flex-1 truncate">{option.label}</span>
+													{selected ? (
+														<span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+													) : null}
+												</motion.button>
+											)
+										})
+									) : (
+										<div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">No options</div>
+									)}
+								</div>
+							</motion.div>
+						) : null}
+					</AnimatePresence>,
+					document.body,
+				)
+				: null}
 		</div>
 	)
 }

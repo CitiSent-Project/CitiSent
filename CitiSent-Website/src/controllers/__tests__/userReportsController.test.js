@@ -7,7 +7,6 @@ import {
   filterReportsBySearch,
   filterUserReportsByCategory,
   filterUserReportsByUrgency,
-  matchesReportSearch,
   paginateReports,
   sortReports,
   sortReportsByLatest,

@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 import { Spinner } from '../ui/Spinner'
+import { ModalShell } from '../ui/ModalShell'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'
 
 const initialForm = {
@@ -34,10 +36,6 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
     onClose: handleClose,
     containerRef: dialogRef,
   })
-
-  if (!isOpen) {
-    return null
-  }
 
   function updateField(field, value) {
     const ruleByField = {
@@ -77,26 +75,19 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity dark:bg-slate-900/60"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          handleClose()
-        }
-      }}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={handleClose}
+      dialogRef={dialogRef}
+      role="dialog"
+      ariaLabel="Add user form"
+      maxWidth="max-w-xl"
+      closeOnBackdropClick={!isSubmitting}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add user form"
-        tabIndex={-1}
-        className="animate-in fade-in zoom-in-95 w-full max-w-xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 dark:shadow-slate-900/50"
-      >
-        <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-700/80">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Add New User</h2>
-          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Fill in the required user details below.</p>
-        </div>
+      <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-700/80">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Add New User</h2>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Fill in the required user details below.</p>
+      </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
           {inputError ? (
@@ -218,18 +209,22 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-5 dark:border-slate-700/80">
-            <button
+            <motion.button
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.96 }}
+              className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-blue-600"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.96 }}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-blue-600 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -239,10 +234,9 @@ export function AddUserFormModal({ isOpen, onClose, onSubmit }) {
               ) : (
                 'Save User'
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   )
 }

@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Navbar } from './components/ui/Navbar'
 import { BackendUnavailablePanel } from './components/ui/BackendUnavailablePanel'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
@@ -9,6 +10,7 @@ import { renderActivePage, renderAuthPage } from './controllers/navigation/pageR
 import { useAppStateOrchestrator } from './hooks/useAppStateOrchestrator'
 import { SetupPasswordPage } from './frontend/Pages/SetupPassword'
 import { PrivacyPolicy } from './frontend/Pages/PrivacyPolicy'
+import { getMotionVariants, pageTransitionVariants } from './utils/motionVariants'
 
 function isBackendUnavailableError(error) {
   const status = Number(error?.status)
@@ -47,6 +49,7 @@ function AuthenticatedApp() {
   const queryClient = useQueryClient()
   const activeFetchCount = useIsFetching()
   const [hasBackendQueryError, setHasBackendQueryError] = useState(false)
+  const prefersReduced = useReducedMotion()
 
   const {
     appState,
@@ -136,19 +139,30 @@ function AuthenticatedApp() {
           onClearAll={appActions.onClearAll}
           isClearingNotifications={appState.isClearingNotifications}
         >
-          {appState.isPageLoading ? (
-            <PageSkeleton pageKey={appState.activePage} />
-          ) : (
-            <Suspense fallback={<PageSkeleton pageKey={appState.activePage} />}>
-              {renderActivePage({
-                appState,
-                appActions: {
-                  ...appActions,
-                  onConfirmLogout: appActions.onLogout,
-                },
-              })}
-            </Suspense>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={appState.activePage}
+              variants={getMotionVariants(pageTransitionVariants, prefersReduced)}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="w-full flex-1 flex flex-col min-w-0"
+            >
+              {appState.isPageLoading ? (
+                <PageSkeleton pageKey={appState.activePage} />
+              ) : (
+                <Suspense fallback={<PageSkeleton pageKey={appState.activePage} />}>
+                  {renderActivePage({
+                    appState,
+                    appActions: {
+                      ...appActions,
+                      onConfirmLogout: appActions.onLogout,
+                    },
+                  })}
+                </Suspense>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </Navbar>
       </ErrorBoundary>
     </>

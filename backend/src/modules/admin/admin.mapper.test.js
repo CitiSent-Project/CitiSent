@@ -111,9 +111,30 @@ test("toAdminUserResponse maps profile data for active users", () => {
   });
 
   assert.equal(response.id, "user-1");
+  assert.equal(response.displayId, null);
   assert.equal(response.fullName, "User One");
   assert.equal(response.status, "active");
   assert.equal(response.ban, null);
+});
+
+test("toAdminUserResponse maps 6-digit displayId when present", () => {
+  const response = toAdminUserResponse({
+    profile: {
+      user_id: "user-6digit",
+      display_id: "849201",
+      email: "citizen849@example.com",
+      username: "citizen849",
+      fname: "Juan",
+      lname: "Dela Cruz",
+      account_type: "citizen",
+      role: null,
+    },
+    activeBan: null,
+  });
+
+  assert.equal(response.id, "user-6digit");
+  assert.equal(response.displayId, "849201");
+  assert.equal(response.fullName, "Juan Dela Cruz");
 });
 
 test("toAdminUserResponse marks banned users with ban metadata", () => {

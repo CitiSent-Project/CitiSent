@@ -33,7 +33,7 @@ export function UserProfileModal({ user, isOpen, onClose }) {
           <div className="space-y-4 px-6 py-5 text-sm text-slate-700 dark:text-slate-300">
             <div className="flex justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <span className="font-medium text-slate-500 dark:text-slate-400">User ID</span>
-              <span className="font-numeric font-medium text-slate-900 dark:text-white">{displayUser.id}</span>
+              <span className="font-numeric font-medium text-slate-900 dark:text-white">{displayUser.displayId || displayUser.id}</span>
             </div>
             <div className="flex justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <span className="font-medium text-slate-500 dark:text-slate-400">Name</span>

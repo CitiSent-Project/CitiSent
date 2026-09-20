@@ -8,6 +8,7 @@ import { AppError } from "../../shared/errors/appError.js";
 import { USER_ROLES, isSuperadmin } from "../../shared/auth/roleAccess.js";
 import { buildDepartmentCandidates } from "../../shared/data/departments.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
+import { generate6DigitId, isValid6DigitId } from "../../shared/utils/idGenerator.js";
 
 const PROFILES_TABLE = "profiles";
 const BANNED_USERS_TABLE = "banned_users";
@@ -181,17 +182,36 @@ export const adminRepository = {
 
     let query = db
       .from(PROFILES_TABLE)
-      .select("user_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
+      .select("user_id,display_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
       .eq("account_type", "citizen")
       .order("created_at", { ascending: false });
 
     if (normalizedSearch) {
       query = query.or(
-        `email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,fname.ilike.%${normalizedSearch}%,mname.ilike.%${normalizedSearch}%,lname.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
+        `display_id.ilike.%${normalizedSearch}%,email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,fname.ilike.%${normalizedSearch}%,mname.ilike.%${normalizedSearch}%,lname.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
       );
     }
 
-    const { data, error } = await query;
+    let { data, error } = await query;
+
+    // Graceful fallback if display_id column is not yet present in the database
+    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+      let fallbackQuery = db
+        .from(PROFILES_TABLE)
+        .select("user_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
+        .eq("account_type", "citizen")
+        .order("created_at", { ascending: false });
+
+      if (normalizedSearch) {
+        fallbackQuery = fallbackQuery.or(
+          `email.ilike.%${normalizedSearch}%,username.ilike.%${normalizedSearch}%,fname.ilike.%${normalizedSearch}%,mname.ilike.%${normalizedSearch}%,lname.ilike.%${normalizedSearch}%,phone_number.ilike.%${normalizedSearch}%`,
+        );
+      }
+
+      const fallbackResult = await fallbackQuery;
+      data = fallbackResult.data;
+      error = fallbackResult.error;
+    }
 
     if (error) {
       throw toGatewayError("Failed to fetch users", error);
@@ -246,12 +266,38 @@ export const adminRepository = {
 
   async getUserById({ accessToken, userId }) {
     const db = getDb(accessToken);
+    const normalizedId = String(userId || "").trim();
+    const is6Digit = isValid6DigitId(normalizedId);
 
-    const { data, error } = await db
-      .from(PROFILES_TABLE)
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    let data = null;
+    let error = null;
+
+    // Look up by 6-digit display_id first if applicable
+    if (is6Digit) {
+      const byDisplayId = await db
+        .from(PROFILES_TABLE)
+        .select("*")
+        .eq("display_id", normalizedId)
+        .maybeSingle();
+
+      if (!byDisplayId.error && byDisplayId.data) {
+        data = byDisplayId.data;
+      } else if (byDisplayId.error && byDisplayId.error.code !== "42703") {
+        error = byDisplayId.error;
+      }
+    }
+
+    // If not found by display_id or if ID is a UUID, query by user_id
+    if (!data && !error) {
+      const byUserId = await db
+        .from(PROFILES_TABLE)
+        .select("*")
+        .eq("user_id", normalizedId)
+        .maybeSingle();
+
+      data = byUserId.data;
+      error = byUserId.error;
+    }
 
     if (error) {
       throw toGatewayError("Failed to fetch user", error);
@@ -261,7 +307,7 @@ export const adminRepository = {
       return null;
     }
 
-    const activeBan = await getActiveBanByUserId({ db, userId });
+    const activeBan = await getActiveBanByUserId({ db, userId: data.user_id });
 
     return {
       profile: data,
@@ -309,17 +355,31 @@ export const adminRepository = {
 
   async createUserProfile({ accessToken, userId, payload }) {
     const db = getDb(accessToken);
-    const { data, error } = await db
+    const displayId = payload.display_id || payload.displayId || generate6DigitId();
+    const insertPayload = {
+      user_id: userId,
+      ...payload,
+      display_id: displayId,
+    };
+    delete insertPayload.displayId;
+
+    let { data, error } = await db
       .from(PROFILES_TABLE)
-      .upsert(
-        {
-          user_id: userId,
-          ...payload,
-        },
-        { onConflict: "user_id" },
-      )
+      .upsert(insertPayload, { onConflict: "user_id" })
       .select("*")
       .maybeSingle();
+
+    // Fallback if display_id column is not yet added to profiles table
+    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+      delete insertPayload.display_id;
+      const retry = await db
+        .from(PROFILES_TABLE)
+        .upsert(insertPayload, { onConflict: "user_id" })
+        .select("*")
+        .maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       throw toGatewayError("Failed to create user profile", error);

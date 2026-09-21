@@ -8,6 +8,7 @@ import {
   FlatList,
 } from "react-native";
 import * as Location from "expo-location";
+import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../modules/shared";
 
 const ST_LAT_MIN = 13.9796305;
@@ -270,12 +271,14 @@ export default function IssueReportForm({
           Selected Department
         </Text>
         <View
-          className="rounded-lg border px-3 py-3"
-          style={{ borderColor: Colors.border, backgroundColor: Colors.background }}
+          className="flex-row items-center justify-between rounded-lg border px-3 py-3"
+          style={{ borderColor: Colors.borderSoft, backgroundColor: Colors.ui.neutralMuted }}
+          accessibilityState={{ disabled: true }}
         >
-          <Text className="text-base" style={{ color: Colors.text.primary }}>
+          <Text className="text-base flex-1 pr-2" style={{ color: Colors.text.secondary }}>
             {requestType}
           </Text>
+          <Ionicons name="lock-closed" size={16} color={Colors.icon.muted} />
         </View>
       </View>
 

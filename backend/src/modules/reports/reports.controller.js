@@ -51,7 +51,13 @@ export const reportsController = {
       turnstileToken: req.body.turnstileToken || null,
       remoteIp: req.ip || null,
       accessToken: req.accessToken,
-      isAborted: () => res.headersSent || req.aborted || req.destroyed,
+      isAborted: () =>
+        Boolean(
+          res.headersSent ||
+          res.writableEnded ||
+          (req.socket && (req.socket.destroyed || !req.socket.writable)) ||
+          (res.socket && (res.socket.destroyed || !res.socket.writable)),
+        ),
     });
 
     if (res.headersSent) {

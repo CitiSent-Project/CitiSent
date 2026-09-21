@@ -131,3 +131,21 @@ export function getCreateReportIssueById(issueId, issues = CREATE_REPORT_ISSUES)
     (issue) => normalizeKey(issue?.id) === normalizedId,
   );
 }
+
+export function filterLguIssues(issues = [], searchQuery = "") {
+  const query = String(searchQuery || "").trim().toLowerCase();
+  const issueList = Array.isArray(issues) ? issues : [];
+
+  if (!query) {
+    return issueList;
+  }
+
+  return issueList.filter((issue) => {
+    const label = String(issue?.label || "").toLowerCase();
+    const name = String(issue?.name || "").toLowerCase();
+    const slug = String(issue?.slug || "").toLowerCase();
+
+    return label.includes(query) || name.includes(query) || slug.includes(query);
+  });
+}
+

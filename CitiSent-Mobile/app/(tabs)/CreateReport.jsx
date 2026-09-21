@@ -1,11 +1,14 @@
 import { useMemo, useState, useCallback } from "react";
-import { Text, View, ScrollView, RefreshControl } from "react-native";
+import { Text, View, ScrollView, RefreshControl, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { AuthCityFooter } from "../../modules/auth";
 import {
   CREATE_REPORT_ISSUES,
   CreateReportTopBar,
   IssueGrid,
+  LguSearchBar,
   buildIssueOptionsFromDepartments,
+  filterLguIssues,
 } from "../../modules/createReport";
 import { Button, Colors, SkeletonBlock } from "../../modules/shared";
 import useDepartments from "../../hooks/useDepartments";
@@ -33,6 +36,7 @@ function IssueGridSkeleton() {
 export default function CreateReportScreen() {
   const { departments, error, isInitialLoading, reloadDepartments } = useDepartments();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -56,6 +60,11 @@ export default function CreateReportScreen() {
     return { issues: [], isFallback: false };
   }, [departments, error]);
 
+  const filteredIssues = useMemo(
+    () => filterLguIssues(issues, searchQuery),
+    [issues, searchQuery]
+  );
+
   const showEmptyState = !isInitialLoading && issues.length === 0;
 
   return (
@@ -68,12 +77,24 @@ export default function CreateReportScreen() {
         className="flex-1 px-3 pt-4" 
         contentContainerStyle={{ paddingBottom: 160 }} 
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text className="mb-4 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>Select a Department</Text>
-        <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>Select your Local Government Unit (LGU) to continue.</Text>
+        <Text className="mb-1 text-3xl font-extrabold" style={{ color: Colors.text.primary }}>
+          Select a Department
+        </Text>
+        <Text className="mb-4 text-sm" style={{ color: Colors.text.slate }}>
+          Select your Local Government Unit (LGU) to continue.
+        </Text>
+
+        <LguSearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          disabled={isInitialLoading}
+        />
 
         {isInitialLoading ? <IssueGridSkeleton /> : null}
 
@@ -102,7 +123,38 @@ export default function CreateReportScreen() {
           </View>
         ) : null}
 
-        {issues.length > 0 ? <IssueGrid issues={issues} /> : null}
+        {!isInitialLoading && searchQuery.trim().length > 0 && filteredIssues.length === 0 && issues.length > 0 ? (
+          <View
+            className="mb-4 items-center justify-center rounded-2xl bg-white px-6 py-8 shadow-sm border"
+            style={{ borderColor: "#E2E8F0" }}
+          >
+            <View
+              className="mb-3 h-12 w-12 items-center justify-center rounded-full"
+              style={{ backgroundColor: "#F1F5F9" }}
+            >
+              <Ionicons name="search-outline" size={24} color={Colors.text.secondary} />
+            </View>
+            <Text className="text-base font-bold text-center" style={{ color: Colors.text.primary }}>
+              No LGU offices found
+            </Text>
+            <Text className="mt-1 text-center text-xs" style={{ color: Colors.text.slate }}>
+              No office matches "{searchQuery.trim()}". Try another search term.
+            </Text>
+            <Pressable
+              onPress={() => setSearchQuery("")}
+              className="mt-4 rounded-xl border px-4 py-2"
+              style={{ borderColor: Colors.primary }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search query"
+            >
+              <Text className="text-xs font-semibold" style={{ color: Colors.primary }}>
+                Clear Search
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {filteredIssues.length > 0 ? <IssueGrid issues={filteredIssues} /> : null}
       </ScrollView>
     </View>
   );

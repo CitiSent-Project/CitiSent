@@ -45,3 +45,6 @@ Thumbs.db
 
 # Agent Skills
 .agents
+
+# CitiSent-Ops folder (still in development)
+.CitiSent-Ops

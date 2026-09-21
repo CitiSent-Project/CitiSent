@@ -2,6 +2,7 @@ export { default as CreateReportTopBar } from "../../components/createReport/Cre
 export { default as CreateReportImageFooter } from "../../components/createReport/CreateReportImageFooter";
 export { default as IssueCard } from "../../components/createReport/IssueCard";
 export { default as IssueGrid } from "../../components/createReport/IssueGrid";
+export { default as LguSearchBar } from "../../components/createReport/LguSearchBar";
 
 export { default as AttachmentSection } from "../../components/createReport/details/AttachmentSection";
 export { default as BreadcrumbsNav } from "../../components/createReport/details/BreadcrumbsNav";
@@ -12,6 +13,8 @@ export {
   CREATE_REPORT_ISSUES,
   DEFAULT_ISSUE_LOGO_SOURCE,
   buildIssueOptionsFromDepartments,
+  filterLguIssues,
   getCreateReportIssueById,
   resolveIssueLogoSource,
 } from "../../constants/createReportIssues";
+

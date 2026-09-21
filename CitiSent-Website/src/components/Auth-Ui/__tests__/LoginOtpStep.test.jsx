@@ -115,5 +115,59 @@ describe('LoginOtpStep', () => {
     expect(inputs[0].value).toBe('')
     expect(document.activeElement).toBe(inputs[0])
   })
+
+  it('uses responsive grid and shrinkable input classes to prevent mobile horizontal overflow', () => {
+    const markup = renderToStaticMarkup(
+      <LoginOtpStep
+        maskedEmail="superadmin.very.long.email.address@citisent.gov.ph"
+        email="superadmin.very.long.email.address@citisent.gov.ph"
+        onVerify={vi.fn()}
+        onResend={vi.fn()}
+        onReturnToLogin={vi.fn()}
+        initialCooldown={60}
+      />
+    )
+
+    // Ensure responsive grid container is used instead of fixed non-shrinking flex width
+    expect(markup).toContain('grid grid-cols-6')
+    expect(markup).toContain('w-full')
+
+    // Ensure inputs include fluid and shrinkable classes
+    expect(markup).toContain('min-w-0')
+
+    // Ensure long email handles wrapping on small mobile screens
+    expect(markup).toContain('break-all')
+  })
+
+  it('populates all 6 slots and calls onVerify when 6 digits are pasted or autofilled', async () => {
+    const verifySpy = vi.fn().mockResolvedValue({ ok: true })
+
+    await act(async () => {
+      root.render(
+        <LoginOtpStep
+          maskedEmail="d*******6@gmail.com"
+          email="darren@gmail.com"
+          onVerify={verifySpy}
+          onResend={vi.fn()}
+          onReturnToLogin={vi.fn()}
+          initialCooldown={60}
+        />
+      )
+    })
+
+    const inputs = Array.from(container.querySelectorAll('input[id^="otp-digit-"]'))
+    expect(inputs).toHaveLength(6)
+
+    // Simulate pasting "123456" into slot 0
+    await act(async () => {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+      nativeInputValueSetter.call(inputs[0], '123456')
+      inputs[0].dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    expect(inputs.map((input) => input.value).join('')).toBe('123456')
+    expect(verifySpy).toHaveBeenCalledWith('123456')
+  })
 })
+
 

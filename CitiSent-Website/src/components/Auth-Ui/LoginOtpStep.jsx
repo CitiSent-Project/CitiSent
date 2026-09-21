@@ -186,14 +186,14 @@ export function LoginOtpStep({
     <div className="space-y-6">
       {/* 2FA Status Notice Banner */}
       <div className="flex items-start gap-3 rounded-xl border border-white/30 bg-white/10 p-3.5 backdrop-blur-xs text-white">
-        <div className="mt-0.5 rounded-lg bg-white/20 p-2 text-cyan-200">
+        <div className="mt-0.5 shrink-0 rounded-lg bg-white/20 p-2 text-cyan-200">
           <FiShield className="h-5 w-5" aria-hidden="true" />
         </div>
-        <div className="text-sm leading-relaxed">
+        <div className="min-w-0 flex-1 text-sm leading-relaxed">
           <p className="font-semibold text-white">Two-Factor Authentication</p>
-          <p className="mt-0.5 text-white/85 text-xs sm:text-sm">
+          <p className="mt-0.5 text-white/85 text-xs sm:text-sm wrap-break-word">
             We sent a 6-digit security code to{' '}
-            <span className="font-mono font-medium text-cyan-200">{maskedEmail || email}</span>.
+            <span className="font-mono font-medium text-cyan-200 break-all">{maskedEmail || email}</span>.
           </p>
         </div>
       </div>
@@ -207,7 +207,7 @@ export function LoginOtpStep({
           className="flex items-center gap-2 rounded-xl bg-rose-100/95 px-3.5 py-2.5 text-sm font-medium text-red-950 shadow-sm transition-all"
         >
           <FiAlertCircle className="h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
-          <span>{errorMessage}</span>
+          <span className="wrap-break-word">{errorMessage}</span>
         </div>
       ) : null}
 
@@ -219,7 +219,7 @@ export function LoginOtpStep({
           className="flex items-center gap-2 rounded-xl bg-emerald-100/95 px-3.5 py-2.5 text-sm font-medium text-emerald-950 shadow-sm transition-all"
         >
           <FiCheckCircle className="h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
-          <span>{successMessage}</span>
+          <span className="wrap-break-word">{successMessage}</span>
         </div>
       ) : null}
 
@@ -238,7 +238,7 @@ export function LoginOtpStep({
 
           {/* 6 Digit Input Group */}
           <div
-            className="flex items-center justify-between gap-1.5 sm:gap-2.5"
+            className="grid grid-cols-6 gap-1.5 sm:gap-2.5 w-full"
             onPaste={handlePaste}
           >
             {digits.map((digit, idx) => (
@@ -249,7 +249,7 @@ export function LoginOtpStep({
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={1}
+                maxLength={6}
                 autoComplete={idx === 0 ? 'one-time-code' : 'off'}
                 aria-label={`Digit ${idx + 1} of 6`}
                 value={digit}
@@ -257,10 +257,10 @@ export function LoginOtpStep({
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 onFocus={(e) => e.target.select()}
                 disabled={isSubmitting}
-                className={`h-12 w-11 sm:h-14 sm:w-13 text-center text-xl sm:text-2xl font-bold rounded-xl border transition-all duration-150 shadow-inner ${
+                className={`h-11 min-[360px]:h-12 sm:h-14 w-full min-w-0 p-0 text-center text-lg min-[360px]:text-xl sm:text-2xl font-bold rounded-xl border transition-all duration-150 shadow-inner ${
                   digit
                     ? 'border-white bg-white text-[#173f75] ring-2 ring-cyan-200/60'
-                    : 'border-white/50 bg-white/90 text-slate-800 placeholder:text-slate-400 focus:border-white focus:bg-white focus:ring-4 focus:ring-cyan-200/50'
+                    : 'border-white/50 bg-white/90 text-slate-800 placeholder:text-slate-400 focus:border-white focus:bg-white focus:ring-2 sm:focus:ring-4 focus:ring-cyan-200/50'
                 } focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed`}
               />
             ))}
@@ -293,7 +293,7 @@ export function LoginOtpStep({
             type="button"
             onClick={onReturnToLogin}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 self-start font-medium text-white/90 underline decoration-white/30 underline-offset-4 transition hover:text-white active:text-cyan-100 disabled:opacity-50"
+            className="inline-flex min-h-10 items-center gap-1.5 self-start font-medium text-white/90 underline decoration-white/30 underline-offset-4 transition hover:text-white active:text-cyan-100 disabled:opacity-50"
           >
             <FiArrowLeft className="h-4 w-4" aria-hidden="true" />
             <span>Back to Login</span>
@@ -303,7 +303,7 @@ export function LoginOtpStep({
             type="button"
             onClick={handleResendCode}
             disabled={cooldown > 0 || isResending || isSubmitting}
-            className="self-start sm:self-auto font-medium text-white underline decoration-white/30 underline-offset-4 transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-10 items-center self-start sm:self-auto font-medium text-white underline decoration-white/30 underline-offset-4 transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isResending ? (
               <span className="inline-flex items-center gap-1">

@@ -14,7 +14,18 @@ export function errorHandler(err, req, res, _next) {
   const statusCode = err.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR;
   const isOperational = Boolean(err.isOperational);
 
-  if (!isOperational || statusCode >= 500) {
+  if (err.code === "REQUEST_TIMEOUT") {
+    logger.warn("Request timed out", {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      statusCode,
+      errorName: err.name,
+      errorCode: err.code,
+      message: err.message,
+      details: err.details,
+    });
+  } else if (!isOperational || statusCode >= 500) {
     logger.error("Unhandled application error", {
       requestId: req.requestId,
       method: req.method,

@@ -142,7 +142,7 @@ const envSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
-  REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+  REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   STARTUP_SUPABASE_TIMEOUT_MS: z.coerce
     .number()
     .int()

@@ -267,7 +267,7 @@ export function LoginOtpStep({
           </div>
 
           <p id={helperId} className="mt-2.5 text-xs sm:text-sm text-white/80">
-            Enter the 6-digit code sent to your email. The code expires in 5 minutes.
+            Enter the 6-digit code sent to your email. The code expires in 8 hours.
           </p>
         </div>
 

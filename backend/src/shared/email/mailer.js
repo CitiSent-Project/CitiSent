@@ -584,7 +584,7 @@ export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
       "",
       `Your one-time verification code is: ${otp}`,
       "",
-      "This code expires in 5 minutes.",
+      "This code expires in 8 hours.",
       "",
       "If you did not initiate this sign-in attempt, please notify your Superadmin or IT department immediately.",
     ].join("\n"),
@@ -604,7 +604,7 @@ export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
               <div style="color:#173f75; font-family:Consolas,'Courier New',monospace; font-size:36px; font-weight:800; letter-spacing:10px; line-height:1.2;">${safeOtp}</div>
             </div>
             <p style="margin:0; color:#536b78; font-size:13px; text-align:center;">
-              <strong>This code expires in 5 minutes.</strong><br/>
+              <strong>This code expires in 8 hours.</strong><br/>
               Never share this code with anyone.
             </p>
           </td></tr>

@@ -101,11 +101,14 @@ async function resolveAnalysisWithFallback({
   reportId = null,
 }) {
   try {
-    const analysis = await reportsSentimentClient.analyzeReport({
-      issueType,
-      location,
-      description,
-    });
+    const analysis = await reportsSentimentClient.analyzeReport(
+      {
+        issueType,
+        location,
+        description,
+      },
+      { timeoutMs: 5000 },
+    );
 
     return {
       urgency: analysis.urgency,
@@ -197,6 +200,7 @@ export const reportsService = {
     accessToken,
     turnstileToken,
     remoteIp,
+    isAborted,
   }) {
     // ── Guest CAPTCHA verification (Cloudflare Turnstile) ───────────────────────
     // The backend determines guest status from the verified JWT (actor.isGuest).
@@ -265,17 +269,6 @@ export const reportsService = {
         error.code = "CAPTCHA_INVALID";
         throw error;
       }
-
-      // Anti-spam duplicate check: reject exact same report from guest within 60s
-      const duplicateKey = `guest:report:dupe:${actor.id}:${issueType}:${location}:${description}`.slice(0, 150);
-      const isDuplicate = await cacheService.getJSON(duplicateKey);
-      if (isDuplicate) {
-        throw new AppError(
-          "Duplicate report detected. Please wait a moment before submitting again.",
-          StatusCodes.TOO_MANY_REQUESTS,
-        );
-      }
-      await cacheService.setJSON(duplicateKey, true, 60);
     }
 
     if (latitude === undefined || longitude === undefined) {
@@ -285,20 +278,7 @@ export const reportsService = {
       throw new AppError("The selected location is outside Sto. Tomas City, Batangas.", StatusCodes.BAD_REQUEST);
     }
 
-    const department = await resolveActiveDepartment({
-      accessToken,
-      value: issueType,
-    });
-
-    const { urgency, emotionLevel, aiSummary } = await resolveAnalysisWithFallback({
-      issueType: department?.name || issueType,
-      description,
-      location,
-    });
-
     // ── Ensure Guest Database Identity ─────────────────────────────────────────
-    // If the reporter is a guest, ensure their user_id exists in auth.users and profiles
-    // so the foreign-key constraint reports_user_id_fkey is always satisfied.
     let resolvedUserId = userId;
     if (actor?.isGuest) {
       const guestIdentity = await authRepository.ensureGuestUser(userId);
@@ -307,38 +287,99 @@ export const reportsService = {
       }
     }
 
-    const created = await reportsRepository.create(
-      buildReportCreatePayload({
+    const department = await resolveActiveDepartment({
+      accessToken,
+      value: issueType,
+    });
+    const departmentSlug = department?.slug || issueType;
+
+    // ── Idempotent Deduplication Check ──────────────────────────────────────
+    // If an identical report from this user was already submitted within the last 120s
+    // (e.g. client network timeout retry), return the existing report without duplicating rows.
+    if (typeof reportsRepository.findRecentDuplicate === "function") {
+      const recentDuplicate = await reportsRepository.findRecentDuplicate({
         userId: resolvedUserId,
-        issueType: department?.slug || issueType,
+        issueType: departmentSlug,
+        location,
+        description,
+        windowSeconds: 120,
+        accessToken,
+      });
+
+      if (recentDuplicate) {
+        logger.info("[createReport] Idempotent hit: duplicate report submitted within 120s, returning existing report", {
+          existingReportId: recentDuplicate.id,
+          userId: resolvedUserId,
+        });
+        return toReportResponse(recentDuplicate);
+      }
+    }
+
+    // ── Anti-Spam / In-Flight Concurrency Lock ─────────────────────────────────
+    const inFlightKey = `report:inflight:${resolvedUserId}:${departmentSlug}:${location}:${description}`.slice(0, 160);
+    const isInFlight = await cacheService.getJSON(inFlightKey);
+    if (isInFlight) {
+      logger.warn("[createReport] Concurrent duplicate submission blocked by in-flight lock", {
+        userId: resolvedUserId,
+      });
+      throw new AppError(
+        "Your report is currently being processed. Please check My Reports.",
+        StatusCodes.TOO_MANY_REQUESTS,
+      );
+    }
+    await cacheService.setJSON(inFlightKey, true, 15);
+
+    try {
+      const { urgency, emotionLevel, aiSummary } = await resolveAnalysisWithFallback({
+        issueType: department?.name || issueType,
         description,
         location,
-        latitude,
-        longitude,
-        attachmentUrl,
-        urgency,
-        emotionLevel,
-        aiSummary,
-      }),
-      accessToken,
-    );
+      });
 
-    await Promise.all([
-      cacheService.deleteByPrefix(buildReportsUserCachePrefix(resolvedUserId)),
-      cacheService.deleteByPrefix("admin:reports:"),
-    ]);
+      // ── Abort Guard ──────────────────────────────────────────────────────────
+      // If the HTTP connection already timed out or was aborted by client, do not insert
+      if (typeof isAborted === "function" && isAborted()) {
+        logger.warn("[createReport] Request was aborted or timed out before database insert, skipping creation", {
+          userId: resolvedUserId,
+        });
+        return null;
+      }
 
-    const response = toReportResponse(created);
+      const created = await reportsRepository.create(
+        buildReportCreatePayload({
+          userId: resolvedUserId,
+          issueType: departmentSlug,
+          description,
+          location,
+          latitude,
+          longitude,
+          attachmentUrl,
+          urgency,
+          emotionLevel,
+          aiSummary,
+        }),
+        accessToken,
+      );
 
-    // Emit report feed event after successful persistence.
-    emitReportFeedChanged({
-      reportId: response.id,
-      changeType: "created",
-      userId: resolvedUserId,
-      departmentId: department?.slug || issueType,
-    });
+      await Promise.all([
+        cacheService.deleteByPrefix(buildReportsUserCachePrefix(resolvedUserId)),
+        cacheService.deleteByPrefix("admin:reports:"),
+      ]);
 
-    return response;
+      const response = toReportResponse(created);
+
+      // Emit report feed event after successful persistence.
+      emitReportFeedChanged({
+        reportId: response.id,
+        changeType: "created",
+        userId: resolvedUserId,
+        departmentId: departmentSlug,
+      });
+
+      return response;
+    } finally {
+      await cacheService.delete(inFlightKey).catch(() => {});
+    }
   },
 
   async getReportById({ userId, reportId, accessToken }) {

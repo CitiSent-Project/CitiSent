@@ -243,6 +243,32 @@ export const reportsRepository = {
     };
   },
 
+  async findRecentDuplicate({ userId, issueType, location, description, windowSeconds = 120, accessToken }) {
+    const db = getDbClient(accessToken);
+    const sinceTime = new Date(Date.now() - windowSeconds * 1000).toISOString();
+
+    const { data, error } = await db
+      .from(TABLE_NAME)
+      .select(REPORT_SELECT_COLUMNS)
+      .eq("user_id", userId)
+      .eq("issue_type", issueType)
+      .eq("location", location)
+      .eq("description", description)
+      .gte("created_at", sinceTime)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      return null;
+    }
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    return enrichWithSignedUrl(db, data[0]);
+  },
+
   async create(payload, accessToken) {
     const db = getDbClient(accessToken);
 

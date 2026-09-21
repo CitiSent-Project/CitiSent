@@ -35,17 +35,20 @@ function stubCommonDependencies(t) {
   const originalRepositoryCreate = reportsRepository.create;
   const originalRepositoryGetById = reportsRepository.getById;
   const originalRepositoryUpdateById = reportsRepository.updateById;
+  const originalFindRecentDuplicate = reportsRepository.findRecentDuplicate;
   const originalDeleteByPrefix = cacheService.deleteByPrefix;
   const originalGetActiveDepartment = departmentsService.getActiveDepartmentByValue;
   const originalLoggerWarn = logger.warn;
 
   departmentsService.getActiveDepartmentByValue = async () => null;
+  reportsRepository.findRecentDuplicate = async () => null;
 
   t.after(() => {
     reportsSentimentClient.analyzeReport = originalAnalyzeReport;
     reportsRepository.create = originalRepositoryCreate;
     reportsRepository.getById = originalRepositoryGetById;
     reportsRepository.updateById = originalRepositoryUpdateById;
+    reportsRepository.findRecentDuplicate = originalFindRecentDuplicate;
     cacheService.deleteByPrefix = originalDeleteByPrefix;
     departmentsService.getActiveDepartmentByValue = originalGetActiveDepartment;
     logger.warn = originalLoggerWarn;
@@ -339,6 +342,85 @@ test("listReports includes hasUnreadAdminMessage on mapped report items", async 
   assert.equal(response.data.length, 2);
   assert.equal(response.data[0].hasUnreadAdminMessage, true);
   assert.equal(response.data[1].hasUnreadAdminMessage, false);
+});
+
+test("createReport returns existing report when an identical report was submitted recently (idempotency)", async (t) => {
+  stubCommonDependencies(t);
+
+  const existingRow = createReportRow({
+    id: "existing-report-123",
+    issue_type: "Flooding",
+    description: "Water level is rising quickly near the bridge.",
+    location: "Riverside",
+  });
+
+  let repositoryCreateCalled = false;
+  reportsRepository.create = async () => {
+    repositoryCreateCalled = true;
+    return existingRow;
+  };
+
+  const originalFindRecentDuplicate = reportsRepository.findRecentDuplicate;
+  reportsRepository.findRecentDuplicate = async ({ userId, issueType, location, description }) => {
+    assert.equal(userId, "user-1");
+    assert.equal(issueType, "Flooding");
+    assert.equal(location, "Riverside");
+    assert.equal(description, "Water level is rising quickly near the bridge.");
+    return existingRow;
+  };
+
+  t.after(() => {
+    reportsRepository.findRecentDuplicate = originalFindRecentDuplicate;
+  });
+
+  const result = await reportsService.createReport({
+    userId: "user-1",
+    issueType: "Flooding",
+    location: "Riverside",
+    latitude: 14.0,
+    longitude: 121.15,
+    description: "Water level is rising quickly near the bridge.",
+    accessToken: "token-123",
+  });
+
+  assert.equal(result.id, "existing-report-123");
+  assert.equal(repositoryCreateCalled, false, "Repository create should not be called on idempotent hit");
+});
+
+test("createReport skips database insert when request is aborted", async (t) => {
+  stubCommonDependencies(t);
+
+  const originalFindRecentDuplicate = reportsRepository.findRecentDuplicate;
+  reportsRepository.findRecentDuplicate = async () => null;
+
+  let repositoryCreateCalled = false;
+  reportsRepository.create = async () => {
+    repositoryCreateCalled = true;
+    return createReportRow();
+  };
+
+  reportsSentimentClient.analyzeReport = async () => ({
+    urgency: "Medium",
+    confidence: 0.8,
+  });
+
+  t.after(() => {
+    reportsRepository.findRecentDuplicate = originalFindRecentDuplicate;
+  });
+
+  const result = await reportsService.createReport({
+    userId: "user-1",
+    issueType: "Flooding",
+    location: "Riverside",
+    latitude: 14.0,
+    longitude: 121.15,
+    description: "Water level is rising quickly near the bridge.",
+    accessToken: "token-123",
+    isAborted: () => true, // Request already aborted / timed out
+  });
+
+  assert.equal(result, null);
+  assert.equal(repositoryCreateCalled, false, "Repository create must be aborted if request connection closed");
 });
 
 

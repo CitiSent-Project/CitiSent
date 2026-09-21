@@ -63,6 +63,7 @@ export default function CreateReportIssueDetailScreen() {
   const [report, setReport] = useState("");
   const [imageUri, setImageUri] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [modalConfig, setModalConfig] = useState({
     visible: false,
     type: "info",
@@ -134,7 +135,7 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   async function handleSubmitReport() {
-    if (!issue) return;
+    if (!issue || isSubmittingRef.current) return;
     if (issueLocation.trim().length === 0) {
       showModal("error", "Missing details", "Please provide the issue location.");
       return;
@@ -166,6 +167,8 @@ export default function CreateReportIssueDetailScreen() {
   }
 
   async function executeSubmitReport(turnstileToken) {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       let attachmentUrl;
@@ -183,6 +186,7 @@ export default function CreateReportIssueDetailScreen() {
         ...(attachmentUrl ? { attachmentUrl } : {}),
         ...(turnstileToken ? { turnstileToken } : {}),
       });
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
       showModal(
         "success",
@@ -198,6 +202,7 @@ export default function CreateReportIssueDetailScreen() {
         }
       );
     } catch (error) {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
 
       const isCaptchaRequired =

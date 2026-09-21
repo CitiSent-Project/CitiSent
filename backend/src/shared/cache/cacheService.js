@@ -193,6 +193,19 @@ class CacheService {
     this.memory.set(key, value, ttlSeconds);
   }
 
+  async delete(key) {
+    try {
+      const client = await this.getRedisClient();
+      if (client) {
+        await client.del(key);
+        return;
+      }
+    } catch (error) {
+      logger.warn("Redis delete failed, using memory fallback", { key, message: error.message });
+    }
+    this.memory.delete(key);
+  }
+
   async deleteByPrefix(prefix) {
     try {
       const client = await this.getRedisClient();

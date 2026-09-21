@@ -51,7 +51,19 @@ export const reportsController = {
       turnstileToken: req.body.turnstileToken || null,
       remoteIp: req.ip || null,
       accessToken: req.accessToken,
+      isAborted: () => res.headersSent || req.aborted || req.destroyed,
     });
+
+    if (res.headersSent) {
+      return;
+    }
+
+    if (!created) {
+      return res.status(StatusCodes.GATEWAY_TIMEOUT).json({
+        success: false,
+        message: "Request timed out or aborted",
+      });
+    }
 
     return res.status(StatusCodes.CREATED).json({
       success: true,

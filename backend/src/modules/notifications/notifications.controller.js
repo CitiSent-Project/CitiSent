@@ -12,6 +12,10 @@ export const notificationsController = {
       reportId: req.query.reportId,
     });
 
+    if (res.headersSent) {
+      return;
+    }
+
     return res.status(StatusCodes.OK).json({
       success: true,
       ...result,
@@ -25,6 +29,10 @@ export const notificationsController = {
       notificationId: req.params.notificationId,
       isRead: req.body.isRead,
     });
+
+    if (res.headersSent) {
+      return;
+    }
 
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -40,6 +48,10 @@ export const notificationsController = {
       markAll: req.body.markAll,
       isRead: req.body.isRead,
     });
+
+    if (res.headersSent) {
+      return;
+    }
 
     return res.status(StatusCodes.OK).json({
       success: true,

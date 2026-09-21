@@ -46,6 +46,27 @@ export function requestContext(req, res, next) {
 
   res.setHeader("x-request-id", requestId);
 
+  // Prevent ERR_HTTP_HEADERS_SENT if an async operation resolves after timeout or abort
+  const originalJson = res.json?.bind(res);
+  if (typeof originalJson === "function") {
+    res.json = function safeJson(...args) {
+      if (res.headersSent) {
+        return this;
+      }
+      return originalJson(...args);
+    };
+  }
+
+  const originalSend = res.send?.bind(res);
+  if (typeof originalSend === "function") {
+    res.send = function safeSend(...args) {
+      if (res.headersSent) {
+        return this;
+      }
+      return originalSend(...args);
+    };
+  }
+
   // Hook into response headers to attach Server-Timing header
   const originalWriteHead = res.writeHead;
   res.writeHead = function (...args) {

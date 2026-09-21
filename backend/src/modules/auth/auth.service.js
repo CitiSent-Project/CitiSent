@@ -254,7 +254,7 @@ export const authService = {
     }
 
     // Generate OTP
-    const plainOtp = otpStore_.createOtp(profile.email);
+    const plainOtp = otpStore_.createOtp(profile.email, 8 * 60 * 60 * 1000);
 
     // Send email
     try {
@@ -279,7 +279,7 @@ export const authService = {
       );
     }
 
-    // Create signed temporary challenge token (valid 5m)
+    // Create signed temporary challenge token (valid 8h)
     const secret = getAdminAuthJwtSecret();
     const tempToken = jwt.sign(
       {
@@ -291,7 +291,7 @@ export const authService = {
         authUser: authResult?.user || null,
       },
       secret,
-      { expiresIn: "5m" },
+      { expiresIn: "8h" },
     );
 
     return {
@@ -299,7 +299,7 @@ export const authService = {
       tempToken,
       email: profile.email,
       maskedEmail: maskEmail(profile.email),
-      expiresInSeconds: 300,
+      expiresInSeconds: 28800,
       resendCooldownSeconds: 60,
     };
   },
@@ -402,7 +402,7 @@ export const authService = {
       throw new AppError("Admin account not found.", StatusCodes.NOT_FOUND);
     }
 
-    const plainOtp = otpStore_.createOtp(normalizedEmail);
+    const plainOtp = otpStore_.createOtp(normalizedEmail, 8 * 60 * 60 * 1000);
 
     try {
       await mailerService.sendLoginOtpEmail({

@@ -101,15 +101,16 @@ export const otpStore_ = {
    * Create (or replace) an OTP for the given email.
    * Returns the plaintext OTP (to be emailed — never stored).
    * @param {string} email
+   * @param {number} [ttlMs] custom TTL in milliseconds (defaults to OTP_TTL_MS = 5 min)
    * @returns {string} plaintext OTP
    */
-  createOtp(email) {
+  createOtp(email, ttlMs) {
     pruneExpired();
     const key = normalizeEmail(email);
     const plaintext = generateOtp();
     otpStore.set(key, {
       hash: hashOtp(plaintext),
-      expiresAt: Date.now() + OTP_TTL_MS,
+      expiresAt: Date.now() + (ttlMs || OTP_TTL_MS),
       attempts: 0,
       used: false,
     });

@@ -101,14 +101,11 @@ async function resolveAnalysisWithFallback({
   reportId = null,
 }) {
   try {
-    const analysis = await reportsSentimentClient.analyzeReport(
-      {
-        issueType,
-        location,
-        description,
-      },
-      { timeoutMs: 5000 },
-    );
+    const analysis = await reportsSentimentClient.analyzeReport({
+      issueType,
+      location,
+      description,
+    });
 
     return {
       urgency: analysis.urgency,

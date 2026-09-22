@@ -86,9 +86,18 @@ function UsersTableRow({
       top: `${Math.round(top)}px`,
       left: `${Math.round(left)}px`,
       width: '144px',
-      zIndex: 50,
+      zIndex: 60,
     })
   }, [])
+
+  const toggleActionMenu = useCallback(() => {
+    if (!isActionMenuOpen) {
+      updatePopoverPosition()
+      setIsActionMenuOpen(true)
+    } else {
+      setIsActionMenuOpen(false)
+    }
+  }, [isActionMenuOpen, updatePopoverPosition])
 
   useEffect(() => {
     if (!isActionMenuOpen) return
@@ -107,12 +116,21 @@ function UsersTableRow({
       setIsActionMenuOpen(false)
     }
 
+    function onEscape(event) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setIsActionMenuOpen(false)
+      triggerRef.current?.focus?.()
+    }
+
     document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
     window.addEventListener('resize', handleReposition)
     document.addEventListener('scroll', handleReposition, true)
 
     return () => {
       document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
       window.removeEventListener('resize', handleReposition)
       document.removeEventListener('scroll', handleReposition, true)
     }
@@ -177,67 +195,79 @@ function UsersTableRow({
           type="button"
           ref={triggerRef}
           disabled={isProcessing}
-          onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+          onClick={toggleActionMenu}
+          aria-haspopup="menu"
+          aria-expanded={isActionMenuOpen}
+          aria-label={`Actions for ${user.email || user.username || 'user'}`}
           whileHover={{ scale: isProcessing ? 1 : 1.06 }}
           whileTap={{ scale: isProcessing ? 1 : 0.94 }}
-          className="grid h-8.5 w-8.5 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700 cursor-pointer"
+          className="relative grid h-8.5 w-8.5 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700 cursor-pointer before:absolute before:-inset-1.5 before:content-['']"
         >
           {isProcessing ? <Spinner size="sm" /> : <FiMoreHorizontal />}
         </motion.button>
 
-        <AnimatePresence>
-          {isActionMenuOpen && popoverStyle && typeof document !== 'undefined'
-            ? createPortal(
-                <motion.div
-                  ref={popoverRef}
-                  style={popoverStyle}
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95"
-                >
-                <button
-                  type="button"
-                  onClick={() => handleAction('view')}
-                  className="block w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  View Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAction('edit')}
-                  className="block w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  Edit User
-                </button>
-                {canToggleBan ? (
-                  <button
-                    type="button"
-                    onClick={() => handleAction('ban-toggle')}
-                    className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 ${
-                      user.status === 'Banned'
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-rose-600 dark:text-rose-400'
-                    }`}
+        {typeof document !== 'undefined'
+          ? createPortal(
+              <AnimatePresence>
+                {isActionMenuOpen && popoverStyle ? (
+                  <motion.div
+                    key="action-menu"
+                    ref={popoverRef}
+                    role="menu"
+                    aria-label="User actions"
+                    style={popoverStyle}
+                    initial={prefersReduced ? false : { opacity: 0, scale: 0.95, y: -4 }}
+                    animate={prefersReduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                    exit={prefersReduced ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: prefersReduced ? 0 : 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95 max-h-[calc(100vh-16px)] overflow-y-auto"
                   >
-                    {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
-                  </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleAction('view')}
+                      className="block w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleAction('edit')}
+                      className="block w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                    >
+                      Edit User
+                    </button>
+                    {canToggleBan ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleAction('ban-toggle')}
+                        className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer ${
+                          user.status === 'Banned'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
+                        }`}
+                      >
+                        {user.status === 'Banned' ? 'Unban User' : 'Ban User'}
+                      </button>
+                    ) : null}
+                    {canToggleBan ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleAction('delete')}
+                        className="block w-full px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 cursor-pointer"
+                      >
+                        Delete User
+                      </button>
+                    ) : null}
+                  </motion.div>
                 ) : null}
-                {canToggleBan ? (
-                  <button
-                    type="button"
-                    onClick={() => handleAction('delete')}
-                    className="block w-full px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                  >
-                    Delete User
-                  </button>
-                ) : null}
-              </motion.div>,
+              </AnimatePresence>,
               document.body
             )
           : null}
-        </AnimatePresence>
       </div>
     </motion.div>
   )

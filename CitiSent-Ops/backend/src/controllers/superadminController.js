@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { sendSuperadminInvitationEmail } from "../services/emailService.js";
 import { logPlatformAction } from "../services/auditService.js";
+import { createSuperadminActivationToken } from "../utils/tokenUtils.js";
 
 const provisionSuperadminSchema = z.object({
   fname: z.string().trim().min(1, "First name is required").max(100),
@@ -90,15 +91,11 @@ export async function provisionSuperadmin(req, res) {
       });
     }
 
-    // 2. Cryptographic token generation (SHA-256)
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const internalInitialPassword = `Tmp!${crypto.randomBytes(16).toString("hex")}#9`;
-
     const fullName = [payload.fname, payload.mname, payload.lname].filter(Boolean).join(" ");
     const username = `${payload.fname.toLowerCase()}_${payload.lname.toLowerCase()}`.replace(/[^a-z0-9_]/g, "");
 
-    // 3. Create Supabase Auth User
+    // 2. Create Supabase Auth User
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: payload.email,
       password: internalInitialPassword,
@@ -123,6 +120,12 @@ export async function provisionSuperadmin(req, res) {
     }
 
     const userId = authData.user.id;
+
+    // 3. Cryptographic token generation (JWT matching CitiSent-Website & backend activation standard)
+    const { token, tokenHash } = createSuperadminActivationToken({
+      userId,
+      email: payload.email,
+    });
 
     // 4. Create Profile Record
     const { error: profileError } = await supabaseAdmin.from("profiles").insert({
@@ -156,7 +159,7 @@ export async function provisionSuperadmin(req, res) {
     }
 
     // 5. Generate Setup URL & Dispatch Email
-    const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${rawToken}`;
+    const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${token}`;
     
     await sendSuperadminInvitationEmail({
       toEmail: payload.email,
@@ -218,8 +221,10 @@ export async function resendInvite(req, res) {
       });
     }
 
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const { token, tokenHash } = createSuperadminActivationToken({
+      userId: id,
+      email: profile.email,
+    });
 
     await supabaseAdmin
       .from("profiles")
@@ -229,7 +234,7 @@ export async function resendInvite(req, res) {
       })
       .eq("user_id", id);
 
-    const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${rawToken}`;
+    const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${token}`;
     const fullName = `${profile.fname} ${profile.lname}`.trim();
 
     await sendSuperadminInvitationEmail({

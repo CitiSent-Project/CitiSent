@@ -54,7 +54,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, "0.0.0.0", () => {
   console.log(`=======================================================`);
   console.log(`🚀 CitiSent-Ops Dedicated API Server running on port ${env.PORT}`);
   console.log(`🔒 Control Plane Architecture: Isolated from Client Gateway`);

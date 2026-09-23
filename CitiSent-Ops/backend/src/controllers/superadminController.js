@@ -94,6 +94,7 @@ export async function provisionSuperadmin(req, res) {
     const internalInitialPassword = `Tmp!${crypto.randomBytes(16).toString("hex")}#9`;
     const fullName = [payload.fname, payload.mname, payload.lname].filter(Boolean).join(" ");
     const username = `${payload.fname.toLowerCase()}_${payload.lname.toLowerCase()}`.replace(/[^a-z0-9_]/g, "");
+    const normalizedCity = /^s(an)?to\.?\s*tomas$/i.test(payload.city || "") ? "Sto. Tomas" : payload.city;
 
     // 2. Create Supabase Auth User
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -107,7 +108,7 @@ export async function provisionSuperadmin(req, res) {
         phone_number: payload.phoneNumber,
         username,
         role: "Superadmin",
-        city: payload.city,
+        city: normalizedCity,
       },
     });
 
@@ -127,26 +128,29 @@ export async function provisionSuperadmin(req, res) {
       email: payload.email,
     });
 
-    // 4. Create Profile Record
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-      user_id: userId,
-      email: payload.email,
-      username,
-      fname: payload.fname,
-      mname: payload.mname,
-      lname: payload.lname,
-      phone_number: payload.phoneNumber,
-      account_type: "admin",
-      role: "Superadmin",
-      city: payload.city,
-      province: payload.province,
-      barangay: payload.barangay,
-      activation_status: "pending",
-      account_status: "active",
-      invitation_token_hash: tokenHash,
-      invitation_sent_at: new Date().toISOString(),
-      invitation_created_by_user_id: req.developer?.id || null,
-    });
+    // 4. Create/Update Profile Record (upsert to handle databases with or without auth.users auto-creation triggers)
+    const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+      {
+        user_id: userId,
+        email: payload.email,
+        username,
+        fname: payload.fname,
+        mname: payload.mname,
+        lname: payload.lname,
+        phone_number: payload.phoneNumber,
+        account_type: "admin",
+        role: "Superadmin",
+        city: normalizedCity,
+        province: payload.province || "Batangas",
+        barangay: payload.barangay || "San Miguel",
+        activation_status: "pending",
+        account_status: "active",
+        invitation_token_hash: tokenHash,
+        invitation_sent_at: new Date().toISOString(),
+        invitation_created_by_user_id: req.developer?.id || null,
+      },
+      { onConflict: "user_id" }
+    );
 
     if (profileError) {
       // Rollback auth user creation if profile insert fails
@@ -161,12 +165,16 @@ export async function provisionSuperadmin(req, res) {
     // 5. Generate Setup URL & Dispatch Email
     const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${token}`;
     
-    await sendSuperadminInvitationEmail({
-      toEmail: payload.email,
-      recipientName: fullName,
-      setupUrl,
-      jurisdictionCity: payload.city,
-    });
+    try {
+      await sendSuperadminInvitationEmail({
+        toEmail: payload.email,
+        recipientName: fullName,
+        setupUrl,
+        jurisdictionCity: normalizedCity,
+      });
+    } catch (emailErr) {
+      console.warn("[ProvisionSuperadmin] Email dispatch warning (setup URL still generated):", emailErr.message);
+    }
 
     // 6. Audit Logging
     await logPlatformAction({

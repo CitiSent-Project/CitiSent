@@ -121,6 +121,9 @@ export async function registerDeveloperAccount(req, res) {
         role: "Platform Developer",
         account_status: "active",
         activation_status: "active",
+        city: "Santo Tomas",
+        province: "Batangas",
+        barangay: "Santo Tomas",
       },
       { onConflict: "user_id" }
     );

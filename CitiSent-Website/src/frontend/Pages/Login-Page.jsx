@@ -2,13 +2,9 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   FiAlertCircle,
-  FiCheckCircle,
-  FiCopy,
   FiLock,
   FiMail,
   FiRefreshCw,
-  FiShield,
-  FiX,
 } from 'react-icons/fi'
 import {
   AuthInputField,
@@ -24,102 +20,7 @@ import {
 import { PASSWORD_RESET_STEPS } from '../../models/passwordResetModel'
 import { usePasswordResetFlow } from '../../hooks/auth/usePasswordResetFlow'
 
-function RequestAccessModal({ isOpen, onClose }) {
-  const [copied, setCopied] = useState(false)
 
-  if (!isOpen) return null
-
-  function handleCopyEmail() {
-    navigator.clipboard?.writeText('sysadmin@citisent.gov.ph')
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="request-access-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        transition={{ duration: 0.2 }}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-lg rounded-2xl border border-white/20 bg-[#102e56] p-6 sm:p-7 text-white shadow-2xl backdrop-blur-xl"
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 grid h-8 w-8 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition"
-          aria-label="Close modal"
-        >
-          <FiX className="h-5 w-5" />
-        </button>
-
-        <div className="flex items-center gap-3 mb-4">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-500/20 text-cyan-300">
-            <FiShield className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 id="request-access-title" className="text-lg font-bold text-white">
-              Admin Account Provisioning
-            </h3>
-            <p className="text-xs text-cyan-200/80">
-              City Government Administrative Access
-            </p>
-          </div>
-        </div>
-
-        <p className="text-sm text-blue-100/90 leading-relaxed mb-4">
-          CitiSent administrator accounts for Department Heads, Dispatchers, and Municipal Supervisors are provisioned internally by the City Government System Administrator to ensure security and official compliance.
-        </p>
-
-        <div className="rounded-xl border border-white/15 bg-white/5 p-4 mb-5 text-sm text-blue-100/90 space-y-2">
-          <p className="font-semibold text-white text-xs uppercase tracking-wider">
-            How to obtain access:
-          </p>
-          <ol className="list-decimal list-inside space-y-1.5 text-xs text-blue-100/80">
-            <li>Submit an internal access request to your Department Administrator or City Hall IT Office.</li>
-            <li>Provide your official government email address (e.g., <code className="text-cyan-200">@citisent.gov.ph</code>).</li>
-            <li>Once approved, a secure password setup link and two-factor authentication verification will be sent to your inbox.</li>
-          </ol>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-white/10">
-          <button
-            type="button"
-            onClick={handleCopyEmail}
-            className="flex items-center gap-2 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20 transition cursor-pointer w-full sm:w-auto justify-center"
-          >
-            {copied ? (
-              <>
-                <FiCheckCircle className="h-4 w-4 text-emerald-400" />
-                <span>Copied to Clipboard!</span>
-              </>
-            ) : (
-              <>
-                <FiCopy className="h-4 w-4" />
-                <span>Copy: sysadmin@citisent.gov.ph</span>
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg bg-white/15 px-4 py-2 text-xs font-semibold text-white hover:bg-white/25 transition cursor-pointer w-full sm:w-auto"
-          >
-            Understood
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
 
 function PasswordRecovery({ onReturnToLogin }) {
   const flow = usePasswordResetFlow()
@@ -179,7 +80,6 @@ export function LoginPage({
   onVerifyOtp,
   onResendOtp,
   rememberedEmail,
-  onSwitchToRegister,
 }) {
   const [form, setForm] = useState({
     identifier: rememberedEmail || '',
@@ -195,7 +95,6 @@ export function LoginPage({
   })
   const [feedback, setFeedback] = useState({ type: '', message: '' })
   const [submitting, setSubmitting] = useState(false)
-  const [showRegisterModal, setShowRegisterModal] = useState(false)
 
   const updateField = (field, value) => setForm((previous) => ({ ...previous, [field]: value }))
 
@@ -284,13 +183,7 @@ export function LoginPage({
     setFeedback({ type: '', message: '' })
   }
 
-  function handleRegisterClick() {
-    if (typeof onSwitchToRegister === 'function') {
-      onSwitchToRegister()
-      return
-    }
-    setShowRegisterModal(true)
-  }
+
 
   // 1. Forgot Password Flow
   if (viewMode === 'forgot') {
@@ -325,8 +218,7 @@ export function LoginPage({
 
   // 3. Primary Credentials Step
   return (
-    <>
-      <AuthPageShell
+    <AuthPageShell
         variant="admin-login"
         title="Admin Login"
         subtitle="Sign in to access the CitiSent administrative workspace."
@@ -432,25 +324,7 @@ export function LoginPage({
               <span>Sign-in</span>
             )}
           </motion.button>
-
-          {/* Register / Create Account Option */}
-          <div className="pt-2 text-center text-sm text-blue-100/90">
-            <span>Need an admin account? </span>
-            <button
-              type="button"
-              onClick={handleRegisterClick}
-              className="font-semibold text-cyan-200 underline decoration-cyan-300/40 underline-offset-4 transition hover:text-cyan-100 hover:decoration-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200/60 rounded-xs cursor-pointer"
-            >
-              Request Access / Register
-            </button>
-          </div>
         </form>
       </AuthPageShell>
-
-      <RequestAccessModal
-        isOpen={showRegisterModal}
-        onClose={() => setShowRegisterModal(false)}
-      />
-    </>
   )
 }

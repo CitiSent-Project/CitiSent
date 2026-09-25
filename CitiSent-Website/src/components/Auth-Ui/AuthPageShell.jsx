@@ -42,14 +42,14 @@ export function AuthPageShell({
               <img
                 src="/assets/logo-2.png"
                 alt="CitiSent Logo"
-                className="block lg:hidden w-36 h-36 sm:w-44 sm:h-44 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                className="block lg:hidden w-56 h-56 sm:w-64 sm:h-64 object-contain drop-shadow-sm"
               />
 
               {/* Desktop Logo (lg+): Horizontal Lockup (logo-left.png) */}
               <img
                 src="/assets/logo-left.png"
                 alt="CitiSent Logo"
-                className="hidden lg:block w-72 lg:w-80 xl:w-96 max-w-full h-auto object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                className="hidden lg:block w-96 lg:w-[440px] xl:w-[520px] 2xl:w-[580px] max-w-[92%] h-auto object-contain drop-shadow-sm"
               />
             </MotionDiv>
           </section>

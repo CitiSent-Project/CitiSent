@@ -1,5 +1,4 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import CitiSentLogo from '/assets/CitiSentLogo.svg'
 
 const MotionDiv = motion.div
 
@@ -37,16 +36,21 @@ export function AuthPageShell({
               initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.94, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center justify-center gap-4 sm:gap-6 text-center select-none"
+              className="flex flex-col items-center justify-center text-center select-none"
             >
+              {/* Mobile Logo (<lg): Stacked Lockup (logo-2.png) */}
               <img
-                src={CitiSentLogo}
+                src="/assets/logo-2.png"
                 alt="CitiSent Logo"
-                className="h-28 w-28 sm:h-36 sm:w-36 lg:h-44 lg:w-44 xl:h-52 xl:w-52 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                className="block lg:hidden w-36 h-36 sm:w-44 sm:h-44 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
               />
-              <span className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight text-[#173f75] block leading-tight">
-                CitiSent
-              </span>
+
+              {/* Desktop Logo (lg+): Horizontal Lockup (logo-left.png) */}
+              <img
+                src="/assets/logo-left.png"
+                alt="CitiSent Logo"
+                className="hidden lg:block w-72 lg:w-80 xl:w-96 max-w-full h-auto object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+              />
             </MotionDiv>
           </section>
 
@@ -122,9 +126,8 @@ export function AuthPageShell({
         /* Fallback for stacked card layout if explicitly requested */
         <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100">
           <div className="w-full max-w-md rounded-2xl bg-[#173f75] p-6 sm:p-8 text-white shadow-xl">
-            <div className="mb-6 flex items-center justify-center gap-3">
-              <img src={CitiSentLogo} alt="CitiSent" className="h-12 w-12" />
-              <span className="text-2xl font-bold text-white">CitiSent</span>
+            <div className="mb-6 flex items-center justify-center">
+              <img src="/assets/logo-left.png" alt="CitiSent" className="h-10 w-auto object-contain" />
             </div>
             <header className="mb-6 text-center">
               <h2 className="text-2xl font-bold text-white">{title}</h2>

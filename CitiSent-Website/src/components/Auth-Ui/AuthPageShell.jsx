@@ -33,9 +33,13 @@ export function AuthPageShell({
           {/* ======================================================== */}
           <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.94, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 1.05, ease: [0.16, 1, 0.3, 1] }
+              }
               className="flex flex-col items-center justify-center text-center select-none"
             >
               {/* Mobile Logo (<lg): Stacked Lockup (logo-2.png) */}
@@ -57,9 +61,13 @@ export function AuthPageShell({
           {/* Mobile/Tablet Horizontal Curved Divider (visible on <lg, hidden on lg+) */}
           <div className="block lg:hidden relative z-20 w-full -mt-2 -mb-px pointer-events-none">
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              initial={prefersReduced ? { opacity: 1 } : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
+              }
               className="w-full"
             >
               <svg
@@ -96,9 +104,13 @@ export function AuthPageShell({
           {/* ======================================================== */}
           <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 1.05, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
+              }
               className="w-full max-w-md mx-auto"
             >
               <header className="mb-6 sm:mb-8 text-left">

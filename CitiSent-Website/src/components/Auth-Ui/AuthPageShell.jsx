@@ -29,9 +29,15 @@ export function AuthPageShell({
           />
 
           {/* ======================================================== */}
-          {/* LEFT SIDE: Pure White Background with CitiSent Logo Only */}
+          {/* LEFT SIDE: Subtle Dot Matrix Background with CitiSent Logo */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16 overflow-hidden">
+            {/* Subtle Dot Matrix Background Pattern */}
+            <div
+              className="absolute inset-0 pointer-events-none select-none z-0 bg-dot-grid bg-dot-grid-left"
+              aria-hidden="true"
+            />
+
             <MotionDiv
               initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -40,7 +46,7 @@ export function AuthPageShell({
                   ? { duration: 0 }
                   : { duration: 1.05, ease: [0.16, 1, 0.3, 1] }
               }
-              className="flex flex-col items-center justify-center text-center select-none"
+              className="relative z-10 flex flex-col items-center justify-center text-center select-none"
             >
               {/* Mobile Logo (<lg): Stacked Lockup (logo-2.png) */}
               <img
@@ -136,7 +142,7 @@ export function AuthPageShell({
         </div>
       ) : (
         /* Fallback for stacked card layout if explicitly requested */
-        <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100">
+        <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100 bg-dot-grid">
           <div className="w-full max-w-md rounded-2xl bg-[#173f75] p-6 sm:p-8 text-white shadow-xl">
             <div className="mb-6 flex items-center justify-center">
               <img src="/assets/logo-left.png" alt="CitiSent" className="h-10 w-auto object-contain" />

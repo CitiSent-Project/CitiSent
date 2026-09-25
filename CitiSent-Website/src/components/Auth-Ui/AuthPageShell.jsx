@@ -1,157 +1,143 @@
-import { motion } from "framer-motion";
-import CitiSentLogo from "/assets/CitiSentLogo.svg";
+import { motion, useReducedMotion } from 'framer-motion'
 
-const MotionSection = motion.section;
+const MotionDiv = motion.div
 
 export function AuthPageShell({
   title,
   subtitle,
   children,
   footer,
-  variant = "default",
-  layout = "stack",
+  variant = 'admin-login',
+  layout = 'split',
 }) {
-  const isAdminLogin = variant === "admin-login";
-  const isSplitLayout = isAdminLogin && layout === "split";
+  const isAdminLogin = variant === 'admin-login'
+  const isSplitLayout = isAdminLogin && layout !== 'stack'
+  const prefersReduced = useReducedMotion()
 
   return (
-    <main
-      className={`relative flex min-h-screen items-center justify-center overflow-x-hidden overflow-y-auto p-3 sm:p-6 ${
-        isAdminLogin
-          ? "bg-linear-to-br from-[#9cbce0] via-[#5f8fd3] to-[#84a8d1]"
-          : "bg-linear-to-br from-[#dbe9ff] via-[#a8c5f1] to-[#87ade4]"
-      }`}
-    >
-      <div
-        className="absolute inset-0 z-0 bg-no-repeat"
-        style={{
-          backgroundImage: "url('/assets/Untitled_design-removebg-preview 1 (1).png')",
-          backgroundPosition: "center 5%",
-          backgroundSize: "100% auto",
-        }}
-      />
-      <div
-        className={`pointer-events-none absolute -top-44 right-0 h-96 w-96 rounded-full blur-3xl ${
-          isAdminLogin ? "bg-blue-100/24" : "bg-blue-100/35"
-        }`}
-      />
-      <div
-        className={`pointer-events-none absolute -bottom-44 left-0 h-96 w-96 rounded-full blur-3xl ${
-          isAdminLogin ? "bg-blue-100/30" : "bg-blue-100/35"
-        }`}
-      />
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-white">
+      {isSplitLayout ? (
+        <div className="relative min-h-screen w-full flex flex-col lg:flex-row">
+          {/* ======================================================== */}
+          {/* DESKTOP SPLIT BACKGROUND: login-background-1.svg         */}
+          {/* ======================================================== */}
+          <img
+            src="/assets/login-background-1.svg"
+            alt=""
+            className="hidden lg:block absolute inset-0 h-full w-full object-cover pointer-events-none select-none z-0"
+            aria-hidden="true"
+          />
 
-      <MotionSection
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className={`relative w-full rounded-2xl backdrop-blur-sm sm:rounded-3xl ${
-          isSplitLayout
-            ? "max-w-6xl overflow-hidden border border-white/72 bg-[#3c73c8]/52 text-white shadow-[0_18px_50px_rgba(23,56,110,0.28)]"
-            : isAdminLogin
-              ? "max-w-lg border border-white/72 bg-[#3c73c8]/58 px-4 py-6 min-[400px]:p-6 text-white shadow-[0_18px_50px_rgba(23,56,110,0.32)] sm:p-8 md:p-9 md:pb-10"
-              : "max-w-xl border border-white/60 bg-white/86 p-6 sm:p-7 shadow-xl md:p-9"
-        }`}
-      >
-        {isSplitLayout ? (
-          <div className="grid md:grid-cols-[minmax(0,1.02fr)_minmax(0,1.18fr)]">
-            <div className="relative p-7 md:p-10 lg:p-12">
-              <div className="absolute inset-0 bg-linear-to-br from-white/12 via-white/6 to-transparent" />
-              <div className="relative flex h-full flex-col justify-between gap-12">
-                <div>
-                  <div className="mb-8 flex items-center gap-4 md:gap-5">
-                    <p className="text-2xl font-bold text-[#1f3f73] md:text-[52px]">
-                      CitiSent
-                    </p>
-                    <img
-                      src={CitiSentLogo}
-                      alt="CitiSent"
-                      className="h-19 w-19 md:h-21 md:w-21"
-                    />
-                  </div>
+          {/* ======================================================== */}
+          {/* LEFT SIDE: Pure White Background with CitiSent Logo Only */}
+          {/* ======================================================== */}
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
+            <MotionDiv
+              initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col items-center justify-center text-center select-none"
+            >
+              {/* Mobile Logo (<lg): Stacked Lockup (logo-2.png) */}
+              <img
+                src="/assets/logo-2.png"
+                alt="CitiSent Logo"
+                className="block lg:hidden w-36 h-36 sm:w-44 sm:h-44 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+              />
 
-                  <header className="max-w-md">
-                    <h1 className="text-4xl font-semibold text-white md:text-[52px] md:leading-[1.05]">
-                      {title}
-                    </h1>
-                    <p className="mt-3 max-w-sm text-sm leading-6 text-white/85 md:text-base">
-                      {subtitle}
-                    </p>
-                  </header>
-                </div>
+              {/* Desktop Logo (lg+): Horizontal Lockup (logo-left.png) */}
+              <img
+                src="/assets/logo-left.png"
+                alt="CitiSent Logo"
+                className="hidden lg:block w-72 lg:w-80 xl:w-96 max-w-full h-auto object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+              />
+            </MotionDiv>
+          </section>
 
-                <div className="hidden items-center gap-3 md:flex">
-                  <span className="h-px w-18 bg-white/32" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-200" />
-                  <span className="h-px w-28 bg-white/18" />
-                </div>
-              </div>
-            </div>
+          {/* Mobile/Tablet Horizontal Curved Divider (visible on <lg, hidden on lg+) */}
+          <div className="block lg:hidden relative z-20 w-full -mt-2 -mb-px pointer-events-none">
+            <MotionDiv
+              initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full"
+            >
+              <svg
+                viewBox="0 0 1000 80"
+                preserveAspectRatio="none"
+                className="w-full h-12 sm:h-16 block"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="softTransitionMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.3" />
+                    <stop offset="50%" stopColor="#bae6fd" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0.95" />
+                  </linearGradient>
+                </defs>
 
-            <div className="relative border-t border-white/14 bg-white/6 p-7 md:border-t-0 md:border-l md:border-white/14 md:p-10 lg:p-12">
-              <div className="absolute inset-y-8 left-0 hidden w-px bg-white/18 md:block" />
+                {/* Soft Light Transition Wave */}
+                <path
+                  d="M 0 80 L 0 32 C 320 -6, 680 62, 1000 24 L 1000 80 Z"
+                  fill="url(#softTransitionMobile)"
+                />
+
+                {/* Main Navy Blue Wave */}
+                <path
+                  d="M 0 80 L 0 52 C 320 12, 680 78, 1000 44 L 1000 80 Z"
+                  fill="#173f75"
+                />
+              </svg>
+            </MotionDiv>
+          </div>
+
+          {/* ======================================================== */}
+          {/* RIGHT SIDE: CitiSent Navy Blue with Centered Login Form  */}
+          {/* ======================================================== */}
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
+            <MotionDiv
+              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+              className="w-full max-w-md mx-auto"
+            >
+              <header className="mb-6 sm:mb-8 text-left">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
+                  {title}
+                </h2>
+                {subtitle ? (
+                  <p className="mt-2 text-sm sm:text-base text-blue-100/90 leading-relaxed">
+                    {subtitle}
+                  </p>
+                ) : null}
+              </header>
+
               {children}
+
               {footer ? (
-                <footer className="mt-6 text-sm text-white/90">
+                <footer className="mt-7 border-t border-white/20 pt-5 text-sm text-blue-100/85">
                   {footer}
                 </footer>
               ) : null}
+            </MotionDiv>
+          </section>
+        </div>
+      ) : (
+        /* Fallback for stacked card layout if explicitly requested */
+        <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100">
+          <div className="w-full max-w-md rounded-2xl bg-[#173f75] p-6 sm:p-8 text-white shadow-xl">
+            <div className="mb-6 flex items-center justify-center">
+              <img src="/assets/logo-left.png" alt="CitiSent" className="h-10 w-auto object-contain" />
             </div>
-          </div>
-        ) : (
-          <>
-            <div
-              className={`mb-6 sm:mb-8 ${isAdminLogin ? "flex justify-center" : "flex items-center gap-3"}`}
-            >
-              <div
-                className={`flex items-center ${isAdminLogin ? "gap-3 sm:gap-4 md:gap-5" : "gap-3"}`}
-              >
-                <p
-                  className={`text-2xl sm:text-4xl font-bold tracking-[-0.035em] ${isAdminLogin ? "text-[#1f3f73] md:text-[52px]" : "text-slate-900"}`}
-                >
-                  CitiSent
-                </p>
-                <img
-                  src={CitiSentLogo}
-                  alt="CitiSent"
-                  className={`${isAdminLogin ? "h-14 w-14 sm:h-19 sm:w-19 md:h-21 md:w-21" : "h-13 w-13"}`}
-                />
-              </div>
-
-              {!isAdminLogin ? (
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Admin Portal
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            <header className={`mb-6 sm:mb-8 ${isAdminLogin ? "mt-1 sm:mt-2 md:mt-4" : ""}`}>
-              <h1
-                className={`font-semibold tracking-[-0.035em] ${isAdminLogin ? "text-3xl leading-tight text-white sm:text-5xl md:text-[54px] sm:leading-[0.98]" : "text-2xl sm:text-3xl text-slate-900"}`}
-              >
-                {title}
-              </h1>
-              <p
-                className={`mt-2 sm:mt-3 max-w-md text-sm sm:text-base leading-6 ${isAdminLogin ? "text-white/90" : "text-slate-600"}`}
-              >
-                {subtitle}
-              </p>
+            <header className="mb-6 text-center">
+              <h2 className="text-2xl font-bold text-white">{title}</h2>
+              {subtitle ? <p className="mt-1 text-sm text-blue-100/80">{subtitle}</p> : null}
             </header>
-
             {children}
-
-            {footer ? (
-              <footer
-                className={`mt-7 border-t pt-5 text-sm ${isAdminLogin ? "border-white/20 text-white/90" : "border-slate-200 text-slate-600"}`}
-              >
-                {footer}
-              </footer>
-            ) : null}
-          </>
-        )}
-      </MotionSection>
+            {footer ? <footer className="mt-6 border-t border-white/20 pt-4 text-xs text-blue-100/70">{footer}</footer> : null}
+          </div>
+        </div>
+      )}
     </main>
-  );
+  )
 }

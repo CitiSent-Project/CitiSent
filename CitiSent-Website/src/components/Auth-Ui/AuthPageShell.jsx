@@ -20,9 +20,19 @@ export function AuthPageShell({
       {isSplitLayout ? (
         <div className="relative min-h-screen w-full flex flex-col lg:flex-row">
           {/* ======================================================== */}
+          {/* DESKTOP SPLIT BACKGROUND: login-background-1.svg         */}
+          {/* ======================================================== */}
+          <img
+            src="/assets/login-background-1.svg"
+            alt=""
+            className="hidden lg:block absolute inset-0 h-full w-full object-cover pointer-events-none select-none z-0"
+            aria-hidden="true"
+          />
+
+          {/* ======================================================== */}
           {/* LEFT SIDE: Pure White Background with CitiSent Logo Only */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
             <MotionDiv
               initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.94, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -39,48 +49,6 @@ export function AuthPageShell({
               </span>
             </MotionDiv>
           </section>
-
-          {/* ======================================================== */}
-          {/* CENTER COLOR TRANSITION: White -> Soft Sky Blue -> Navy  */}
-          {/* ======================================================== */}
-
-          {/* Desktop Vertical Curved Divider (hidden on mobile, visible on lg+) */}
-          <div className="hidden lg:block absolute inset-y-0 left-1/2 -translate-x-full w-24 sm:w-32 lg:w-36 xl:w-44 z-20 pointer-events-none overflow-visible">
-            <MotionDiv
-              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-              className="h-full w-full"
-            >
-              <svg
-                viewBox="0 0 100 1000"
-                preserveAspectRatio="none"
-                className="h-full w-full"
-                aria-hidden="true"
-              >
-                <defs>
-                  {/* Soft light transition gradient */}
-                  <linearGradient id="softTransitionDesktop" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.3" />
-                    <stop offset="50%" stopColor="#bae6fd" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0.9" />
-                  </linearGradient>
-                </defs>
-
-                {/* Soft Light Transition Wave (White -> Soft Transition) */}
-                <path
-                  d="M 100 0 L 52 0 C 8 260, 88 640, 28 1000 L 100 1000 Z"
-                  fill="url(#softTransitionDesktop)"
-                />
-
-                {/* Main Navy Blue Wave (Soft Transition -> Navy Blue) */}
-                <path
-                  d="M 100 0 L 72 0 C 30 260, 98 640, 48 1000 L 100 1000 Z"
-                  fill="#173f75"
-                />
-              </svg>
-            </MotionDiv>
-          </div>
 
           {/* Mobile/Tablet Horizontal Curved Divider (visible on <lg, hidden on lg+) */}
           <div className="block lg:hidden relative z-20 w-full -mt-2 -mb-px pointer-events-none">
@@ -122,7 +90,7 @@ export function AuthPageShell({
           {/* ======================================================== */}
           {/* RIGHT SIDE: CitiSent Navy Blue with Centered Login Form  */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
             <MotionDiv
               initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}

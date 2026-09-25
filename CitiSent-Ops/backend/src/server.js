@@ -9,15 +9,24 @@ const app = express();
 app.disable("x-powered-by");
 app.use(helmet());
 
+const allowedOrigins = new Set([
+  ...env.corsOrigins,
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+]);
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || env.corsOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         return callback(null, true);
       }
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
+      console.warn(`[CitiSent-Ops CORS Blocked] Origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

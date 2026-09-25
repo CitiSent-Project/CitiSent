@@ -7,6 +7,7 @@ import { SuperadminDirectory } from "./components/SuperadminDirectory";
 import { ProvisionSuperadminModal } from "./components/ProvisionSuperadminModal";
 import { AuditLogViewer } from "./components/AuditLogViewer";
 import { Button } from "./components/common/Button";
+import { useToast } from "./context/ToastContext";
 import {
   IoCubeOutline,
   IoKeyOutline,
@@ -15,6 +16,7 @@ import {
 } from "react-icons/io5";
 
 export function App() {
+  const { showToast } = useToast();
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [activeTab, setActiveTab] = useState("directory"); // 'directory' | 'seeder' | 'audit'
@@ -54,7 +56,7 @@ export function App() {
         // Register Developer Account via Ops Backend
         const res = await opsApiClient.registerDeveloper({ email, password });
         setRegisterSuccess(res.message);
-        
+
         // Auto sign-in immediately after registration
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -62,6 +64,12 @@ export function App() {
         });
         if (error) throw error;
         setSession(data.session);
+
+        showToast({
+          type: "success",
+          title: "Developer Registered",
+          message: "Welcome! Your account has been provisioned and signed in.",
+        });
       } else {
         // Standard Sign In
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -70,9 +78,21 @@ export function App() {
         });
         if (error) throw error;
         setSession(data.session);
+
+        showToast({
+          type: "success",
+          title: "Authenticated",
+          message: `Signed in as ${email}`,
+        });
       }
     } catch (err) {
-      setLoginError(err.message || "Authentication failed.");
+      const errorMsg = err.message || "Authentication failed.";
+      setLoginError(errorMsg);
+      showToast({
+        type: "error",
+        title: "Auth Failed",
+        message: errorMsg,
+      });
     } finally {
       setLoginLoading(false);
     }
@@ -81,6 +101,11 @@ export function App() {
   async function handleSignOut() {
     await supabase.auth.signOut();
     setSession(null);
+    showToast({
+      type: "info",
+      title: "Signed Out",
+      message: "Developer session ended.",
+    });
   }
 
   if (loadingSession) {
@@ -120,11 +145,10 @@ export function App() {
                 setLoginError(null);
                 setRegisterSuccess(null);
               }}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                !isRegisterMode
+              className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${!isRegisterMode
                   ? "bg-slate-800 text-cyan-400 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
-              }`}
+                }`}
             >
               Sign In
             </button>
@@ -135,11 +159,10 @@ export function App() {
                 setLoginError(null);
                 setRegisterSuccess(null);
               }}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                isRegisterMode
+              className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${isRegisterMode
                   ? "bg-slate-800 text-cyan-400 shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
-              }`}
+                }`}
             >
               First-Time Setup
             </button>
@@ -168,7 +191,7 @@ export function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="madriagajohneduard@gmail.com"
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none transition-colors"
               />
               {isRegisterMode && (
                 <p className="text-[11px] text-slate-500 mt-1">
@@ -188,7 +211,7 @@ export function App() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-500 focus:outline-none transition-colors"
               />
               {isRegisterMode && (
                 <p className="text-[11px] text-slate-500 mt-1">
@@ -231,11 +254,10 @@ export function App() {
           <button
             type="button"
             onClick={() => setActiveTab("directory")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "directory"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "directory"
                 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-            }`}
+              }`}
           >
             <IoKeyOutline className="w-4 h-4" />
             Superadmin Directory
@@ -244,11 +266,10 @@ export function App() {
           <button
             type="button"
             onClick={() => setActiveTab("seeder")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "seeder"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "seeder"
                 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-            }`}
+              }`}
           >
             <IoCubeOutline className="w-4 h-4" />
             Department Seeder
@@ -257,11 +278,10 @@ export function App() {
           <button
             type="button"
             onClick={() => setActiveTab("audit")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "audit"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "audit"
                 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-            }`}
+              }`}
           >
             <IoListOutline className="w-4 h-4" />
             Audit Trail

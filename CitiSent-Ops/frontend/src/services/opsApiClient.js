@@ -72,5 +72,13 @@ export const opsApiClient = {
     }),
 
   // Audit Logs
-  getAuditLogs: () => request("/audit-logs"),
+  getAuditLogs: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.actionType) query.append("actionType", params.actionType);
+    if (params.startDate) query.append("startDate", params.startDate);
+    if (params.endDate) query.append("endDate", params.endDate);
+    if (params.limit) query.append("limit", params.limit);
+    const qs = query.toString();
+    return request(`/audit-logs${qs ? `?${qs}` : ""}`);
+  },
 };

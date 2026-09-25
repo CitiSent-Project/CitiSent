@@ -36,9 +36,8 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
-      className={`${baseClasses} ${sizeClasses[size] || sizeClasses.md} ${
-        variantClasses[variant] || variantClasses.primary
-      } ${className}`}
+      className={`${baseClasses} ${sizeClasses[size] || sizeClasses.md} ${variantClasses[variant] || variantClasses.primary
+        } ${className}`}
       {...props}
     >
       {loading && (

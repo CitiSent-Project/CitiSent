@@ -1,24 +1,77 @@
+import dns from "node:dns";
 import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
-let transporter = null;
+// Ensure IPv4 resolution takes precedence to avoid Node 18+ dual-stack connection delays
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
-if (env.GMAIL_USER && env.GMAIL_APP_PASSWORD) {
-  transporter = nodemailer.createTransport({
-    service: "gmail",
+/**
+ * Creates a configured Nodemailer transport for Gmail SMTP.
+ * Sanitizes app password (stripping whitespace) and supports SSL/TLS.
+ */
+function createGmailTransporter(port = 465, secure = true) {
+  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
+    return null;
+  }
+
+  const cleanPass = String(env.GMAIL_APP_PASSWORD).trim().replace(/\s+/g, "");
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port,
+    secure,
     auth: {
-      user: env.GMAIL_USER,
-      pass: env.GMAIL_APP_PASSWORD,
+      user: env.GMAIL_USER.trim(),
+      pass: cleanPass,
     },
+    connectionTimeout: 8000,
+    greetingTimeout: 5000,
+    socketTimeout: 8000,
   });
 }
 
 /**
+ * Sends email directly through Gmail SMTP via Nodemailer.
+ * Tries port 465 (SSL) first, falling back to port 587 (TLS) if blocked.
+ */
+async function sendViaGmailSmtp({ toEmail, subject, htmlContent }) {
+  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
+    throw new Error("Gmail SMTP credentials (GMAIL_USER, GMAIL_APP_PASSWORD) not configured.");
+  }
+
+  const primaryTransporter = createGmailTransporter(465, true);
+  try {
+    const info = await primaryTransporter.sendMail({
+      from: `"CitiSent Platform" <${env.GMAIL_USER.trim()}>`,
+      to: toEmail,
+      subject,
+      html: htmlContent,
+    });
+    return { success: true, provider: "Gmail SMTP (Port 465)", messageId: info.messageId };
+  } catch (primaryErr) {
+    console.warn("[EmailService Notice] Gmail SMTP port 465 failed, attempting port 587 fallback:", primaryErr.message);
+    const fallbackTransporter = createGmailTransporter(587, false);
+    const fallbackInfo = await fallbackTransporter.sendMail({
+      from: `"CitiSent Platform" <${env.GMAIL_USER.trim()}>`,
+      to: toEmail,
+      subject,
+      html: htmlContent,
+    });
+    return { success: true, provider: "Gmail SMTP (Port 587)", messageId: fallbackInfo.messageId };
+  }
+}
+
+/**
  * Sends email via Brevo's HTTPS REST API (Port 443).
- * Immune to ISP and cloud provider SMTP port blocks (ports 25, 465, 587).
+ * Uses the verified sender account registered on Brevo.
  */
 async function sendViaBrevo({ toEmail, recipientName, subject, htmlContent }) {
-  const senderEmail = env.BREVO_SENDER_EMAIL || env.GMAIL_USER || "citisent.app@gmail.com";
+  if (!env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY not configured.");
+  }
+
+  const senderEmail = env.BREVO_SENDER_EMAIL || env.GMAIL_USER || "madriagajohneduard@gmail.com";
   const senderName = env.BREVO_SENDER_NAME || "CitiSent Platform";
 
   const controller = new AbortController();
@@ -45,13 +98,14 @@ async function sendViaBrevo({ toEmail, recipientName, subject, htmlContent }) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const err = new Error(data?.message || `Brevo API returned status ${response.status}`);
+      const errMsg = data?.message || `Brevo API returned status ${response.status}`;
+      const err = new Error(errMsg);
       err.provider = "brevo";
       err.statusCode = response.status;
       throw err;
     }
 
-    return { success: true, messageId: data?.messageId, provider: "brevo" };
+    return { success: true, messageId: data?.messageId, provider: "Brevo API" };
   } catch (err) {
     clearTimeout(timer);
     console.error("[EmailService Error] Brevo send failed:", err.message);
@@ -61,7 +115,7 @@ async function sendViaBrevo({ toEmail, recipientName, subject, htmlContent }) {
 
 /**
  * Dispatches an official invitation email to the newly provisioned Superadmin.
- * Prioritizes Brevo HTTPS API, falling back to Gmail SMTP or local simulation.
+ * Automatically tries Gmail SMTP (if app password is set) and Brevo HTTPS API.
  */
 export async function sendSuperadminInvitationEmail({
   toEmail,
@@ -118,34 +172,36 @@ export async function sendSuperadminInvitationEmail({
     </html>
   `;
 
-  // 1. Primary Provider: Brevo HTTPS REST API
-  if (env.BREVO_API_KEY) {
+  let lastError = null;
+
+  // 1. If Gmail SMTP credentials (GMAIL_USER & GMAIL_APP_PASSWORD) are configured, attempt Gmail SMTP first
+  if (env.GMAIL_USER && env.GMAIL_APP_PASSWORD) {
     try {
-      return await sendViaBrevo({ toEmail, recipientName, subject, htmlContent });
-    } catch (brevoErr) {
-      console.warn("[EmailService Notice] Brevo failed, checking fallback:", brevoErr.message);
-      // Fallback to transporter if configured below
+      const res = await sendViaGmailSmtp({ toEmail, subject, htmlContent });
+      return res;
+    } catch (smtpErr) {
+      console.warn("[EmailService Notice] Gmail SMTP attempt failed:", smtpErr.message);
+      lastError = smtpErr.message;
     }
   }
 
-  // 2. Secondary Provider: Nodemailer (Gmail / SMTP)
-  if (transporter) {
+  // 2. Brevo HTTPS REST API (Port 443) - primary or fallback provider
+  if (env.BREVO_API_KEY) {
     try {
-      await transporter.sendMail({
-        from: `"CitiSent Platform" <${env.GMAIL_USER}>`,
-        to: toEmail,
-        subject,
-        html: htmlContent,
-      });
-      return { success: true, provider: "smtp" };
-    } catch (smtpErr) {
-      console.error("[EmailService Error] Nodemailer send failed:", smtpErr.message);
-      return { success: false, error: smtpErr.message };
+      const res = await sendViaBrevo({ toEmail, recipientName, subject, htmlContent });
+      return res;
+    } catch (brevoErr) {
+      console.warn("[EmailService Notice] Brevo API attempt failed:", brevoErr.message);
+      lastError = brevoErr.message;
     }
   }
 
   // 3. Fallback: Development Simulation
-  console.warn(`[EmailService Notice] No Brevo or SMTP credentials set. Simulated email dispatch to ${toEmail}:`);
+  console.warn(`[EmailService Notice] Email dispatch simulated for ${toEmail}. Reason: ${lastError || "No credentials configured"}`);
   console.log(`[EmailService Notice] Setup URL: ${setupUrl}`);
-  return { success: true, simulated: true };
+  return {
+    success: false,
+    simulated: true,
+    error: lastError || "No active email credentials configured.",
+  };
 }

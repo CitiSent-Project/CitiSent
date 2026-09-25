@@ -91,6 +91,32 @@ export async function provisionSuperadmin(req, res) {
       });
     }
 
+    // 1b. Normalize phone number and verify uniqueness across existing profiles
+    const digitsOnly = payload.phoneNumber.replace(/\D/g, "");
+    const localPhone = digitsOnly.startsWith("63")
+      ? `0${digitsOnly.slice(2)}`
+      : digitsOnly.startsWith("0")
+      ? digitsOnly
+      : `0${digitsOnly}`;
+    const intlPhone = digitsOnly.startsWith("0")
+      ? `63${digitsOnly.slice(1)}`
+      : digitsOnly;
+    const formattedPhone = `+${intlPhone}`;
+
+    const { data: existingPhoneProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("email, phone_number")
+      .or(`phone_number.eq.${localPhone},phone_number.eq.${intlPhone},phone_number.eq.${formattedPhone}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingPhoneProfile) {
+      return res.status(409).json({
+        success: false,
+        error: `The phone number "${payload.phoneNumber}" is already registered to another account (${existingPhoneProfile.email}). Please use a unique phone number.`,
+      });
+    }
+
     const internalInitialPassword = `Tmp!${crypto.randomBytes(16).toString("hex")}#9`;
     const fullName = [payload.fname, payload.mname, payload.lname].filter(Boolean).join(" ");
     const username = `${payload.fname.toLowerCase()}_${payload.lname.toLowerCase()}`.replace(/[^a-z0-9_]/g, "");
@@ -105,7 +131,7 @@ export async function provisionSuperadmin(req, res) {
         fname: payload.fname,
         mname: payload.mname,
         lname: payload.lname,
-        phone_number: payload.phoneNumber,
+        phone_number: localPhone,
         username,
         role: "Superadmin",
         city: normalizedCity,
@@ -137,7 +163,7 @@ export async function provisionSuperadmin(req, res) {
         fname: payload.fname,
         mname: payload.mname,
         lname: payload.lname,
-        phone_number: payload.phoneNumber,
+        phone_number: localPhone,
         account_type: "admin",
         role: "Superadmin",
         city: normalizedCity,
@@ -164,9 +190,10 @@ export async function provisionSuperadmin(req, res) {
 
     // 5. Generate Setup URL & Dispatch Email
     const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${token}`;
+    let emailResult = { success: false };
     
     try {
-      await sendSuperadminInvitationEmail({
+      emailResult = await sendSuperadminInvitationEmail({
         toEmail: payload.email,
         recipientName: fullName,
         setupUrl,
@@ -174,6 +201,7 @@ export async function provisionSuperadmin(req, res) {
       });
     } catch (emailErr) {
       console.warn("[ProvisionSuperadmin] Email dispatch warning (setup URL still generated):", emailErr.message);
+      emailResult = { success: false, error: emailErr.message };
     }
 
     // 6. Audit Logging
@@ -191,16 +219,26 @@ export async function provisionSuperadmin(req, res) {
       },
     });
 
+    const isDelivered = Boolean(emailResult.success && !emailResult.simulated);
+
     return res.status(201).json({
       success: true,
-      message: `Superadmin ${fullName} successfully provisioned. Activation email has been dispatched.`,
+      message: isDelivered
+        ? `Superadmin ${fullName} successfully provisioned. Activation email delivered to ${payload.email} via ${emailResult.provider || "email service"}.`
+        : `Superadmin ${fullName} provisioned. Note: Email delivery could not be completed (${emailResult.error || "Simulated"}). Please share the direct setup URL.`,
       data: {
         userId,
         email: payload.email,
         fullName,
         role: "Superadmin",
         jurisdictionCity: payload.city,
-        setupUrl, // Provided for developer manual copy fallback
+        setupUrl, // Provided as fallback/backup
+        emailStatus: {
+          delivered: isDelivered,
+          provider: emailResult.provider || null,
+          messageId: emailResult.messageId || null,
+          error: emailResult.error || null,
+        },
       },
     });
   } catch (err) {
@@ -245,12 +283,18 @@ export async function resendInvite(req, res) {
     const setupUrl = `${env.CLIENT_WEB_APP_BASE_URL}/setup-password?token=${token}`;
     const fullName = `${profile.fname} ${profile.lname}`.trim();
 
-    await sendSuperadminInvitationEmail({
-      toEmail: profile.email,
-      recipientName: fullName,
-      setupUrl,
-      jurisdictionCity: profile.city,
-    });
+    let emailResult = { success: false };
+    try {
+      emailResult = await sendSuperadminInvitationEmail({
+        toEmail: profile.email,
+        recipientName: fullName,
+        setupUrl,
+        jurisdictionCity: profile.city,
+      });
+    } catch (emailErr) {
+      console.warn("[ResendInvite] Email dispatch warning:", emailErr.message);
+      emailResult = { success: false, error: emailErr.message };
+    }
 
     await logPlatformAction({
       actorEmail: req.developer?.email,
@@ -262,13 +306,23 @@ export async function resendInvite(req, res) {
       metadata: { email: profile.email },
     });
 
+    const isDelivered = Boolean(emailResult.success && !emailResult.simulated);
+
     return res.json({
       success: true,
-      message: `Invitation re-dispatched to ${profile.email}.`,
+      message: isDelivered
+        ? `Invitation successfully dispatched to ${profile.email} via ${emailResult.provider || "email service"}.`
+        : `Invitation link regenerated for ${profile.email}. Note: Email delivery could not be completed (${emailResult.error || "Simulated"}).`,
       data: {
         userId: id,
         email: profile.email,
         setupUrl,
+        emailStatus: {
+          delivered: isDelivered,
+          provider: emailResult.provider || null,
+          messageId: emailResult.messageId || null,
+          error: emailResult.error || null,
+        },
       },
     });
   } catch (err) {

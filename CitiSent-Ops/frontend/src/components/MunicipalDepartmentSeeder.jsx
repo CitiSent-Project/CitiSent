@@ -2,14 +2,24 @@ import React, { useState, useEffect } from "react";
 import { opsApiClient } from "../services/opsApiClient";
 import { Button } from "./common/Button";
 import { Badge } from "./common/Badge";
+import { ConfirmationModal } from "./common/ConfirmationModal";
+import { useToast } from "../context/ToastContext";
 import { IoCheckmarkCircle, IoCubeOutline, IoRefresh } from "react-icons/io5";
 
+/**
+ * MunicipalDepartmentSeeder Component
+ *
+ * Provides one-click database provisioning for municipal departments.
+ * Includes idempotency guarantees, multi-select workflows, and safety confirmation gates.
+ */
 export function MunicipalDepartmentSeeder({ onSeeded }) {
+  const { showToast } = useToast();
+
   const [presets, setPresets] = useState([]);
   const [selectedSlugs, setSelectedSlugs] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   async function loadPresets() {
     try {
@@ -24,7 +34,11 @@ export function MunicipalDepartmentSeeder({ onSeeded }) {
         setSelectedSlugs(unseeded);
       }
     } catch (err) {
-      setFeedback({ type: "error", message: err.message });
+      showToast({
+        type: "error",
+        title: "Load Failed",
+        message: err.message || "Failed to load department presets.",
+      });
     } finally {
       setLoading(false);
     }
@@ -53,28 +67,47 @@ export function MunicipalDepartmentSeeder({ onSeeded }) {
     setSelectedSlugs(new Set());
   }
 
-  async function handleSeed() {
+  function handleOpenConfirm() {
     const toSeed = presets.filter((p) => selectedSlugs.has(p.slug));
     if (toSeed.length === 0) {
-      setFeedback({ type: "error", message: "Please select at least one department." });
+      showToast({
+        type: "warning",
+        title: "No Selection",
+        message: "Please select at least one department preset to seed.",
+      });
       return;
     }
+    setIsConfirmOpen(true);
+  }
+
+  async function executeSeed() {
+    const toSeed = presets.filter((p) => selectedSlugs.has(p.slug));
 
     try {
       setSeeding(true);
-      setFeedback(null);
       const res = await opsApiClient.seedDepartments(toSeed);
       if (res.success) {
-        setFeedback({ type: "success", message: res.message });
+        showToast({
+          type: "success",
+          title: "Departments Seeded",
+          message: res.message || `Successfully initialized ${toSeed.length} departments.`,
+        });
         await loadPresets();
         if (onSeeded) onSeeded();
       }
     } catch (err) {
-      setFeedback({ type: "error", message: err.message });
+      showToast({
+        type: "error",
+        title: "Seeding Failed",
+        message: err.message || "Failed to seed departments into database.",
+      });
     } finally {
       setSeeding(false);
+      setIsConfirmOpen(false);
     }
   }
+
+  const selectedCount = selectedSlugs.size;
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
@@ -102,37 +135,19 @@ export function MunicipalDepartmentSeeder({ onSeeded }) {
             <IoRefresh className={`w-3.5 h-3.5 mr-1 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
+
           <Button
             variant="primary"
             size="sm"
-            onClick={handleSeed}
+            onClick={handleOpenConfirm}
             loading={seeding}
-            disabled={loading || selectedSlugs.size === 0}
+            disabled={loading || selectedCount === 0}
           >
-            Seed Selected ({selectedSlugs.size})
+            <IoCheckmarkCircle className="w-4 h-4 mr-1.5" />
+            Seed Selected ({selectedCount})
           </Button>
         </div>
       </div>
-
-      {/* Feedback Banner */}
-      {feedback && (
-        <div
-          className={`mt-4 p-3.5 rounded-xl border text-xs font-medium flex items-center justify-between ${
-            feedback.type === "success"
-              ? "bg-emerald-950/60 border-emerald-800 text-emerald-300"
-              : "bg-rose-950/60 border-rose-800 text-rose-300"
-          }`}
-        >
-          <span>{feedback.message}</span>
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="text-slate-400 hover:text-slate-200 ml-2"
-          >
-            &times;
-          </button>
-        </div>
-      )}
 
       {/* Quick Select Controls */}
       <div className="flex items-center justify-between text-xs text-slate-400 py-3 mt-1">
@@ -215,6 +230,24 @@ export function MunicipalDepartmentSeeder({ onSeeded }) {
         💡 <strong>Idempotency Protection:</strong> Seeding uses{" "}
         <code className="text-cyan-400">ON CONFLICT (slug) DO NOTHING</code>. Re-running this tool will never duplicate or overwrite existing departments.
       </div>
+
+      {/* Safety Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        onClose={() => {
+          if (!seeding) setIsConfirmOpen(false);
+        }}
+        onConfirm={executeSeed}
+        title="Confirm Department Seeding"
+        message={
+          <span>
+            You are about to seed <strong className="text-cyan-300">{selectedCount} departments</strong> into the PostgreSQL database. Existing departments will not be duplicated. Do you want to proceed?
+          </span>
+        }
+        confirmText="Execute Seeding"
+        variant="primary"
+        loading={seeding}
+      />
     </div>
   );
 }

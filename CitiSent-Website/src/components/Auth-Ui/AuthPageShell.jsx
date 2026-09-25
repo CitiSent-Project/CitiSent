@@ -31,7 +31,7 @@ export function AuthPageShell({
           {/* ======================================================== */}
           {/* LEFT SIDE: Subtle Dot Matrix Background with CitiSent Logo */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16 overflow-hidden">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 pt-8 pb-3 sm:px-12 sm:pt-12 sm:pb-4 lg:min-h-screen lg:py-16 lg:px-12 xl:px-16 overflow-hidden">
             {/* Subtle Dot Matrix Background Pattern */}
             <div
               className="absolute inset-0 pointer-events-none select-none z-0 bg-dot-grid bg-dot-grid-left"
@@ -108,7 +108,7 @@ export function AuthPageShell({
           {/* ======================================================== */}
           {/* RIGHT SIDE: CitiSent Navy Blue with Centered Login Form  */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 pt-0 pb-10 sm:px-12 sm:pt-2 sm:pb-12 lg:min-h-screen lg:py-12 lg:px-12 xl:px-16">
             <MotionDiv
               initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}

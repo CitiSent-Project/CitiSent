@@ -29,27 +29,37 @@ export function AuthPageShell({
           />
 
           {/* ======================================================== */}
-          {/* LEFT SIDE: Pure White Background with CitiSent Logo Only */}
+          {/* LEFT SIDE: Subtle Dot Matrix Background with CitiSent Logo */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 py-12 sm:py-16 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-white lg:bg-transparent px-6 pt-8 pb-3 sm:px-12 sm:pt-12 sm:pb-4 lg:min-h-screen lg:py-16 lg:px-12 xl:px-16 overflow-hidden">
+            {/* Subtle Dot Matrix Background Pattern */}
+            <div
+              className="absolute inset-0 pointer-events-none select-none z-0 bg-dot-grid bg-dot-grid-left"
+              aria-hidden="true"
+            />
+
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.94, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center justify-center text-center select-none"
+              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 1.05, ease: [0.16, 1, 0.3, 1] }
+              }
+              className="relative z-10 flex flex-col items-center justify-center text-center select-none"
             >
               {/* Mobile Logo (<lg): Stacked Lockup (logo-2.png) */}
               <img
                 src="/assets/logo-2.png"
                 alt="CitiSent Logo"
-                className="block lg:hidden w-36 h-36 sm:w-44 sm:h-44 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                className="block lg:hidden w-56 h-56 sm:w-64 sm:h-64 object-contain drop-shadow-sm"
               />
 
               {/* Desktop Logo (lg+): Horizontal Lockup (logo-left.png) */}
               <img
                 src="/assets/logo-left.png"
                 alt="CitiSent Logo"
-                className="hidden lg:block w-72 lg:w-80 xl:w-96 max-w-full h-auto object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
+                className="hidden lg:block w-96 lg:w-[440px] xl:w-[520px] 2xl:w-[580px] max-w-[92%] h-auto object-contain drop-shadow-sm"
               />
             </MotionDiv>
           </section>
@@ -57,9 +67,13 @@ export function AuthPageShell({
           {/* Mobile/Tablet Horizontal Curved Divider (visible on <lg, hidden on lg+) */}
           <div className="block lg:hidden relative z-20 w-full -mt-2 -mb-px pointer-events-none">
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              initial={prefersReduced ? { opacity: 1 } : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
+              }
               className="w-full"
             >
               <svg
@@ -94,11 +108,15 @@ export function AuthPageShell({
           {/* ======================================================== */}
           {/* RIGHT SIDE: CitiSent Navy Blue with Centered Login Form  */}
           {/* ======================================================== */}
-          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 py-10 sm:p-12 lg:min-h-screen lg:px-12 xl:px-16">
+          <section className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[#173f75] lg:bg-transparent px-6 pt-0 pb-10 sm:px-12 sm:pt-2 sm:pb-12 lg:min-h-screen lg:py-12 lg:px-12 xl:px-16">
             <MotionDiv
-              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              initial={prefersReduced ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0 }
+                  : { duration: 1.05, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
+              }
               className="w-full max-w-md mx-auto"
             >
               <header className="mb-6 sm:mb-8 text-left">
@@ -124,7 +142,7 @@ export function AuthPageShell({
         </div>
       ) : (
         /* Fallback for stacked card layout if explicitly requested */
-        <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100">
+        <div className="flex min-h-screen items-center justify-center p-4 bg-slate-100 bg-dot-grid">
           <div className="w-full max-w-md rounded-2xl bg-[#173f75] p-6 sm:p-8 text-white shadow-xl">
             <div className="mb-6 flex items-center justify-center">
               <img src="/assets/logo-left.png" alt="CitiSent" className="h-10 w-auto object-contain" />

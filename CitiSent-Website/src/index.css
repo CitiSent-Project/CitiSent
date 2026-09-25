@@ -86,3 +86,17 @@ body {
   scroll-behavior: auto !important;
 }
 
+/* Modern subtle dot matrix grid background */
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(23, 63, 117, 0.16) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  background-position: center center;
+}
+
+@media (min-width: 1024px) {
+  .bg-dot-grid-left {
+    -webkit-mask-image: linear-gradient(to right, black 76%, transparent 92%);
+    mask-image: linear-gradient(to right, black 76%, transparent 92%);
+  }
+}
+

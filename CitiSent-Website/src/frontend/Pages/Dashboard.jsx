@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/preserve-manual-memoization */
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { FiCheckCircle, FiFileText, FiTarget, FiUsers } from 'react-icons/fi'
+import { FiCheckCircle, FiDownload, FiFileText, FiTarget, FiUsers } from 'react-icons/fi'
 import {
     DashboardStatCard,
     DashboardTableCard,
+    ExportCsvButton,
     PieChart,
     SolidPieChart,
     VerticalChart,
@@ -21,6 +22,16 @@ import {
     mapDashboardWeeklyTrend,
 } from '../../services/api/admin/dashboardApiMappers'
 import { dashboardApiService } from '../../services/api/admin/dashboardApiService'
+import { exportToCsv } from '../../services/csvExportService'
+import {
+    formatCategoryCsv,
+    formatStatusBreakdownCsv,
+    formatWeeklyTrendCsv,
+    formatSummaryCsv,
+    formatRecentAdminsCsv,
+    formatRecentUsersCsv,
+    formatAllDashboardCsv,
+} from '../../services/api/admin/dashboardCsvFormatters'
 import { notifyErrorWithRetry } from '../../components/ui/toastHelpers'
 import { loadFromStorageWithSchema } from '../../services/storageService'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
@@ -78,7 +89,7 @@ const DASHBOARD_CATEGORY_COLORS = [
 ]
 
 const DASHBOARD_ADMIN_TABLE_COLUMNS = ['Name', 'Email', 'Department Assigned', 'Last Activity']
-const DASHBOARD_NEW_USERS_TABLE_COLUMNS = ['Username', 'Date Joined']
+const DASHBOARD_NEW_USERS_TABLE_COLUMNS = ['Email', 'Date Joined']
 
 const EMPTY_CATEGORY_DATA = {
     title: 'Reports by Category',
@@ -240,32 +251,91 @@ export function Dashboard({ profile: propsProfile }) {
         [dashboardQuery.data?.users]
     )
 
+    // --- CSV Export Handlers ---
+    // Privacy: admin/user exports use RAW API data, never the mapped rows that contain names.
+
+    const handleExportCategory = useCallback(() => {
+        exportToCsv(formatCategoryCsv(categoryData))
+    }, [categoryData])
+
+    const handleExportStatus = useCallback(() => {
+        exportToCsv(formatStatusBreakdownCsv(statusData))
+    }, [statusData])
+
+    const handleExportWeekly = useCallback(() => {
+        exportToCsv(formatWeeklyTrendCsv(weeklyData))
+    }, [weeklyData])
+
+    const handleExportSummary = useCallback(() => {
+        exportToCsv(formatSummaryCsv(statCards))
+    }, [statCards])
+
+    const handleExportAdmins = useCallback(() => {
+        exportToCsv(formatRecentAdminsCsv(dashboardQuery.data?.admins || []))
+    }, [dashboardQuery.data?.admins])
+
+    const handleExportUsers = useCallback(() => {
+        exportToCsv(formatRecentUsersCsv(dashboardQuery.data?.users || []))
+    }, [dashboardQuery.data?.users])
+
+    const handleExportAll = useCallback(() => {
+        exportToCsv(formatAllDashboardCsv({
+            categoryData,
+            statusData,
+            weeklyData,
+            statCards,
+            adminsRaw: dashboardQuery.data?.admins || [],
+            usersRaw: dashboardQuery.data?.users || [],
+        }))
+    }, [categoryData, statusData, weeklyData, statCards, dashboardQuery.data?.admins, dashboardQuery.data?.users])
+
     return (
         <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
             <MotionDiv
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-5 sm:mb-8"
+                className="mb-5 sm:mb-8 flex items-start justify-between gap-4"
             >
-                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
-                    Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
-                </h1>
-                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
-                </p>
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
+                        Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
+                    </h1>
+                    <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleExportAll}
+                    disabled={isLoadingDashboard || !dashboardQuery.data}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-slate-600 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 hover:shadow-sm active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-white"
+                >
+                    <FiDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Export All</span>
+                    <span className="sm:hidden">Export</span>
+                </button>
             </MotionDiv>
 
             {/* Stats Grid */}
-            <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-3.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {statCards.map((card) => (
-                    <DashboardStatCard key={card.id} {...card} />
-                ))}
+            <div className="mb-5 sm:mb-8">
+                <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide dark:text-slate-400">Overview</h2>
+                    <ExportCsvButton onExport={handleExportSummary} label="Export summary to CSV" disabled={isLoadingDashboard} />
+                </div>
+                <div className="grid grid-cols-1 gap-3.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {statCards.map((card) => (
+                        <DashboardStatCard key={card.id} {...card} />
+                    ))}
+                </div>
             </div>
 
             {/* Charts Grid */}
             <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
-                <div className="h-90 sm:h-100 lg:h-110 min-w-0">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                        <ExportCsvButton onExport={handleExportCategory} label="Export categories to CSV" disabled={isLoadingDashboard} />
+                    </div>
                     <PieChart
                         title={categoryData.title}
                         total={categoryData.total}
@@ -275,7 +345,10 @@ export function Dashboard({ profile: propsProfile }) {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="h-90 sm:h-100 lg:h-110 min-w-0">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                        <ExportCsvButton onExport={handleExportStatus} label="Export status breakdown to CSV" disabled={isLoadingDashboard} />
+                    </div>
                     <SolidPieChart
                         title={statusData.title}
                         total={statusData.total}
@@ -286,7 +359,10 @@ export function Dashboard({ profile: propsProfile }) {
                     />
                 </div>
             </div>
-            <div className="mb-5 sm:mb-8 w-full h-90 sm:h-100 lg:h-110 min-w-0">
+            <div className="relative mb-5 sm:mb-8 w-full h-90 sm:h-100 lg:h-110 min-w-0">
+                <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                    <ExportCsvButton onExport={handleExportWeekly} label="Export weekly trend to CSV" disabled={isLoadingDashboard} />
+                </div>
                 <VerticalChart
                     title={weeklyData.title}
                     labels={weeklyData.labels}
@@ -296,18 +372,28 @@ export function Dashboard({ profile: propsProfile }) {
 
             {/* Tables Grid */}
             <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
-                <DashboardTableCard
-                    title="Admins"
-                    columns={adminsTableColumns}
-                    rows={adminsTableRowsNoEmail}
-                    isLoading={isLoadingDashboard}
-                />
-                <DashboardTableCard
-                    title="Newly Joined Users"
-                    columns={DASHBOARD_NEW_USERS_TABLE_COLUMNS}
-                    rows={newUsersTableRows}
-                    isLoading={isLoadingDashboard}
-                />
+                <div className="relative">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                        <ExportCsvButton onExport={handleExportAdmins} label="Export admins to CSV" disabled={isLoadingDashboard} />
+                    </div>
+                    <DashboardTableCard
+                        title="Admins"
+                        columns={adminsTableColumns}
+                        rows={adminsTableRowsNoEmail}
+                        isLoading={isLoadingDashboard}
+                    />
+                </div>
+                <div className="relative">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                        <ExportCsvButton onExport={handleExportUsers} label="Export users to CSV" disabled={isLoadingDashboard} />
+                    </div>
+                    <DashboardTableCard
+                        title="Newly Joined Users"
+                        columns={DASHBOARD_NEW_USERS_TABLE_COLUMNS}
+                        rows={newUsersTableRows}
+                        isLoading={isLoadingDashboard}
+                    />
+                </div>
             </div>
         </main>
     )

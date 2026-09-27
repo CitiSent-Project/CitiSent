@@ -163,12 +163,7 @@ export function mapDashboardRecentUsers(payload = []) {
   const rows = Array.isArray(payload) ? payload : []
 
   return rows.map((row) => ({
-    username:
-      composeFullName({ fname: row.fname, mname: row.mname, lname: row.lname }) ||
-      row.fullName ||
-      row.username ||
-      row.email ||
-      'Unknown User',
+    email: row.email || row.username || 'Unknown User',
     joined: formatDate(row.joinedAt),
   }))
 }

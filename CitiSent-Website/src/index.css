@@ -100,3 +100,13 @@ body {
   }
 }
 
+/* Accessible focus indicators for keyboard navigation (WCAG 2.1 AA) */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+:root[data-theme='dark'] :focus-visible {
+  outline-color: #60a5fa;
+}
+

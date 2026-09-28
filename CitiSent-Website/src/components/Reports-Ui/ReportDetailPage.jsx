@@ -427,6 +427,8 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
             <img
               src={fullReport.attachmentUrl}
               alt="Attached report evidence"
+              loading="lazy"
+              decoding="async"
               className="max-h-[85vh] w-auto object-contain"
             />
           </div>

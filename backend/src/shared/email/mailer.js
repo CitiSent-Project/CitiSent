@@ -69,68 +69,20 @@ export function maskEmail(email) {
  * Classifies underlying mail provider errors into structured diagnostic categories
  * while ensuring no passwords, tokens, or raw secrets are leaked.
  */
+let mailerEnv = env;
+
+export function _setMailerEnvForTesting(overrides) {
+  mailerEnv = overrides ? { ...env, ...overrides } : env;
+}
+
+/**
+ * Classifies underlying mail provider errors into structured diagnostic categories
+ * while ensuring no passwords, tokens, or raw secrets are leaked.
+ */
 export function classifyAndSanitizeSmtpError(err) {
   const code = String(err?.code || "").toUpperCase();
   const message = String(err?.message || "");
   const responseCode = err?.responseCode || null;
-
-  let category = "UNKNOWN_ERROR";
-  let diagnostic = "An unexpected error occurred while communicating with the mail server.";
-
-  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
-    category = "MISSING_ENV_VARS";
-    const missing = [];
-    if (!env.GMAIL_USER) missing.push("GMAIL_USER");
-    if (!env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
-    diagnostic = `Missing required email environment variable(s): ${missing.join(", ")}`;
-  } else if (
-    code === "EAUTH" ||
-    responseCode === 535 ||
-    message.includes("535") ||
-    message.toLowerCase().includes("badcredentials") ||
-    message.toLowerCase().includes("username and password not accepted")
-  ) {
-    category = "AUTHENTICATION_FAILED";
-    diagnostic =
-      "Gmail SMTP authentication failed (535). Verify GMAIL_USER and GMAIL_APP_PASSWORD (must use a 16-character Google App Password without spaces, not your regular account password).";
-  } else if (
-    code === "ETIMEDOUT" ||
-    code === "ESOCKETTIMEDOUT" ||
-    message.toLowerCase().includes("timeout") ||
-    message.toLowerCase().includes("timed out")
-  ) {
-    category = "CONNECTION_TIMEOUT";
-    diagnostic = `SMTP connection timed out connecting to ${env.SMTP_HOST || "smtp.gmail.com"}:${env.SMTP_PORT || 465}. The host or port may be restricted by the platform firewall.`;
-  } else if (
-    code === "ENETUNREACH" ||
-    code === "ECONNREFUSED" ||
-    code === "ECONNRESET" ||
-    code === "ENOTFOUND"
-  ) {
-    category = "NETWORK_UNREACHABLE";
-    diagnostic = `SMTP network error (${code}): unable to establish socket connection with ${env.SMTP_HOST || "smtp.gmail.com"}:${env.SMTP_PORT || 465}.`;
-  } else if (
-    responseCode === 550 ||
-    responseCode === 553 ||
-    message.includes("550") ||
-    message.includes("553")
-  ) {
-    category = "RECIPIENT_REJECTED";
-    diagnostic = `SMTP rejection (${responseCode || code}): recipient or sender address was rejected by the mail server.`;
-  } else if (
-    code === "ESOCKET" ||
-    message.toLowerCase().includes("ssl") ||
-    message.toLowerCase().includes("tls") ||
-    message.toLowerCase().includes("handshake")
-  ) {
-    category = "TLS_HANDSHAKE_ERROR";
-    diagnostic = `TLS handshake failed (${code}): ${message.slice(0, 100)}`;
-  } else if (responseCode === 421 || responseCode === 451 || responseCode === 452) {
-    category = "PROVIDER_RATE_LIMITED";
-    diagnostic = `Mail provider temporary rate limit or quota exceeded (${responseCode}).`;
-  } else {
-    diagnostic = message ? message.slice(0, 150) : "Unknown mail delivery failure";
-  }
 
   if (err?.provider === "resend" || err?.provider === "brevo") {
     const provName = err.provider === "resend" ? "Resend" : "Brevo";
@@ -150,12 +102,78 @@ export function classifyAndSanitizeSmtpError(err) {
         responseCode: 429,
       };
     }
+    if (code === "ETIMEDOUT") {
+      return {
+        category: "CONNECTION_TIMEOUT",
+        diagnostic: `${provName} HTTP request timed out.`,
+        code: "ETIMEDOUT",
+        responseCode: err.statusCode || responseCode || null,
+      };
+    }
     return {
       category: "PROVIDER_API_ERROR",
       diagnostic: `${provName} API error: ${message.slice(0, 150)}`,
       code: String(err.statusCode || code || "API_ERROR"),
       responseCode: err.statusCode || responseCode || null,
     };
+  }
+
+  let category = "UNKNOWN_ERROR";
+  let diagnostic = "An unexpected error occurred while communicating with the mail server.";
+
+  if (
+    code === "EAUTH" ||
+    responseCode === 535 ||
+    message.includes("535") ||
+    message.toLowerCase().includes("badcredentials") ||
+    message.toLowerCase().includes("username and password not accepted")
+  ) {
+    category = "AUTHENTICATION_FAILED";
+    diagnostic =
+      "Gmail SMTP authentication failed (535). Verify GMAIL_USER and GMAIL_APP_PASSWORD (must use a 16-character Google App Password without spaces, not your regular account password).";
+  } else if (
+    code === "ETIMEDOUT" ||
+    code === "ESOCKETTIMEDOUT" ||
+    message.toLowerCase().includes("timeout") ||
+    message.toLowerCase().includes("timed out")
+  ) {
+    category = "CONNECTION_TIMEOUT";
+    diagnostic = `SMTP connection timed out connecting to ${mailerEnv.SMTP_HOST || "smtp.gmail.com"}:${mailerEnv.SMTP_PORT || 465}. The host or port may be restricted by the platform firewall.`;
+  } else if (
+    code === "ENETUNREACH" ||
+    code === "ECONNREFUSED" ||
+    code === "ECONNRESET" ||
+    code === "ENOTFOUND"
+  ) {
+    category = "NETWORK_UNREACHABLE";
+    diagnostic = `SMTP network error (${code}): unable to establish socket connection with ${mailerEnv.SMTP_HOST || "smtp.gmail.com"}:${mailerEnv.SMTP_PORT || 465}.`;
+  } else if (
+    responseCode === 550 ||
+    responseCode === 553 ||
+    message.includes("550") ||
+    message.includes("553")
+  ) {
+    category = "RECIPIENT_REJECTED";
+    diagnostic = `SMTP rejection (${responseCode || code}): recipient or sender address was rejected by the mail server.`;
+  } else if (
+    code === "ESOCKET" ||
+    message.toLowerCase().includes("ssl") ||
+    message.toLowerCase().includes("tls") ||
+    message.toLowerCase().includes("handshake")
+  ) {
+    category = "TLS_HANDSHAKE_ERROR";
+    diagnostic = `TLS handshake failed (${code}): ${message.slice(0, 100)}`;
+  } else if (responseCode === 421 || responseCode === 451 || responseCode === 452) {
+    category = "PROVIDER_RATE_LIMITED";
+    diagnostic = `Mail provider temporary rate limit or quota exceeded (${responseCode}).`;
+  } else if (
+    message.toLowerCase().includes("missing environment variable") ||
+    (!mailerEnv.GMAIL_USER && !mailerEnv.RESEND_API_KEY && !mailerEnv.BREVO_API_KEY)
+  ) {
+    category = "MISSING_ENV_VARS";
+    diagnostic = message || "Missing required email configuration";
+  } else {
+    diagnostic = message ? message.slice(0, 150) : "Unknown mail delivery failure";
   }
 
   return {
@@ -299,10 +317,13 @@ export async function sendViaBrevo({ to, subject, html, text, recipientName }) {
  * Distinct from web URL validation so OTP flows are never blocked by WEB_APP_BASE_URL.
  */
 export function requireSmtpConfig() {
-  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
+  if (mailerEnv.RESEND_API_KEY || mailerEnv.BREVO_API_KEY) {
+    return;
+  }
+  if (!mailerEnv.GMAIL_USER || !mailerEnv.GMAIL_APP_PASSWORD) {
     const missing = [];
-    if (!env.GMAIL_USER) missing.push("GMAIL_USER");
-    if (!env.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
+    if (!mailerEnv.GMAIL_USER) missing.push("GMAIL_USER");
+    if (!mailerEnv.GMAIL_APP_PASSWORD) missing.push("GMAIL_APP_PASSWORD");
     throw new AppError(
       `Email delivery is not configured. Missing environment variable(s): ${missing.join(", ")} (or configure RESEND_API_KEY / BREVO_API_KEY).`,
       StatusCodes.SERVICE_UNAVAILABLE,

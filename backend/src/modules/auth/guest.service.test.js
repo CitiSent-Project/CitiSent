@@ -19,6 +19,19 @@ reportsSentimentClient.analyzeReport = async () => ({
   summary: "Test report summary",
 });
 
+// Stub Cloudflare Turnstile verification to avoid external HTTP requests
+const originalFetch = global.fetch;
+global.fetch = async (url, options) => {
+  if (typeof url === "string" && url.includes("challenges.cloudflare.com")) {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, "error-codes": [] }),
+    };
+  }
+  return originalFetch(url, options);
+};
+
 // ─── Test 1: Guest can obtain a session without Gmail ─────────────────────────
 test("1. Guest can obtain a guest session (no email required)", async () => {
   const session = await authService.createGuestSession();
@@ -399,16 +412,26 @@ test("12. Valid Turnstile token allows report creation (mocked Cloudflare respon
 // ─── Test 13: Rate limiting (duplicate detection) still works after CAPTCHA ────
 test("13. Duplicate report detection still works after CAPTCHA passes", async (t) => {
   const origCreate = reportsRepository.create;
+  const origFindRecent = reportsRepository.findRecentDuplicate;
   const origDept = departmentsService.getActiveDepartmentByValue;
   const origDeleteByPrefix = cacheService.deleteByPrefix;
+  const origEnsure = authRepository.ensureGuestUser;
 
   departmentsService.getActiveDepartmentByValue = async () => null;
   cacheService.deleteByPrefix = async () => {};
+  authRepository.ensureGuestUser = async (id) => ({
+    id,
+    role: "guest",
+    isGuest: true,
+    username: "Guest",
+  });
 
   let callCount = 0;
+  let createdReport = null;
+  reportsRepository.findRecentDuplicate = async () => createdReport;
   reportsRepository.create = async (payload) => {
     callCount++;
-    return {
+    createdReport = {
       id: `report-dupe-${callCount}`,
       report_number: `REP-DUPE-${callCount}`,
       issue_type: payload.issue_type,
@@ -421,12 +444,15 @@ test("13. Duplicate report detection still works after CAPTCHA passes", async (t
       updated_at: new Date().toISOString(),
       user_id: payload.user_id,
     };
+    return createdReport;
   };
 
   t.after(() => {
     reportsRepository.create = origCreate;
+    reportsRepository.findRecentDuplicate = origFindRecent;
     departmentsService.getActiveDepartmentByValue = origDept;
     cacheService.deleteByPrefix = origDeleteByPrefix;
+    authRepository.ensureGuestUser = origEnsure;
   });
 
   const guestId = `guest-dupe-test-${Date.now()}`;
@@ -446,16 +472,10 @@ test("13. Duplicate report detection still works after CAPTCHA passes", async (t
   await reportsService.createReport(reportPayload);
   assert.equal(callCount, 1);
 
-  // Second identical submission within 60s should be rejected as duplicate
-  await assert.rejects(
-    () => reportsService.createReport({ ...reportPayload, turnstileToken: "test-dev-token-dupe-2" }),
-    (err) => {
-      assert.match(err.message, /Duplicate report detected/);
-      return true;
-    },
-  );
-
-  assert.equal(callCount, 1, "Repository must only be called once — duplicate rejected");
+  // Second identical submission within window returns existing report without creating duplicate row
+  const secondSubmission = await reportsService.createReport({ ...reportPayload, turnstileToken: "test-dev-token-dupe-2" });
+  assert.equal(secondSubmission.id, "report-dupe-1");
+  assert.equal(callCount, 1, "Repository must only be called once — duplicate rejected/deduped");
 });
 
 // ─── Test 14: createGuestSession reuses existing guestId ───────────────────────

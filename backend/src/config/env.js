@@ -142,6 +142,13 @@ const envSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(15 * 60 * 1000),
+  AUTH_LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
+  AUTH_LOGIN_IP_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(15),
   REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   STARTUP_SUPABASE_TIMEOUT_MS: z.coerce
     .number()

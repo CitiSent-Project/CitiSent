@@ -11,6 +11,7 @@ import { apiRouter } from "./routes/index.js";
 import { requestContext } from "./middlewares/requestContext.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { createRateLimitHandler } from "./middlewares/rateLimiter.js";
 import { AppError } from "./shared/errors/appError.js";
 
 const app = express();
@@ -58,6 +59,10 @@ app.use(
     // Browser CORS preflights are negotiation requests, not API work.
     // Counting them halves the useful quota for cross-origin clients.
     skip: (req) => req.method === "OPTIONS",
+    handler: createRateLimitHandler(
+      ({ retryAfterMinutes }) =>
+        `Too many requests to the server. Please try again after ${retryAfterMinutes} minute(s).`,
+    ),
   }),
 );
 

@@ -9,6 +9,13 @@ from main import app
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def clean_api_key_env(monkeypatch):
+    """Ensure tests run without ambient SENTIMENT_API_KEY from .env unless explicitly set."""
+    monkeypatch.delenv("SENTIMENT_API_KEY", raising=False)
+
+
+
 def test_analyze_endpoint_returns_normalized_urgency(monkeypatch):
     async def fake_analyze_report(office, location, description):
         assert office == "BFP"
@@ -182,8 +189,12 @@ def test_internal_api_key_authentication(monkeypatch):
     assert res_valid.status_code == 200
     assert res_valid.json()["urgency"] == "Low"
 
-    # 4. Health check endpoint is public without key
+    # 4. Health check and root endpoints are public without key
     res_health = client.get("/health")
     assert res_health.status_code == 200
     assert res_health.json()["status"] == "ok"
+
+    res_root = client.get("/")
+    assert res_root.status_code == 200
+    assert res_root.json()["status"] == "ok"
 

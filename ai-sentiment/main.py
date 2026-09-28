@@ -55,6 +55,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/", tags=["Health"])
+def root():
+    return {
+        "status": "ok",
+        "service": "CitiSent AI Sentiment Analysis API",
+        "version": "2.0.0",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "ok", "service": "ai-sentiment"}

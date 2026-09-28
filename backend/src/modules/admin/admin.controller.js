@@ -26,14 +26,12 @@ export const adminController = {
       userId: req.params.userId,
     });
 
-    activityRepository
-      .createActivityLogEntry({
-        accessToken: req.accessToken,
-        adminUserId: req.actor?.id,
-        action: "VIEW_USER_PII",
-        detail: `Viewed detailed profile of user ${req.params.userId}`,
-      })
-      .catch((error) => console.error("Failed to log PII view:", error));
+    activityRepository.recordActivityBestEffort({
+      accessToken: req.accessToken,
+      adminUserId: req.actor?.id,
+      action: "VIEW_USER_PII",
+      detail: `Viewed detailed profile of user ${req.params.userId}`,
+    });
 
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -170,15 +168,6 @@ export const adminController = {
       reportId: req.params.reportId,
     });
 
-    activityRepository
-      .createActivityLogEntry({
-        accessToken: req.accessToken,
-        adminUserId: req.actor?.id,
-        action: "VIEW_REPORT_PII",
-        detail: `Viewed detailed report and user profile for report ${req.params.reportId}`,
-      })
-      .catch((error) => console.error("Failed to log PII view for report:", error));
-
     return res.status(StatusCodes.OK).json({
       success: true,
       data: result,
@@ -228,6 +217,7 @@ export const adminController = {
 
   async assignOfficeDepartment(req, res) {
     const result = await adminService.assignOfficeAdminDepartment({
+      actor: req.actor,
       accessToken: req.accessToken,
       adminUserId: req.params.adminId,
       departmentId: req.body.departmentId,

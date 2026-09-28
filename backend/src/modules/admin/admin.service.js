@@ -569,6 +569,13 @@ export const adminService = {
       userId: createdProfile.user_id,
     });
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "INVITE_ADMIN_USER",
+      detail: `Invited new ${payload.role || "office-admin"} (${normalizedEmail})`,
+    });
+
     return {
       ...toAdminUserResponse({
         profile: result?.profile || createdProfile,
@@ -690,6 +697,13 @@ export const adminService = {
       throw new AppError("User not found", StatusCodes.NOT_FOUND);
     }
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "UPDATE_USER",
+      detail: `Updated profile for user ${userId}`,
+    });
+
     return toAdminUserResponse({
       profile: result.profile || updatedProfile,
       activeBan: result.activeBan,
@@ -729,6 +743,13 @@ export const adminService = {
     // Deletes the user account from Supabase auth and cascades profile data.
     await adminRepository.deleteManagedUserById({ userId });
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "DELETE_USER",
+      detail: `Permanently deleted user account ${userId}`,
+    });
+
     return {
       deleted: true,
       userId,
@@ -753,6 +774,13 @@ export const adminService = {
       actorId: actor.id,
       userId,
       reason,
+    });
+
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "BAN_USER",
+      detail: `Banned user ${userId}. Reason: ${reason || "No reason specified"}`,
     });
 
     const result = await adminRepository.getUserById({
@@ -786,6 +814,13 @@ export const adminService = {
       userId,
     });
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "UNBAN_USER",
+      detail: `Unbanned user ${userId}`,
+    });
+
     const result = await adminRepository.getUserById({
       actor,
       accessToken,
@@ -808,6 +843,13 @@ export const adminService = {
       reason,
     });
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "BULK_BAN_USERS",
+      detail: `Bulk banned ${userIds?.length || 0} users. Reason: ${reason || "No reason specified"}`,
+    });
+
     return { success: true };
   },
 
@@ -818,6 +860,13 @@ export const adminService = {
       accessToken,
       actorId: actor.id,
       userIds,
+    });
+
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "BULK_UNBAN_USERS",
+      detail: `Bulk unbanned ${userIds?.length || 0} users`,
     });
 
     return { success: true };
@@ -929,21 +978,12 @@ export const adminService = {
     // [DPA 2012 Compliance: Audit Trails]
     // We log every time an admin views a specific report's full details. 
     // This establishes a strict audit trail for access to Personally Identifiable Information (PII).
-    // We run this asynchronously using .catch() so it doesn't block the response if logging fails.
-    activityRepository
-      .createActivityLogEntry({
-        accessToken,
-        adminUserId: actor.id,
-        action: "VIEW_REPORT_PII",
-        detail: `Viewed full PII details for report ID: ${reportId}`,
-      })
-      .catch((error) => {
-        logger.warn("Failed to create VIEW_REPORT_PII audit log", {
-          reportId,
-          adminId: actor.id,
-          error: error?.message,
-        });
-      });
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "VIEW_REPORT_PII",
+      detail: `Viewed full PII details for report ID: ${reportId}`,
+    });
 
     return toAdminReportResponse({
       reportRow,
@@ -1035,6 +1075,13 @@ export const adminService = {
       // Non-critical cache invalidation fallback
     }
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "UPDATE_REPORT_STATUS",
+      detail: `Updated report #${reportId} status from "${previousStatus}" to "${nextStatus}"${adminMessage ? ` (Note: ${adminMessage})` : ""}`,
+    });
+
     return toAdminReportResponse({
       reportRow: applyDepartmentMetadataToReportRow(
         result.row,
@@ -1100,6 +1147,7 @@ export const adminService = {
   },
 
   async assignOfficeAdminDepartment({
+    actor,
     accessToken,
     adminUserId,
     departmentId,
@@ -1145,6 +1193,15 @@ export const adminService = {
           error: error?.message,
         });
       });
+
+    if (actor?.id) {
+      activityRepository.recordActivityBestEffort({
+        accessToken,
+        adminUserId: actor.id,
+        action: "ASSIGN_ADMIN_DEPARTMENT",
+        detail: `Assigned office admin ${adminUserId} to department ${resolvedDepartment.name}`,
+      });
+    }
 
     return toOfficeAdminResponse(updatedOfficeAdmin);
   },
@@ -1296,6 +1353,13 @@ export const adminService = {
         logger.warn("Failed to notify requester", { error: error?.message });
       });
 
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "APPROVE_TRANSFER_REQUEST",
+      detail: `Approved transfer request #${requestId} for admin ${request.admin_user_id} to ${request.requested_department_label}`,
+    });
+
     return toTransferRequestResponse(reviewedRequest);
   },
 
@@ -1340,6 +1404,13 @@ export const adminService = {
       .catch((error) => {
         logger.warn("Failed to notify requester", { error: error?.message });
       });
+
+    activityRepository.recordActivityBestEffort({
+      accessToken,
+      adminUserId: actor.id,
+      action: "REJECT_TRANSFER_REQUEST",
+      detail: `Rejected transfer request #${requestId} for admin ${request.admin_user_id}${reviewNotes ? `. Reason: ${reviewNotes}` : ""}`,
+    });
 
     return toTransferRequestResponse(reviewedRequest);
   },

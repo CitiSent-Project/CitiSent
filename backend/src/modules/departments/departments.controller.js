@@ -16,6 +16,7 @@ export const departmentsController = {
 
 	async createDepartment(req, res) {
 		const department = await departmentsService.createDepartment({
+			actor: req.actor,
 			accessToken: req.accessToken,
 			payload: req.body,
 		});
@@ -28,6 +29,7 @@ export const departmentsController = {
 
 	async updateDepartment(req, res) {
 		const department = await departmentsService.updateDepartment({
+			actor: req.actor,
 			accessToken: req.accessToken,
 			departmentSlug: req.params.departmentSlug,
 			payload: req.body,
@@ -41,6 +43,7 @@ export const departmentsController = {
 
 	async setDepartmentActive(req, res) {
 		const department = await departmentsService.setDepartmentActive({
+			actor: req.actor,
 			accessToken: req.accessToken,
 			departmentSlug: req.params.departmentSlug,
 			isActive: req.body.isActive,
@@ -79,6 +82,7 @@ export const departmentsController = {
 
 	async deleteDepartment(req, res) {
 		const department = await departmentsService.deleteDepartment({
+			actor: req.actor,
 			accessToken: req.accessToken,
 			departmentSlug: req.params.departmentSlug,
 			cleanup: req.query.cleanup,

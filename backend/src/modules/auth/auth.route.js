@@ -3,6 +3,13 @@ import { asyncHandler } from "../../shared/utils/asyncHandler.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import {
+  loginRateLimiter,
+  otpRequestRateLimiter,
+  otpVerifyRateLimiter,
+  registerRateLimiter,
+  passwordResetRateLimiter,
+} from "../../middlewares/rateLimiter.js";
+import {
   activateAccountSchema,
   adminLoginChallengeSchema,
   adminLoginVerifyOtpSchema,
@@ -23,42 +30,49 @@ const authRouter = Router();
 
 authRouter.post(
   "/register",
+  registerRateLimiter,
   validateRequest(registerSchema),
   asyncHandler(authController.register),
 );
 
 authRouter.post(
   "/login",
+  ...loginRateLimiter,
   validateRequest(loginSchema),
   asyncHandler(authController.login),
 );
 
 authRouter.post(
   "/admin/challenge",
+  ...loginRateLimiter,
   validateRequest(adminLoginChallengeSchema),
   asyncHandler(authController.adminLoginChallenge),
 );
 
 authRouter.post(
   "/admin/verify-otp",
+  otpVerifyRateLimiter,
   validateRequest(adminLoginVerifyOtpSchema),
   asyncHandler(authController.adminLoginVerifyOtp),
 );
 
 authRouter.post(
   "/admin/resend-otp",
+  otpRequestRateLimiter,
   validateRequest(adminResendOtpSchema),
   asyncHandler(authController.adminResendOtp),
 );
 
 authRouter.post(
   "/request-password-reset",
+  otpRequestRateLimiter,
   validateRequest(forgotPasswordSchema),
   asyncHandler(authController.forgotPassword),
 );
 
 authRouter.post(
   "/reset-password",
+  passwordResetRateLimiter,
   validateRequest(resetPasswordSchema),
   asyncHandler(authController.resetPassword),
 );
@@ -89,18 +103,21 @@ authRouter.post(
 // NOT for guest verification (which is now handled by Cloudflare Turnstile at report submission).
 authRouter.post(
   "/request-otp",
+  otpRequestRateLimiter,
   validateRequest(requestOtpSchema),
   asyncHandler(authController.requestOtp),
 );
 
 authRouter.post(
   "/verify-otp",
+  otpVerifyRateLimiter,
   validateRequest(verifyOtpSchema),
   asyncHandler(authController.verifyOtp),
 );
 
 authRouter.post(
   "/reset-password-otp",
+  passwordResetRateLimiter,
   validateRequest(resetPasswordWithOtpSchema),
   asyncHandler(authController.resetPasswordWithOtp),
 );

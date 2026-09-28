@@ -31,7 +31,7 @@ export const getLoginErrorMessage = (error) => {
   const apiMessage = error?.response?.data?.message || "";
 
   if (error?.response?.status === 429) {
-    return "Too many login attempts. Please try again later.";
+    return apiMessage || "Too many login attempts. Please try again later.";
   }
 
   if (

@@ -166,6 +166,8 @@ export function useAuthSession({
       notifyError('Login failed.', error.message)
       return {
         ok: false,
+        status: error.status,
+        retryAfterSeconds: error.retryAfterSeconds,
         message: error.message || 'Unable to sign in with this account.',
       }
     }
@@ -211,6 +213,8 @@ export function useAuthSession({
       performance.finish()
       return {
         ok: false,
+        status: error.status,
+        retryAfterSeconds: error.retryAfterSeconds,
         message: error.message || 'Verification failed. Please try again.',
       }
     }
@@ -223,6 +227,8 @@ export function useAuthSession({
     } catch (error) {
       return {
         ok: false,
+        status: error.status,
+        retryAfterSeconds: error.retryAfterSeconds,
         message: error.message || 'Failed to resend verification code.',
       }
     }

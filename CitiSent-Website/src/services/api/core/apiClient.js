@@ -165,6 +165,10 @@ function buildUserFacingErrorMessage({ status, backendMessage, details }) {
     return 'The requested item could not be found.'
   }
 
+  if (status === 429) {
+    return backendMessage || 'Too many attempts. Please wait a few minutes before trying again.'
+  }
+
   if (status >= 500) {
     return 'The server could not complete your request. Please try again.'
   }
@@ -302,9 +306,19 @@ async function request(endpoint, options = {}) {
       .filter(Boolean)
       .join(' - ')
 
+    const retryAfterHeader = response.headers?.get ? response.headers.get('retry-after') : undefined
+    const retryAfterSeconds =
+      isObjectBody && Number(parsedBody.retryAfterSeconds) > 0
+        ? Number(parsedBody.retryAfterSeconds)
+        : Number(retryAfterHeader) > 0
+          ? Number(retryAfterHeader)
+          : undefined
+
     const apiError = new Error(userMessage)
     apiError.name = 'ApiClientError'
     apiError.status = response.status
+    apiError.retryAfterSeconds = retryAfterSeconds
+    apiError.code = isObjectBody ? parsedBody.code : undefined
     apiError.requestId = isObjectBody ? parsedBody.requestId : undefined
     apiError.details = isObjectBody ? parsedBody.details : undefined
     apiError.userMessage = userMessage

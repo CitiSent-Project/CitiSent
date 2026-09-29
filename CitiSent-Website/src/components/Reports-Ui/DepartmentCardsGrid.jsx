@@ -127,6 +127,8 @@ export function DepartmentCardsGrid({ items, selectedItemId, onSelectItem }) {
                     <img
                       src={iconSrc}
                       alt={`${item.label} icon`}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   ) : (

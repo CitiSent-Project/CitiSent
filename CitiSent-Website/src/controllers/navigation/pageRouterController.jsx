@@ -1,6 +1,5 @@
 import { lazy } from 'react'
 import { Dashboard } from '../../frontend/Pages/Dashboard'
-import { Users } from '../../frontend/Users/Users'
 import { LoginPage } from '../../frontend/Pages/Login-Page'
 import { Logout } from '../../frontend/Pages/Logout'
 import { APP_PAGES, REPORT_SECTIONS } from '../../models/pageModel'
@@ -8,6 +7,7 @@ import { APP_PAGES, REPORT_SECTIONS } from '../../models/pageModel'
 // Low-frequency pages are split into separate chunks. The named-export
 // adapters keep existing component modules unchanged while allowing Vite to
 // load each page only when it is first visited.
+const Users = lazy(() => import('../../frontend/Users/Users').then((module) => ({ default: module.Users })))
 const Reports = lazy(() => import('../../frontend/Reports/Reports').then((module) => ({ default: module.Reports })))
 const ProfileInformation = lazy(() => import('../../frontend/Pages/ProfilePage').then((module) => ({ default: module.ProfileInformation })))
 const Settings = lazy(() => import('../../frontend/Pages/Settings').then((module) => ({ default: module.Settings })))

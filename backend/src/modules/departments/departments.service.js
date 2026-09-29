@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { AppError } from "../../shared/errors/appError.js";
 import { departmentsRepository } from "./departments.repository.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
+import { activityRepository } from "../admin/activity/activity.repository.js";
 
 const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_LOGO_MIME_TYPES = new Map([
@@ -135,7 +136,7 @@ export const departmentsService = {
     return match || null;
   },
 
-  async createDepartment({ accessToken, payload }) {
+  async createDepartment({ actor, accessToken, payload }) {
     const slug = normalizeSlug(payload.slug);
     const name = String(payload.name || "").trim();
     const description = String(payload.description || "").trim();
@@ -159,6 +160,16 @@ export const departmentsService = {
       });
 
       await invalidateDepartmentCaches();
+
+      if (actor?.id) {
+        activityRepository.recordActivityBestEffort({
+          accessToken,
+          adminUserId: actor.id,
+          action: "CREATE_DEPARTMENT",
+          detail: `Created department "${created.name}" (${created.slug})`,
+        });
+      }
+
       return created;
     } catch (error) {
       if (isUniqueConflict(error)) {
@@ -173,7 +184,7 @@ export const departmentsService = {
   },
 
 
-  async updateDepartment({ accessToken, departmentSlug, payload }) {
+  async updateDepartment({ actor, accessToken, departmentSlug, payload }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
       accessToken,
       slug: departmentSlug,
@@ -212,6 +223,16 @@ export const departmentsService = {
 
       assertDepartmentFound(updated);
       await invalidateDepartmentCaches();
+
+      if (actor?.id) {
+        activityRepository.recordActivityBestEffort({
+          accessToken,
+          adminUserId: actor.id,
+          action: "UPDATE_DEPARTMENT",
+          detail: `Updated department "${updated.name}" (${updated.slug})`,
+        });
+      }
+
       return updated;
     } catch (error) {
       if (isUniqueConflict(error)) {
@@ -225,7 +246,7 @@ export const departmentsService = {
     }
   },
 
-  async setDepartmentActive({ accessToken, departmentSlug, isActive }) {
+  async setDepartmentActive({ actor, accessToken, departmentSlug, isActive }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
       accessToken,
       slug: departmentSlug,
@@ -240,6 +261,16 @@ export const departmentsService = {
 
     assertDepartmentFound(updated);
     await invalidateDepartmentCaches();
+
+    if (actor?.id) {
+      activityRepository.recordActivityBestEffort({
+        accessToken,
+        adminUserId: actor.id,
+        action: isActive ? "ACTIVATE_DEPARTMENT" : "DEACTIVATE_DEPARTMENT",
+        detail: `${isActive ? "Activated" : "Deactivated"} department "${updated.name}" (${updated.slug})`,
+      });
+    }
+
     return updated;
   },
 
@@ -323,7 +354,7 @@ export const departmentsService = {
     return updated;
   },
 
-  async deleteDepartment({ accessToken, departmentSlug, cleanup = false, reassignTo }) {
+  async deleteDepartment({ actor, accessToken, departmentSlug, cleanup = false, reassignTo }) {
     const existing = await departmentsRepository.getDepartmentBySlug({
       accessToken,
       slug: departmentSlug,
@@ -435,6 +466,16 @@ export const departmentsService = {
     }
 
     await invalidateDepartmentCaches();
+
+    if (actor?.id) {
+      activityRepository.recordActivityBestEffort({
+        accessToken,
+        adminUserId: actor.id,
+        action: "DELETE_DEPARTMENT",
+        detail: `Deleted department "${deleted.name}" (${deleted.slug})`,
+      });
+    }
+
     return deleted;
   },
 };

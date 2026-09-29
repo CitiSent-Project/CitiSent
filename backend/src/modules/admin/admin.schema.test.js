@@ -7,6 +7,8 @@ import {
   getAdminUserByIdSchema,
   bulkBanUsersSchema,
   bulkUnbanUsersSchema,
+  listAdminReportsSchema,
+  listAdminUsersSchema,
 } from "./admin.schema.js";
 
 function createPayload(overrides = {}) {
@@ -139,6 +141,35 @@ test("getAdminUserByIdSchema accepts either a UUID or a 6-digit User ID", () => 
   assert.throws(() =>
     getAdminUserByIdSchema.parse({
       params: { userId: "not-a-valid-id" },
+    }),
+  );
+});
+
+test("listAdminReportsSchema enforces max limit of 1000", () => {
+  const valid = listAdminReportsSchema.parse({
+    query: { limit: "1000", offset: "0" },
+  });
+  assert.equal(valid.query.limit, 1000);
+
+  const defaultLimit = listAdminReportsSchema.parse({ query: {} });
+  assert.equal(defaultLimit.query.limit, 50);
+
+  assert.throws(() =>
+    listAdminReportsSchema.parse({
+      query: { limit: "1001" },
+    }),
+  );
+});
+
+test("listAdminUsersSchema enforces max limit of 100", () => {
+  const valid = listAdminUsersSchema.parse({
+    query: { limit: "100", offset: "0" },
+  });
+  assert.equal(valid.query.limit, 100);
+
+  assert.throws(() =>
+    listAdminUsersSchema.parse({
+      query: { limit: "101" },
     }),
   );
 });

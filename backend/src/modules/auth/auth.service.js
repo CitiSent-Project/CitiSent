@@ -31,11 +31,13 @@ import { otpStore_ } from "../../shared/security/otp.store.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
+import { env } from "../../config/env.js";
 import {
   signGuestToken,
   signGuestRecoveryToken,
   tryVerifyGuestRecoveryToken,
 } from "../../shared/security/guestTokens.js";
+import { activityRepository } from "../admin/activity/activity.repository.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -334,6 +336,14 @@ export const authService = {
     try {
       otpStore_.verifyOtp(normalizedEmail, otp);
     } catch (err) {
+      if (decoded?.userId) {
+        activityRepository.recordActivityBestEffort({
+          accessToken: null,
+          adminUserId: decoded.userId,
+          action: "ADMIN_LOGIN_FAILED_OTP",
+          detail: `Failed 2FA verification attempt for admin ${decoded.email}`,
+        });
+      }
       throw new AppError(err.message, StatusCodes.BAD_REQUEST);
     }
 
@@ -359,6 +369,15 @@ export const authService = {
       } catch {
         // Non-critical cache priming
       }
+    }
+
+    if (decoded.userId) {
+      activityRepository.recordActivityBestEffort({
+        accessToken: decoded.sessionToken,
+        adminUserId: decoded.userId,
+        action: "ADMIN_LOGIN_SUCCESS",
+        detail: `Admin ${profile.email} completed 2FA verification and signed in`,
+      });
     }
 
     return {

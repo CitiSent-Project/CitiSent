@@ -1,4 +1,4 @@
-import { setCache, getCache, removeCache, clearAllCache } from "./cache";
+import { setCache, getCache, removeCache, clearAllCache, storageAdapter } from "./cache";
 
 let sessionToken = "";
 let sessionUser = null;
@@ -486,6 +486,48 @@ export function clearAuthToken() {
   sessionUser = null;
   clearAllCache();
   notifyAuthState(null);
+}
+
+const DEVICE_GUEST_KEY = "@citisent_device_guest_credential";
+
+/**
+ * Retrieves the device-isolated guest credential from persistent storage.
+ * This key is never wiped by clearAuthToken/logout, preserving the device's guest identity.
+ */
+export async function getDeviceGuestCredential() {
+  try {
+    const raw = await storageAdapter.getItem(DEVICE_GUEST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || !parsed.guestId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Saves or clears the device-isolated guest credential in persistent storage.
+ */
+export async function setDeviceGuestCredential(credential) {
+  try {
+    if (!credential) {
+      await storageAdapter.removeItem(DEVICE_GUEST_KEY);
+    } else {
+      await storageAdapter.setItem(DEVICE_GUEST_KEY, JSON.stringify(credential));
+    }
+  } catch (err) {
+    console.warn("Failed to persist device guest credential:", err);
+  }
+}
+
+/**
+ * Explicitly removes the device guest credential (e.g. if the user explicitly resets all data).
+ */
+export async function clearDeviceGuestCredential() {
+  try {
+    await storageAdapter.removeItem(DEVICE_GUEST_KEY);
+  } catch {}
 }
 
 

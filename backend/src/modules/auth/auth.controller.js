@@ -118,7 +118,10 @@ export const authController = {
   },
 
   async createGuestSession(req, res) {
-    const result = await authService.createGuestSession(req.body?.guestId);
+    const result = await authService.createGuestSession({
+      recoveryToken: req.body?.recoveryToken,
+      guestId: req.body?.guestId,
+    });
 
     return res.status(StatusCodes.CREATED).json({
       success: true,

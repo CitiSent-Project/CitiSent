@@ -52,3 +52,48 @@ export function tryVerifyGuestToken(token) {
     return null;
   }
 }
+
+/**
+ * Signs a persistent device recovery token (expires in 365 days).
+ * Stored securely on the mobile device to authenticate the device when
+ * recovering/reusing its existing guest account without re-creating accounts.
+ */
+export function signGuestRecoveryToken({ guestId }) {
+  return jwt.sign(
+    {
+      guestId,
+      role: "guest",
+      isGuest: true,
+      purpose: "guest_recovery",
+    },
+    GUEST_JWT_SECRET,
+    { expiresIn: "365d" },
+  );
+}
+
+/**
+ * Verifies a guest recovery token.
+ * Returns decoded payload if valid and matches guest recovery purpose,
+ * or null if invalid or expired.
+ */
+export function tryVerifyGuestRecoveryToken(token) {
+  if (!token || typeof token !== "string") {
+    return null;
+  }
+
+  try {
+    const unverified = jwt.decode(token);
+    if (
+      !unverified ||
+      typeof unverified !== "object" ||
+      !unverified.isGuest ||
+      unverified.purpose !== "guest_recovery"
+    ) {
+      return null;
+    }
+
+    return jwt.verify(token, GUEST_JWT_SECRET);
+  } catch {
+    return null;
+  }
+}

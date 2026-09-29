@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 
 import { authService } from "./auth.service.js";
 import { authRepository } from "./auth.repository.js";
-import { signGuestToken, tryVerifyGuestToken } from "../../shared/security/guestTokens.js";
+import {
+  signGuestToken,
+  tryVerifyGuestToken,
+  signGuestRecoveryToken,
+  tryVerifyGuestRecoveryToken,
+} from "../../shared/security/guestTokens.js";
 import { reportsService } from "../reports/reports.service.js";
 import { reportsRepository } from "../reports/reports.repository.js";
 import { departmentsService } from "../departments/departments.service.js";
@@ -591,3 +596,92 @@ test("16. toAdminReportResponse strips synthetic email from guest reporter profi
   assert.equal(mapped.reporter.fullName, "Guest", "Reporter name must be 'Guest'");
   assert.equal(mapped.reporter.email, null, "Synthetic guest email must NEVER be exposed in report response");
 });
+
+// ─── Test 17: Guest recovery token cryptographic signing & verification ────────
+test("17. Guest recovery token is signed and verified cryptographically", () => {
+  const guestId = "test-recovery-guest-uuid";
+  const recoveryToken = signGuestRecoveryToken({ guestId });
+  assert.ok(recoveryToken, "Recovery token must be created");
+
+  const verified = tryVerifyGuestRecoveryToken(recoveryToken);
+  assert.ok(verified, "Recovery token must verify successfully");
+  assert.equal(verified.guestId, guestId);
+  assert.equal(verified.role, "guest");
+  assert.equal(verified.purpose, "guest_recovery");
+
+  // A normal session token must not pass recovery token verification (purpose mismatch)
+  const sessionToken = signGuestToken({ guestId });
+  const invalidAsRecovery = tryVerifyGuestRecoveryToken(sessionToken);
+  assert.equal(invalidAsRecovery, null, "Session token must be rejected as recovery token");
+
+  // Tampered token must fail
+  const tampered = recoveryToken.slice(0, -5) + "abcde";
+  assert.equal(tryVerifyGuestRecoveryToken(tampered), null, "Tampered token must be rejected");
+});
+
+// ─── Test 18: createGuestSession with recoveryToken reuses guest identity ─────
+test("18. createGuestSession with valid recoveryToken reuses existing guest identity", async (t) => {
+  const origFind = authRepository.findGuestUserById;
+  const existingGuestId = "e5c88a1c-d7b0-4972-9c87-5f8222b3f948";
+
+  authRepository.findGuestUserById = async (id) => {
+    if (id === existingGuestId) {
+      return {
+        user_id: existingGuestId,
+        role: "guest",
+        account_type: "guest",
+        username: "Guest",
+      };
+    }
+    return null;
+  };
+
+  t.after(() => {
+    authRepository.findGuestUserById = origFind;
+  });
+
+  const recoveryToken = signGuestRecoveryToken({ guestId: existingGuestId });
+  const session = await authService.createGuestSession({ recoveryToken });
+
+  assert.equal(session.user.id, existingGuestId, "Must reuse existing guestId when valid recoveryToken provided");
+  assert.ok(session.token, "Must return active session token");
+  assert.ok(session.recoveryToken, "Must return refreshed recovery token");
+
+  const verifiedSession = tryVerifyGuestToken(session.token);
+  assert.equal(verifiedSession.guestId, existingGuestId);
+});
+
+// ─── Test 19: Spoofing prevention: unverified guestId does not reuse account ─
+test("19. Spoofing prevention: plain guestId without valid recoveryToken is rejected", async (t) => {
+  const origFind = authRepository.findGuestUserById;
+  const targetGuestId = "victim-guest-uuid-9999";
+
+  authRepository.findGuestUserById = async (id) => {
+    if (id === targetGuestId) {
+      return {
+        user_id: targetGuestId,
+        role: "guest",
+        account_type: "guest",
+        username: "Guest",
+      };
+    }
+    return null;
+  };
+
+  t.after(() => {
+    authRepository.findGuestUserById = origFind;
+  });
+
+  // Client attempts to pass plain guestId without recoveryToken (simulating API caller)
+  const session = await authService.createGuestSession({
+    guestId: targetGuestId,
+    recoveryToken: "forged-or-invalid-token",
+  });
+
+  assert.notEqual(
+    session.user.id,
+    targetGuestId,
+    "Must NOT reuse victim account when recoveryToken is forged or invalid",
+  );
+});
+

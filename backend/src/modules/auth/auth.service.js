@@ -32,7 +32,11 @@ import { cacheService } from "../../shared/cache/cacheService.js";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import { env } from "../../config/env.js";
-import { signGuestToken } from "../../shared/security/guestTokens.js";
+import {
+  signGuestToken,
+  signGuestRecoveryToken,
+  tryVerifyGuestRecoveryToken,
+} from "../../shared/security/guestTokens.js";
 import { activityRepository } from "../admin/activity/activity.repository.js";
 
 function normalizeEmail(value) {
@@ -920,17 +924,35 @@ export const authService = {
     return { changed: true };
   },
 
-  async createGuestSession(maybeGuestId = null) {
+  async createGuestSession(options = null) {
+    let targetGuestId = null;
+
+    if (typeof options === "string") {
+      // Direct call (e.g. internal service call or unit tests)
+      targetGuestId = options;
+    } else if (options && typeof options === "object") {
+      const { recoveryToken } = options;
+      if (recoveryToken) {
+        const decoded = tryVerifyGuestRecoveryToken(recoveryToken);
+        if (decoded?.guestId) {
+          targetGuestId = decoded.guestId;
+        }
+      }
+    }
+
     // Ensure the guest user identity exists in auth.users and profiles.
-    // Reuses existing guest if maybeGuestId is already a valid guest in the DB.
-    const guestUser = await authRepository.ensureGuestUser(maybeGuestId);
+    // Reuses existing guest if targetGuestId is already a valid guest in the DB.
+    const guestUser = await authRepository.ensureGuestUser(targetGuestId);
     const guestId = guestUser.id;
 
-    // Guest verification is per-submission via Cloudflare Turnstile CAPTCHA.
+    // Active session token (7-day validity)
     const token = signGuestToken({ guestId });
+    // Long-lived device recovery token (365-day validity)
+    const recoveryToken = signGuestRecoveryToken({ guestId });
 
     return {
       token,
+      recoveryToken,
       user: {
         id: guestId,
         role: "guest",
@@ -940,3 +962,4 @@ export const authService = {
     };
   },
 };
+

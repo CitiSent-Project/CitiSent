@@ -83,9 +83,11 @@ export default function LoginScreen() {
   };
 
   const [isGuestLoading, setIsGuestLoading] = useState(false);
+  const isGuestSubmittingRef = useRef(false);
 
   const handleContinueAsGuest = async () => {
-    if (isGuestLoading) return;
+    if (isGuestSubmittingRef.current || isGuestLoading) return;
+    isGuestSubmittingRef.current = true;
     setIsGuestLoading(true);
     try {
       await authApi.continueAsGuest();
@@ -94,6 +96,7 @@ export default function LoginScreen() {
       router.replace("/(tabs)");
     } finally {
       setIsGuestLoading(false);
+      isGuestSubmittingRef.current = false;
     }
   };
 

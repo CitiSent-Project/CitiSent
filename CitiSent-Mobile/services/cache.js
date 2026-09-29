@@ -7,7 +7,7 @@ const memoryStorage = new Map();
 /**
  * Universal storage adapter supporting Native AsyncStorage, Web localStorage, and Memory fallback
  */
-const storageAdapter = {
+export const storageAdapter = {
   getItem: async (key) => {
     if (Platform.OS === "web") {
       try {
@@ -89,7 +89,9 @@ const storageAdapter = {
           return;
         }
       } catch {}
-      memoryStorage.clear();
+      for (const k of Array.from(memoryStorage.keys())) {
+        if (k.startsWith(PREFIX)) memoryStorage.delete(k);
+      }
       return;
     }
 
@@ -100,7 +102,9 @@ const storageAdapter = {
         await AsyncStorage.multiRemove(citisentKeys);
       }
     } catch {
-      memoryStorage.clear();
+      for (const k of Array.from(memoryStorage.keys())) {
+        if (k.startsWith(PREFIX)) memoryStorage.delete(k);
+      }
     }
   },
 };

@@ -51,6 +51,10 @@ function buildRegistrationUsername(payload = {}) {
   return normalized.slice(0, 40)
 }
 
+// Each registration request makes Supabase send a confirmation email, so never
+// allow a second request while one is already in flight.
+let registrationInFlight = false
+
 export function useAuthSession({
   setAccessToken,
   setProfile,
@@ -68,6 +72,14 @@ export function useAuthSession({
   notifyError,
 }) {
   async function handleRegister(payload) {
+    if (registrationInFlight) {
+      return {
+        ok: false,
+        message: 'Registration is already in progress. Please wait.',
+      }
+    }
+
+    registrationInFlight = true
     try {
       await authApiService.register({
         username: buildRegistrationUsername(payload),
@@ -95,8 +107,12 @@ export function useAuthSession({
       notifyError('Registration failed.', error.message)
       return {
         ok: false,
+        status: error.status,
+        retryAfterSeconds: error.retryAfterSeconds,
         message: error.message || 'Unable to create the admin account.',
       }
+    } finally {
+      registrationInFlight = false
     }
   }
 

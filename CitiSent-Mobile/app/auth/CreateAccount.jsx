@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -340,8 +340,13 @@ export default function CreateAccountScreen() {
     };
   };
 
+  // `isSubmitting` is React state and only updates on the next render, so two
+  // rapid taps can both pass it. The ref is flipped synchronously and guarantees
+  // a single in-flight registration request (each one sends a Supabase email).
+  const submitLockRef = useRef(false);
+
   const handleCreateAccount = async () => {
-    if (isSubmitting) {
+    if (isSubmitting || submitLockRef.current) {
       return;
     }
 
@@ -363,6 +368,7 @@ export default function CreateAccountScreen() {
     }
 
     setSuccessMessage("");
+    submitLockRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -380,7 +386,9 @@ export default function CreateAccountScreen() {
         password,
       });
 
-      setSuccessMessage("Account created successfully! Please login to continue.");
+      setSuccessMessage(
+        "Account created! Check your email to verify your account, then log in.",
+      );
       await new Promise((resolve) => setTimeout(resolve, 850));
       router.replace("/auth/LoginForm");
     } catch (error) {
@@ -391,6 +399,7 @@ export default function CreateAccountScreen() {
         ),
       );
     } finally {
+      submitLockRef.current = false;
       setIsSubmitting(false);
     }
   };

@@ -116,6 +116,13 @@ authRouter.post(
 );
 
 authRouter.post(
+  "/verify-signup-otp",
+  otpVerifyRateLimiter,
+  validateRequest(verifyOtpSchema),
+  asyncHandler(authController.verifySignupOtp),
+);
+
+authRouter.post(
   "/reset-password-otp",
   passwordResetRateLimiter,
   validateRequest(resetPasswordWithOtpSchema),

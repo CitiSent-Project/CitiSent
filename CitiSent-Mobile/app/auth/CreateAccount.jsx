@@ -386,11 +386,12 @@ export default function CreateAccountScreen() {
         password,
       });
 
-      setSuccessMessage(
-        "Account created! Check your email to verify your account, then log in.",
-      );
+      setSuccessMessage("Account created! Redirecting to verification...");
       await new Promise((resolve) => setTimeout(resolve, 850));
-      router.replace("/auth/LoginForm");
+      router.replace({
+        pathname: "/auth/OtpVerification",
+        params: { email: trimmedEmail, mode: "signup" },
+      });
     } catch (error) {
       setSuccessMessage("");
       setFieldErrors(

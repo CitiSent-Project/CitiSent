@@ -147,6 +147,13 @@ function toUserResponse({ user, session, profile }) {
   };
 }
 
+// Registrations currently being processed by this instance, keyed by email.
+// A duplicate submit (double click, impatient retry) while the first is still
+// running would otherwise trigger a second Supabase confirmation email, which
+// counts against the project-wide email quota. Per-instance by design; the
+// Supabase quota and registerRateLimiter remain the cross-instance backstop.
+const inFlightRegistrations = new Set();
+
 async function resolveLoginContext({ identifier, email, username, phoneNumber }) {
   const normalizedEmail = normalizeEmail(email);
   if (normalizedEmail) {
@@ -633,6 +640,24 @@ export const authService = {
   },
 
   async register(payload) {
+    const registrationKey = normalizeEmail(payload.email);
+
+    if (inFlightRegistrations.has(registrationKey)) {
+      throw new AppError(
+        "A registration for this email is already being processed. Please wait a moment.",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    inFlightRegistrations.add(registrationKey);
+    try {
+      return await authService.performRegistration(payload);
+    } finally {
+      inFlightRegistrations.delete(registrationKey);
+    }
+  },
+
+  async performRegistration(payload) {
     const normalizedEmail = normalizeEmail(payload.email);
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
@@ -717,6 +742,26 @@ export const authService = {
 
     const userId = signUpData?.user?.id;
     const sessionToken = signUpData?.session?.access_token;
+
+    // Supabase answers an already-confirmed email with a fake user that has no
+    // identities (and no error) to avoid account enumeration. Treat it as a
+    // duplicate instead of reporting a successful registration.
+    if (
+      Array.isArray(signUpData?.user?.identities) &&
+      signUpData.user.identities.length === 0
+    ) {
+      throw new AppError(
+        "Email is already registered",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    if (!userId) {
+      throw new AppError(
+        "Failed to register account",
+        StatusCodes.BAD_GATEWAY,
+      );
+    }
 
     let profile = null;
     if (userId && sessionToken) {

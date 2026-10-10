@@ -114,9 +114,46 @@ function getDuplicateRegistrationMessage(error) {
   return "An account with the provided credentials already exists";
 }
 
+// Supabase Auth throttles outbound auth emails (confirmation, recovery, ...)
+// per project. Without custom SMTP the built-in mailer only allows a handful of
+// emails per hour, so this is expected to surface during busy periods.
+const EMAIL_RATE_LIMIT_CODE = "EMAIL_RATE_LIMITED";
+// Supabase's email quota is windowed hourly, so an hour is the safe upper bound.
+const EMAIL_RATE_LIMIT_RETRY_AFTER_SECONDS = 3600;
+
+function isEmailSendRateLimitError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  const status = Number(error?.status || error?.statusCode || 0);
+
+  return (
+    code === "over_email_send_rate_limit" ||
+    (status === StatusCodes.TOO_MANY_REQUESTS &&
+      message.includes("email") &&
+      message.includes("rate limit"))
+  );
+}
+
+function toEmailRateLimitError() {
+  // Deliberately omit `details`: the raw Supabase error must never be echoed
+  // to the client, and errorHandler already logs 4xx errors exactly once.
+  const error = new AppError(
+    "We couldn't send your verification email because too many sign-up emails were requested. Please wait a while before trying again.",
+    StatusCodes.TOO_MANY_REQUESTS,
+  );
+  error.code = EMAIL_RATE_LIMIT_CODE;
+  error.publicCode = EMAIL_RATE_LIMIT_CODE;
+  error.retryAfterSeconds = EMAIL_RATE_LIMIT_RETRY_AFTER_SECONDS;
+  return error;
+}
+
 function toRegisterError(error) {
   const message = toErrorText(error);
   const status = Number(error?.status || error?.statusCode || 0);
+
+  if (isEmailSendRateLimitError(error)) {
+    return toEmailRateLimitError();
+  }
 
   if (isDuplicateAuthError(error)) {
     return new AppError(
@@ -199,97 +236,6 @@ function getAdminDbOrThrow() {
   }
 
   return adminDb;
-}
-
-function shouldAttemptAdminRegistrationFallback(error) {
-  const message = toErrorText(error);
-  const status = Number(error?.status || error?.statusCode || 0);
-
-  const isClearlyClientInputError =
-    status === StatusCodes.BAD_REQUEST &&
-    (message.includes("invalid email") ||
-      message.includes("email address") ||
-      message.includes("password") ||
-      message.includes("weak") ||
-      message.includes("validation"));
-
-  if (isClearlyClientInputError) {
-    return false;
-  }
-
-  if (
-    status === StatusCodes.TOO_MANY_REQUESTS ||
-    message.includes("rate limit") ||
-    message.includes("too many")
-  ) {
-    return false;
-  }
-
-  return (
-    status >= StatusCodes.INTERNAL_SERVER_ERROR ||
-    status === 0 ||
-    message.includes("error sending confirmation email") ||
-    message.includes("failed to send") ||
-    message.includes("confirm") ||
-    message.includes("smtp") ||
-    message.includes("mailer") ||
-    message.includes("mail") ||
-    message.includes("email provider") ||
-    message.includes("database error saving new user") ||
-    message.includes("unexpected_failure") ||
-    message.includes("signups not allowed") ||
-    message.includes("signup disabled")
-  );
-}
-
-async function registerWithAdminFallback({ email, password, userMetadata }) {
-  const adminDb = createAdminSupabaseClient();
-  if (!adminDb) {
-    return null;
-  }
-
-  const { data, error } = await adminDb.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: userMetadata,
-  });
-
-  if (error) {
-    return { error, data: null };
-  }
-
-  const createdUser = data?.user || null;
-
-  if (!createdUser) {
-    return {
-      error: new Error("Admin registration did not return a user record."),
-      data: null,
-    };
-  }
-
-  const signInResult = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (signInResult.error) {
-    return {
-      error: null,
-      data: {
-        user: createdUser,
-        session: null,
-      },
-    };
-  }
-
-  return {
-    error: null,
-    data: {
-      user: signInResult.data?.user || createdUser,
-      session: signInResult.data?.session || null,
-    },
-  };
 }
 
 async function queryProfileByIdentifier(db, identifier) {
@@ -546,13 +492,13 @@ export const authRepository = {
 
     let { data, error } = await signUp();
 
-    console.error("DEBUG SIGNUP ERROR:", error);
-
     if (!error) {
       return data;
     }
 
-    if (isDuplicateAuthError(error)) {
+    // Never reconcile (delete) or re-send on a rate-limit error: the retry
+    // would only burn more of the email quota.
+    if (!isEmailSendRateLimitError(error) && isDuplicateAuthError(error)) {
       const reconciled = await tryReconcileOrphanedAuthEmail(email);
 
       if (reconciled) {
@@ -566,23 +512,8 @@ export const authRepository = {
       }
     }
 
-    if (shouldAttemptAdminRegistrationFallback(error)) {
-      const fallbackResult = await registerWithAdminFallback({
-        email,
-        password,
-        userMetadata,
-      });
-
-      if (fallbackResult && !fallbackResult.error) {
-        return fallbackResult.data;
-      }
-
-      if (fallbackResult?.error) {
-        error = fallbackResult.error;
-      }
-    }
-
-    console.error("DEBUG REGISTER ERROR:", error);
+    // Errors are logged once, centrally, by errorHandler. Do not log the raw
+    // Supabase error here (it would duplicate the entry and include stack traces).
     throw toRegisterError(error);
   },
 

@@ -182,4 +182,69 @@ describe('useAuthSession', () => {
     expect(deps.addActivity).toHaveBeenCalledWith('Logout', 'Signed out from admin workspace')
     expect(deps.notifySuccess).toHaveBeenCalledWith('Logout successful.')
   })
+
+  describe('registration failures', () => {
+    const registrationPayload = {
+      fname: 'Admin',
+      mname: '',
+      lname: 'Name',
+      email: 'admin@citisent.gov',
+      departmentId: 'cto',
+      departmentLabel: 'City Treasury Office',
+      phone: '',
+      barangay: 'San Isidro Norte',
+      city: 'Sto. Tomas',
+      province: 'Batangas',
+      password: 'supersecret',
+    }
+
+    it('does not report success when registration is rate limited', async () => {
+      const rateLimitError = Object.assign(new Error('Please wait a while before trying again.'), {
+        status: 429,
+        retryAfterSeconds: 3600,
+      })
+      authApiService.register.mockRejectedValue(rateLimitError)
+
+      const deps = buildDependencies()
+      const { handleRegister } = useAuthSession(deps)
+
+      const result = await handleRegister(registrationPayload)
+
+      expect(result).toEqual({
+        ok: false,
+        status: 429,
+        retryAfterSeconds: 3600,
+        message: 'Please wait a while before trying again.',
+      })
+      expect(authApiService.register).toHaveBeenCalledTimes(1)
+      expect(deps.notifySuccess).not.toHaveBeenCalled()
+      expect(deps.setAuthPage).not.toHaveBeenCalled()
+      expect(deps.setRememberedEmail).not.toHaveBeenCalled()
+      expect(deps.addActivity).not.toHaveBeenCalled()
+    })
+
+    it('sends only one request for concurrent duplicate submissions', async () => {
+      let resolveRegister
+      authApiService.register.mockImplementation(
+        () => new Promise((resolve) => { resolveRegister = resolve })
+      )
+
+      const deps = buildDependencies()
+      const { handleRegister } = useAuthSession(deps)
+
+      const first = handleRegister(registrationPayload)
+      const second = await handleRegister(registrationPayload)
+
+      expect(second.ok).toBe(false)
+      expect(authApiService.register).toHaveBeenCalledTimes(1)
+
+      resolveRegister({ data: {} })
+      expect((await first).ok).toBe(true)
+
+      // The lock is released once the first request settles.
+      authApiService.register.mockResolvedValue({ data: {} })
+      expect((await handleRegister(registrationPayload)).ok).toBe(true)
+      expect(authApiService.register).toHaveBeenCalledTimes(2)
+    })
+  })
 })

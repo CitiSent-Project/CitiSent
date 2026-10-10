@@ -779,20 +779,6 @@ export const authService = {
       );
     }
 
-    // Generate and send signup OTP
-    try {
-      otpStore_.checkSendRateLimit(normalizedEmail);
-      const plainOtp = otpStore_.createOtp(normalizedEmail);
-      await mailerService.sendOtpEmail({
-        toEmail: normalizedEmail,
-        recipientName: normalizedFname,
-        otp: plainOtp,
-      });
-    } catch (err) {
-      // Ignore errors so the user can still be created, they can request resend later
-      logger.error("[AUTH] Failed to send signup OTP email", err);
-    }
-
     return toUserResponse({
       user: signUpData?.user,
       session: signUpData?.session,

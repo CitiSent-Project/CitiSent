@@ -480,17 +480,39 @@ export const authRepository = {
     return true;
   },
 
+  async confirmUserEmail(userId) {
+    const adminDb = createAdminSupabaseClient();
+    if (!adminDb) {
+      throw new Error("Admin client is required to confirm user emails");
+    }
+
+    const { error } = await adminDb.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+
+    if (error) {
+      throw toGatewayError("Failed to confirm user email", error);
+    }
+
+    return true;
+  },
+
   async registerWithEmailPassword({ email, password, userMetadata }) {
+    const adminDb = createAdminSupabaseClient();
+    if (!adminDb) {
+      throw new Error("Admin Supabase client is required for registration to bypass default emails.");
+    }
+
     const signUp = () =>
-      supabase.auth.signUp({
+      adminDb.auth.admin.createUser({
         email,
         password,
-        options: {
-          data: userMetadata,
-        },
+        email_confirm: false,
+        user_metadata: userMetadata,
       });
 
     let { data, error } = await signUp();
+
 
     if (!error) {
       return data;

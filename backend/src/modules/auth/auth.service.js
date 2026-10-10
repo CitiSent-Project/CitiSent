@@ -779,11 +779,45 @@ export const authService = {
       );
     }
 
+    // Generate and send signup OTP
+    try {
+      otpStore_.checkSendRateLimit(normalizedEmail);
+      const plainOtp = otpStore_.createOtp(normalizedEmail);
+      await mailerService.sendOtpEmail({
+        toEmail: normalizedEmail,
+        recipientName: normalizedFname,
+        otp: plainOtp,
+      });
+    } catch (err) {
+      // Ignore errors so the user can still be created, they can request resend later
+      logger.error("[AUTH] Failed to send signup OTP email", err);
+    }
+
     return toUserResponse({
       user: signUpData?.user,
       session: signUpData?.session,
       profile,
     });
+  },
+
+  async verifySignupOtp(email, otp) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    try {
+      otpStore_.verifyOtp(normalizedEmail, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    const profile = await authRepository.getProfileByEmail(normalizedEmail);
+    if (!profile) {
+      throw new AppError("Account not found.", StatusCodes.NOT_FOUND);
+    }
+
+    // Mark the user as email confirmed using Admin API
+    await authRepository.confirmUserEmail(profile.user_id);
+
+    return { success: true };
   },
 
   async login(payload, perf) {
@@ -801,7 +835,7 @@ export const authService = {
       const p = loginContext.profile
         ? loginContext.profile
         : await authRepository.getProfileByIdentifier(resolvedEmail);
-        
+
       let isBanned = false;
       if (p?.user_id) {
         if (String(p.account_status || "").trim().toLowerCase() === "banned") {
@@ -934,7 +968,7 @@ export const authService = {
         accessToken,
       );
       if (profile) {
-        await cacheService.setJSON(cacheKey, profile, 120).catch(() => {});
+        await cacheService.setJSON(cacheKey, profile, 120).catch(() => { });
       }
     }
 

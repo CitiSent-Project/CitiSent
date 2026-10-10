@@ -31,8 +31,9 @@ function formatTime(totalSeconds) {
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { email } = useLocalSearchParams();
+  const { email, mode } = useLocalSearchParams();
   const normalizedEmail = Array.isArray(email) ? email[0] : email || "";
+  const isSignup = mode === "signup";
 
   // OTP digit state
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
@@ -147,20 +148,32 @@ export default function OtpVerificationScreen() {
     setIsVerifying(true);
 
     try {
-      const result = await authApi.verifyOtp(normalizedEmail, otp);
-      const resetToken = result?.resetToken;
+      if (isSignup) {
+        await authApi.verifySignupOtp(normalizedEmail, otp);
+        clearInterval(otpTimerRef.current);
+        clearInterval(resendTimerRef.current);
+        showModal(
+          "info",
+          "Verification Successful",
+          "Your account has been verified. You can now log in.",
+          () => router.replace("/auth/LoginForm")
+        );
+      } else {
+        const result = await authApi.verifyOtp(normalizedEmail, otp);
+        const resetToken = result?.resetToken;
 
-      if (!resetToken) {
-        throw new Error("Verification succeeded but no reset token was returned.");
+        if (!resetToken) {
+          throw new Error("Verification succeeded but no reset token was returned.");
+        }
+
+        clearInterval(otpTimerRef.current);
+        clearInterval(resendTimerRef.current);
+
+        router.push({
+          pathname: "/auth/ResetPassword",
+          params: { resetToken },
+        });
       }
-
-      clearInterval(otpTimerRef.current);
-      clearInterval(resendTimerRef.current);
-
-      router.push({
-        pathname: "/auth/ResetPassword",
-        params: { resetToken },
-      });
     } catch (err) {
       const msg = err?.message || "Verification failed. Please try again.";
       setError(msg);

@@ -34,42 +34,42 @@ export function OfficeAdminAssignmentsSection({
   }))
 
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all sm:p-6 dark:border-slate-700/80 dark:bg-slate-800">
+    <section className="rounded-md border border-slate-200 bg-white p-4 transition-all sm:p-5 dark:border-slate-800 dark:bg-slate-900">
       {/* Section Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight dark:text-white">Office Admin Assignments</h2>
+          <h2 className="text-base font-semibold text-slate-900 tracking-tight dark:text-white">Office Admin Assignments</h2>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             Manage and reassign department responsibilities for office administrators.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50">
-            <FiBell className="text-blue-500 text-xs" />
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50">
+            <FiBell className="text-blue-600 text-xs" />
             <span>{totalOfficeUnread} unread notifications</span>
           </span>
         </div>
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/70 p-3 rounded-xl border border-slate-100 dark:bg-slate-900/40 dark:border-slate-700/60">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/80 p-2.5 rounded-md border border-slate-200/80 dark:bg-slate-900/60 dark:border-slate-800">
         <div className="relative flex flex-col gap-1 text-xs font-medium text-slate-700 dark:text-slate-300">
-          <label htmlFor="search-admins-input" className="text-slate-600 dark:text-slate-400">Search Admins</label>
+          <label htmlFor="search-admins-input" className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Search Admins</label>
           <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+            <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               id="search-admins-input"
               type="search"
               value={searchTerm}
               onChange={(event) => onSearchTermChange(event.target.value)}
               placeholder="Search name, email, or department..."
-              className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-8 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-2xs transition hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:hover:border-slate-600"
+              className="w-full rounded-md border border-slate-200 bg-white pl-8 pr-7 py-1.5 text-xs text-slate-800 placeholder-slate-400 transition hover:border-slate-300 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:hover:border-slate-700"
             />
             {searchTerm ? (
               <button
                 type="button"
                 onClick={() => onSearchTermChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 aria-label="Clear search"
               >
                 <FiX className="text-xs" />
@@ -79,12 +79,12 @@ export function OfficeAdminAssignmentsSection({
         </div>
 
         <div className="flex flex-col gap-1 text-xs font-medium text-slate-700 dark:text-slate-300">
-          <label className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+          <label className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <FiFilter className="text-slate-400 text-xs" />
             <span>Department Filter</span>
           </label>
           <DropdownButton
-            className="w-full h-8.5 rounded-lg border-slate-200 bg-white text-xs shadow-2xs hover:border-slate-300"
+            className="w-full h-8 rounded-md border-slate-200 bg-white text-xs hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
             ariaLabel="Department filter"
             value={departmentFilter}
             onChange={onDepartmentFilterChange}
@@ -201,7 +201,7 @@ export function OfficeAdminAssignmentsSection({
       </div>
 
       {/* Desktop Table View */}
-      <div className="mt-5 hidden overflow-hidden rounded-xl border border-slate-200/80 shadow-2xs lg:block dark:border-slate-700">
+      <div className="mt-4 hidden overflow-hidden rounded-md border border-slate-200 lg:block dark:border-slate-800">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-245 table-fixed text-left text-xs">
             <colgroup>
@@ -212,15 +212,15 @@ export function OfficeAdminAssignmentsSection({
               <col className="w-[16%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
-                <th className="pl-6 pr-3 py-3">Admin</th>
-                <th className="px-3 py-3">Email</th>
-                <th className="px-3 py-3">Current Department</th>
-                <th className="px-3 py-3">Assign Department</th>
-                <th className="pl-3 pr-6 py-3 text-center">Actions</th>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                <th className="pl-4 pr-3 py-2.5">Admin</th>
+                <th className="px-3 py-2.5">Email</th>
+                <th className="px-3 py-2.5">Current Department</th>
+                <th className="px-3 py-2.5">Assign Department</th>
+                <th className="pl-3 pr-4 py-2.5 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-700/60 dark:bg-slate-800">
+            <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800/60 dark:bg-slate-900">
               {filteredOfficeAdmins.map((admin) => {
                 const selectedDeptId = getSelectedDepartmentId(admin)
                 const hasChanges = Boolean(selectedDeptId && selectedDeptId !== admin.departmentId)
@@ -228,35 +228,35 @@ export function OfficeAdminAssignmentsSection({
                 const isSaveDisabled = !hasChanges || isProcessing
 
                 return (
-                  <tr key={admin.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-700/40">
-                    <td className="pl-6 pr-3 py-3.5">
+                  <tr key={admin.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="pl-4 pr-3 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-600 text-[11px] font-bold text-white shadow-2xs">
+                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-blue-600 text-[10px] font-bold text-white">
                           {getAdminInitials(admin.fullName)}
                         </div>
-                        <span className="font-semibold text-slate-900 truncate max-w-37.5 dark:text-white" title={admin.fullName}>
+                        <span className="font-medium text-slate-900 truncate max-w-37.5 dark:text-white" title={admin.fullName}>
                           {admin.fullName}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-3.5 text-slate-600 truncate max-w-45 dark:text-slate-300" title={admin.email}>
+                    <td className="px-3 py-2.5 text-slate-600 truncate max-w-45 dark:text-slate-300" title={admin.email}>
                       {admin.email}
                     </td>
-                    <td className="px-3 py-3.5">
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-42.5 truncate dark:bg-slate-700 dark:text-slate-300" title={admin.department}>
+                    <td className="px-3 py-2.5">
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 max-w-42.5 truncate dark:bg-slate-800 dark:text-slate-300" title={admin.department}>
                         {admin.department}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-3 py-2.5">
                       <DropdownButton
-                        className="h-8 w-full min-w-0 rounded-lg text-xs"
+                        className="h-8 w-full min-w-0 rounded-md text-xs border-slate-200 dark:border-slate-800"
                         ariaLabel={`Assign department for ${admin.fullName}`}
                         value={selectedDeptId}
                         onChange={(nextDepartmentId) => onDraftDepartmentChange(admin.id, nextDepartmentId)}
                         options={departmentAssignmentOptions}
                       />
                     </td>
-                    <td className="pl-3 pr-6 py-3.5 text-center">
+                    <td className="pl-3 pr-4 py-2.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"
@@ -270,10 +270,10 @@ export function OfficeAdminAssignmentsSection({
                               : 'Save assignment changes'
                           }
                           aria-label={`Save department assignment for ${admin.fullName}`}
-                          className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                          className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                             hasChanges && !isProcessing
-                              ? 'bg-blue-600 hover:bg-blue-700 active:scale-[0.97] text-white shadow-xs shadow-blue-500/20 cursor-pointer'
-                              : 'bg-slate-100 text-slate-400 border border-slate-200/80 cursor-not-allowed opacity-60 shadow-none dark:bg-slate-700/50 dark:text-slate-500 dark:border-slate-700'
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer'
+                              : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60 dark:bg-slate-800 dark:text-slate-600 dark:border-slate-800'
                           }`}
                         >
                           {isProcessing ? (
@@ -289,7 +289,7 @@ export function OfficeAdminAssignmentsSection({
                           onClick={() => onDeleteAdmin?.(admin)}
                           title={`Delete ${admin.fullName}`}
                           aria-label={`Delete ${admin.fullName}`}
-                          className="inline-flex items-center justify-center gap-1 rounded-lg border border-rose-200/80 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-900/40"
+                          className="inline-flex items-center justify-center gap-1 rounded-md border border-rose-200/80 bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-900/40 cursor-pointer"
                         >
                           <FiTrash2 className="text-xs" />
                           <span>Delete</span>
@@ -302,7 +302,7 @@ export function OfficeAdminAssignmentsSection({
 
               {filteredOfficeAdmins.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <td colSpan={5} className="px-6 py-8 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
                     No office admins match your search or filter criteria.
                   </td>
                 </tr>

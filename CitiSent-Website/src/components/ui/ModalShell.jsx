@@ -27,7 +27,7 @@ export function ModalShell({
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className={`fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/40 p-3 sm:p-4 backdrop-blur-xs dark:bg-slate-900/60 ${backdropClassName}`.trim()}
+          className={`fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/60 p-3 sm:p-4 backdrop-blur-[2px] ${backdropClassName}`.trim()}
           variants={backdropVariants}
           initial="initial"
           animate="animate"
@@ -50,7 +50,7 @@ export function ModalShell({
             initial="initial"
             animate="animate"
             exit="exit"
-            className={`max-h-[calc(100vh-1.5rem)] w-full ${maxWidth} overflow-y-auto rounded-xl bg-white shadow-2xl sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl dark:border dark:border-slate-700 dark:bg-slate-800 ${className}`.trim()}
+            className={`max-h-[calc(100vh-1.5rem)] w-full ${maxWidth} overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl sm:max-h-[calc(100vh-2rem)] dark:border-slate-800 dark:bg-slate-900 ${className}`.trim()}
           >
             {children}
           </motion.div>

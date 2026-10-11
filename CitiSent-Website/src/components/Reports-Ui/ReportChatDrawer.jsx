@@ -183,33 +183,33 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-slate-900/20 dark:bg-slate-900/60" onClick={onClose} aria-hidden="true" />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-md min-w-0 flex-col bg-white dark:bg-slate-900 shadow-2xl dark:shadow-slate-900/50" role="dialog" aria-modal="true" aria-label="Report chat">
-        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-[#183b68] dark:bg-slate-950 px-4 py-3 text-white gap-2">
+      <div className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <aside className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-md min-w-0 flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800" role="dialog" aria-modal="true" aria-label="Report chat">
+        <header className="flex items-center justify-between border-b border-slate-800 bg-[#0c1322] px-4 py-2.5 text-white gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
-              <FiMessageCircle className="shrink-0 text-blue-200 text-sm" />
-              <h2 className="font-semibold text-sm sm:text-base truncate text-white">{report.email || report.name || 'User'}</h2>
+              <FiMessageCircle className="shrink-0 text-blue-400 text-xs" />
+              <h2 className="font-semibold text-xs sm:text-sm truncate text-white">{report.email || report.name || 'User'}</h2>
               {report.isOnline ?? report.is_online ? (
-                <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="shrink-0 flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Online
                 </span>
               ) : (
-                <span className="shrink-0 text-[10px] sm:text-[11px] font-medium text-blue-200">
+                <span className="shrink-0 text-[10px] font-medium text-slate-400">
                   Offline
                 </span>
               )}
             </div>
-            <p className="mt-0.5 truncate text-[11px] sm:text-xs text-blue-100/90 font-medium">
+            <p className="mt-0.5 truncate text-[11px] text-slate-400 font-mono">
               Report {report.reportNum || (report.id ? `${String(report.id).slice(0, 8)}…` : '')}{report.category ? ` · ${report.category}` : ''}
             </p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button type="button" onClick={load} className="rounded-lg p-2 hover:bg-white/10 active:scale-95 transition" aria-label="Refresh conversation">
+            <button type="button" onClick={load} className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Refresh conversation">
               <FiRefreshCw className="text-xs" />
             </button>
-            <button type="button" onClick={onClose} className="rounded-lg p-2 hover:bg-white/10 active:scale-95 transition" aria-label="Close chat">
+            <button type="button" onClick={onClose} className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Close chat">
               <FiX className="text-sm" />
             </button>
           </div>

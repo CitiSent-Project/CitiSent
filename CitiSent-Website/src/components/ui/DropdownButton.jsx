@@ -258,18 +258,18 @@ export function DropdownButton({
 				aria-controls={listboxId}
 				aria-label={ariaLabel || label || 'Dropdown'}
 				aria-invalid={ariaInvalid || undefined}
-				className={`group inline-flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-800 dark:focus:ring-blue-500/20 ${
+				className={`group inline-flex h-9 w-full min-w-0 items-center gap-2.5 rounded-md border border-slate-200 bg-white px-3 text-xs transition-colors focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/30 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 ${
 					disabled
-						? 'cursor-not-allowed opacity-70'
-						: 'cursor-pointer shadow-sm hover:shadow-md'
+						? 'cursor-not-allowed opacity-60'
+						: 'cursor-pointer'
 				}`}
 			>
-				{Icon ? <Icon className="shrink-0 text-base text-slate-500 dark:text-slate-400" /> : null}
+				{Icon ? <Icon className="shrink-0 text-xs text-slate-500 dark:text-slate-400" /> : null}
 
-				<div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left">
-					{label ? <span className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">{label}:</span> : null}
+				<div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left">
+					{label ? <span className="whitespace-nowrap text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}:</span> : null}
 					<span
-						className={`truncate font-medium ${
+						className={`truncate font-medium text-xs ${
 							isPlaceholder ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'
 						}`}
 					>
@@ -278,7 +278,7 @@ export function DropdownButton({
 				</div>
 
 				<FiChevronDown
-					className={`ml-auto shrink-0 text-sm text-slate-400 dark:text-slate-500 transition-transform duration-150 ease-in-out ${
+					className={`ml-auto shrink-0 text-xs text-slate-400 dark:text-slate-500 transition-transform duration-150 ease-in-out ${
 						open ? 'rotate-180' : ''
 					}`}
 				/>
@@ -295,7 +295,7 @@ export function DropdownButton({
 								initial="initial"
 								animate="animate"
 								exit="exit"
-								className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
+								className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900"
 							>
 								<div
 									id={listboxId}
@@ -349,23 +349,23 @@ export function DropdownButton({
 														if (optionDisabled) return
 														commitValue(option.value)
 													}}
-													className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
+													className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-xs transition-colors cursor-pointer ${
 														optionDisabled
 															? 'cursor-not-allowed text-slate-300 dark:text-slate-600'
 															: active
-																? 'bg-slate-50 text-slate-900 dark:bg-slate-700 dark:text-white'
-																: 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700'
+																? 'bg-slate-50 text-slate-900 dark:bg-slate-800 dark:text-white'
+																: 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
 													} ${selected ? 'font-medium' : 'font-normal'}`}
 												>
 													<span className="min-w-0 flex-1 truncate">{option.label}</span>
 													{selected ? (
-														<span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+														<span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
 													) : null}
 												</motion.button>
 											)
 										})
 									) : (
-										<div className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">No options</div>
+										<div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500">No options</div>
 									)}
 								</div>
 							</motion.div>

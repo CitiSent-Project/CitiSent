@@ -30,4 +30,24 @@ describe('accessControlController', () => {
 
     expect(decision).toEqual({ allowed: true })
   })
+
+  it('allows office admins and superadmins to access all settings sub-sections', () => {
+    const settingsSubPages = [
+      APP_PAGES.SETTINGS_APPEARANCE,
+      APP_PAGES.SETTINGS_SECURITY,
+      APP_PAGES.SETTINGS_NOTIFICATIONS,
+      APP_PAGES.SETTINGS_REPORT_MANAGEMENT,
+      APP_PAGES.SETTINGS_AUDIT_LOGS,
+      APP_PAGES.SETTINGS_SYSTEM,
+    ]
+
+    for (const page of settingsSubPages) {
+      expect(buildPageAccessDecision({ role: USER_ROLES.OFFICE_ADMIN, requestedPage: page })).toEqual({
+        allowed: true,
+      })
+      expect(buildPageAccessDecision({ role: USER_ROLES.SUPERADMIN, requestedPage: page })).toEqual({
+        allowed: true,
+      })
+    }
+  })
 })

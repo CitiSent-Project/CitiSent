@@ -50,7 +50,19 @@ const navItems = [
 		roles: [USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN],
 	},
 	{ label: 'Admin Profile', pageKey: APP_PAGES.ADMIN_PROFILE, icon: FiUser },
-	{ label: 'Settings', pageKey: APP_PAGES.SETTINGS, icon: FiSettings },
+	{
+		label: 'Settings',
+		pageKey: APP_PAGES.SETTINGS,
+		icon: FiSettings,
+		children: [
+			{ label: 'Appearance', pageKey: APP_PAGES.SETTINGS_APPEARANCE },
+			{ label: 'Security', pageKey: APP_PAGES.SETTINGS_SECURITY },
+			{ label: 'Notifications', pageKey: APP_PAGES.SETTINGS_NOTIFICATIONS },
+			{ label: 'Report Management', pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT },
+			{ label: 'Audit & Logs', pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS },
+			{ label: 'System', pageKey: APP_PAGES.SETTINGS_SYSTEM },
+		],
+	},
 	{ label: 'Logout', pageKey: APP_PAGES.LOGOUT, icon: FiLogOut, danger: true },
 ]
 
@@ -97,15 +109,28 @@ function CitiSentLogoIcon({ className = '' }) {
 
 function NavOption({ item, activePage, onNavigate, isDesktopExpanded }) {
 	const hasChildren = Boolean(item.children?.length)
-	const isReportsSection = activePage.startsWith(`${APP_PAGES.REPORTS}:`)
-	const isSelected = hasChildren ? isReportsSection : activePage === item.pageKey
+	const isChildActive = Boolean(item.children?.some((child) => child.pageKey === activePage))
+	const isSectionActive =
+		activePage === item.pageKey ||
+		(item.pageKey && activePage.startsWith(`${item.pageKey}:`)) ||
+		isChildActive
+	const isSelected = hasChildren ? isSectionActive : activePage === item.pageKey
 	const Icon = item.icon
-	const [submenuOpen, setSubmenuOpen] = useState(hasChildren && isReportsSection)
+	const [prevActivePage, setPrevActivePage] = useState(activePage)
+	const [submenuOpen, setSubmenuOpen] = useState(hasChildren && isSectionActive)
+
+	if (prevActivePage !== activePage) {
+		setPrevActivePage(activePage)
+		if (hasChildren && isSectionActive) {
+			setSubmenuOpen(true)
+		}
+	}
 
 	function handleClick() {
 		if (hasChildren) {
-			if (!isReportsSection) {
-				onNavigate(APP_PAGES.REPORTS_BY_CATEGORY)
+			if (!isSectionActive) {
+				const defaultChild = item.children[0]?.pageKey || item.pageKey
+				onNavigate(defaultChild)
 				setSubmenuOpen(true)
 				return
 			}

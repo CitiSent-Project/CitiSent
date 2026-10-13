@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
 	FiBell,
@@ -116,13 +116,15 @@ function NavOption({ item, activePage, onNavigate, isDesktopExpanded }) {
 		isChildActive
 	const isSelected = hasChildren ? isSectionActive : activePage === item.pageKey
 	const Icon = item.icon
+	const [prevActivePage, setPrevActivePage] = useState(activePage)
 	const [submenuOpen, setSubmenuOpen] = useState(hasChildren && isSectionActive)
 
-	useEffect(() => {
+	if (prevActivePage !== activePage) {
+		setPrevActivePage(activePage)
 		if (hasChildren && isSectionActive) {
 			setSubmenuOpen(true)
 		}
-	}, [hasChildren, isSectionActive])
+	}
 
 	function handleClick() {
 		if (hasChildren) {

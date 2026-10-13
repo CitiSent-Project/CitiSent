@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_PREFERENCES,
@@ -53,19 +53,22 @@ export function Settings({
   onRequestLogout,
   onNavigate,
 }) {
+  const targetTab = activePage && PAGE_KEY_TO_TAB[activePage] ? PAGE_KEY_TO_TAB[activePage] : null
+  const [prevActivePage, setPrevActivePage] = useState(activePage)
   const [activeTab, setActiveTab] = useState(() => {
-    if (activePage && PAGE_KEY_TO_TAB[activePage]) {
-      return PAGE_KEY_TO_TAB[activePage]
+    if (targetTab) {
+      return targetTab
     }
     const storedTab = loadFromStorage(ADMIN_STORAGE_KEYS.settingsActiveTab, tabs[0])
     return tabs.includes(storedTab) ? storedTab : tabs[0]
   })
 
-  useEffect(() => {
-    if (activePage && PAGE_KEY_TO_TAB[activePage]) {
-      setActiveTab(PAGE_KEY_TO_TAB[activePage])
+  if (prevActivePage !== activePage) {
+    setPrevActivePage(activePage)
+    if (targetTab && targetTab !== activeTab) {
+      setActiveTab(targetTab)
     }
-  }, [activePage])
+  }
 
   const selectedTheme = preferences?.theme ?? DEFAULT_PREFERENCES.theme
   const selectedFontSize = preferences?.fontSize ?? DEFAULT_PREFERENCES.fontSize

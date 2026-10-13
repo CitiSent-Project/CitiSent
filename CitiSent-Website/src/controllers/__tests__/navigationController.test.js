@@ -114,6 +114,22 @@ describe('navigationController', () => {
       pushSpy.mockRestore()
       replaceSpy.mockRestore()
     })
+
+    it('maps and parses settings sub-section routes', () => {
+      expect(getPathFromPage(APP_PAGES.SETTINGS_APPEARANCE)).toBe('/settings/appearance')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_SECURITY)).toBe('/settings/security')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_NOTIFICATIONS)).toBe('/settings/notifications')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_REPORT_MANAGEMENT)).toBe('/settings/report-management')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_AUDIT_LOGS)).toBe('/settings/audit-logs')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_SYSTEM)).toBe('/settings/system')
+
+      expect(getPageFromPath('/settings/appearance')).toEqual({ pageKey: APP_PAGES.SETTINGS_APPEARANCE, params: {} })
+      expect(getPageFromPath('/settings/security')).toEqual({ pageKey: APP_PAGES.SETTINGS_SECURITY, params: {} })
+      expect(getPageFromPath('/settings/notifications')).toEqual({ pageKey: APP_PAGES.SETTINGS_NOTIFICATIONS, params: {} })
+      expect(getPageFromPath('/settings/report-management')).toEqual({ pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT, params: {} })
+      expect(getPageFromPath('/settings/audit-logs')).toEqual({ pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS, params: {} })
+      expect(getPageFromPath('/settings/system')).toEqual({ pageKey: APP_PAGES.SETTINGS_SYSTEM, params: {} })
+    })
   })
 })
 

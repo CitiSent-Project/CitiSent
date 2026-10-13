@@ -12,7 +12,6 @@ import {
   NotificationSettingsTab,
   ReportManagementSettingsTab,
   SecuritySettingsTab,
-  SettingsTabNav,
   SystemSettingsTab,
 } from '../../components/Settings-Ui'
 
@@ -159,8 +158,6 @@ export function Settings({
             </div>
           </div>
         </header>
-
-        <SettingsTabNav tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
         {tabContent[activeTab]}
       </div>

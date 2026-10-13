@@ -42,30 +42,38 @@ describe('Settings Page Layout & Section Synchronization', () => {
     expect(container.textContent).toContain('Security Settings')
   })
 
-  it('notifies onNavigate when switching tabs if onNavigate is provided', async () => {
+  it('does not render horizontal tab navigation chips and notifies onNavigate via internal actions', async () => {
     const handleNavigate = vi.fn()
 
     await act(async () => {
       root.render(
         <Settings
-          activePage={APP_PAGES.SETTINGS_APPEARANCE}
+          activePage={APP_PAGES.SETTINGS_SYSTEM}
           profile={{ id: 'A-1', email: 'admin@citisent.gov' }}
           preferences={{ theme: 'Light', fontSize: 'Medium' }}
+          activityLog={[{ id: 1, action: 'Login' }]}
           onUpdatePreferences={vi.fn()}
           onNavigate={handleNavigate}
         />
       )
     })
 
-    // Find tab buttons
-    const tabButtons = Array.from(container.querySelectorAll('button'))
-    const notificationsTab = tabButtons.find((btn) => btn.textContent?.trim() === 'Notifications')
-    expect(notificationsTab).toBeDefined()
+    // Horizontal tabs should no longer be rendered
+    const tabNavButtons = Array.from(container.querySelectorAll('button')).filter((btn) =>
+      ['Appearance', 'Security', 'Notifications', 'Report Management'].includes(btn.textContent?.trim())
+    )
+    expect(tabNavButtons).toHaveLength(0)
+
+    // Clicking "Open activity logs" inside System section calls onNavigate with SETTINGS_AUDIT_LOGS
+    const openLogsButton = Array.from(container.querySelectorAll('button')).find((btn) =>
+      btn.textContent?.includes('Open activity logs')
+    )
+    expect(openLogsButton).toBeDefined()
 
     await act(async () => {
-      notificationsTab.click()
+      openLogsButton.click()
     })
 
-    expect(handleNavigate).toHaveBeenCalledWith(APP_PAGES.SETTINGS_NOTIFICATIONS)
+    expect(handleNavigate).toHaveBeenCalledWith(APP_PAGES.SETTINGS_AUDIT_LOGS)
   })
 })

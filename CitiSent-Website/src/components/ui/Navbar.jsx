@@ -14,10 +14,22 @@ import {
 	FiChevronUp,
 	FiX,
 } from 'react-icons/fi'
+import {
+	Activity01Icon,
+	Alert01Icon,
+	Clock01Icon,
+	File01Icon,
+	Layers01Icon,
+	Notification03Icon,
+	PaintBoardIcon,
+	Settings02Icon,
+	Shield01Icon,
+} from '@hugeicons/core-free-icons'
 import CitiSentLogo from '/assets/CitiSentLogo.svg'
 import { APP_PAGES } from '../../models/pageModel'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
 import { NotificationsDrawer } from '../Notifications-Ui/NotificationsDrawer'
+import { BranchedSubtree } from './BranchedMenu'
 
 const navItems = [
 	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
@@ -38,9 +50,9 @@ const navItems = [
 		icon: FiFileText,
 		roles: [USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN],
 		children: [
-			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY },
-			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY },
-			{ label: 'History', pageKey: APP_PAGES.REPORTS_HISTORY },
+			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY, icon: Layers01Icon },
+			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY, icon: Alert01Icon },
+			{ label: 'History', pageKey: APP_PAGES.REPORTS_HISTORY, icon: Clock01Icon },
 		],
 	},
 	{
@@ -55,12 +67,12 @@ const navItems = [
 		pageKey: APP_PAGES.SETTINGS,
 		icon: FiSettings,
 		children: [
-			{ label: 'Appearance', pageKey: APP_PAGES.SETTINGS_APPEARANCE },
-			{ label: 'Security', pageKey: APP_PAGES.SETTINGS_SECURITY },
-			{ label: 'Notifications', pageKey: APP_PAGES.SETTINGS_NOTIFICATIONS },
-			{ label: 'Report Management', pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT },
-			{ label: 'Audit & Logs', pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS },
-			{ label: 'System', pageKey: APP_PAGES.SETTINGS_SYSTEM },
+			{ label: 'Appearance', pageKey: APP_PAGES.SETTINGS_APPEARANCE, icon: PaintBoardIcon },
+			{ label: 'Security', pageKey: APP_PAGES.SETTINGS_SECURITY, icon: Shield01Icon },
+			{ label: 'Notifications', pageKey: APP_PAGES.SETTINGS_NOTIFICATIONS, icon: Notification03Icon },
+			{ label: 'Report Management', pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT, icon: File01Icon },
+			{ label: 'Audit & Logs', pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS, icon: Activity01Icon },
+			{ label: 'System', pageKey: APP_PAGES.SETTINGS_SYSTEM, icon: Settings02Icon },
 		],
 	},
 	{ label: 'Logout', pageKey: APP_PAGES.LOGOUT, icon: FiLogOut, danger: true },
@@ -183,25 +195,21 @@ function NavOption({ item, activePage, onNavigate, isDesktopExpanded }) {
 			</MotionButton>
 
 			{hasChildren && submenuOpen ? (
-				<div className={`mt-1 space-y-1 border-l border-slate-800 ml-4 pl-3 ${isDesktopExpanded ? 'block' : 'block lg:hidden'}`}>
-					{item.children.map((child) => {
-						const childSelected = activePage === child.pageKey
-
-						return (
-							<button
-								type="button"
-								key={child.pageKey}
-								onClick={() => onNavigate(child.pageKey)}
-								className={`block w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors cursor-pointer ${
-									childSelected
-										? 'bg-blue-600/15 text-white font-medium'
-										: 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
-								}`}
-							>
-								{child.label}
-							</button>
-						)
-					})}
+				<div className={`mt-0.5 overflow-hidden ${isDesktopExpanded ? 'block' : 'block lg:hidden'}`}>
+					<BranchedSubtree
+						kids={item.children}
+						active={activePage}
+						onSelect={(pageKey) => onNavigate(pageKey)}
+						rowHeight={34}
+						indent={36}
+						trunk={16}
+						radius={10}
+						lineWidth={1.5}
+						color="#f8fafc"
+						accentColor="#3b82f6"
+						lineColor="#334155"
+						fontSize={12.5}
+					/>
 				</div>
 			) : null}
 		</div>

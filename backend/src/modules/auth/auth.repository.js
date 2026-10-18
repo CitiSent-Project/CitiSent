@@ -342,9 +342,10 @@ async function findAuthUserByEmail(email) {
   }
 
   const perPage = 200;
+  const maxPages = 50;
   let page = 1;
 
-  while (true) {
+  while (page <= maxPages) {
     const { data, error } = await adminDb.auth.admin.listUsers({
       page,
       perPage,
@@ -370,6 +371,8 @@ async function findAuthUserByEmail(email) {
 
     page += 1;
   }
+
+  return null;
 }
 
 async function tryReconcileOrphanedAuthEmail(email) {

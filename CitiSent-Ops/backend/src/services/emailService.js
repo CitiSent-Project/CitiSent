@@ -198,7 +198,9 @@ export async function sendSuperadminInvitationEmail({
 
   // 3. Fallback: Development Simulation
   console.warn(`[EmailService Notice] Email dispatch simulated for ${toEmail}. Reason: ${lastError || "No credentials configured"}`);
-  console.log(`[EmailService Notice] Setup URL: ${setupUrl}`);
+  if (!env.isProduction) {
+    console.log(`[EmailService Notice] Setup link generated for ${toEmail}`);
+  }
   return {
     success: false,
     simulated: true,

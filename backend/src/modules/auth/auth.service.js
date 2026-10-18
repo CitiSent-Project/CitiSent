@@ -54,13 +54,19 @@ function normalizeOptionalString(value) {
   return normalizedValue || null;
 }
 
+let _devAdminAuthJwtSecret = null;
+
 function getAdminAuthJwtSecret() {
-  return (
-    env.INVITATION_JWT_SECRET ||
-    env.SUPABASE_SERVICE_ROLE_KEY ||
-    env.SUPABASE_ANON_KEY ||
-    "citisent_admin_2fa_secret_fallback_key_at_least_32_chars"
-  );
+  if (env.INVITATION_JWT_SECRET) {
+    return env.INVITATION_JWT_SECRET;
+  }
+  if (env.isProduction) {
+    throw new Error("Missing required INVITATION_JWT_SECRET in production environment");
+  }
+  if (!_devAdminAuthJwtSecret) {
+    _devAdminAuthJwtSecret = crypto.randomBytes(32).toString("hex");
+  }
+  return _devAdminAuthJwtSecret;
 }
 
 async function resolveProfileEmailFromCandidates(candidates) {
@@ -265,8 +271,9 @@ export const authService = {
       throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
     }
 
-    // Generate OTP
-    const plainOtp = otpStore_.createOtp(profile.email, 8 * 60 * 60 * 1000);
+    // Generate OTP (expires in 10 minutes)
+    const ADMIN_LOGIN_OTP_EXPIRY_MS = 10 * 60 * 1000;
+    const plainOtp = otpStore_.createOtp(profile.email, ADMIN_LOGIN_OTP_EXPIRY_MS);
 
     // Send email
     try {
@@ -291,7 +298,7 @@ export const authService = {
       );
     }
 
-    // Create signed temporary challenge token (valid 8h)
+    // Create signed temporary challenge token (valid 10m)
     const secret = getAdminAuthJwtSecret();
     const tempToken = jwt.sign(
       {
@@ -303,7 +310,7 @@ export const authService = {
         authUser: authResult?.user || null,
       },
       secret,
-      { expiresIn: "8h" },
+      { expiresIn: "10m" },
     );
 
     return {
@@ -311,7 +318,7 @@ export const authService = {
       tempToken,
       email: profile.email,
       maskedEmail: maskEmail(profile.email),
-      expiresInSeconds: 28800,
+      expiresInSeconds: 600,
       resendCooldownSeconds: 60,
     };
   },
@@ -431,7 +438,7 @@ export const authService = {
       throw new AppError("Admin account not found.", StatusCodes.NOT_FOUND);
     }
 
-    const plainOtp = otpStore_.createOtp(normalizedEmail, 8 * 60 * 60 * 1000);
+    const plainOtp = otpStore_.createOtp(normalizedEmail, 10 * 60 * 1000);
 
     try {
       await mailerService.sendLoginOtpEmail({
@@ -935,7 +942,12 @@ export const authService = {
         email: activatedProfile?.email || verifiedToken.email,
         status: "active",
       })
-      .catch(() => { });
+      .catch((err) => {
+        logger.warn("[AUTH] Failed to create account activation notification", {
+          error: err?.message,
+          userId: verifiedToken.userId,
+        });
+      });
 
     return {
       activated: true,

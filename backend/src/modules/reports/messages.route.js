@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../../shared/utils/asyncHandler.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
+import { messageRateLimiter } from "../../middlewares/rateLimiter.js";
 import { reportMessagesController } from "./messages.controller.js";
 import {
   listReportMessagesSchema,
@@ -21,6 +22,7 @@ reportMessagesRouter.get(
 reportMessagesRouter.post(
   "/",
   requireAuth,
+  messageRateLimiter,
   validateRequest(sendReportMessageSchema),
   asyncHandler(reportMessagesController.sendMessage),
 );

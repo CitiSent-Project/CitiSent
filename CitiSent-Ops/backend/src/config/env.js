@@ -15,7 +15,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   DEVELOPER_ALLOWED_EMAILS: z.string().default(""),
   CLIENT_WEB_APP_BASE_URL: z.string().url().default("https://citisent-website.vercel.app"),
-  INVITATION_JWT_SECRET: z.string().default("1de03ba81cbaa5a192384b295ae086a3932e464e285eb3a1547fd812722263b3e75a220ff15a06b5785722d08193bcfe4740f130de590bc2086639196c0ecf7c"),
+  INVITATION_JWT_SECRET: z.string().optional(),
   BREVO_API_KEY: z.string().optional().default(""),
   BREVO_SENDER_EMAIL: z.string().optional().default("madriagajohneduard@gmail.com"),
   BREVO_SENDER_NAME: z.string().optional().default("CitiSent Platform"),
@@ -42,9 +42,18 @@ const normalizedDeveloperEmails = envData.DEVELOPER_ALLOWED_EMAILS.split(",")
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
 
+let resolvedSecret = envData.INVITATION_JWT_SECRET;
+if (!resolvedSecret) {
+  if (envData.NODE_ENV === "production") {
+    throw new Error("[CitiSent-Ops Backend] Missing required INVITATION_JWT_SECRET in production environment");
+  }
+  resolvedSecret = "citisent_ops_dev_jwt_secret_fallback_key_32chars_min";
+}
+
 export const env = Object.freeze({
   ...envData,
   isProduction: envData.NODE_ENV === "production",
+  INVITATION_JWT_SECRET: resolvedSecret,
   corsOrigins: normalizedOrigins,
   developerAllowedEmails: normalizedDeveloperEmails,
 });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../../shared/utils/asyncHandler.js";
 import { requireAuth } from "../../middlewares/auth.js";
 import { validateRequest } from "../../middlewares/validateRequest.js";
+import { reportRateLimiter } from "../../middlewares/rateLimiter.js";
 import {
   createReportSchema,
   deleteReportSchema,
@@ -24,6 +25,7 @@ reportsRouter.get(
 reportsRouter.post(
   "/",
   requireAuth,
+  reportRateLimiter,
   validateRequest(createReportSchema),
   asyncHandler(reportsController.create),
 );

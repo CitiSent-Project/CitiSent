@@ -214,4 +214,16 @@ export const adminResendOtpSchema = z.object({
   }),
 });
 
+export const guestSessionSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z
+    .object({
+      guestId: z.string().trim().uuid().optional(),
+      recoveryToken: z.string().trim().min(1).optional(),
+    })
+    .optional()
+    .default({}),
+});
+
 

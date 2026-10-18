@@ -40,11 +40,22 @@ def verify_internal_api_key(api_key: str = Security(api_key_header)):
     return True
 
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS") or os.getenv("CORS_ORIGINS")
+is_production = os.getenv("ENVIRONMENT", "").lower() == "production"
 if allowed_origins_env:
     allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
     allow_credentials = True
+elif not is_production:
+    allowed_origins = [
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ]
+    allow_credentials = True
 else:
-    allowed_origins = ["*"]
+    allowed_origins = []
     allow_credentials = False
 
 app.add_middleware(

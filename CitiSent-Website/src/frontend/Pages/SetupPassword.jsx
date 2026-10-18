@@ -109,9 +109,9 @@ export function SetupPasswordPage() {
       })
       setSuccessMessage(
         response?.data?.message ||
-          (isResetMode
-            ? 'Your password has been reset successfully. You can now sign in.'
-            : 'Your CitiSent account is active. You can now sign in.')
+        (isResetMode
+          ? 'Your password has been reset successfully. You can now sign in.'
+          : 'Your CitiSent account is active. You can now sign in.')
       )
       setForm(initialForm)
       setHasSubmitted(false)
@@ -136,21 +136,21 @@ export function SetupPasswordPage() {
     : 'Choose a password for your CitiSent account.'
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#f8fafc] via-[#edf2f9] to-[#e4eaf5] px-4 py-12">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-[#f8fafc] via-[#edf2f9] to-[#e4eaf5] px-4 py-12">
       {/* Decorative ambient blurred gradients */}
       <div
-        className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-blue-200/35 blur-3xl"
+        className="pointer-events-none absolute -top-40 -left-40 h-80 w-96 rounded-full bg-blue-200/35 blur-3xl"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -bottom-40 -right-40 h-[480px] w-[480px] rounded-full bg-indigo-200/30 blur-3xl"
+        className="pointer-events-none absolute -bottom-40 -right-40 h-80 w-96 rounded-full bg-indigo-200/30 blur-3xl"
         aria-hidden="true"
       />
 
-      <section className="relative z-10 w-full max-w-[540px]">
-        <div className="rounded-[32px] border border-white/80 bg-white/95 p-7 shadow-[0_24px_50px_-12px_rgba(23,63,117,0.12),0_4px_16px_rgba(0,0,0,0.02)] backdrop-blur-xl sm:p-10">
+      <section className="relative z-10 w-full max-w-sm">
+        <div className="rounded-4xl border border-white/80 bg-white/95 p-7 shadow-[0_24px_50px_-12px_rgba(23,63,117,0.12),0_4px_16px_rgba(0,0,0,0.02)] backdrop-blur-xl sm:p-10">
           <div className="mb-8 flex items-center gap-3.5">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-linear-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25">
               <FiLock className="text-xl" />
             </span>
             <div>

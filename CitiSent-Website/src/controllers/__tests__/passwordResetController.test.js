@@ -28,11 +28,13 @@ describe('passwordResetController', () => {
   })
 
   describe('password validation', () => {
-    it('requires an eight character matching password', () => {
+    it('requires a strong matching password adhering to core security rules', () => {
+      const validPass = 'K9#mP$2vL!q8'
       expect(validatePassword('', '')).toBe('Please enter a new password.')
-      expect(validatePassword('short', 'short')).toBe('Your new password must be at least 8 characters.')
-      expect(validatePassword('12345678', '87654321')).toBe('Your passwords do not match.')
-      expect(validatePassword('12345678', '12345678')).toBe('')
+      expect(validatePassword('short', 'short')).toBe('Password must be at least 12 characters long.')
+      expect(validatePassword('NoSpecialChar12', 'NoSpecialChar12')).toBe('Password must include at least one special symbol (!@#$%^&*).')
+      expect(validatePassword(validPass, 'DifferentPass1!')).toBe('Passwords do not match.')
+      expect(validatePassword(validPass, validPass)).toBe('')
     })
   })
 

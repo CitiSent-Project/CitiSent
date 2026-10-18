@@ -1,3 +1,5 @@
+import { validatePassword as validateStrongPassword } from '../../utils/passwordValidation'
+
 export function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase()
 }
@@ -19,9 +21,7 @@ export function validateOtp(value) {
 
 export function validatePassword(password, confirmation) {
   if (!password) return 'Please enter a new password.'
-  if (password.length < 8) return 'Your new password must be at least 8 characters.'
-  if (password !== confirmation) return 'Your passwords do not match.'
-  return ''
+  return validateStrongPassword(password, confirmation)
 }
 
 export function resolveSafeErrorMessage(error, fallback) {

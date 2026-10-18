@@ -122,6 +122,7 @@ describe('navigationController', () => {
       expect(getPathFromPage(APP_PAGES.SETTINGS_REPORT_MANAGEMENT)).toBe('/settings/report-management')
       expect(getPathFromPage(APP_PAGES.SETTINGS_AUDIT_LOGS)).toBe('/settings/audit-logs')
       expect(getPathFromPage(APP_PAGES.SETTINGS_SYSTEM)).toBe('/settings/system')
+      expect(getPathFromPage(APP_PAGES.SETTINGS_PRIVACY_TERMS)).toBe('/settings/privacy-policy')
 
       expect(getPageFromPath('/settings/appearance')).toEqual({ pageKey: APP_PAGES.SETTINGS_APPEARANCE, params: {} })
       expect(getPageFromPath('/settings/security')).toEqual({ pageKey: APP_PAGES.SETTINGS_SECURITY, params: {} })
@@ -129,6 +130,7 @@ describe('navigationController', () => {
       expect(getPageFromPath('/settings/report-management')).toEqual({ pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT, params: {} })
       expect(getPageFromPath('/settings/audit-logs')).toEqual({ pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS, params: {} })
       expect(getPageFromPath('/settings/system')).toEqual({ pageKey: APP_PAGES.SETTINGS_SYSTEM, params: {} })
+      expect(getPageFromPath('/settings/privacy-policy')).toEqual({ pageKey: APP_PAGES.SETTINGS_PRIVACY_TERMS, params: {} })
     })
   })
 })

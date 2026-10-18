@@ -10,6 +10,7 @@ import {
   AppearanceSettingsTab,
   AuditLogsSettingsTab,
   NotificationSettingsTab,
+  PrivacyTermsSettingsTab,
   ReportManagementSettingsTab,
   SecuritySettingsTab,
   SystemSettingsTab,
@@ -22,6 +23,7 @@ const tabs = [
   'Report Management',
   'Audit & Logs',
   'System',
+  'Privacy & Terms',
 ]
 
 const PAGE_KEY_TO_TAB = {
@@ -31,6 +33,7 @@ const PAGE_KEY_TO_TAB = {
   [APP_PAGES.SETTINGS_REPORT_MANAGEMENT]: 'Report Management',
   [APP_PAGES.SETTINGS_AUDIT_LOGS]: 'Audit & Logs',
   [APP_PAGES.SETTINGS_SYSTEM]: 'System',
+  [APP_PAGES.SETTINGS_PRIVACY_TERMS]: 'Privacy & Terms',
 }
 
 const TAB_TO_PAGE_KEY = {
@@ -40,6 +43,7 @@ const TAB_TO_PAGE_KEY = {
   'Report Management': APP_PAGES.SETTINGS_REPORT_MANAGEMENT,
   'Audit & Logs': APP_PAGES.SETTINGS_AUDIT_LOGS,
   System: APP_PAGES.SETTINGS_SYSTEM,
+  'Privacy & Terms': APP_PAGES.SETTINGS_PRIVACY_TERMS,
 }
 
 export function Settings({
@@ -120,8 +124,10 @@ export function Settings({
         preferences={preferences}
         onUpdatePreference={updatePreference}
         onOpenActivityLogs={() => handleTabChange('Audit & Logs')}
+        onOpenPrivacyTerms={() => handleTabChange('Privacy & Terms')}
       />
     ),
+    'Privacy & Terms': <PrivacyTermsSettingsTab />,
   }
 
   return (

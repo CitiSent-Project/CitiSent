@@ -30,6 +30,8 @@ import { APP_PAGES } from '../../models/pageModel'
 import { normalizeUserRole, USER_ROLES } from '../../models/roleAccessModel'
 import { NotificationsDrawer } from '../Notifications-Ui/NotificationsDrawer'
 import { BranchedSubtree } from './BranchedMenu'
+import { GuideProvider } from '../../hooks/usePageGuide'
+import { PageGuideNavbarButton, GuidedTourOverlay } from '../Guide-Ui'
 
 const navItems = [
 	{ label: 'Dashboard', pageKey: APP_PAGES.DASHBOARD, icon: FiBarChart },
@@ -304,133 +306,138 @@ export function Navbar({
 	}
 
 	return (
-		<div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100">
-			<AnimatePresence>
-				{mobileOpen && (
-					<MotionButton
-						type="button"
-						className="fixed inset-0 z-30 bg-slate-950/60 backdrop-blur-[2px] pointer-events-auto lg:hidden"
-						onClick={() => setMobileOpen(false)}
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						aria-label="Close navigation menu"
-					/>
-				)}
-			</AnimatePresence>
+		<GuideProvider activePage={activePage}>
+			<div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100">
+				<AnimatePresence>
+					{mobileOpen && (
+						<MotionButton
+							type="button"
+							className="fixed inset-0 z-30 bg-slate-950/60 backdrop-blur-[2px] pointer-events-auto lg:hidden"
+							onClick={() => setMobileOpen(false)}
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							aria-label="Close navigation menu"
+						/>
+					)}
+				</AnimatePresence>
 
-			<MotionAside
-				className={`fixed left-0 top-0 z-40 h-full bg-[#0c1322] text-slate-200 border-r border-slate-800 transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 w-72 max-w-[85vw] ${
-					expanded ? 'lg:w-60' : 'lg:w-18'
-				} ${
-					mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'
-				}`}
-			>
-				<div className={`flex h-full flex-col pb-20 pt-4 px-3.5 ${expanded ? 'lg:px-3.5' : 'lg:px-2'}`}>
-					<BrandBlock isDesktopExpanded={expanded} onCloseMobile={() => setMobileOpen(false)} />
+				<MotionAside
+					className={`fixed left-0 top-0 z-40 h-full bg-[#0c1322] text-slate-200 border-r border-slate-800 transition-[width,transform] duration-300 ease-in-out will-change-transform lg:translate-x-0 w-72 max-w-[85vw] ${
+						expanded ? 'lg:w-60' : 'lg:w-18'
+					} ${
+						mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none lg:pointer-events-auto'
+					}`}
+				>
+					<div className={`flex h-full flex-col pb-20 pt-4 px-3.5 ${expanded ? 'lg:px-3.5' : 'lg:px-2'}`}>
+						<BrandBlock isDesktopExpanded={expanded} onCloseMobile={() => setMobileOpen(false)} />
 
-					<nav className="flex-1 space-y-1 overflow-y-auto pr-0.5">
-						{visibleNavItems.map((item) => (
-							<NavOption
-								key={item.label}
-								item={item}
-								activePage={activePage}
-								onNavigate={handleNavigate}
-								isDesktopExpanded={expanded}
-							/>
-						))}
-					</nav>
+						<nav className="flex-1 space-y-1 overflow-y-auto pr-0.5">
+							{visibleNavItems.map((item) => (
+								<NavOption
+									key={item.label}
+									item={item}
+									activePage={activePage}
+									onNavigate={handleNavigate}
+									isDesktopExpanded={expanded}
+								/>
+							))}
+						</nav>
 
-					<MotionButton
-						type="button"
-						onClick={() => setExpanded((prev) => !prev)}
-						className="hidden lg:block absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-[#0c1322] transition-colors hover:bg-slate-800/60 cursor-pointer"
-					>
-						<div className={`flex items-center py-2.5 ${expanded ? 'px-3.5' : 'px-2'}`}>
-							<MotionDiv className="grid h-8 w-8 place-content-center text-xs text-slate-400">
-								<span>{expanded ? '«' : '»'}</span>
-							</MotionDiv>
-							{expanded && (
-								<span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-									Collapse
-								</span>
-							)}
-						</div>
-					</MotionButton>
-				</div>
-			</MotionAside>
-
-			<div
-				className={`min-w-0 flex-1 transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
-					expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
-				}`}
-			>
-				<header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0c1322]/95 backdrop-blur-md px-4 py-2.5 md:px-6 lg:px-8">
-					<div className="flex w-full items-center justify-between gap-4">
-						<div className="flex items-center gap-3">
-							<button
-								type="button"
-								className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
-								onClick={() => setMobileOpen((prev) => !prev)}
-								aria-label="Open navigation menu"
-							>
-								<span className="space-y-1">
-									<span className="block h-0.5 w-4 bg-current" />
-									<span className="block h-0.5 w-4 bg-current" />
-									<span className="block h-0.5 w-4 bg-current" />
-								</span>
-							</button>
-						</div>
-
-						<div className="flex items-center gap-2.5">
-							<ConnectionStatusBadge status={connectionStatus} />
-							<button
-								type="button"
-								onClick={() => setIsNotificationsOpen(true)}
-								className={`relative grid h-9 w-9 place-items-center rounded-md border transition cursor-pointer ${
-									isNotificationsOpen
-										? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300'
-										: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
-								}`}
-								aria-label="Notifications"
-							>
-								<FiBell className="text-base" />
-								{unreadNotifications > 0 ? (
-									<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white font-numeric">
-										{unreadNotifications}
+						<MotionButton
+							type="button"
+							onClick={() => setExpanded((prev) => !prev)}
+							className="hidden lg:block absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-[#0c1322] transition-colors hover:bg-slate-800/60 cursor-pointer"
+						>
+							<div className={`flex items-center py-2.5 ${expanded ? 'px-3.5' : 'px-2'}`}>
+								<MotionDiv className="grid h-8 w-8 place-content-center text-xs text-slate-400">
+									<span>{expanded ? '«' : '»'}</span>
+								</MotionDiv>
+								{expanded && (
+									<span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+										Collapse
 									</span>
-								) : null}
-							</button>
-							<button
-								type="button"
-								onClick={() => handleNavigate(APP_PAGES.ADMIN_PROFILE)}
-								className={`grid h-9 w-9 place-items-center rounded-md border transition cursor-pointer ${
-									activePage === APP_PAGES.ADMIN_PROFILE
-										? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300'
-										: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
-								}`}
-								aria-label="User profile"
-							>
-								<FiUser className="text-base" />
-							</button>
-						</div>
+								)}
+							</div>
+						</MotionButton>
 					</div>
-				</header>
-				<MainContentSlot>{children}</MainContentSlot>
-			</div>
+				</MotionAside>
 
-			<AnimatePresence>
-				{isNotificationsOpen && (
-					<NotificationsDrawer
-						notifications={notifications}
-						onToggleRead={onToggleRead}
-						onClearAll={onClearAll}
-						isClearing={isClearingNotifications}
-						onClose={() => setIsNotificationsOpen(false)}
-                        onNavigate={(targetPage) => handleNavigate(targetPage || APP_PAGES.DASHBOARD)}
-					/>
-				)}
-			</AnimatePresence>
-		</div>
+				<div
+					className={`min-w-0 flex-1 transition-none lg:transition-[margin] lg:duration-300 ease-in-out ${
+						expanded ? CONTENT_OFFSET_CLASSES.expanded : CONTENT_OFFSET_CLASSES.collapsed
+					}`}
+				>
+					<header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0c1322]/95 backdrop-blur-md px-4 py-2.5 md:px-6 lg:px-8">
+						<div className="flex w-full items-center justify-between gap-4">
+							<div className="flex items-center gap-3">
+								<button
+									type="button"
+									className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+									onClick={() => setMobileOpen((prev) => !prev)}
+									aria-label="Open navigation menu"
+								>
+									<span className="space-y-1">
+										<span className="block h-0.5 w-4 bg-current" />
+										<span className="block h-0.5 w-4 bg-current" />
+										<span className="block h-0.5 w-4 bg-current" />
+									</span>
+								</button>
+							</div>
+
+							<div className="flex items-center gap-2.5">
+								<ConnectionStatusBadge status={connectionStatus} />
+								<PageGuideNavbarButton activePage={activePage} />
+								<button
+									type="button"
+									onClick={() => setIsNotificationsOpen(true)}
+									className={`relative grid h-9 w-9 place-items-center rounded-md border transition cursor-pointer ${
+										isNotificationsOpen
+											? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300'
+											: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+									}`}
+									aria-label="Notifications"
+								>
+									<FiBell className="text-base" />
+									{unreadNotifications > 0 ? (
+										<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white font-numeric">
+											{unreadNotifications}
+										</span>
+									) : null}
+								</button>
+								<button
+									type="button"
+									onClick={() => handleNavigate(APP_PAGES.ADMIN_PROFILE)}
+									className={`grid h-9 w-9 place-items-center rounded-md border transition cursor-pointer ${
+										activePage === APP_PAGES.ADMIN_PROFILE
+											? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300'
+											: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+									}`}
+									aria-label="User profile"
+								>
+									<FiUser className="text-base" />
+								</button>
+							</div>
+						</div>
+					</header>
+					<MainContentSlot>{children}</MainContentSlot>
+				</div>
+
+				<GuidedTourOverlay />
+
+				<AnimatePresence>
+					{isNotificationsOpen && (
+						<NotificationsDrawer
+							notifications={notifications}
+							onToggleRead={onToggleRead}
+							onClearAll={onClearAll}
+							isClearing={isClearingNotifications}
+							onClose={() => setIsNotificationsOpen(false)}
+							onNavigate={(targetPage) => handleNavigate(targetPage || APP_PAGES.DASHBOARD)}
+						/>
+					)}
+				</AnimatePresence>
+			</div>
+		</GuideProvider>
 	)
 }

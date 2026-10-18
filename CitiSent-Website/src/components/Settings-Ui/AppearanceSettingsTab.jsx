@@ -29,6 +29,7 @@ export function AppearanceSettingsTab({ preferences, onUpdatePreference }) {
     <SettingsSectionCard
       title="Appearance"
       description="Set visual preferences for readability and comfort."
+      guideId="settings-appearance-card"
     >
       <div className="grid gap-4 md:grid-cols-2">
         <SettingsSelect

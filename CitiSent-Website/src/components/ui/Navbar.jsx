@@ -73,6 +73,7 @@ const navItems = [
 			{ label: 'Report Management', pageKey: APP_PAGES.SETTINGS_REPORT_MANAGEMENT, icon: File01Icon },
 			{ label: 'Audit & Logs', pageKey: APP_PAGES.SETTINGS_AUDIT_LOGS, icon: Activity01Icon },
 			{ label: 'System', pageKey: APP_PAGES.SETTINGS_SYSTEM, icon: Settings02Icon },
+			{ label: 'Privacy & Terms', pageKey: APP_PAGES.SETTINGS_PRIVACY_TERMS, icon: Shield01Icon },
 		],
 	},
 	{ label: 'Logout', pageKey: APP_PAGES.LOGOUT, icon: FiLogOut, danger: true },

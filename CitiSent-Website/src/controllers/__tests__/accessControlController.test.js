@@ -39,6 +39,7 @@ describe('accessControlController', () => {
       APP_PAGES.SETTINGS_REPORT_MANAGEMENT,
       APP_PAGES.SETTINGS_AUDIT_LOGS,
       APP_PAGES.SETTINGS_SYSTEM,
+      APP_PAGES.SETTINGS_PRIVACY_TERMS,
     ]
 
     for (const page of settingsSubPages) {

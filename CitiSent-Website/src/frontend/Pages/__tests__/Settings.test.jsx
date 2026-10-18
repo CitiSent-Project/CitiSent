@@ -76,4 +76,24 @@ describe('Settings Page Layout & Section Synchronization', () => {
 
     expect(handleNavigate).toHaveBeenCalledWith(APP_PAGES.SETTINGS_AUDIT_LOGS)
   })
+
+  it('renders Privacy & Terms breadcrumb and mounts Privacy & Terms tab content', async () => {
+    await act(async () => {
+      root.render(
+        <Settings
+          activePage={APP_PAGES.SETTINGS_PRIVACY_TERMS}
+          profile={{ id: 'A-1', email: 'admin@citisent.gov' }}
+          preferences={{ theme: 'Light', fontSize: 'Medium' }}
+          onUpdatePreferences={vi.fn()}
+        />
+      )
+    })
+
+    expect(container.textContent).toContain('Settings')
+    expect(container.textContent).toContain('Privacy & Terms')
+    expect(container.textContent).toContain('Privacy & Terms Settings')
+    expect(container.textContent).toContain('Data Privacy Policy')
+    expect(container.textContent).toContain('Admin Terms of Use')
+    expect(container.textContent).toContain('RA 10173 Compliant')
+  })
 })

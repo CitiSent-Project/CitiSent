@@ -18,6 +18,7 @@ export const APP_PAGES = {
   SETTINGS_REPORT_MANAGEMENT: 'Settings:Report Management',
   SETTINGS_AUDIT_LOGS: 'Settings:Audit & Logs',
   SETTINGS_SYSTEM: 'Settings:System',
+  SETTINGS_PRIVACY_TERMS: 'Settings:Privacy & Terms',
   LOGOUT: 'Logout',
 }
 
@@ -38,6 +39,7 @@ export const SETTINGS_SECTIONS = {
   REPORT_MANAGEMENT: 'Report Management',
   AUDIT_LOGS: 'Audit & Logs',
   SYSTEM: 'System',
+  PRIVACY_TERMS: 'Privacy & Terms',
 }
 
 /**
@@ -63,5 +65,6 @@ export const PAGE_ROUTES = {
   [APP_PAGES.SETTINGS_REPORT_MANAGEMENT]: '/settings/report-management',
   [APP_PAGES.SETTINGS_AUDIT_LOGS]: '/settings/audit-logs',
   [APP_PAGES.SETTINGS_SYSTEM]: '/settings/system',
+  [APP_PAGES.SETTINGS_PRIVACY_TERMS]: '/settings/privacy-policy',
   [APP_PAGES.LOGOUT]: '/logout',
 }

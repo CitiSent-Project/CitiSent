@@ -170,6 +170,7 @@ export function renderActivePage({
         case APP_PAGES.SETTINGS_REPORT_MANAGEMENT:
         case APP_PAGES.SETTINGS_AUDIT_LOGS:
         case APP_PAGES.SETTINGS_SYSTEM:
+        case APP_PAGES.SETTINGS_PRIVACY_TERMS:
             return (
                 <Settings
                     activePage={activePage}

@@ -8,6 +8,7 @@ import { emitToReportRoom, emitToUser, emitToAdminFeedRooms } from "../../realti
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { buildReportsUserCachePrefix } from "./reports.cache.js";
 import { adminRepository } from "../admin/admin.repository.js";
+import { logger } from "../../config/logger.js";
 
 
 function normalizeMessageInput(message) {
@@ -164,7 +165,12 @@ export const reportMessagesService = {
       let superadmins = [];
       try {
         superadmins = await adminRepository.listSuperadmins({ accessToken });
-      } catch (err) {}
+      } catch (err) {
+        logger.warn("[MESSAGES] Failed to fetch superadmins for message notification", {
+          error: err?.message,
+          reportId,
+        });
+      }
 
       const allAdminsToNotify = new Set(participants.map((p) => p.user_id));
       superadmins.forEach((sa) => allAdminsToNotify.add(sa.user_id));
@@ -190,7 +196,13 @@ export const reportMessagesService = {
                 senderName,
               },
             })
-            .catch(() => {});
+            .catch((err) => {
+              logger.warn("[MESSAGES] Failed to deliver admin notification", {
+                userId,
+                error: err?.message,
+                reportId,
+              });
+            });
         })
       );
     } else {
@@ -211,12 +223,23 @@ export const reportMessagesService = {
               reportDescription: access.report?.description || null,
             },
           })
-          .catch(() => {});
+          .catch((err) => {
+            logger.warn("[MESSAGES] Failed to deliver citizen notification", {
+              userId: reportOwnerId,
+              error: err?.message,
+              reportId,
+            });
+          });
       }
     }
 
     for (const uId of invalidateUserIds) {
-      cacheService.deleteByPrefix(buildReportsUserCachePrefix(uId)).catch(() => {});
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(uId)).catch((err) => {
+        logger.warn("[MESSAGES] Failed to clear user cache prefix", {
+          userId: uId,
+          error: err?.message,
+        });
+      });
     }
 
     return formattedMessage;

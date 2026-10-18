@@ -17,9 +17,18 @@ const provisionSuperadminSchema = z.object({
   barangay: z.string().trim().max(100).optional().default(""),
 });
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUuid(id) {
+  return typeof id === "string" && UUID_REGEX.test(id);
+}
+
 export async function listSuperadmins(req, res) {
   try {
-    const { data: superadmins, error } = await supabaseAdmin
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const offset = (page - 1) * limit;
+
+    const { data: superadmins, count, error } = await supabaseAdmin
       .from("profiles")
       .select(`
         user_id,
@@ -39,9 +48,10 @@ export async function listSuperadmins(req, res) {
         invitation_activated_at,
         created_at,
         display_id
-      `)
+      `, { count: "exact" })
       .eq("role", "Superadmin")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       return res.status(500).json({
@@ -54,6 +64,9 @@ export async function listSuperadmins(req, res) {
     return res.json({
       success: true,
       data: superadmins || [],
+      total: count ?? (superadmins || []).length,
+      page,
+      limit,
     });
   } catch (err) {
     return res.status(500).json({
@@ -337,6 +350,12 @@ export async function resendInvite(req, res) {
 export async function unlockAccount(req, res) {
   try {
     const { id } = req.params;
+    if (!isValidUuid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "A valid user UUID is required.",
+      });
+    }
     
     // Set account_status to active and unban if in banned_users
     await supabaseAdmin
@@ -376,6 +395,13 @@ export async function toggleAccountStatus(req, res) {
     const { id } = req.params;
     const { status } = req.body;
 
+    if (!isValidUuid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "A valid user UUID is required.",
+      });
+    }
+
     if (!["active", "suspended"].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -390,7 +416,9 @@ export async function toggleAccountStatus(req, res) {
 
     if (status === "suspended") {
       // Invalidate active sessions
-      await supabaseAdmin.auth.admin.signOut(id).catch(() => {});
+      await supabaseAdmin.auth.admin.signOut(id).catch((err) => {
+        console.warn(`[superadminController] Failed to invalidate session for user ${id}:`, err?.message);
+      });
     }
 
     await logPlatformAction({

@@ -481,6 +481,23 @@ export const reportsService = {
   },
 
   async deleteReport({ userId, reportId, accessToken }) {
+    const existingReport = await reportsRepository.getById({
+      userId,
+      reportId,
+      accessToken,
+    });
+
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (existingReport.status && existingReport.status.toLowerCase() !== "pending") {
+      throw new AppError(
+        "This report can no longer be deleted because it is already under review or has been resolved.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
     const deleted = await reportsRepository.deleteById({
       userId,
       reportId,

@@ -1,9 +1,21 @@
+import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
 
-const GUEST_JWT_SECRET =
-  env.INVITATION_JWT_SECRET ||
-  "citisent-secure-guest-session-secret-key-32chars-min";
+let _devGuestJwtSecret = null;
+
+function getGuestJwtSecret() {
+  if (env.INVITATION_JWT_SECRET) {
+    return env.INVITATION_JWT_SECRET;
+  }
+  if (env.isProduction) {
+    throw new Error("Missing required INVITATION_JWT_SECRET in production environment");
+  }
+  if (!_devGuestJwtSecret) {
+    _devGuestJwtSecret = crypto.randomBytes(32).toString("hex");
+  }
+  return _devGuestJwtSecret;
+}
 
 /**
  * Signs a guest session token (expires in 7 days).
@@ -18,7 +30,7 @@ export function signGuestToken({ guestId }) {
       isGuest: true,
       purpose: "guest_session",
     },
-    GUEST_JWT_SECRET,
+    getGuestJwtSecret(),
     { expiresIn: "7d" },
   );
 }
@@ -35,7 +47,7 @@ export function tryVerifyGuestToken(token) {
       return null;
     }
 
-    return jwt.verify(token, GUEST_JWT_SECRET);
+    return jwt.verify(token, getGuestJwtSecret());
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       const err = new Error("Guest session has expired. Please refresh your session.");
@@ -54,7 +66,7 @@ export function tryVerifyGuestToken(token) {
 }
 
 /**
- * Signs a persistent device recovery token (expires in 365 days).
+ * Signs a persistent device recovery token (expires in 30 days).
  * Stored securely on the mobile device to authenticate the device when
  * recovering/reusing its existing guest account without re-creating accounts.
  */
@@ -66,8 +78,8 @@ export function signGuestRecoveryToken({ guestId }) {
       isGuest: true,
       purpose: "guest_recovery",
     },
-    GUEST_JWT_SECRET,
-    { expiresIn: "365d" },
+    getGuestJwtSecret(),
+    { expiresIn: "30d" },
   );
 }
 
@@ -92,7 +104,7 @@ export function tryVerifyGuestRecoveryToken(token) {
       return null;
     }
 
-    return jwt.verify(token, GUEST_JWT_SECRET);
+    return jwt.verify(token, getGuestJwtSecret());
   } catch {
     return null;
   }

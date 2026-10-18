@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { requireDeveloperAuth } from "../middleware/authMiddleware.js";
-import { developerRegistrationLimiter, superadminProvisioningLimiter } from "../middleware/rateLimiter.js";
+import {
+  developerRegistrationLimiter,
+  superadminProvisioningLimiter,
+  opsActionLimiter,
+} from "../middleware/rateLimiter.js";
 import {
   getDepartmentPresets,
   executeDepartmentSeed,
@@ -41,14 +45,14 @@ opsRouter.get("/me", (req, res) => {
 
 // Municipal Department Seeding
 opsRouter.get("/departments/preview", getDepartmentPresets);
-opsRouter.post("/departments/seed", executeDepartmentSeed);
+opsRouter.post("/departments/seed", opsActionLimiter, executeDepartmentSeed);
 
 // Superadmin Lifecycle & Provisioning
 opsRouter.get("/superadmins", listSuperadmins);
 opsRouter.post("/superadmins", superadminProvisioningLimiter, provisionSuperadmin);
 opsRouter.post("/superadmins/:id/resend-invite", superadminProvisioningLimiter, resendInvite);
-opsRouter.post("/superadmins/:id/unlock", unlockAccount);
-opsRouter.post("/superadmins/:id/status", toggleAccountStatus);
+opsRouter.post("/superadmins/:id/unlock", opsActionLimiter, unlockAccount);
+opsRouter.post("/superadmins/:id/status", opsActionLimiter, toggleAccountStatus);
 
 // Developer Audit Log Stream
 opsRouter.get("/audit-logs", getAuditLogs);

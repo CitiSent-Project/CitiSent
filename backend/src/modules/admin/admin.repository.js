@@ -182,7 +182,10 @@ export const adminRepository = {
 
     let query = db
       .from(PROFILES_TABLE)
-      .select("user_id,display_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
+      .select(
+        "user_id,display_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at",
+        { count: "exact" },
+      )
       .eq("account_type", "citizen")
       .order("created_at", { ascending: false });
 
@@ -192,13 +195,55 @@ export const adminRepository = {
       );
     }
 
-    let { data, error } = await query;
+    if (status === "banned") {
+      const { data: bannedRows, error: banError } = await db
+        .from("banned_users")
+        .select("user_id")
+        .eq("is_active", true);
+
+      if (banError) {
+        throw toGatewayError("Failed to fetch banned users", banError);
+      }
+
+      const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+      if (bannedUserIds.length === 0) {
+        return { rows: [], count: 0, activeBansByUserId: {} };
+      }
+      query = query.in("user_id", bannedUserIds);
+    } else if (status === "pending") {
+      query = query.eq("activation_status", "pending");
+      const { data: bannedRows } = await db
+        .from("banned_users")
+        .select("user_id")
+        .eq("is_active", true);
+      const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+      if (bannedUserIds.length > 0) {
+        query = query.not("user_id", "in", `(${bannedUserIds.join(",")})`);
+      }
+    } else if (status === "active") {
+      query = query.neq("activation_status", "pending");
+      const { data: bannedRows } = await db
+        .from("banned_users")
+        .select("user_id")
+        .eq("is_active", true);
+      const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+      if (bannedUserIds.length > 0) {
+        query = query.not("user_id", "in", `(${bannedUserIds.join(",")})`);
+      }
+    }
+
+    query = query.range(normalizedOffset, normalizedOffset + normalizedLimit - 1);
+
+    let { data, count, error } = await query;
 
     // Graceful fallback if display_id column is not yet present in the database
     if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
       let fallbackQuery = db
         .from(PROFILES_TABLE)
-        .select("user_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at")
+        .select(
+          "user_id,email,username,account_type,role,department_id,department_label,activation_status,created_at,updated_at",
+          { count: "exact" },
+        )
         .eq("account_type", "citizen")
         .order("created_at", { ascending: false });
 
@@ -208,8 +253,42 @@ export const adminRepository = {
         );
       }
 
+      if (status === "banned") {
+        const { data: bannedRows } = await db
+          .from("banned_users")
+          .select("user_id")
+          .eq("is_active", true);
+        const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+        if (bannedUserIds.length === 0) {
+          return { rows: [], count: 0, activeBansByUserId: {} };
+        }
+        fallbackQuery = fallbackQuery.in("user_id", bannedUserIds);
+      } else if (status === "pending") {
+        fallbackQuery = fallbackQuery.eq("activation_status", "pending");
+        const { data: bannedRows } = await db
+          .from("banned_users")
+          .select("user_id")
+          .eq("is_active", true);
+        const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+        if (bannedUserIds.length > 0) {
+          fallbackQuery = fallbackQuery.not("user_id", "in", `(${bannedUserIds.join(",")})`);
+        }
+      } else if (status === "active") {
+        fallbackQuery = fallbackQuery.neq("activation_status", "pending");
+        const { data: bannedRows } = await db
+          .from("banned_users")
+          .select("user_id")
+          .eq("is_active", true);
+        const bannedUserIds = (bannedRows || []).map((r) => r.user_id).filter(Boolean);
+        if (bannedUserIds.length > 0) {
+          fallbackQuery = fallbackQuery.not("user_id", "in", `(${bannedUserIds.join(",")})`);
+        }
+      }
+
+      fallbackQuery = fallbackQuery.range(normalizedOffset, normalizedOffset + normalizedLimit - 1);
       const fallbackResult = await fallbackQuery;
       data = fallbackResult.data;
+      count = fallbackResult.count;
       error = fallbackResult.error;
     }
 
@@ -217,50 +296,16 @@ export const adminRepository = {
       throw toGatewayError("Failed to fetch users", error);
     }
 
-    const allRows = data || [];
+    const paginatedRows = data || [];
     const activeBansByUserId = await getActiveBansByUserIds({
       db,
-      userIds: allRows.map((row) => row.user_id).filter(Boolean),
+      userIds: paginatedRows.map((row) => row.user_id).filter(Boolean),
     });
-
-    const filteredRows = allRows.filter((row) => {
-      if (!status) {
-        return true;
-      }
-
-      const isBanned = Boolean(activeBansByUserId[row.user_id]);
-      const activationStatus =
-        String(row.activation_status || "").trim().toLowerCase() === "pending"
-          ? "pending"
-          : "active";
-
-      if (status === "banned") {
-        return isBanned;
-      }
-
-      if (status === "pending") {
-        return !isBanned && activationStatus === "pending";
-      }
-
-      return !isBanned && activationStatus === "active";
-    });
-
-    const paginatedRows = filteredRows.slice(
-      normalizedOffset,
-      normalizedOffset + normalizedLimit,
-    );
-
-    const paginatedBansByUserId = paginatedRows.reduce((accumulator, row) => {
-      if (activeBansByUserId[row.user_id]) {
-        accumulator[row.user_id] = activeBansByUserId[row.user_id];
-      }
-      return accumulator;
-    }, {});
 
     return {
       rows: paginatedRows,
-      count: filteredRows.length,
-      activeBansByUserId: paginatedBansByUserId,
+      count: count ?? paginatedRows.length,
+      activeBansByUserId,
     };
   },
 
@@ -598,13 +643,17 @@ export const adminRepository = {
     };
   },
 
-  async listConversations({ actor, accessToken, readerId }) {
+  async listConversations({ actor, accessToken, readerId, limit = 50, offset = 0 }) {
     const db = getDb(accessToken);
+    const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 100);
+    const safeOffset = Math.max(Number(offset) || 0, 0);
 
     let reportsQuery = db
       .from(REPORTS_TABLE)
       .select("*")
-      .not("status", "in", "(resolved,rejected)");
+      .not("status", "in", "(resolved,rejected)")
+      .order("updated_at", { ascending: false })
+      .range(safeOffset, safeOffset + safeLimit - 1);
     reportsQuery = applyDepartmentScope(reportsQuery, actor);
 
     const { data: reports, error: reportsError } = await reportsQuery;
@@ -743,15 +792,17 @@ export const adminRepository = {
     };
   },
 
-  async listOfficeAdmins({ accessToken }) {
+  async listOfficeAdmins({ accessToken, limit = 200 }) {
     const db = getDb(accessToken);
+    const safeLimit = Math.min(Math.max(Number(limit) || 200, 1), 500);
     const { data, error } = await db
       .from(PROFILES_TABLE)
       .select("*")
       .eq("account_type", "admin")
       .eq("role", USER_ROLES.OFFICE_ADMIN)
       .order("lname", { ascending: true })
-      .order("fname", { ascending: true });
+      .order("fname", { ascending: true })
+      .limit(safeLimit);
 
     if (error) {
       throw toGatewayError("Failed to fetch office admins", error);
@@ -760,15 +811,17 @@ export const adminRepository = {
     return data || [];
   },
 
-  async listSuperadmins({ accessToken }) {
+  async listSuperadmins({ accessToken, limit = 200 }) {
     const db = getDb(accessToken);
+    const safeLimit = Math.min(Math.max(Number(limit) || 200, 1), 500);
     const { data, error } = await db
       .from(PROFILES_TABLE)
       .select("*")
       .eq("account_type", "admin")
       .eq("role", USER_ROLES.SUPERADMIN)
       .order("lname", { ascending: true })
-      .order("fname", { ascending: true });
+      .order("fname", { ascending: true })
+      .limit(safeLimit);
 
     if (error) {
       throw toGatewayError("Failed to fetch superadmins", error);
@@ -819,13 +872,15 @@ export const adminRepository = {
     return data;
   },
 
-  async listTransferRequests({ actor, accessToken }) {
+  async listTransferRequests({ actor, accessToken, limit = 200 }) {
     const db = getDb(accessToken);
+    const safeLimit = Math.min(Math.max(Number(limit) || 200, 1), 500);
 
     let query = db
       .from(TRANSFER_REQUESTS_TABLE)
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(safeLimit);
 
     if (!isSuperadmin(actor?.role)) {
       query = query.eq("admin_user_id", actor?.id);
@@ -917,13 +972,15 @@ export const adminRepository = {
     return data;
   },
 
-  async listDashboardReports({ actor, accessToken, startAt, endAt, columns = "id, issue_type, status, created_at" }) {
+  async listDashboardReports({ actor, accessToken, startAt, endAt, columns = "id, issue_type, status, created_at", limit = 1000 }) {
     const db = getDb(accessToken);
+    const safeLimit = Math.min(Math.max(Number(limit) || 1000, 1), 5000);
 
     let query = db
       .from(REPORTS_TABLE)
       .select(columns)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(safeLimit);
 
     query = applyDepartmentScope(query, actor);
 

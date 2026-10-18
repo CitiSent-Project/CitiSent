@@ -55,6 +55,39 @@ function assertDepartmentFound(department) {
   }
 }
 
+function isValidImageMagicBytes(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) {
+    return false;
+  }
+  // PNG: 89 50 4E 47
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return true;
+  }
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return true;
+  }
+  // WebP: RIFF .... WEBP
+  if (
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function assertLogoFile(file) {
   if (!file) {
     throw new AppError("Please choose a logo image to upload.", StatusCodes.BAD_REQUEST);
@@ -71,6 +104,13 @@ function assertLogoFile(file) {
   if (!ALLOWED_LOGO_MIME_TYPES.has(file.mimetype)) {
     throw new AppError(
       "Logo must be a PNG, JPG, or WebP image.",
+      StatusCodes.BAD_REQUEST,
+    );
+  }
+
+  if (!isValidImageMagicBytes(file.buffer)) {
+    throw new AppError(
+      "The uploaded file is not a valid PNG, JPG, or WebP image.",
       StatusCodes.BAD_REQUEST,
     );
   }

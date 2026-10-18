@@ -4,6 +4,7 @@ import { buildActor } from "../../shared/auth/roleAccess.js";
 import { normalizeNamePart } from "../../shared/utils/name.js";
 import { AppError } from "../../shared/errors/appError.js";
 import { StatusCodes } from "http-status-codes";
+import { createAdminSupabaseClient } from "../../config/supabase.js";
 
 function normalizePhoneNumber(value) {
   return String(value || "").replace(/\D/g, "");
@@ -74,6 +75,26 @@ export const usersService = {
 
     if (normalizedCity !== undefined) {
       assertValidCity(normalizedCity);
+    }
+
+    if (payload.email !== undefined && payload.email !== authUser.email) {
+      if (!payload.currentPassword) {
+        throw new AppError(
+          "Current password is required to change your email address.",
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+      const adminDb = createAdminSupabaseClient();
+      const { error: signInError } = await adminDb.auth.signInWithPassword({
+        email: authUser.email,
+        password: payload.currentPassword,
+      });
+      if (signInError) {
+        throw new AppError(
+          "Invalid current password.",
+          StatusCodes.UNAUTHORIZED,
+        );
+      }
     }
 
     const updatePayload = {

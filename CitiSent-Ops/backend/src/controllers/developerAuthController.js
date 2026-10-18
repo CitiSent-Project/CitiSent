@@ -37,12 +37,27 @@ export async function registerDeveloperAccount(req, res) {
     }
 
     // Check if user already exists
-    const { data: existingUsersData } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1000,
-    });
-    const existingUser = (existingUsersData?.users || []).find(
-      (u) => u.email?.toLowerCase() === email
-    );
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, email")
+      .ilike("email", email)
+      .maybeSingle();
+
+    let existingUser = null;
+    if (existingProfile?.user_id) {
+      const { data: authUserData } = await supabaseAdmin.auth.admin.getUserById(
+        existingProfile.user_id,
+      );
+      existingUser = authUserData?.user || null;
+    } else {
+      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 100,
+      });
+      existingUser = (usersData?.users || []).find(
+        (u) => u.email?.toLowerCase() === email,
+      );
+    }
 
     let targetUserId = null;
 

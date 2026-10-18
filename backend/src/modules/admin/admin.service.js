@@ -603,6 +603,24 @@ export const adminService = {
       throw new AppError("User not found", StatusCodes.NOT_FOUND);
     }
 
+    if (
+      (existingUser?.profile?.account_type === "admin" ||
+        isSuperadmin(existingUser?.profile?.role)) &&
+      !isSuperadmin(actor?.role)
+    ) {
+      throw new AppError(
+        "Only superadmins can modify administrative accounts",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    if (payload.status !== undefined && !isSuperadmin(actor?.role)) {
+      throw new AppError(
+        "Only superadmins can change user status or ban/unban users",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
     const normalizedRole =
       payload.role !== undefined ? normalizeUserRole(payload.role) || null : undefined;
     const normalizedPhoneNumber =

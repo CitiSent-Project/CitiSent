@@ -8,6 +8,7 @@ import {
   otpVerifyRateLimiter,
   registerRateLimiter,
   passwordResetRateLimiter,
+  guestRateLimiter,
 } from "../../middlewares/rateLimiter.js";
 import {
   activateAccountSchema,
@@ -16,6 +17,7 @@ import {
   adminResendOtpSchema,
   changePasswordSchema,
   forgotPasswordSchema,
+  guestSessionSchema,
   loginSchema,
   meSchema,
   registerSchema,
@@ -133,6 +135,8 @@ authRouter.post(
 // CAPTCHA is verified at report submission time (POST /reports).
 authRouter.post(
   "/guest",
+  guestRateLimiter,
+  validateRequest(guestSessionSchema),
   asyncHandler(authController.createGuestSession),
 );
 

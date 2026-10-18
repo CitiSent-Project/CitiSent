@@ -589,7 +589,7 @@ export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
 
   if (!env.GMAIL_USER && !env.RESEND_API_KEY && !env.BREVO_API_KEY) {
     if (!env.isProduction) {
-      console.log(`[ADMIN LOGIN OTP EMAIL] Verification code for ${toEmail}: ${otp}`);
+      console.log(`[ADMIN LOGIN OTP EMAIL] Verification code dispatched to ${toEmail}`);
     }
     return { sent: true, mode: "mock" };
   }
@@ -605,7 +605,7 @@ export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
       "",
       `Your one-time verification code is: ${otp}`,
       "",
-      "This code expires in 8 hours.",
+      "This code expires in 10 minutes.",
       "",
       "If you did not initiate this sign-in attempt, please notify your Superadmin or IT department immediately.",
     ].join("\n"),
@@ -625,7 +625,7 @@ export async function sendLoginOtpEmail({ toEmail, recipientName, otp }) {
               <div style="color:#173f75; font-family:Consolas,'Courier New',monospace; font-size:36px; font-weight:800; letter-spacing:10px; line-height:1.2;">${safeOtp}</div>
             </div>
             <p style="margin:0; color:#536b78; font-size:13px; text-align:center;">
-              <strong>This code expires in 8 hours.</strong><br/>
+              <strong>This code expires in 10 minutes.</strong><br/>
               Never share this code with anyone.
             </p>
           </td></tr>
@@ -654,7 +654,7 @@ export const mailerService = {
     // If email credentials are not configured or in test/dev, log safely and don't block
     if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
       if (!env.isProduction) {
-        console.log(`[GUEST OTP EMAIL] Verification code for ${toEmail}: ${otp}`);
+        console.log(`[GUEST OTP EMAIL] Verification code dispatched to ${toEmail}`);
       }
       return { sent: true, mode: "mock" };
     }

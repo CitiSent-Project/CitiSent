@@ -274,6 +274,7 @@ export function PrivacyTermsSettingsTab() {
       <SettingsSectionCard
         title="Data Privacy Policy & Administrative Terms"
         description="Comprehensive compliance guidelines governing citizen data collection via Supabase and staff data stewardship under Republic Act No. 10173."
+        guideId="settings-privacy-terms-card"
       >
         {/* Compliance Badges & Action Toolbar */}
         <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center md:justify-between dark:border-slate-700">

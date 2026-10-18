@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Spinner } from '../../components/ui/Spinner'
 import { AddUserFormModal, DeleteUserConfirmModal, EditUserFormModal, UserStatCard, UsersPagination, UsersTable, UsersToolbar } from '../../components/Users-Ui'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui'
 import { useUsersState } from '../../hooks/useUsersState'
 
 const stats = [{ id: 'active-users', label: 'Active Users', icon: 'user', accent: 'blue' }, { id: 'pending-users', label: 'Pending Users', icon: 'user', accent: 'cyan' }, { id: 'banned-users', label: 'Banned Users', icon: 'user-x', accent: 'orange' }]
@@ -12,9 +13,7 @@ export function Users({ onViewUserProfile, profile }) {
       <div className="flex flex-col gap-5">
         <header className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Users</h1>
-          <span className="grid h-6 w-6 place-items-center rounded-full border border-slate-300 dark:border-slate-600 text-xs text-slate-600 dark:text-slate-400">
-            !
-          </span>
+          <ComponentGuideTrigger guideId="users-table" />
         </header>
         <div className="grid gap-4 md:grid-cols-3">
           {stats.map((item) => (

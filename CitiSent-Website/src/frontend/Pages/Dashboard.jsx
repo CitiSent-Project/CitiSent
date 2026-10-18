@@ -11,6 +11,7 @@ import {
     SolidPieChart,
     VerticalChart,
 } from '../../components/Dashboard-Ui'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { buildDashboardStatCards } from '../../controllers/admin/dashboardController'
 import {
@@ -318,9 +319,12 @@ export function Dashboard({ profile: propsProfile }) {
             </MotionDiv>
 
             {/* Stats Grid */}
-            <div className="mb-5 sm:mb-6">
+            <div className="mb-5 sm:mb-6" data-guide="dashboard-summary-cards">
                 <div className="mb-2.5 flex items-center justify-between">
-                    <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h2>
+                        <ComponentGuideTrigger guideId="dashboard-summary-cards" />
+                    </div>
                     <ExportCsvButton onExport={handleExportSummary} label="Export summary to CSV" disabled={isLoadingDashboard} />
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -332,8 +336,9 @@ export function Dashboard({ profile: propsProfile }) {
 
             {/* Charts Grid */}
             <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
-                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
-                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0" data-guide="dashboard-department-distribution">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-department-distribution" />
                         <ExportCsvButton onExport={handleExportCategory} label="Export categories to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <PieChart
@@ -345,8 +350,9 @@ export function Dashboard({ profile: propsProfile }) {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
-                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0" data-guide="dashboard-sentiment">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-sentiment" />
                         <ExportCsvButton onExport={handleExportStatus} label="Export status breakdown to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <SolidPieChart
@@ -371,9 +377,10 @@ export function Dashboard({ profile: propsProfile }) {
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2" data-guide="dashboard-recent-triage">
                 <div className="relative">
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-recent-triage" />
                         <ExportCsvButton onExport={handleExportAdmins} label="Export admins to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <DashboardTableCard
@@ -384,7 +391,8 @@ export function Dashboard({ profile: propsProfile }) {
                     />
                 </div>
                 <div className="relative">
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-recent-triage" />
                         <ExportCsvButton onExport={handleExportUsers} label="Export users to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <DashboardTableCard

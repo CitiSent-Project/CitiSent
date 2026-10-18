@@ -120,6 +120,7 @@ export function SecuritySettingsTab({
       <SettingsSectionCard
         title="Security"
         description="Manage session behavior and review security actions."
+        guideId="settings-security-card"
       >
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-300 dark:border-slate-700 dark:bg-slate-900/50">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Change password</p>

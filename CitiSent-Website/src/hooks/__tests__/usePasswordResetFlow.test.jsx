@@ -139,13 +139,13 @@ describe('usePasswordResetFlow', () => {
 
     let resetResult
     await act(async () => {
-      resetResult = await getLatest().resetPassword('newPassword123', 'newPassword123')
+      resetResult = await getLatest().resetPassword('K9#mP$2vL!q8', 'K9#mP$2vL!q8')
     })
 
     expect(resetResult).toBe(true)
     expect(authApiService.resetPasswordWithOtp).toHaveBeenCalledWith({
       resetToken: 'token-abc',
-      password: 'newPassword123',
+      password: 'K9#mP$2vL!q8',
     })
     expect(getLatest().step).toBe(PASSWORD_RESET_STEPS.SUCCESS)
   })

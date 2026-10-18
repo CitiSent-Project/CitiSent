@@ -9,5 +9,6 @@ export {
   PasswordResetSuccessStep,
 } from './PasswordReset'
 export { LoginOtpStep } from './LoginOtpStep'
+export { PasswordRequirements } from './PasswordRequirements'
 
 

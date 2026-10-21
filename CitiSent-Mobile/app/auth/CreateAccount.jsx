@@ -372,7 +372,7 @@ export default function CreateAccountScreen() {
     setIsSubmitting(true);
 
     try {
-      await authApi.register({
+      const payload = {
         fname: validatedFname,
         mname: validatedMname ? validatedMname : null,
         lname: validatedLname,
@@ -384,18 +384,26 @@ export default function CreateAccountScreen() {
         clientType,
         barangay: trimmedBarangay,
         password,
-      });
+      };
 
-      setSuccessMessage(
-        "Account created! You can now log in.",
-      );
-      await new Promise((resolve) => setTimeout(resolve, 850));
-      router.replace("/auth/LoginForm");
+      const result = await authApi.requestRegisterOtp(payload);
+
+      router.push({
+        pathname: "/auth/OtpVerification",
+        params: {
+          mode: "register",
+          registrationToken: result?.registrationToken,
+          phoneNumber: result?.phoneNumber || `+63${trimmedPhoneNumber}`,
+          phoneNumberMasked: result?.phoneNumberMasked || "",
+          expiresInSeconds: String(result?.expiresInSeconds || 300),
+          resendCooldownSeconds: String(result?.resendCooldownSeconds || 60),
+        },
+      });
     } catch (error) {
       setSuccessMessage("");
       setFieldErrors(
         mapRegisterErrorToFieldErrors(
-          error?.message || "Unable to create account right now. Please try again.",
+          error?.message || "Unable to send verification code. Please try again.",
         ),
       );
     } finally {

@@ -21,6 +21,10 @@ import {
   loginSchema,
   meSchema,
   registerSchema,
+  registerRequestOtpSchema,
+  registerResendOtpSchema,
+  registerVerifyOtpSchema,
+  registerCompleteSchema,
   requestOtpSchema,
   resetPasswordSchema,
   resetPasswordWithOtpSchema,
@@ -35,6 +39,36 @@ authRouter.post(
   registerRateLimiter,
   validateRequest(registerSchema),
   asyncHandler(authController.register),
+);
+
+// Registration Phone OTP routes (SMS via iProgSMS)
+authRouter.post(
+  "/register/request-otp",
+  registerRateLimiter,
+  otpRequestRateLimiter,
+  validateRequest(registerRequestOtpSchema),
+  asyncHandler(authController.requestRegisterOtp),
+);
+
+authRouter.post(
+  "/register/resend-otp",
+  otpRequestRateLimiter,
+  validateRequest(registerResendOtpSchema),
+  asyncHandler(authController.resendRegisterOtp),
+);
+
+authRouter.post(
+  "/register/verify-otp",
+  otpVerifyRateLimiter,
+  validateRequest(registerVerifyOtpSchema),
+  asyncHandler(authController.verifyRegisterOtp),
+);
+
+authRouter.post(
+  "/register/complete",
+  registerRateLimiter,
+  validateRequest(registerCompleteSchema),
+  asyncHandler(authController.completeRegister),
 );
 
 authRouter.post(

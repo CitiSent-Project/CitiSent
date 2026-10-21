@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 
 import { authService } from "./auth.service.js";
 import { authRepository } from "./auth.repository.js";
-import { supabase } from "../../config/supabase.js";
+import { createAdminSupabaseClient, supabase } from "../../config/supabase.js";
 import { errorHandler } from "../../middlewares/errorHandler.js";
 import { logger } from "../../config/logger.js";
 import { AppError } from "../../shared/errors/appError.js";
+import { pendingRegistrationStore } from "../../shared/security/pendingRegistration.store.js";
 
 const VALID_PAYLOAD = Object.freeze({
   username: "maria_santos",
@@ -21,6 +22,23 @@ const VALID_PAYLOAD = Object.freeze({
   clientType: "citizen",
   barangay: "San Isidro Norte",
 });
+
+let phoneCounter = 1000;
+function getVerifiedPayload(overrides = {}) {
+  phoneCounter += 1;
+  const phoneNumber = overrides.phoneNumber || `+63917000${phoneCounter}`;
+  const email = overrides.email || `maria.santos.${phoneCounter}@example.com`;
+  const username = overrides.username || `maria_santos_${phoneCounter}`;
+  const payload = { ...VALID_PAYLOAD, ...overrides, phoneNumber, email, username };
+  const pending = pendingRegistrationStore.createPendingRegistration({
+    registrationPayload: payload,
+    phoneNumber,
+    email: email.toLowerCase(),
+    username,
+  });
+  pendingRegistrationStore.verifyOtp(pending.registrationToken, pending.plainOtp);
+  return { ...payload, verificationToken: pending.registrationToken };
+}
 
 function buildRateLimitError() {
   return Object.assign(new Error("email rate limit exceeded"), {
@@ -45,13 +63,27 @@ function captureConsole(t) {
 
 function stubSignUp(t, impl) {
   const original = supabase.auth.signUp;
+  const adminClient = createAdminSupabaseClient();
+  const originalAdminCreate = adminClient?.auth?.admin?.createUser;
   const calls = [];
+
   supabase.auth.signUp = async (args) => {
     calls.push(args);
     return impl(args, calls.length);
   };
+
+  if (adminClient?.auth?.admin) {
+    adminClient.auth.admin.createUser = async (args) => {
+      calls.push(args);
+      return impl(args, calls.length);
+    };
+  }
+
   t.after(() => {
     supabase.auth.signUp = original;
+    if (adminClient?.auth?.admin && originalAdminCreate) {
+      adminClient.auth.admin.createUser = originalAdminCreate;
+    }
   });
   return calls;
 }
@@ -183,7 +215,11 @@ test("registerWithEmailPassword does not bypass email verification when Supabase
 test("authService.register succeeds and stores a normalized profile", async (t) => {
   const calls = stubServiceDependencies(t);
 
-  const result = await authService.register({ ...VALID_PAYLOAD });
+  const payload = getVerifiedPayload({
+    email: "maria.santos@example.com",
+    username: "maria_santos",
+  });
+  const result = await authService.register(payload);
 
   assert.equal(calls.register.length, 1);
   assert.equal(calls.register[0].email, "maria.santos@example.com");
@@ -203,12 +239,23 @@ test("authService.register propagates the email rate limit and creates no profil
   });
 
   await assert.rejects(
-    () => authService.register({ ...VALID_PAYLOAD }),
+    () => authService.register(getVerifiedPayload()),
     (err) => err === rateLimited && err.statusCode === 429,
   );
 
   assert.equal(calls.upsert.length, 0);
   assert.equal(calls.upsertAdmin.length, 0);
+});
+
+test("authService.register strictly requires phone verification for citizens", async () => {
+  await assert.rejects(
+    () => authService.register({ ...VALID_PAYLOAD }),
+    (err) => {
+      assert.equal(err.statusCode, 403);
+      assert.ok(err.message.includes("Phone number verification required"));
+      return true;
+    },
+  );
 });
 
 test("authService.register rejects a duplicate submission while one is in flight", async (t) => {
@@ -226,12 +273,12 @@ test("authService.register rejects a duplicate submission while one is in flight
     },
   });
 
-  const first = authService.register({ ...VALID_PAYLOAD });
+  const verified1 = getVerifiedPayload({ email: "maria.santos@example.com" });
+  const verified2 = getVerifiedPayload({ email: "  MARIA.SANTOS@example.com " });
+
+  const first = authService.register(verified1);
   // Same email with different casing/whitespace is still the same registration.
-  const second = authService.register({
-    ...VALID_PAYLOAD,
-    email: "  MARIA.SANTOS@example.com ",
-  });
+  const second = authService.register(verified2);
 
   await assert.rejects(second, (err) => err.statusCode === 409);
 
@@ -242,7 +289,8 @@ test("authService.register rejects a duplicate submission while one is in flight
   assert.equal(registerCalls, 1);
 
   // The lock is released afterwards, so a later attempt is accepted.
-  await authService.register({ ...VALID_PAYLOAD });
+  const verified3 = getVerifiedPayload({ email: "maria.santos@example.com" });
+  await authService.register(verified3);
   assert.equal(registerCalls, 2);
 });
 
@@ -258,8 +306,11 @@ test("authService.register releases the in-flight lock when registration fails",
     },
   });
 
-  await assert.rejects(() => authService.register({ ...VALID_PAYLOAD }));
-  await authService.register({ ...VALID_PAYLOAD });
+  const verified1 = getVerifiedPayload({ email: "inflight-fail@example.com" });
+  await assert.rejects(() => authService.register(verified1));
+
+  const verified2 = getVerifiedPayload({ email: "inflight-fail@example.com" });
+  await authService.register(verified2);
   assert.equal(attempts, 2);
 });
 
@@ -270,7 +321,7 @@ test("authService.register still enforces username uniqueness before calling Sup
   });
 
   await assert.rejects(
-    () => authService.register({ ...VALID_PAYLOAD }),
+    () => authService.register(getVerifiedPayload({ username: "maria_santos" })),
     (err) => err.statusCode === 409 && err.message === "Username is already in use",
   );
   assert.equal(calls.register.length, 0);
@@ -283,7 +334,7 @@ test("authService.register still enforces phone number uniqueness before calling
   });
 
   await assert.rejects(
-    () => authService.register({ ...VALID_PAYLOAD }),
+    () => authService.register(getVerifiedPayload({ phoneNumber: "+639171234567" })),
     (err) =>
       err.statusCode === 409 && err.message === "Phone number is already in use",
   );
@@ -296,7 +347,7 @@ test("authService.register does not report success when Supabase returns no user
   });
 
   await assert.rejects(
-    () => authService.register({ ...VALID_PAYLOAD }),
+    () => authService.register(getVerifiedPayload()),
     (err) => err.statusCode === 502,
   );
   assert.equal(calls.upsertAdmin.length, 0);
@@ -311,7 +362,7 @@ test("authService.register treats an obfuscated already-registered user as a con
   });
 
   await assert.rejects(
-    () => authService.register({ ...VALID_PAYLOAD }),
+    () => authService.register(getVerifiedPayload()),
     (err) => err.statusCode === 409,
   );
   assert.equal(calls.upsertAdmin.length, 0);
@@ -349,11 +400,7 @@ test("errorHandler returns a safe 429 for the email rate limit and logs exactly 
   };
 
   // Build the error through the real repository path.
-  const origSignUp = supabase.auth.signUp;
-  supabase.auth.signUp = async () => ({ data: null, error: buildRateLimitError() });
-  t.after(() => {
-    supabase.auth.signUp = origSignUp;
-  });
+  stubSignUp(t, async () => ({ data: null, error: buildRateLimitError() }));
 
   return authRepository
     .registerWithEmailPassword({

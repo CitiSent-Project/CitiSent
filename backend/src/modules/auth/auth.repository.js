@@ -753,8 +753,10 @@ export const authRepository = {
       .select("*")
       .maybeSingle();
 
-    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+    if (error && error.code === "42703") {
       delete insertPayload.display_id;
+      delete insertPayload.phone_verified;
+      delete insertPayload.phone_verified_at;
       const retry = await db
         .from(PROFILES_TABLE)
         .upsert(insertPayload, { onConflict: "user_id" })
@@ -794,8 +796,10 @@ export const authRepository = {
       .select("*")
       .maybeSingle();
 
-    if (error && (error.code === "42703" || error.message?.includes("display_id"))) {
+    if (error && error.code === "42703") {
       delete insertPayload.display_id;
+      delete insertPayload.phone_verified;
+      delete insertPayload.phone_verified_at;
       const retry = await adminDb
         .from(PROFILES_TABLE)
         .upsert(insertPayload, { onConflict: "user_id" })

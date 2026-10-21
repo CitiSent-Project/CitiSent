@@ -3,6 +3,7 @@ import {
   requiredNameSchema,
   optionalNameSchema,
 } from "../../shared/utils/nameValidation.js";
+import { isValidPhilippineMobile } from "../../shared/utils/phoneUtils.js";
 
 function optionalTrimmedString(schema) {
   return z.preprocess((value) => {
@@ -26,6 +27,12 @@ const phoneSchema = z
   .trim()
   .regex(/^\+639\d{9}$/, {
     message: "Phone number must be a valid Philippine mobile number starting with +639.",
+  });
+export const phMobileSchema = z
+  .string()
+  .trim()
+  .refine(isValidPhilippineMobile, {
+    message: "Phone number must be a valid Philippine mobile number (e.g. 09XXXXXXXXX or +639XXXXXXXXX).",
   });
 const loginPhoneSchema = z
   .string()
@@ -52,6 +59,7 @@ export const registerSchema = z.object({
     clientType: z.string().trim().min(1).max(32).nullish(),
     barangay: z.string().trim().min(1).max(120).nullish(),
     profileImage: z.string().trim().max(1024).nullish(),
+    verificationToken: z.string().trim().min(1).nullish(),
   }),
 });
 
@@ -225,5 +233,78 @@ export const guestSessionSchema = z.object({
     .optional()
     .default({}),
 });
+
+export const registerRequestOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    username: usernameSchema,
+    email: z.string().trim().email("Please enter a valid email address."),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters.")
+      .max(128),
+    fname: requiredNameSchema("First name"),
+    mname: optionalNameSchema("Middle name"),
+    lname: requiredNameSchema("Last name"),
+    phoneNumber: phMobileSchema,
+    role: z.string().trim().min(1).max(40).nullish(),
+    accountType: z.string().trim().min(1).max(24).nullish(),
+    departmentId: z.string().trim().min(1).max(64).nullish(),
+    departmentLabel: z.string().trim().min(1).max(120).nullish(),
+    age: z.coerce.number().int().min(1).max(120).nullish(),
+    gender: z.string().trim().min(1).max(24).nullish(),
+    clientType: z.string().trim().min(1).max(32).nullish(),
+    barangay: z.string().trim().min(1).max(120).nullish(),
+    profileImage: z.string().trim().max(1024).nullish(),
+  }),
+});
+
+export const registerResendOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    registrationToken: z
+      .string()
+      .trim()
+      .min(1, "Registration session token is required."),
+  }),
+});
+
+export const registerVerifyOtpSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    registrationToken: z
+      .string()
+      .trim()
+      .min(1, "Registration session token is required."),
+    otp: z
+      .string()
+      .trim()
+      .length(6, "Verification code must be exactly 6 digits.")
+      .regex(/^\d{6}$/, "Verification code must contain digits only."),
+  }),
+});
+
+export const registerCompleteSchema = z.object({
+  params: z.object({}).optional().default({}),
+  query: z.object({}).optional().default({}),
+  body: z
+    .object({
+      registrationToken: z.string().trim().min(1).optional(),
+      verificationToken: z.string().trim().min(1).optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.registrationToken && !data.verificationToken) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["registrationToken"],
+          message: "Registration token or verification token is required.",
+        });
+      }
+    }),
+});
+
 
 

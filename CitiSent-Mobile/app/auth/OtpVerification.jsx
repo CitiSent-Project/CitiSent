@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  BackHandler,
   Pressable,
   ScrollView,
   Text,
@@ -19,8 +21,8 @@ import {
 import { AppKeyboardAvoidingView, FeedbackModal } from "../../modules/shared";
 
 const OTP_LENGTH = 6;
-const OTP_TTL_SECONDS = 5 * 60; // 5 minutes
-const RESEND_COOLDOWN_SECONDS = 60;
+const DEFAULT_OTP_TTL_SECONDS = 5 * 60; // 5 minutes
+const DEFAULT_RESEND_COOLDOWN_SECONDS = 60; // 60 seconds
 
 function formatTime(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -31,17 +33,47 @@ function formatTime(totalSeconds) {
 export default function OtpVerificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { email, mode } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+
+  const {
+    email,
+    mode,
+    registrationToken: initialRegToken,
+    phoneNumber,
+    phoneNumberMasked,
+    expiresInSeconds,
+    resendCooldownSeconds,
+  } = params;
+
   const normalizedEmail = Array.isArray(email) ? email[0] : email || "";
+  const isRegister = mode === "register";
   const isSignup = mode === "signup";
+
+  const [regToken, setRegToken] = useState(
+    Array.isArray(initialRegToken) ? initialRegToken[0] : initialRegToken || "",
+  );
+
+  const initialExpiry =
+    Number(Array.isArray(expiresInSeconds) ? expiresInSeconds[0] : expiresInSeconds) ||
+    DEFAULT_OTP_TTL_SECONDS;
+  const initialCooldown =
+    Number(
+      Array.isArray(resendCooldownSeconds)
+        ? resendCooldownSeconds[0]
+        : resendCooldownSeconds,
+    ) || DEFAULT_RESEND_COOLDOWN_SECONDS;
+
+  const phoneDisplay = Array.isArray(phoneNumberMasked)
+    ? phoneNumberMasked[0]
+    : phoneNumberMasked || (Array.isArray(phoneNumber) ? phoneNumber[0] : phoneNumber) || "";
 
   // OTP digit state
   const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(""));
   const inputRefs = useRef([]);
 
   // Timers
-  const [otpSecondsLeft, setOtpSecondsLeft] = useState(OTP_TTL_SECONDS);
-  const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(initialExpiry);
+  const [resendCooldown, setResendCooldown] = useState(initialCooldown);
   const otpTimerRef = useRef(null);
   const resendTimerRef = useRef(null);
 
@@ -67,9 +99,9 @@ export default function OtpVerificationScreen() {
   };
 
   // ─── OTP countdown ────────────────────────────────────────────────────────
-  const startOtpTimer = useCallback(() => {
+  const startOtpTimer = useCallback((duration = DEFAULT_OTP_TTL_SECONDS) => {
     clearInterval(otpTimerRef.current);
-    setOtpSecondsLeft(OTP_TTL_SECONDS);
+    setOtpSecondsLeft(duration);
     otpTimerRef.current = setInterval(() => {
       setOtpSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -82,9 +114,9 @@ export default function OtpVerificationScreen() {
   }, []);
 
   // ─── Resend cooldown ───────────────────────────────────────────────────────
-  const startResendCooldown = useCallback(() => {
+  const startResendCooldown = useCallback((duration = DEFAULT_RESEND_COOLDOWN_SECONDS) => {
     clearInterval(resendTimerRef.current);
-    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    setResendCooldown(duration);
     resendTimerRef.current = setInterval(() => {
       setResendCooldown((prev) => {
         if (prev <= 1) {
@@ -97,13 +129,47 @@ export default function OtpVerificationScreen() {
   }, []);
 
   useEffect(() => {
-    startOtpTimer();
-    startResendCooldown();
+    startOtpTimer(initialExpiry);
+    startResendCooldown(initialCooldown);
+
+    // Auto focus first input on mount
+    const timer = setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 300);
+
     return () => {
+      clearTimeout(timer);
       clearInterval(otpTimerRef.current);
       clearInterval(resendTimerRef.current);
     };
-  }, [startOtpTimer, startResendCooldown]);
+  }, [initialExpiry, initialCooldown, startOtpTimer, startResendCooldown]);
+
+  // ─── Hardware Back Button Interception (Registration Mode) ─────────────────
+  useEffect(() => {
+    if (!isRegister) return;
+
+    const onBackPress = () => {
+      Alert.alert(
+        "Leave Verification?",
+        "Your account cannot be created until your phone number is verified. If you leave now, you will need to register again.",
+        [
+          { text: "Stay", style: "cancel" },
+          {
+            text: "Leave",
+            style: "destructive",
+            onPress: () => router.replace("/auth/CreateAccount"),
+          },
+        ],
+      );
+      return true; // prevent accidental skipping
+    };
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => subscription.remove();
+  }, [isRegister, router]);
 
   // ─── Digit input handling ──────────────────────────────────────────────────
   const handleDigitChange = (value, index) => {
@@ -148,7 +214,18 @@ export default function OtpVerificationScreen() {
     setIsVerifying(true);
 
     try {
-      if (isSignup) {
+      if (isRegister) {
+        const result = await authApi.verifyRegisterOtp(regToken, otp);
+        clearInterval(otpTimerRef.current);
+        clearInterval(resendTimerRef.current);
+        showModal(
+          "info",
+          "Registration Successful",
+          result?.message ||
+            "Your phone number has been verified and your account is ready. You can now log in.",
+          () => router.replace("/auth/LoginForm"),
+        );
+      } else if (isSignup) {
         await authApi.verifySignupOtp(normalizedEmail, otp);
         clearInterval(otpTimerRef.current);
         clearInterval(resendTimerRef.current);
@@ -156,7 +233,7 @@ export default function OtpVerificationScreen() {
           "info",
           "Verification Successful",
           "Your account has been verified. You can now log in.",
-          () => router.replace("/auth/LoginForm")
+          () => router.replace("/auth/LoginForm"),
         );
       } else {
         const result = await authApi.verifyOtp(normalizedEmail, otp);
@@ -181,7 +258,8 @@ export default function OtpVerificationScreen() {
       // If OTP is fully invalidated, reset digits
       if (
         msg.toLowerCase().includes("invalidated") ||
-        msg.toLowerCase().includes("expired")
+        msg.toLowerCase().includes("expired") ||
+        msg.toLowerCase().includes("too many")
       ) {
         setDigits(Array(OTP_LENGTH).fill(""));
         inputRefs.current[0]?.focus();
@@ -200,11 +278,30 @@ export default function OtpVerificationScreen() {
     setDigits(Array(OTP_LENGTH).fill(""));
 
     try {
-      await authApi.requestOtp(normalizedEmail);
-      startOtpTimer();
-      startResendCooldown();
-      inputRefs.current[0]?.focus();
-      showModal("info", "Code Sent", "A new verification code has been sent to your email.");
+      if (isRegister) {
+        const res = await authApi.resendRegisterOtp(regToken);
+        if (res?.registrationToken) {
+          setRegToken(res.registrationToken);
+        }
+        const nextExpiry = Number(res?.expiresInSeconds) || DEFAULT_OTP_TTL_SECONDS;
+        const nextCooldown =
+          Number(res?.resendCooldownSeconds) || DEFAULT_RESEND_COOLDOWN_SECONDS;
+
+        startOtpTimer(nextExpiry);
+        startResendCooldown(nextCooldown);
+        inputRefs.current[0]?.focus();
+        showModal(
+          "info",
+          "Code Sent",
+          res?.message || "A new verification code has been sent to your phone number via SMS.",
+        );
+      } else {
+        await authApi.requestOtp(normalizedEmail);
+        startOtpTimer(DEFAULT_OTP_TTL_SECONDS);
+        startResendCooldown(DEFAULT_RESEND_COOLDOWN_SECONDS);
+        inputRefs.current[0]?.focus();
+        showModal("info", "Code Sent", "A new verification code has been sent to your email.");
+      }
     } catch (err) {
       const msg = err?.message || "Unable to resend code. Please try again.";
       showModal("error", "Resend Failed", msg);
@@ -225,6 +322,25 @@ export default function OtpVerificationScreen() {
         ? "#FCA5A5" // red — urgent
         : "#FDE68A" // yellow — warning
       : "#86EFAC"; // green — plenty of time
+
+  const handleBackToRegister = () => {
+    if (isRegister) {
+      Alert.alert(
+        "Cancel Registration?",
+        "Are you sure you want to return to Create Account? Your pending registration will need to be restarted.",
+        [
+          { text: "Stay", style: "cancel" },
+          {
+            text: "Back to Register",
+            style: "destructive",
+            onPress: () => router.replace("/auth/CreateAccount"),
+          },
+        ],
+      );
+    } else {
+      router.push("/auth/LoginForm");
+    }
+  };
 
   return (
     <View
@@ -250,13 +366,24 @@ export default function OtpVerificationScreen() {
             {/* Heading */}
             <View className="mt-10 items-center">
               <Text className="text-center text-[32px] text-[#CFDAEA]">
-                Enter Verification Code
+                {isRegister ? "Verify Phone Number" : "Enter Verification Code"}
               </Text>
               <Text className="mt-3 text-center text-[13px] leading-5 text-[#AFC5E2]">
-                We sent a 6-digit code to{"\n"}
-                <Text className="font-semibold text-[#CFDAEA]">
-                  {normalizedEmail}
-                </Text>
+                {isRegister ? (
+                  <>
+                    We sent a 6-digit SMS verification code to{"\n"}
+                    <Text className="font-semibold text-[#CFDAEA]">
+                      {phoneDisplay || "your phone number"}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    We sent a 6-digit code to{"\n"}
+                    <Text className="font-semibold text-[#CFDAEA]">
+                      {normalizedEmail}
+                    </Text>
+                  </>
+                )}
               </Text>
             </View>
 
@@ -361,14 +488,16 @@ export default function OtpVerificationScreen() {
               )}
             </View>
 
-            {/* Back to login */}
+            {/* Back link */}
             <Pressable
               className="mt-6 items-center"
-              onPress={() => router.push("/auth/LoginForm")}
+              onPress={handleBackToRegister}
               accessibilityRole="button"
-              accessibilityLabel="Back to login"
+              accessibilityLabel={isRegister ? "Back to registration" : "Back to login"}
             >
-              <Text className="text-[13px] text-[#8CA8C9]">Back to Login</Text>
+              <Text className="text-[13px] text-[#8CA8C9]">
+                {isRegister ? "Back to Register" : "Back to Login"}
+              </Text>
             </Pressable>
           </View>
         </ScrollView>

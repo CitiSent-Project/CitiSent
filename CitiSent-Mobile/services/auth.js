@@ -95,6 +95,33 @@ export const authApi = {
     return unwrapAuthPayload(response);
   },
 
+  requestRegisterOtp: async (payload) => {
+    const response = await api.post("/auth/register/request-otp", payload);
+    return unwrapAuthPayload(response);
+  },
+
+  resendRegisterOtp: async (registrationToken) => {
+    const response = await api.post("/auth/register/resend-otp", {
+      registrationToken,
+    });
+    return unwrapAuthPayload(response);
+  },
+
+  verifyRegisterOtp: async (registrationToken, otp) => {
+    const response = await api.post("/auth/register/verify-otp", {
+      registrationToken,
+      otp,
+    });
+    return unwrapAuthPayload(response);
+  },
+
+  completeRegister: async (verificationToken) => {
+    const response = await api.post("/auth/register/complete", {
+      verificationToken,
+    });
+    return unwrapAuthPayload(response);
+  },
+
   logout: () => {
     resetAdminMessageState();
     clearAuthToken();

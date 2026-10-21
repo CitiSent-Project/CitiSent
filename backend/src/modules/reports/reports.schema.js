@@ -13,6 +13,22 @@ export const listReportsSchema = z.object({
   }),
 });
 
+const attachmentUrlSchema = z
+  .string()
+  .trim()
+  .url("Attachment URL must be a valid URL.")
+  .refine(
+    (url) => {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Attachment URL must use HTTP or HTTPS protocol." },
+  );
+
 export const createReportSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z.object({}).optional().default({}),
@@ -22,7 +38,7 @@ export const createReportSchema = z.object({
     location: z.string().min(1).max(240),
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180),
-    attachmentUrl: z.string().url().optional(),
+    attachmentUrl: attachmentUrlSchema.optional(),
     // Cloudflare Turnstile token — required for guest users, validated server-side.
     // Optional here because registered users do not send it.
     turnstileToken: z.string().min(1).max(4096).optional(),
@@ -50,7 +66,7 @@ export const updateReportSchema = z.object({
       location: z.string().min(1).max(240).optional(),
       latitude: z.number().min(-90).max(90).optional(),
       longitude: z.number().min(-180).max(180).optional(),
-      attachmentUrl: z.string().url().nullable().optional(),
+      attachmentUrl: attachmentUrlSchema.nullable().optional(),
       status: z.enum(allowedStatus).optional(),
     })
     .strict()

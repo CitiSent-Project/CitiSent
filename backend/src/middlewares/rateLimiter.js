@@ -155,3 +155,51 @@ export const passwordResetRateLimiter = rateLimit({
       `Too many password reset attempts. Please try again after ${retryAfterMinutes} minute(s).`,
   ),
 });
+
+/**
+ * Guest session creation rate limiter:
+ * Prevents mass generation of guest auth records (max 20 per 15 minutes per IP).
+ */
+export const guestRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: shouldSkipInTest,
+  handler: createRateLimitHandler(
+    ({ retryAfterMinutes }) =>
+      `Too many guest sessions requested. Please try again after ${retryAfterMinutes} minute(s).`,
+  ),
+});
+
+/**
+ * Report creation rate limiter:
+ * Limits submission rate per client IP/user (max 10 reports per 10 minutes).
+ */
+export const reportRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: shouldSkipInTest,
+  handler: createRateLimitHandler(
+    ({ retryAfterMinutes }) =>
+      `Too many reports submitted. Please wait ${retryAfterMinutes} minute(s) before submitting another report.`,
+  ),
+});
+
+/**
+ * Chat message rate limiter:
+ * Limits rapid message sending per client (max 30 messages per minute).
+ */
+export const messageRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: shouldSkipInTest,
+  handler: createRateLimitHandler(
+    ({ retryAfterSeconds }) =>
+      `You are sending messages too quickly. Please wait ${retryAfterSeconds} second(s).`,
+  ),
+});

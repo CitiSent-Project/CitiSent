@@ -199,5 +199,6 @@ const normalizedOrigins = envData.CORS_ORIGINS.split(",")
 export const env = Object.freeze({
   ...envData,
   isProduction: envData.NODE_ENV === "production",
+  isDev: envData.NODE_ENV !== "production",
   corsOrigins: normalizedOrigins,
 });

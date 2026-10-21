@@ -6,6 +6,7 @@ import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMapp
 import { useConversationsState } from '../../hooks/useConversationsState'
 import { ConversationEmptyState } from './ConversationEmptyState'
 import { ConversationListItem } from './ConversationListItem'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui/ComponentGuideTrigger'
 
 function formatLastSeen(dateString) {
   if (!dateString) return 'Offline'
@@ -50,10 +51,13 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     <main className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
       <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm sm:my-4 sm:h-[calc(100vh-6rem)]">
 
-        <div className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
+        <div data-guide="conversations-thread-list" className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
           <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Conversations</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Conversations</h1>
+                <ComponentGuideTrigger guideId="conversations-thread-list" />
+              </div>
               <button onClick={() => { setUnreadOnly(!unreadOnly); loadConversations() }} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${unreadOnly ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
                 <FiFilter /> Unread
               </button>
@@ -94,7 +98,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
           </div>
         </div>
 
-        <div className={`flex flex-1 min-w-0 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
+        <div data-guide="conversations-chat-window" className={`flex flex-1 min-w-0 flex-col ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
           {activeConversation ? (
             <>
               <header className="flex shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-[#183b68] dark:bg-slate-950 px-3.5 py-2.5 sm:px-5 sm:py-3.5 text-white gap-2.5">
@@ -131,6 +135,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+                  <ComponentGuideTrigger guideId="conversations-chat-window" />
                   {onViewReport && activeConversation.rawReport && (
                     <button
                       type="button"

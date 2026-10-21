@@ -17,6 +17,7 @@ import {
   AddAdminFormModal,
   DeleteAdminConfirmModal,
 } from '../../components/AdminManagement-Ui'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui/ComponentGuideTrigger'
 
 function getStoredAccessToken() {
   const schemaRule = getStorageSchemaRule(ADMIN_STORAGE_KEYS.accessToken)
@@ -192,7 +193,10 @@ export function AdminManagement({
       <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">Admin Management</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">Admin Management</h1>
+              <ComponentGuideTrigger guideId="admin-staff-roster" />
+            </div>
             <p className="mt-1 text-xs text-slate-500 sm:text-sm dark:text-slate-400">
               Assign office admins by department, manage department catalog, and process transfer queue approvals.
             </p>
@@ -207,40 +211,46 @@ export function AdminManagement({
           </button>
         </header>
 
-        <OfficeAdminAssignmentsSection
-          totalOfficeUnread={totalOfficeUnread}
-          searchTerm={searchTerm}
-          onSearchTermChange={setSearchTerm}
-          departmentFilter={departmentFilter}
-          onDepartmentFilterChange={setDepartmentFilter}
-          unreadFilter={unreadFilter}
-          onUnreadFilterChange={setUnreadFilter}
-          departmentOptions={departmentOptions}
-          filteredOfficeAdmins={filteredOfficeAdmins}
-          unreadByAdminId={unreadByAdminId}
-          getSelectedDepartmentId={getSelectedDepartmentId}
-          onDraftDepartmentChange={handleDraftDepartmentChange}
-          onSaveAssignment={handleSaveAssignment}
-          onDeleteAdmin={setAdminToDelete}
-          processingAdminIds={processingAdminIds}
-        />
+        <div data-guide="admin-staff-roster">
+          <OfficeAdminAssignmentsSection
+            totalOfficeUnread={totalOfficeUnread}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            departmentFilter={departmentFilter}
+            onDepartmentFilterChange={setDepartmentFilter}
+            unreadFilter={unreadFilter}
+            onUnreadFilterChange={setUnreadFilter}
+            departmentOptions={departmentOptions}
+            filteredOfficeAdmins={filteredOfficeAdmins}
+            unreadByAdminId={unreadByAdminId}
+            getSelectedDepartmentId={getSelectedDepartmentId}
+            onDraftDepartmentChange={handleDraftDepartmentChange}
+            onSaveAssignment={handleSaveAssignment}
+            onDeleteAdmin={setAdminToDelete}
+            processingAdminIds={processingAdminIds}
+          />
+        </div>
 
-        <DepartmentCatalogSection
-          departmentCatalog={departmentCatalog}
-          onCreateDepartment={onCreateDepartment}
-          onUpdateDepartment={onUpdateDepartment}
-          onSetDepartmentActive={onSetDepartmentActive}
-          onUpdateDepartmentLogo={onUpdateDepartmentLogo}
-          onDeleteDepartmentLogo={onDeleteDepartmentLogo}
-          onDeleteDepartment={onDeleteDepartment}
-        />
+        <div data-guide="admin-department-catalog">
+          <DepartmentCatalogSection
+            departmentCatalog={departmentCatalog}
+            onCreateDepartment={onCreateDepartment}
+            onUpdateDepartment={onUpdateDepartment}
+            onSetDepartmentActive={onSetDepartmentActive}
+            onUpdateDepartmentLogo={onUpdateDepartmentLogo}
+            onDeleteDepartmentLogo={onDeleteDepartmentLogo}
+            onDeleteDepartment={onDeleteDepartment}
+          />
+        </div>
 
-        <TransferRequestQueueSection
-          filteredPendingRequests={filteredPendingRequests}
-          unreadByAdminId={unreadByAdminId}
-          onOpenApprovalModal={openApprovalModal}
-          onOpenRejectionModal={openRejectionModal}
-        />
+        <div data-guide="admin-transfer-queue">
+          <TransferRequestQueueSection
+            filteredPendingRequests={filteredPendingRequests}
+            unreadByAdminId={unreadByAdminId}
+            onOpenApprovalModal={openApprovalModal}
+            onOpenRejectionModal={openRejectionModal}
+          />
+        </div>
       </div>
 
       <TransferReviewModal

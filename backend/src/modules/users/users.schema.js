@@ -61,6 +61,7 @@ export const updateCurrentUserSchema = z.object({
       mname: optionalNameSchema("Middle name"),
       lname: requiredNameSchema("Last name").optional(),
       email: z.string().trim().email().optional(),
+      currentPassword: z.string().min(1).optional(),
       barangay: z.string().trim().min(1).optional(),
       city: citySchema.optional(),
       province: z.string().trim().min(1).optional(),

@@ -57,10 +57,27 @@ export function errorHandler(err, req, res, _next) {
     });
   }
 
+  // Only errors that explicitly opt in (publicCode / retryAfterSeconds) expose
+  // these fields, so internal error codes are never leaked by accident.
+  const retryAfterSeconds =
+    isOperational &&
+    Number.isFinite(err.retryAfterSeconds) &&
+    err.retryAfterSeconds > 0
+      ? Math.ceil(err.retryAfterSeconds)
+      : null;
+
+  if (retryAfterSeconds) {
+    res.setHeader("Retry-After", String(retryAfterSeconds));
+  }
+
   res.status(statusCode).json({
     success: false,
     requestId: req.requestId,
     message: err.message || "Internal server error",
+    ...(isOperational && typeof err.publicCode === "string"
+      ? { code: err.publicCode }
+      : {}),
+    ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
     ...(err.details ? { details: err.details } : {}),
     ...(env.isProduction ? {} : { stack: err.stack }),
   });

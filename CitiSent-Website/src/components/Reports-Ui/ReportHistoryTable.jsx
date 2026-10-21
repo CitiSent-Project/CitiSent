@@ -179,10 +179,10 @@ export function ReportHistoryTable({
   return (
     <div className="space-y-4">
       {/* Filters Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Search Input */}
-          <div className="flex flex-1 sm:flex-initial sm:w-64 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 focus-within:border-blue-400 focus-within:bg-white transition-colors dark:border-slate-700 dark:bg-slate-900/50 dark:focus-within:bg-slate-900">
+          <div className="flex flex-1 sm:flex-initial sm:w-64 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/30 transition-colors dark:border-slate-800 dark:bg-slate-900">
             <FiSearch className="text-slate-400 shrink-0 dark:text-slate-500 text-xs" />
             <input
               type="text"
@@ -196,7 +196,7 @@ export function ReportHistoryTable({
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0"
+                className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 shrink-0 cursor-pointer"
                 aria-label="Clear search"
               >
                 ✕
@@ -205,20 +205,20 @@ export function ReportHistoryTable({
           </div>
 
           {/* Month Selector */}
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
-            <FiCalendar className="text-slate-500 text-sm dark:text-slate-400" />
-            <span className="font-medium">Period:</span>
+          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+            <FiCalendar className="text-slate-500 text-xs dark:text-slate-400" />
+            <span className="font-medium text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Period:</span>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent font-numeric focus:outline-none text-slate-800 dark:text-slate-200"
+              className="bg-transparent font-numeric focus:outline-none text-slate-800 dark:text-slate-200 text-xs"
             />
             {selectedMonth && (
               <button
                 type="button"
                 onClick={() => setSelectedMonth('')}
-                className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold ml-1"
+                className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold ml-1 cursor-pointer"
               >
                 Reset
               </button>
@@ -226,13 +226,13 @@ export function ReportHistoryTable({
           </div>
 
           {/* Status Filter Group */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs font-medium dark:border-slate-700 dark:bg-slate-900/50">
+          <div className="flex items-center rounded-md border border-slate-200 bg-slate-50/80 p-0.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`rounded-md px-2.5 py-1 transition-colors ${
+              className={`rounded px-2.5 py-1 text-xs transition-colors cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white font-medium'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
@@ -241,9 +241,9 @@ export function ReportHistoryTable({
             <button
               type="button"
               onClick={() => setStatusFilter('resolved')}
-              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
+              className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs transition-colors cursor-pointer ${
                 statusFilter === 'resolved'
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                  ? 'bg-emerald-600 text-white font-medium'
                   : 'text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400'
               }`}
             >
@@ -253,9 +253,9 @@ export function ReportHistoryTable({
             <button
               type="button"
               onClick={() => setStatusFilter('rejected')}
-              className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 transition-colors ${
+              className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs transition-colors cursor-pointer ${
                 statusFilter === 'rejected'
-                  ? 'bg-rose-600 text-white font-semibold shadow-sm'
+                  ? 'bg-rose-600 text-white font-medium'
                   : 'text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400'
               }`}
             >
@@ -268,12 +268,12 @@ export function ReportHistoryTable({
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* Department Filter Button */}
             <div className="relative flex items-center w-full sm:w-auto">
-              <FiGrid className="pointer-events-none absolute left-3 text-sm text-blue-500 z-10" />
+              <FiGrid className="pointer-events-none absolute left-2.5 text-xs text-blue-500 z-10" />
               <select
                 aria-label="Filter by department"
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                className="w-full sm:w-auto appearance-none rounded-md border border-slate-200 bg-white py-1.5 pl-7 pr-6 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               >
                 {availableDepartments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -281,17 +281,17 @@ export function ReportHistoryTable({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+              <span className="pointer-events-none absolute right-2 text-[9px] text-slate-400">▼</span>
             </div>
 
             {/* Emotion Status Filter Button */}
             <div className="relative flex items-center w-full sm:w-auto">
-              <FiSmile className="pointer-events-none absolute left-3 text-sm text-amber-500 z-10" />
+              <FiSmile className="pointer-events-none absolute left-2.5 text-xs text-amber-500 z-10" />
               <select
                 aria-label="Filter by emotional status"
                 value={emotionFilter}
                 onChange={(e) => setEmotionFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                className="w-full sm:w-auto appearance-none rounded-md border border-slate-200 bg-white py-1.5 pl-7 pr-6 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               >
                 {EMOTION_OPTIONS.map((emotion) => (
                   <option key={emotion} value={emotion}>
@@ -299,17 +299,17 @@ export function ReportHistoryTable({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+              <span className="pointer-events-none absolute right-2 text-[9px] text-slate-400">▼</span>
             </div>
 
             {/* Urgency Level Filter Button */}
             <div className="relative flex items-center w-full sm:w-auto">
-              <FiAlertTriangle className="pointer-events-none absolute left-3 text-sm text-rose-500 z-10" />
+              <FiAlertTriangle className="pointer-events-none absolute left-2.5 text-xs text-rose-500 z-10" />
               <select
                 aria-label="Filter by urgency level"
                 value={urgencyFilter}
                 onChange={(e) => setUrgencyFilter(e.target.value)}
-                className="w-full sm:w-auto appearance-none rounded-lg border border-slate-300 bg-slate-100 py-1.5 pl-8 pr-7 text-xs font-medium text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors shadow-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                className="w-full sm:w-auto appearance-none rounded-md border border-slate-200 bg-white py-1.5 pl-7 pr-6 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               >
                 {URGENCY_OPTIONS.map((urgency) => (
                   <option key={urgency} value={urgency}>
@@ -317,7 +317,7 @@ export function ReportHistoryTable({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2.5 text-[10px] text-slate-400">▼</span>
+              <span className="pointer-events-none absolute right-2 text-[9px] text-slate-400">▼</span>
             </div>
           </div>
         </div>
@@ -327,26 +327,26 @@ export function ReportHistoryTable({
           type="button"
           onClick={exportToCSV}
           disabled={filteredRows.length === 0}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm lg:w-auto lg:shrink-0"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto lg:shrink-0 cursor-pointer"
         >
-          <FiDownload className="text-sm" />
+          <FiDownload className="text-xs" />
           Export CSV Report
         </button>
       </div>
 
       {/* History Feed Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block overflow-x-auto rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100/80 text-xs text-center font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
-              <th className="px-4 py-3.5 w-32">Report #</th>
-              <th className="px-4 py-3.5">Department</th>
-              <th className="px-4 py-3.5 hidden md:table-cell">Location</th>
-              <th className="px-4 py-3.5">Urgency</th>
-              <th className="px-4 py-3.5">Outcome</th>
-              <th className="px-4 py-3.5 hidden lg:table-cell">Date Submitted</th>
-              <th className="px-4 py-3.5 hidden lg:table-cell">Date Completed</th>
-              <th className="px-4 py-3.5">Action</th>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+              <th className="px-3.5 py-2.5 w-28">Report #</th>
+              <th className="px-3.5 py-2.5">Department</th>
+              <th className="px-3.5 py-2.5 hidden md:table-cell">Location</th>
+              <th className="px-3.5 py-2.5">Urgency</th>
+              <th className="px-3.5 py-2.5">Outcome</th>
+              <th className="px-3.5 py-2.5 hidden lg:table-cell">Date Submitted</th>
+              <th className="px-3.5 py-2.5 hidden lg:table-cell">Date Completed</th>
+              <th className="px-3.5 py-2.5 text-right">Action</th>
             </tr>
           </thead>
           <TableLoader
@@ -357,7 +357,7 @@ export function ReportHistoryTable({
             refreshText="Refreshing history logs..."
             rows={1}
             columns={8}
-            cellClassName="h-4 w-24"
+            cellClassName="h-3.5 w-20"
           />
           <TableLoader
             isLoading={isInitialLoading}
@@ -367,13 +367,13 @@ export function ReportHistoryTable({
             label="Loading history logs..."
             rows={5}
             columns={8}
-            cellClassName="h-4 w-24"
+            cellClassName="h-3.5 w-20"
           />
           {!isInitialLoading && (
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-400 dark:text-slate-500">
+                <td colSpan={8} className="px-3.5 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
                   {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
                 </td>
               </tr>
@@ -386,44 +386,44 @@ export function ReportHistoryTable({
                 return (
                   <tr
                     key={row.id}
-                    className="border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-700/50"
+                    className="border-b border-slate-100 transition-colors hover:bg-slate-50/70 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
                   >
-                    <td className="px-4 py-3.5 font-medium text-slate-800 font-numeric w-32 dark:text-slate-200" title={rawId}>
-                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-medium text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                    <td className="px-3.5 py-2 font-medium text-slate-800 font-numeric w-28 dark:text-slate-200" title={rawId}>
+                      <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         {displayId}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-800 font-medium dark:text-slate-200">
+                    <td className="px-3.5 py-2 text-slate-800 font-medium dark:text-slate-200">
                       {row.category || row.issueType || 'Unassigned'}
                     </td>
-                    <td className="px-4 py-3.5 hidden md:table-cell text-slate-600 max-w-xs truncate dark:text-slate-400">
+                    <td className="px-3.5 py-2 hidden md:table-cell text-slate-600 max-w-xs truncate dark:text-slate-400">
                       {row.location}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-3.5 py-2">
                       <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}
+                        className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}
                       >
                         {row.urgency}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-3.5 py-2">
                       <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}
+                        className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}
                       >
                         {normalizedStatus}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
+                    <td className="px-3.5 py-2 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
                       {row.date || 'N/A'}
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
+                    <td className="px-3.5 py-2 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
                       {formatCompletedDate(row.resolvedAt, row.updatedAt)}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-3.5 py-2 text-right">
                       <button
                         type="button"
                         onClick={() => onViewReport?.(row)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-xs dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 dark:hover:text-white"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
                       >
                         <FiEye className="text-xs" />
                         Details

@@ -73,6 +73,7 @@ export function renderActivePage({
         onRejectTransfer,
         onRefreshAdminAccounts,
         onSyncConversations,
+        onNavigate,
     } = appActions
 
     switch (activePage) {
@@ -163,14 +164,23 @@ export function renderActivePage({
                 />
             )
         case APP_PAGES.SETTINGS:
+        case APP_PAGES.SETTINGS_APPEARANCE:
+        case APP_PAGES.SETTINGS_SECURITY:
+        case APP_PAGES.SETTINGS_NOTIFICATIONS:
+        case APP_PAGES.SETTINGS_REPORT_MANAGEMENT:
+        case APP_PAGES.SETTINGS_AUDIT_LOGS:
+        case APP_PAGES.SETTINGS_SYSTEM:
+        case APP_PAGES.SETTINGS_PRIVACY_TERMS:
             return (
                 <Settings
+                    activePage={activePage}
                     profile={profile}
                     accessToken={appState.accessToken}
                     preferences={preferences}
                     activityLog={activityLog}
                     onUpdatePreferences={onUpdatePreferences}
                     onRequestLogout={onRequestLogout}
+                    onNavigate={onNavigate}
                 />
             )
         case APP_PAGES.LOGOUT:

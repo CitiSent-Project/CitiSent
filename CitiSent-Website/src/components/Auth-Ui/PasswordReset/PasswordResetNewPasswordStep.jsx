@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { AuthPasswordField } from '../AuthPasswordField'
+import { PasswordRequirements } from '../PasswordRequirements'
+import {
+  MIN_PASSWORD_LENGTH,
+  MAX_PASSWORD_LENGTH,
+} from '../../../utils/passwordValidation'
 
 export function PasswordResetNewPasswordStep({ flow }) {
   const [password, setPassword] = useState('')
@@ -14,19 +19,20 @@ export function PasswordResetNewPasswordStep({ flow }) {
     }
   }
 
-  const requirements = [
-    ['At least 8 characters', password.length >= 8],
-    ['Passwords match', Boolean(password) && password === confirmation],
-  ]
-
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <AuthPasswordField
         id="reset-password"
         label="New password"
         value={password}
         onChange={setPassword}
-        placeholder="At least 8 characters"
+        placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+        maxLength={MAX_PASSWORD_LENGTH}
+        variant="admin-login"
+      />
+      <PasswordRequirements
+        password={password}
+        confirmPassword={confirmation}
         variant="admin-login"
       />
       <AuthPasswordField
@@ -35,19 +41,18 @@ export function PasswordResetNewPasswordStep({ flow }) {
         value={confirmation}
         onChange={setConfirmation}
         placeholder="Repeat your new password"
+        maxLength={MAX_PASSWORD_LENGTH}
         variant="admin-login"
       />
-      <ul aria-label="Password requirements" className="space-y-1 text-xs text-white/80">
-        {requirements.map(([label, met]) => (
-          <li key={label} className={met ? 'text-emerald-200' : ''}>
-            {met ? '✓' : '○'} {label}
-          </li>
-        ))}
-      </ul>
+      {flow.errorMessage ? (
+        <p className="rounded-lg border border-rose-300/40 bg-rose-950/60 px-3 py-2 text-sm text-rose-200">
+          {flow.errorMessage}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={flow.isSubmitting}
-        className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-xl font-semibold text-white"
+        className="w-full rounded-xl bg-[#173f75] px-4 py-2.5 text-lg font-semibold text-white shadow-sm transition hover:bg-[#123666] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {flow.isSubmitting ? 'Updating...' : 'Update password'}
       </button>

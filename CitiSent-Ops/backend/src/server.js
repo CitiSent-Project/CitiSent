@@ -33,6 +33,22 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
+// 30-second Request Timeout Middleware
+app.use((req, res, next) => {
+  const timer = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(504).json({
+        success: false,
+        error: "Request timed out after 30 seconds",
+      });
+    }
+  }, 30_000);
+
+  res.on("finish", () => clearTimeout(timer));
+  res.on("close", () => clearTimeout(timer));
+  next();
+});
+
 // Public Liveness Probe
 app.get("/health", (req, res) => {
   res.json({

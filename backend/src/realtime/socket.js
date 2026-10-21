@@ -31,13 +31,14 @@ function hashToken(token) {
 function isAllowedSocketOrigin(origin) {
   if (!origin) return true;
   if (env.corsOrigins.includes(origin)) return true;
-  // Allow mobile Expo Go / local network origins in development
-  if (
-    env.isDev ||
-    /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
-    origin.startsWith("exp://")
-  ) {
-    return true;
+  // Allow mobile Expo Go / local network origins only in development
+  if (env.isDev) {
+    if (
+      /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin) ||
+      origin.startsWith("exp://")
+    ) {
+      return true;
+    }
   }
   return false;
 }
@@ -248,9 +249,20 @@ export function initSocketIO(httpServer) {
     socket.on("send_message", async (payload, callback) => {
       try {
         const { reportId, message } = payload || {};
-        if (!reportId || !message) {
+        if (!reportId || typeof reportId !== "string") {
           if (typeof callback === "function") {
-            callback({ success: false, error: "reportId and message are required" });
+            callback({ success: false, error: "Valid reportId is required" });
+          }
+          return;
+        }
+
+        const trimmedMessage = typeof message === "string" ? message.trim() : "";
+        if (!trimmedMessage || trimmedMessage.length > 2000) {
+          if (typeof callback === "function") {
+            callback({
+              success: false,
+              error: "Message must be a non-empty string with maximum 2,000 characters",
+            });
           }
           return;
         }
@@ -259,7 +271,7 @@ export function initSocketIO(httpServer) {
         const savedMessage = await reportMessagesService.sendMessage({
           actor: socket.user,
           reportId,
-          message,
+          message: trimmedMessage,
           accessToken: socket.accessToken,
           // The socket handler broadcasts the room below. Avoid emitting the
           // same receive_message event from the service as well.

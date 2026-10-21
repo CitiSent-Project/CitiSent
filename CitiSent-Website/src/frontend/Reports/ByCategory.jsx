@@ -7,6 +7,7 @@ import { canAdminUpdateReport, getScopedAgencyFilters } from '../../controllers/
 import { filterUserReportsByCategory, buildWeeklyReportTrend, matchesReportSearch } from '../../controllers/reports/userReportsController'
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
 import { isSuperadmin } from '../../models/roleAccessModel'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui/ComponentGuideTrigger'
 
 const CATEGORY_COLORS = ['#1650e8', '#65c98d', '#8d66d6', '#ff9082', '#39bee0', '#ffb44d', '#2f89e5', '#7a6ce5', '#4f46e5']
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -237,7 +238,7 @@ export function ByCategory({
       <div className="flex flex-col gap-4 sm:gap-5 w-full min-w-0">
         <header className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Reports</h1>
-          <span className="grid h-7 w-7 place-items-center rounded-full border border-slate-300 text-sm text-slate-700 dark:border-slate-600 dark:text-slate-300">!</span>
+          <ComponentGuideTrigger guideId="reports-feed-table" />
         </header>
 
         <section className="rounded-2xl bg-[#5f82bd] p-3 sm:p-4 md:p-6 w-full min-w-0 dark:bg-slate-800">
@@ -270,15 +271,18 @@ export function ByCategory({
           onSelectItem={handleSelectAgency}
         />
 
-        <section className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm w-full min-w-0 dark:border-slate-700/80 dark:bg-slate-800">
+        <section data-guide="reports-feed-table" className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm w-full min-w-0 dark:border-slate-700/80 dark:bg-slate-800">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-700">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Report Feed by Department</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">Report Feed by Department</h2>
+              <ComponentGuideTrigger guideId="reports-feed-table" />
+            </div>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-cyan-900 dark:bg-blue-900/40 dark:text-cyan-200">
               {selectedDepartmentLabel}
             </span>
           </div>
 
-          <div className="mb-4 px-1 flex flex-col gap-4">
+          <div data-guide="reports-filter-bar" className="mb-4 px-1 flex flex-col gap-4">
             <UrgencyFilterChips
               chips={urgencyChips}
               selectedChip={urgencyFilter}

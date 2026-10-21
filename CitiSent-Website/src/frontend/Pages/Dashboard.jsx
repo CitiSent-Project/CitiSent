@@ -11,6 +11,7 @@ import {
     SolidPieChart,
     VerticalChart,
 } from '../../components/Dashboard-Ui'
+import { ComponentGuideTrigger } from '../../components/Guide-Ui'
 import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { buildDashboardStatCards } from '../../controllers/admin/dashboardController'
 import {
@@ -290,18 +291,18 @@ export function Dashboard({ profile: propsProfile }) {
     }, [categoryData, statusData, weeklyData, statCards, dashboardQuery.data?.admins, dashboardQuery.data?.users])
 
     return (
-        <main className="w-full flex-1 min-w-0 bg-[#eef2f8] px-4 py-6 md:px-6 lg:px-8 dark:bg-slate-900">
+        <main className="w-full flex-1 min-w-0 bg-slate-50 px-4 py-5 md:px-6 lg:px-8 dark:bg-[#0b0f19]">
             <MotionDiv
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mb-5 sm:mb-8 flex items-start justify-between gap-4"
+                transition={{ duration: 0.2 }}
+                className="mb-5 sm:mb-6 flex items-start justify-between gap-4"
             >
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
-                        Hi, Welcome back<span className="text-2xl sm:text-3xl">👋</span>
+                    <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                        Hi, Welcome back <span className="inline-block text-lg sm:text-xl">👋</span>
                     </h1>
-                    <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {isLoadingDashboard ? 'Refreshing dashboard metrics...' : 'Dashboard metrics are up to date.'}
                     </p>
                 </div>
@@ -309,21 +310,24 @@ export function Dashboard({ profile: propsProfile }) {
                     type="button"
                     onClick={handleExportAll}
                     disabled={isLoadingDashboard || !dashboardQuery.data}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-slate-600 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 hover:shadow-sm active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-white"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
                 >
-                    <FiDownload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <FiDownload className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Export All</span>
                     <span className="sm:hidden">Export</span>
                 </button>
             </MotionDiv>
 
             {/* Stats Grid */}
-            <div className="mb-5 sm:mb-8">
-                <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide dark:text-slate-400">Overview</h2>
+            <div className="mb-5 sm:mb-6" data-guide="dashboard-summary-cards">
+                <div className="mb-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Overview</h2>
+                        <ComponentGuideTrigger guideId="dashboard-summary-cards" />
+                    </div>
                     <ExportCsvButton onExport={handleExportSummary} label="Export summary to CSV" disabled={isLoadingDashboard} />
                 </div>
-                <div className="grid grid-cols-1 gap-3.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {statCards.map((card) => (
                         <DashboardStatCard key={card.id} {...card} />
                     ))}
@@ -332,8 +336,9 @@ export function Dashboard({ profile: propsProfile }) {
 
             {/* Charts Grid */}
             <div className="mb-5 sm:mb-8 grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
-                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
-                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0" data-guide="dashboard-department-distribution">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-department-distribution" />
                         <ExportCsvButton onExport={handleExportCategory} label="Export categories to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <PieChart
@@ -345,8 +350,9 @@ export function Dashboard({ profile: propsProfile }) {
                         legend={categoryData.legend}
                     />
                 </div>
-                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0">
-                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                <div className="relative h-90 sm:h-100 lg:h-110 min-w-0" data-guide="dashboard-sentiment">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-sentiment" />
                         <ExportCsvButton onExport={handleExportStatus} label="Export status breakdown to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <SolidPieChart
@@ -371,9 +377,10 @@ export function Dashboard({ profile: propsProfile }) {
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2" data-guide="dashboard-recent-triage">
                 <div className="relative">
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-recent-triage" />
                         <ExportCsvButton onExport={handleExportAdmins} label="Export admins to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <DashboardTableCard
@@ -384,7 +391,8 @@ export function Dashboard({ profile: propsProfile }) {
                     />
                 </div>
                 <div className="relative">
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+                        <ComponentGuideTrigger guideId="dashboard-recent-triage" />
                         <ExportCsvButton onExport={handleExportUsers} label="Export users to CSV" disabled={isLoadingDashboard} />
                     </div>
                     <DashboardTableCard

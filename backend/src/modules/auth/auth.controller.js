@@ -77,6 +77,12 @@ export const authController = {
     return res.status(StatusCodes.OK).json({ success: true, data: result });
   },
 
+  async verifySignupOtp(req, res) {
+    const { email, otp } = req.body;
+    const result = await authService.verifySignupOtp(email, otp);
+    return res.status(StatusCodes.OK).json({ success: true, data: result });
+  },
+
   async resetPasswordWithOtp(req, res) {
     const { resetToken, password } = req.body;
     const result = await authService.resetPasswordWithOtp(resetToken, password);

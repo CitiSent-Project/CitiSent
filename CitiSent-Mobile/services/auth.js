@@ -110,6 +110,11 @@ export const authApi = {
     return response?.data ?? response;
   },
 
+  verifySignupOtp: async (email, otp) => {
+    const response = await api.post("/auth/verify-signup-otp", { email, otp });
+    return response?.data ?? response;
+  },
+
   resetPasswordWithOtp: async (resetToken, password) => {
     const response = await api.post("/auth/reset-password-otp", {
       resetToken,

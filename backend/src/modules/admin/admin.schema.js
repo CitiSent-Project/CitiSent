@@ -187,7 +187,13 @@ export const listAdminReportsSchema = z.object({
 export const listAdminConversationsSchema = z.object({
   body: z.object({}).optional().default({}),
   params: z.object({}).optional().default({}),
-  query: z.object({}).optional().default({}),
+  query: z
+    .object({
+      limit: z.coerce.number().int().min(1).max(100).default(50).optional(),
+      offset: z.coerce.number().int().min(0).default(0).optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 export const getAdminReportByIdSchema = z.object({

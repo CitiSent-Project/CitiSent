@@ -54,13 +54,19 @@ function normalizeOptionalString(value) {
   return normalizedValue || null;
 }
 
+let _devAdminAuthJwtSecret = null;
+
 function getAdminAuthJwtSecret() {
-  return (
-    env.INVITATION_JWT_SECRET ||
-    env.SUPABASE_SERVICE_ROLE_KEY ||
-    env.SUPABASE_ANON_KEY ||
-    "citisent_admin_2fa_secret_fallback_key_at_least_32_chars"
-  );
+  if (env.INVITATION_JWT_SECRET) {
+    return env.INVITATION_JWT_SECRET;
+  }
+  if (env.isProduction) {
+    throw new Error("Missing required INVITATION_JWT_SECRET in production environment");
+  }
+  if (!_devAdminAuthJwtSecret) {
+    _devAdminAuthJwtSecret = crypto.randomBytes(32).toString("hex");
+  }
+  return _devAdminAuthJwtSecret;
 }
 
 async function resolveProfileEmailFromCandidates(candidates) {
@@ -146,6 +152,13 @@ function toUserResponse({ user, session, profile }) {
     }),
   };
 }
+
+// Registrations currently being processed by this instance, keyed by email.
+// A duplicate submit (double click, impatient retry) while the first is still
+// running would otherwise trigger a second Supabase confirmation email, which
+// counts against the project-wide email quota. Per-instance by design; the
+// Supabase quota and registerRateLimiter remain the cross-instance backstop.
+const inFlightRegistrations = new Set();
 
 async function resolveLoginContext({ identifier, email, username, phoneNumber }) {
   const normalizedEmail = normalizeEmail(email);
@@ -258,8 +271,9 @@ export const authService = {
       throw new AppError(err.message, StatusCodes.TOO_MANY_REQUESTS);
     }
 
-    // Generate OTP
-    const plainOtp = otpStore_.createOtp(profile.email, 8 * 60 * 60 * 1000);
+    // Generate OTP (expires in 10 minutes)
+    const ADMIN_LOGIN_OTP_EXPIRY_MS = 10 * 60 * 1000;
+    const plainOtp = otpStore_.createOtp(profile.email, ADMIN_LOGIN_OTP_EXPIRY_MS);
 
     // Send email
     try {
@@ -284,7 +298,7 @@ export const authService = {
       );
     }
 
-    // Create signed temporary challenge token (valid 8h)
+    // Create signed temporary challenge token (valid 10m)
     const secret = getAdminAuthJwtSecret();
     const tempToken = jwt.sign(
       {
@@ -296,7 +310,7 @@ export const authService = {
         authUser: authResult?.user || null,
       },
       secret,
-      { expiresIn: "8h" },
+      { expiresIn: "10m" },
     );
 
     return {
@@ -304,7 +318,7 @@ export const authService = {
       tempToken,
       email: profile.email,
       maskedEmail: maskEmail(profile.email),
-      expiresInSeconds: 28800,
+      expiresInSeconds: 600,
       resendCooldownSeconds: 60,
     };
   },
@@ -424,7 +438,7 @@ export const authService = {
       throw new AppError("Admin account not found.", StatusCodes.NOT_FOUND);
     }
 
-    const plainOtp = otpStore_.createOtp(normalizedEmail, 8 * 60 * 60 * 1000);
+    const plainOtp = otpStore_.createOtp(normalizedEmail, 10 * 60 * 1000);
 
     try {
       await mailerService.sendLoginOtpEmail({
@@ -633,6 +647,24 @@ export const authService = {
   },
 
   async register(payload) {
+    const registrationKey = normalizeEmail(payload.email);
+
+    if (inFlightRegistrations.has(registrationKey)) {
+      throw new AppError(
+        "A registration for this email is already being processed. Please wait a moment.",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    inFlightRegistrations.add(registrationKey);
+    try {
+      return await authService.performRegistration(payload);
+    } finally {
+      inFlightRegistrations.delete(registrationKey);
+    }
+  },
+
+  async performRegistration(payload) {
     const normalizedEmail = normalizeEmail(payload.email);
     const normalizedPhoneNumber = payload.phoneNumber
       ? normalizePhoneNumber(payload.phoneNumber)
@@ -718,6 +750,26 @@ export const authService = {
     const userId = signUpData?.user?.id;
     const sessionToken = signUpData?.session?.access_token;
 
+    // Supabase answers an already-confirmed email with a fake user that has no
+    // identities (and no error) to avoid account enumeration. Treat it as a
+    // duplicate instead of reporting a successful registration.
+    if (
+      Array.isArray(signUpData?.user?.identities) &&
+      signUpData.user.identities.length === 0
+    ) {
+      throw new AppError(
+        "Email is already registered",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    if (!userId) {
+      throw new AppError(
+        "Failed to register account",
+        StatusCodes.BAD_GATEWAY,
+      );
+    }
+
     let profile = null;
     if (userId && sessionToken) {
       profile = await authRepository.upsertProfileByUserId(
@@ -741,6 +793,26 @@ export const authService = {
     });
   },
 
+  async verifySignupOtp(email, otp) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    try {
+      otpStore_.verifyOtp(normalizedEmail, otp);
+    } catch (err) {
+      throw new AppError(err.message, StatusCodes.BAD_REQUEST);
+    }
+
+    const profile = await authRepository.getProfileByEmail(normalizedEmail);
+    if (!profile) {
+      throw new AppError("Account not found.", StatusCodes.NOT_FOUND);
+    }
+
+    // Mark the user as email confirmed using Admin API
+    await authRepository.confirmUserEmail(profile.user_id);
+
+    return { success: true };
+  },
+
   async login(payload, perf) {
     const track = (name, operation) =>
       perf?.trackStage ? perf.trackStage(name, operation) : operation();
@@ -756,7 +828,7 @@ export const authService = {
       const p = loginContext.profile
         ? loginContext.profile
         : await authRepository.getProfileByIdentifier(resolvedEmail);
-        
+
       let isBanned = false;
       if (p?.user_id) {
         if (String(p.account_status || "").trim().toLowerCase() === "banned") {
@@ -870,7 +942,12 @@ export const authService = {
         email: activatedProfile?.email || verifiedToken.email,
         status: "active",
       })
-      .catch(() => { });
+      .catch((err) => {
+        logger.warn("[AUTH] Failed to create account activation notification", {
+          error: err?.message,
+          userId: verifiedToken.userId,
+        });
+      });
 
     return {
       activated: true,
@@ -889,7 +966,7 @@ export const authService = {
         accessToken,
       );
       if (profile) {
-        await cacheService.setJSON(cacheKey, profile, 120).catch(() => {});
+        await cacheService.setJSON(cacheKey, profile, 120).catch(() => { });
       }
     }
 

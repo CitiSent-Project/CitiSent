@@ -14,9 +14,9 @@ function ActionMenu({ report, onViewReport }) {
       <button
         type="button"
         onClick={() => onViewReport?.(report)}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
       >
-        <FiEye className="text-sm text-slate-500 dark:text-slate-400" />
+        <FiEye className="text-xs text-slate-400 shrink-0" />
         View
       </button>
     </div>
@@ -43,20 +43,20 @@ const EMOTION_LEGEND = [
 
 function TableLegend() {
   return (
-    <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
-      <div className="flex flex-wrap items-start gap-6">
+    <div className="mb-3 rounded-md border border-slate-200 bg-white px-3.5 py-2.5 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-wrap items-start gap-5">
         {/* Urgency Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Urgency Level
           </p>
           <div className="flex flex-wrap gap-2">
             {URGENCY_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
+                <span className={`inline-block h-2 w-2 rounded-full ${item.color}`} />
                 <span className="text-xs text-slate-700 dark:text-slate-300">
                   {item.label}
-                  <span className="ml-0.5 text-slate-500 dark:text-slate-400">— {item.description}</span>
+                  <span className="ml-0.5 text-slate-400 dark:text-slate-500">— {item.description}</span>
                 </span>
               </div>
             ))}
@@ -65,13 +65,13 @@ function TableLegend() {
 
         {/* Emotion Legend */}
         <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Emotion Status
           </p>
           <div className="flex flex-wrap gap-2">
             {EMOTION_LEGEND.map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
+                <span className={`inline-block h-2 w-2 rounded-full ${item.color}`} />
                 <span className="text-xs text-slate-700 dark:text-slate-300">{item.label}</span>
               </div>
             ))}
@@ -95,18 +95,18 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
   return (
     <div>
       <TableLegend />
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left text-sm">
+      <div className="hidden md:block overflow-x-auto rounded-md border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              <th className="px-4 py-3 w-24">ID</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3 hidden md:table-cell">Location</th>
-              <th className="px-4 py-3">Emotion</th>
-              <th className="px-4 py-3">Urgency</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 hidden lg:table-cell">Date</th>
-              <th className="px-4 py-3 text-right">Action</th>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+              <th className="px-3.5 py-2.5 w-24">ID</th>
+              <th className="px-3.5 py-2.5">Email</th>
+              <th className="px-3.5 py-2.5 hidden md:table-cell">Location</th>
+              <th className="px-3.5 py-2.5">Emotion</th>
+              <th className="px-3.5 py-2.5">Urgency</th>
+              <th className="px-3.5 py-2.5">Status</th>
+              <th className="px-3.5 py-2.5 hidden lg:table-cell">Date</th>
+              <th className="px-3.5 py-2.5 text-right">Action</th>
             </tr>
           </thead>
           <TableLoader
@@ -117,7 +117,7 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             refreshText="Refreshing reports..."
             rows={1}
             columns={8}
-            cellClassName="h-4 w-24"
+            cellClassName="h-3.5 w-20"
           />
           <TableLoader
             isLoading={isInitialLoading}
@@ -127,13 +127,13 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
             label="Loading reports..."
             rows={5}
             columns={8}
-            cellClassName="h-4 w-24"
+            cellClassName="h-3.5 w-20"
           />
           {!isInitialLoading && (
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
+                  <td colSpan={8} className="px-3.5 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
                     No reports to display.
                   </td>
                 </tr>
@@ -144,40 +144,40 @@ export function UrgencyFeedTable({ rows = [], onViewReport, isLoading = false })
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-slate-100 transition-colors hover:bg-slate-100 dark:border-slate-700/60 dark:hover:bg-slate-700/40"
+                  className="border-b border-slate-100 transition-colors hover:bg-slate-50/70 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
                 >
-                  <td className="px-4 py-3 font-medium text-slate-700 font-numeric w-24 dark:text-slate-200" title={row.reportNum || row.id}>
+                  <td className="px-3.5 py-2 font-medium text-slate-700 font-numeric w-24 dark:text-slate-200" title={row.reportNum || row.id}>
                     {row.reportNum || truncateId(row.id)}
                   </td>
-                  <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{row.email || "N/A"}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-slate-600 dark:text-slate-300">
+                  <td className="px-3.5 py-2 text-slate-800 dark:text-slate-200">{row.email || "N/A"}</td>
+                  <td className="px-3.5 py-2 hidden md:table-cell text-slate-600 dark:text-slate-300">
                     {row.location}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3.5 py-2">
                     <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_EMOTION_BADGE_CLASSES[row.emotionLevel] || "bg-slate-500/20 text-slate-400 border border-slate-500/30"}`}
+                      className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${REPORT_EMOTION_BADGE_CLASSES[row.emotionLevel] || "bg-slate-500/20 text-slate-400 border border-slate-500/30"}`}
                     >
                       {row.emotionLevel || 'Neutral'}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3.5 py-2">
                     <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}
+                      className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${REPORT_URGENCY_BADGE_CLASSES[row.urgency] || ""}`}
                     >
                       {row.urgency}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3.5 py-2">
                     <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}
+                      className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${REPORT_STATUS_BADGE_CLASSES[normalizedStatus] || ""}`}
                     >
                       {normalizedStatus}
                     </span>
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-slate-500 font-numeric dark:text-slate-400">
+                  <td className="px-3.5 py-2 hidden lg:table-cell text-slate-500 font-numeric dark:text-slate-400">
                     {row.date}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3.5 py-2 text-right">
                     <ActionMenu
                       report={row}
                       onViewReport={onViewReport}

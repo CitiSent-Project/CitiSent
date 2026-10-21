@@ -14,13 +14,13 @@ export function Pagination({
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-300 ${className}`}
+      className={`flex flex-wrap items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 ${className}`}
     >
       <button
         type="button"
         onClick={onPrevious}
         disabled={isPreviousDisabled}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+        className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
       >
         Previous
       </button>
@@ -30,19 +30,19 @@ export function Pagination({
           key={page}
           type="button"
           onClick={() => onPageChange(page)}
-          className={`h-8 w-8 rounded-full border font-numeric transition ${
+          className={`h-7 w-7 rounded-md border font-numeric text-xs font-medium transition-colors cursor-pointer ${
             page === currentPage
-              ? "border-slate-300 bg-blue-900 text-white dark:border-blue-500 dark:bg-blue-600"
-              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800"
           }`}
         >
           {page}
         </button>
       ))}
 
-      {shouldShowTrailingTotal ? <span className="px-2">...</span> : null}
+      {shouldShowTrailingTotal ? <span className="px-1.5 text-slate-400 text-xs">...</span> : null}
       {shouldShowTrailingTotal ? (
-        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 font-numeric dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-numeric text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
           {totalPages}
         </span>
       ) : null}
@@ -51,7 +51,7 @@ export function Pagination({
         type="button"
         onClick={onNext}
         disabled={isNextDisabled}
-        className="rounded-full border border-slate-200 bg-white px-3 py-1 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+        className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
       >
         Next
       </button>

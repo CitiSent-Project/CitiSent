@@ -6,6 +6,12 @@ import { authApiService } from "../../services/api/auth/authApiService";
 import { useModalAccessibility } from "../../hooks/shared/useModalAccessibility";
 import { ModalShell } from "../ui/ModalShell";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { PasswordRequirements } from "../Auth-Ui";
+import {
+  validatePassword,
+  MIN_PASSWORD_LENGTH,
+  MAX_PASSWORD_LENGTH,
+} from "../../utils/passwordValidation";
 
 const timeoutOptions = [
   { label: "5 minutes", value: 5 },
@@ -81,12 +87,9 @@ export function SecuritySettingsTab({
 
   async function handleChangePassword(e) {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      setFeedback({ type: "error", message: "New password must be at least 8 characters." });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setFeedback({ type: "error", message: "Passwords do not match." });
+    const validationError = validatePassword(newPassword, confirmPassword);
+    if (validationError) {
+      setFeedback({ type: "error", message: validationError });
       return;
     }
 
@@ -117,6 +120,7 @@ export function SecuritySettingsTab({
       <SettingsSectionCard
         title="Security"
         description="Manage session behavior and review security actions."
+        guideId="settings-security-card"
       >
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition-all duration-300 dark:border-slate-700 dark:bg-slate-900/50">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Change password</p>
@@ -178,7 +182,7 @@ export function SecuritySettingsTab({
           )}
 
           {step === "password" && (
-            <form onSubmit={handleChangePassword} className="mt-4 flex max-w-sm flex-col gap-4">
+            <form onSubmit={handleChangePassword} className="mt-4 flex max-w-md flex-col gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
                 <div className="relative">
@@ -186,6 +190,7 @@ export function SecuritySettingsTab({
                     type={showPasswords ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
+                    maxLength={MAX_PASSWORD_LENGTH}
                     className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />
@@ -205,6 +210,8 @@ export function SecuritySettingsTab({
                     type={showPasswords ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+                    maxLength={MAX_PASSWORD_LENGTH}
                     className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />
@@ -217,6 +224,11 @@ export function SecuritySettingsTab({
                   </button>
                 </div>
               </div>
+              <PasswordRequirements
+                password={newPassword}
+                confirmPassword={confirmPassword}
+                variant="default"
+              />
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
                 <div className="relative">
@@ -224,6 +236,8 @@ export function SecuritySettingsTab({
                     type={showPasswords ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat your new password"
+                    maxLength={MAX_PASSWORD_LENGTH}
                     className="block w-full rounded-lg border border-slate-300 pl-3 pr-10 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900/60 dark:text-white"
                     required
                   />

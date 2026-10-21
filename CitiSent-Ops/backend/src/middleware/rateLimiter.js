@@ -33,3 +33,17 @@ export const superadminProvisioningLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/**
+ * Rate Limiter for Sensitive Ops Mutations (Unlock, Status, Seed)
+ */
+export const opsActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: {
+    success: false,
+    error: "Too many administrative action requests. Please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

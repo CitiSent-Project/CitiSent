@@ -149,6 +149,11 @@ export function buildActor({ authUser, profile }) {
       authUser?.phone ||
       authUser?.user_metadata?.phoneNumber ||
       null,
+    phoneVerified: Boolean(
+      profile?.phone_verified ||
+      authUser?.user_metadata?.phone_verified ||
+      false,
+    ),
     barangay: profile?.barangay || null,
     city: profile?.city || null,
     province: profile?.province || null,

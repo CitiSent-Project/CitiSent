@@ -11,6 +11,42 @@ export const authController = {
     });
   },
 
+  async requestRegisterOtp(req, res) {
+    const result = await authService.requestRegistrationOtp(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async resendRegisterOtp(req, res) {
+    const result = await authService.resendRegistrationOtp(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async verifyRegisterOtp(req, res) {
+    const result = await authService.verifyRegistrationOtp(req.body);
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    });
+  },
+
+  async completeRegister(req, res) {
+    const result = await authService.completeRegistration(req.body);
+
+    return res.status(StatusCodes.CREATED).json({
+      success: true,
+      data: result,
+    });
+  },
+
   async login(req, res) {
     const result = await authService.login(req.body, req.perf);
 

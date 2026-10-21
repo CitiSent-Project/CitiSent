@@ -178,6 +178,12 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(60_000),
+  IPROGSMS_API_TOKEN: optionalString(z.string().min(1)),
+  IPROGSMS_API_URL: z.string().url().default("https://www.iprogsms.com/api/v1"),
+  IPROGSMS_SMS_PROVIDER: z.coerce.number().int().min(0).max(2).default(0),
+  OTP_EXPIRY_SECONDS: z.coerce.number().int().positive().default(300),
+  OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().int().positive().default(60),
+  OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
 });
 
 const parsed = envSchema.safeParse(process.env);

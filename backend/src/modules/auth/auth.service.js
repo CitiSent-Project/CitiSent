@@ -38,6 +38,12 @@ import {
   tryVerifyGuestRecoveryToken,
 } from "../../shared/security/guestTokens.js";
 import { activityRepository } from "../admin/activity/activity.repository.js";
+import {
+  normalizePhilippinePhoneNumber,
+  maskPhoneNumber,
+} from "../../shared/utils/phoneUtils.js";
+import { iprogsmsService } from "../../shared/sms/iprogsms.service.js";
+import { pendingRegistrationStore } from "../../shared/security/pendingRegistration.store.js";
 
 function normalizeEmail(value) {
   return String(value || "")
@@ -647,6 +653,34 @@ export const authService = {
   },
 
   async register(payload) {
+    const normalizedRole = normalizeUserRole(payload.role);
+    const accountType = normalizeAccountType(
+      payload.accountType,
+      normalizedRole,
+    );
+    const verificationToken = payload.verificationToken
+      ? String(payload.verificationToken).trim()
+      : null;
+
+    // Direct registration without phone verification is strictly blocked for citizens
+    if (accountType !== ACCOUNT_TYPES.ADMIN) {
+      if (!verificationToken) {
+        throw new AppError(
+          "Phone number verification required. Please verify your phone number via SMS OTP before completing registration.",
+          StatusCodes.FORBIDDEN,
+        );
+      }
+
+      const verifiedSession =
+        pendingRegistrationStore.getPendingRegistration(verificationToken);
+      if (!verifiedSession || !verifiedSession.verified) {
+        throw new AppError(
+          "Phone number verification required. Please complete OTP verification before completing registration.",
+          StatusCodes.FORBIDDEN,
+        );
+      }
+    }
+
     const registrationKey = normalizeEmail(payload.email);
 
     if (inFlightRegistrations.has(registrationKey)) {
@@ -658,17 +692,28 @@ export const authService = {
 
     inFlightRegistrations.add(registrationKey);
     try {
-      return await authService.performRegistration(payload);
+      const isVerified = Boolean(verificationToken);
+      return await authService.performRegistration(payload, {
+        isPhoneVerified: isVerified,
+      });
     } finally {
       inFlightRegistrations.delete(registrationKey);
     }
   },
 
-  async performRegistration(payload) {
+  async performRegistration(payload, options = {}) {
     const normalizedEmail = normalizeEmail(payload.email);
-    const normalizedPhoneNumber = payload.phoneNumber
-      ? normalizePhoneNumber(payload.phoneNumber)
+    const normPhone = payload.phoneNumber
+      ? normalizePhilippinePhoneNumber(payload.phoneNumber)
       : null;
+    const normalizedPhoneNumber = options?.verifiedPhone
+      ? options.verifiedPhone
+      : normPhone?.isValid
+        ? normPhone.e164
+        : payload.phoneNumber
+          ? normalizePhoneNumber(payload.phoneNumber)
+          : null;
+    const isPhoneVerified = Boolean(options?.isPhoneVerified);
     const normalizedFname = normalizeNamePart(payload.fname);
     const normalizedMname = normalizeNamePart(payload.mname);
     const normalizedLname = normalizeNamePart(payload.lname);
@@ -715,6 +760,8 @@ export const authService = {
       client_type: payload.clientType ?? null,
       barangay: payload.barangay ?? null,
       avatar_url: payload.profileImage ?? null,
+      phone_verified: isPhoneVerified,
+      phone_verified_at: isPhoneVerified ? new Date().toISOString() : null,
     };
 
     const rawUserMetadata = {
@@ -724,6 +771,8 @@ export const authService = {
       lname: normalizedLname,
       phoneNumber: normalizedPhoneNumber,
       phone_number: normalizedPhoneNumber,
+      phone_verified: isPhoneVerified,
+      phone_verified_at: isPhoneVerified ? new Date().toISOString() : null,
       barangay: payload.barangay,
       age: payload.age,
       gender: payload.gender,
@@ -791,6 +840,310 @@ export const authService = {
       session: signUpData?.session,
       profile,
     });
+  },
+
+  /**
+   * Registration Phone OTP: Step 1 - Request OTP
+   * Validates registration details, checks uniqueness, creates pending registration,
+   * generates 6-digit OTP (stored only as SHA-256 hash), and dispatches SMS via iProgSMS.
+   */
+  async requestRegistrationOtp(payload) {
+    const normalizedEmail = normalizeEmail(payload.email);
+    const normalizedUsername = normalizeUsername(payload.username);
+
+    // Validate phone number format
+    const normPhone = normalizePhilippinePhoneNumber(payload.phoneNumber);
+    if (!normPhone.isValid) {
+      throw new AppError(
+        "Please enter a valid Philippine mobile number (e.g. 09XXXXXXXXX or +639XXXXXXXXX).",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    // Check uniqueness of username and phone number
+    await assertRegistrationIdentifiersAreUnique({
+      username: payload.username,
+      phoneNumber: normPhone.e164,
+    });
+
+    // Check email uniqueness
+    const existingProfile = await authRepository.getProfileByEmail(normalizedEmail);
+    if (existingProfile) {
+      throw new AppError("Email is already registered", StatusCodes.CONFLICT);
+    }
+
+    // Validate department selection if supplied
+    const rawDepartmentValue = payload.departmentLabel || payload.departmentId;
+    const normalizedDepartmentValue = String(rawDepartmentValue || "").trim();
+    if (normalizedDepartmentValue) {
+      const matchedDepartment =
+        await departmentsService.getActiveDepartmentByValue({
+          value: normalizedDepartmentValue,
+        });
+      if (!matchedDepartment) {
+        throw new AppError(
+          "Invalid or inactive department selection.",
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+    }
+
+    // Create pending registration session & generate 6-digit OTP
+    let pending;
+    try {
+      pending = pendingRegistrationStore.createPendingRegistration({
+        registrationPayload: {
+          ...payload,
+          phoneNumber: normPhone.e164,
+          email: normalizedEmail,
+          username: payload.username,
+        },
+        phoneNumber: normPhone.e164,
+        localPhoneNumber: normPhone.local,
+        email: normalizedEmail,
+        username: payload.username,
+        expirySeconds: env.OTP_EXPIRY_SECONDS,
+        cooldownSeconds: env.OTP_RESEND_COOLDOWN_SECONDS,
+      });
+    } catch (storeError) {
+      if (storeError?.statusCode === StatusCodes.TOO_MANY_REQUESTS) {
+        throw new AppError(storeError.message, StatusCodes.TOO_MANY_REQUESTS);
+      }
+      throw storeError;
+    }
+
+    // Dispatch SMS OTP via iProgSMS
+    try {
+      await iprogsmsService.sendOtp({
+        to: normPhone.local,
+        otp: pending.plainOtp,
+        expiryMinutes: Math.ceil(env.OTP_EXPIRY_SECONDS / 60),
+      });
+    } catch (smsError) {
+      // Rollback phone send rate limit and prune failed registration session
+      pendingRegistrationStore.rollbackPhoneSendRateLimit(normPhone.e164);
+      pendingRegistrationStore.deleteRegistration(pending.registrationToken);
+
+      if (smsError instanceof AppError) {
+        throw smsError;
+      }
+      throw new AppError(
+        smsError?.message || "Failed to deliver SMS verification code. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    return {
+      success: true,
+      requireOtp: true,
+      registrationToken: pending.registrationToken,
+      phoneNumber: normPhone.e164,
+      phoneNumberMasked: maskPhoneNumber(normPhone.e164),
+      expiresInSeconds: pending.expiresInSeconds,
+      resendCooldownSeconds: pending.resendCooldownSeconds,
+    };
+  },
+
+  /**
+   * Registration Phone OTP: Resend OTP
+   * Enforces cooldown and phone rate limits, invalidates previous OTP, issues new OTP via SMS.
+   */
+  async resendRegistrationOtp({ registrationToken }) {
+    if (!registrationToken) {
+      throw new AppError("Registration session token is required.", StatusCodes.BAD_REQUEST);
+    }
+
+    let resent;
+    try {
+      resent = pendingRegistrationStore.resendOtp(registrationToken, {
+        expirySeconds: env.OTP_EXPIRY_SECONDS,
+        cooldownSeconds: env.OTP_RESEND_COOLDOWN_SECONDS,
+      });
+    } catch (err) {
+      throw new AppError(
+        err.message,
+        err.statusCode || StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    const entry = pendingRegistrationStore.getPendingRegistration(registrationToken);
+
+    try {
+      await iprogsmsService.sendOtp({
+        to: entry.localPhoneNumber || entry.phoneNumber,
+        otp: resent.plainOtp,
+        expiryMinutes: Math.ceil(env.OTP_EXPIRY_SECONDS / 60),
+      });
+    } catch (smsError) {
+      pendingRegistrationStore.rollbackPhoneSendRateLimit(entry.phoneNumber);
+      if (smsError instanceof AppError) {
+        throw smsError;
+      }
+      throw new AppError(
+        smsError?.message || "Failed to resend SMS verification code. Please try again.",
+        StatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
+
+    return {
+      success: true,
+      message: "A new verification code has been sent to your phone number.",
+      registrationToken,
+      phoneNumberMasked: maskPhoneNumber(entry.phoneNumber),
+      expiresInSeconds: resent.expiresInSeconds,
+      resendCooldownSeconds: resent.resendCooldownSeconds,
+    };
+  },
+
+  /**
+   * Registration Phone OTP: Step 2 - Verify OTP & complete account creation
+   * Verifies the 6-digit code against the stored hash, invalidates code immediately,
+   * creates the Supabase account with phone_verified metadata, and creates profile.
+   */
+  async verifyRegistrationOtp({ registrationToken, otp }) {
+    if (!registrationToken || !otp) {
+      throw new AppError(
+        "Registration token and verification code are required.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    let verificationResult;
+    try {
+      verificationResult = pendingRegistrationStore.verifyOtp(
+        registrationToken,
+        otp,
+      );
+    } catch (err) {
+      throw new AppError(
+        err.message,
+        err.statusCode || StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    const { pendingRegistration } = verificationResult;
+
+    // Concurrently complete the registration using completion lock
+    const locked = pendingRegistrationStore.acquireCompletionLock(registrationToken);
+    if (!locked) {
+      if (pendingRegistration.completed && pendingRegistration.completedResult) {
+        return {
+          success: true,
+          verified: true,
+          message: "Account created successfully.",
+          verificationToken: registrationToken,
+          ...pendingRegistration.completedResult,
+        };
+      }
+      throw new AppError(
+        "Account creation is already being processed. Please wait a moment.",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    try {
+      if (pendingRegistration.completed && pendingRegistration.completedResult) {
+        return {
+          success: true,
+          verified: true,
+          message: "Account created successfully.",
+          verificationToken: registrationToken,
+          ...pendingRegistration.completedResult,
+        };
+      }
+
+      const completed = await authService.performRegistration(
+        pendingRegistration.registrationPayload,
+        {
+          isPhoneVerified: true,
+          verifiedPhone: pendingRegistration.phoneNumber,
+        },
+      );
+
+      pendingRegistrationStore.markCompleted(registrationToken, completed);
+
+      return {
+        success: true,
+        verified: true,
+        message: "Phone number verified and account created successfully. You can now log in.",
+        verificationToken: registrationToken,
+        ...completed,
+      };
+    } finally {
+      pendingRegistrationStore.releaseCompletionLock(registrationToken);
+    }
+  },
+
+  /**
+   * Registration Phone OTP: Step 3 (Optional) - Explicit complete endpoint
+   * If a client verifies OTP first and then completes in a separate step.
+   */
+  async completeRegistration({ registrationToken, verificationToken }) {
+    const token = verificationToken || registrationToken;
+    if (!token) {
+      throw new AppError("Verification token is required.", StatusCodes.BAD_REQUEST);
+    }
+
+    const entry = pendingRegistrationStore.getPendingRegistration(token);
+    if (!entry) {
+      throw new AppError(
+        "Registration session not found or has expired. Please register again.",
+        StatusCodes.NOT_FOUND,
+      );
+    }
+
+    if (!entry.verified) {
+      throw new AppError(
+        "Phone number verification required. Please complete OTP verification first.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    if (entry.completed && entry.completedResult) {
+      return {
+        success: true,
+        message: "Account created successfully.",
+        verificationToken: token,
+        ...entry.completedResult,
+      };
+    }
+
+    const locked = pendingRegistrationStore.acquireCompletionLock(token);
+    if (!locked) {
+      if (entry.completed && entry.completedResult) {
+        return {
+          success: true,
+          message: "Account created successfully.",
+          verificationToken: token,
+          ...entry.completedResult,
+        };
+      }
+      throw new AppError(
+        "Account creation is already being processed. Please wait a moment.",
+        StatusCodes.CONFLICT,
+      );
+    }
+
+    try {
+      const completed = await authService.performRegistration(
+        entry.registrationPayload,
+        {
+          isPhoneVerified: true,
+          verifiedPhone: entry.phoneNumber,
+        },
+      );
+
+      pendingRegistrationStore.markCompleted(token, completed);
+
+      return {
+        success: true,
+        message: "Account created successfully.",
+        verificationToken: token,
+        ...completed,
+      };
+    } finally {
+      pendingRegistrationStore.releaseCompletionLock(token);
+    }
   },
 
   async verifySignupOtp(email, otp) {

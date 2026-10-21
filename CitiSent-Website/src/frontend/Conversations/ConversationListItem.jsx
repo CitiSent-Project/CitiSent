@@ -169,16 +169,27 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
           )}
         </div>
 
-        {/* Bottom line: Category & Reporter */}
+        {/* Bottom line: Category, Status & Reporter */}
         <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-[10px]">
+          {conversation.isLocked && (
+            <span
+              className={`inline-block shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                String(conversation.status || '').toLowerCase() === 'resolved'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+              }`}
+            >
+              {conversation.status || 'Locked'}
+            </span>
+          )}
           {category && (
-            <span className="inline-block max-w-[55%] truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-block max-w-[45%] truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-medium text-slate-500 dark:text-slate-400">
               {category}
             </span>
           )}
           {userDisplay && (
             <span className="truncate text-slate-400 dark:text-slate-500" title={userDisplay}>
-              {category ? '· ' : ''}{userDisplay}
+              {(conversation.isLocked || category) ? '· ' : ''}{userDisplay}
             </span>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FiMessageCircle, FiRefreshCw, FiX } from 'react-icons/fi'
+import { FiLock, FiMessageCircle, FiRefreshCw, FiX } from 'react-icons/fi'
 import { reportsApiService } from '../../services/api/admin/reportsApiService'
 import { mapBackendMessagesResponse, mapBackendMessageToUi } from '../../services/api/admin/reportsApiMappers'
 import { ReportChatThread } from './ReportChatThread'
@@ -21,6 +21,9 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
   const [error, setError] = useState('')
   const [isUserTyping, setIsUserTyping] = useState(false)
   const typingTimerRef = useRef(null)
+
+  const normalizedStatus = String(report?.status || '').toLowerCase()
+  const isLocked = normalizedStatus === 'resolved' || normalizedStatus === 'rejected'
 
 
 
@@ -201,15 +204,20 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
                 </span>
               )}
             </div>
-            <p className="mt-0.5 truncate text-[11px] text-slate-400 font-mono">
-              Report {report.reportNum || (report.id ? `${String(report.id).slice(0, 8)}…` : '')}{report.category ? ` · ${report.category}` : ''}
-            </p>
+            <div className="mt-0.5 text-[11px] text-slate-400 font-mono flex items-center gap-1.5 min-w-0">
+              <span className="truncate">Report {report.reportNum || (report.id ? `${String(report.id).slice(0, 8)}…` : '')}{report.category ? ` · ${report.category}` : ''}</span>
+              {isLocked ? (
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${normalizedStatus === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                  {report.status || 'Locked'}
+                </span>
+              ) : null}
+            </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button type="button" onClick={load} className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Refresh conversation">
+            <button type="button" onClick={load} className="rounded-lg p-2 sm:p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Refresh conversation">
               <FiRefreshCw className="text-xs" />
             </button>
-            <button type="button" onClick={onClose} className="rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Close chat">
+            <button type="button" onClick={onClose} className="rounded-lg p-2 sm:p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Close chat">
               <FiX className="text-sm" />
             </button>
           </div>
@@ -217,17 +225,29 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
 
         <ReportChatThread messages={messages} loading={loading} error={error} profileId={profile?.id} />
 
-        {isUserTyping && (
-          <div className="px-4 py-1.5 bg-slate-100 text-xs italic text-slate-500 font-medium">
+        {!isLocked && isUserTyping && (
+          <div className="px-4 py-1.5 bg-slate-100 text-xs italic text-slate-500 font-medium dark:bg-slate-800 dark:text-slate-400">
             User is typing...
           </div>
         )}
 
-        <ReportChatComposer
-          onSend={send}
-          onTyping={handleComposerTyping}
-          disabled={sending || loading}
-        />
+        {isLocked ? (
+          <div className="border-t border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/90">
+            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <FiLock className="text-sm text-slate-400" />
+              <span>Report is {report.status || 'Locked'} · Chat History is Read-Only</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+              This report is finalized. New messages cannot be sent.
+            </p>
+          </div>
+        ) : (
+          <ReportChatComposer
+            onSend={send}
+            onTyping={handleComposerTyping}
+            disabled={sending || loading}
+          />
+        )}
       </aside>
     </>
   )

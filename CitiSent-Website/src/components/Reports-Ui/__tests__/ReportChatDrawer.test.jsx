@@ -143,4 +143,40 @@ describe('Report chat drawer', () => {
 
     expect(container.textContent).toContain('Realtime socket message')
   })
+
+  it('opens from report detail for locked reports using View Chat History button and loads conversation', async () => {
+    api.listReportMessages.mockResolvedValue({ data: [] })
+    api.markReportMessagesRead.mockResolvedValue({ data: [] })
+
+    const resolvedReport = { ...report, status: 'Resolved' }
+    await render(<ReportDetailPage report={resolvedReport} profile={profile} onBackToReports={vi.fn()} onUpdateStatus={vi.fn()} />)
+
+    const viewHistoryButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent.includes('View Chat History')
+    )
+    expect(viewHistoryButton).toBeDefined()
+    expect(viewHistoryButton.disabled).toBe(false)
+
+    await act(async () => { viewHistoryButton.click() })
+
+    expect(container.textContent).toContain('Chat History is Read-Only')
+    expect(api.listReportMessages).toHaveBeenCalledWith('', report.id)
+    // Composer textarea in the chat drawer should NOT be present when report is locked
+    expect(container.querySelector('aside textarea')).toBeNull()
+  })
+
+  it('displays read-only locked banner and omits composer when report is Rejected', async () => {
+    api.listReportMessages.mockResolvedValue({
+      data: [{ id: 'm-1', senderId: 'citizen-1', senderRole: 'citizen', content: 'Historic message', createdAt: '2026-07-25T09:00:00.000Z' }]
+    })
+    api.markReportMessagesRead.mockResolvedValue({ data: [] })
+
+    const rejectedReport = { ...report, status: 'Rejected' }
+    await render(<ReportChatDrawer report={rejectedReport} profile={profile} token="token" onClose={vi.fn()} />)
+
+    expect(container.textContent).toContain('Report is Rejected · Chat History is Read-Only')
+    expect(container.textContent).toContain('This report is finalized. New messages cannot be sent.')
+    expect(container.querySelector('textarea')).toBeNull()
+  })
 })
+

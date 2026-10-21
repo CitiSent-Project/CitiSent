@@ -189,8 +189,13 @@ export const listAdminConversationsSchema = z.object({
   params: z.object({}).optional().default({}),
   query: z
     .object({
-      limit: z.coerce.number().int().min(1).max(100).default(50).optional(),
-      offset: z.coerce.number().int().min(0).default(0).optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+      offset: z.coerce.number().int().min(0).default(0),
+      status: z.enum(["active", "resolved", "rejected", "locked", "all"]).optional(),
+      includeLocked: z.preprocess((val) => {
+        if (typeof val === "string") return val.toLowerCase() === "true" || val === "1";
+        return Boolean(val);
+      }, z.boolean()).optional(),
     })
     .optional()
     .default({}),

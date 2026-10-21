@@ -40,6 +40,13 @@ export const reportsApiService = {
     })
     return apiClient.get(`/admin/reports/${reportId}/admin-note-suggestions?${params.toString()}`, { token })
   },
-  listConversations: (token) =>
-    apiClient.get('/admin/conversations', { token }),
+  listConversations: (token, { limit, offset, status, includeLocked } = {}) => {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', String(limit))
+    if (offset) params.set('offset', String(offset))
+    if (status) params.set('status', status)
+    if (includeLocked !== undefined) params.set('includeLocked', String(includeLocked))
+    const query = params.toString()
+    return apiClient.get(`/admin/conversations${query ? `?${query}` : ''}`, { token })
+  },
 }

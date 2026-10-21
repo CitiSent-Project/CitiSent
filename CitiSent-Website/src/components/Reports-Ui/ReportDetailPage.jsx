@@ -386,17 +386,20 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                   <button
                     type="button"
                     onClick={handleOpenChat}
-                    disabled={isPermanentlyLocked}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-slate-500/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-slate-500/10 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
                     <FiMessageCircle className="text-lg" />
-                    <span>Talk to User</span>
-                    {unreadChatCount > 0 && !isPermanentlyLocked && (
+                    <span>{isPermanentlyLocked ? 'View Chat History' : 'Talk to User'}</span>
+                    {isPermanentlyLocked ? (
+                      <span className="ml-auto rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                        {currentStatus || 'Locked'}
+                      </span>
+                    ) : unreadChatCount > 0 ? (
                       <span className="ml-auto flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                         {unreadChatCount > 1 ? unreadChatCount : 'New'}
                       </span>
-                    )}
+                    ) : null}
                   </button>
                 ) : null}
               </div>

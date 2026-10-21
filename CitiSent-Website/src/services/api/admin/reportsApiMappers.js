@@ -163,6 +163,9 @@ export function mapBackendConversationToUi(payload = {}) {
     isOnline: Boolean(payload.isOnline ?? false),
     category: payload.category || payload.departmentLabel || payload.issueType || '',
     status: payload.status || 'pending',
+    isLocked:
+      String(payload.status || '').toLowerCase() === 'resolved' ||
+      String(payload.status || '').toLowerCase() === 'rejected',
     rawReport: payload,
   }
 }

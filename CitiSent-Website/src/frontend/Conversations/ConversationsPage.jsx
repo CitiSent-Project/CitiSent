@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { FiArrowLeft, FiFileText, FiExternalLink, FiRefreshCw, FiSearch, FiFilter } from 'react-icons/fi'
+import { useMemo, useState } from 'react'
+import { FiArrowLeft, FiFileText, FiExternalLink, FiRefreshCw, FiSearch, FiFilter, FiLock } from 'react-icons/fi'
 import { ReportChatComposer } from '../../components/Reports-Ui/ReportChatComposer'
 import { ReportChatThread } from '../../components/Reports-Ui/ReportChatThread'
 import { mapBackendReportToUiRow } from '../../services/api/admin/reportsApiMappers'
@@ -43,28 +43,100 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     sending,
     setMobileShowChat,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
   } = useConversationsState({ profile, onSyncConversations })
 
   const [unreadOnly, setUnreadOnly] = useState(false)
 
+  const displayConversations = useMemo(() => {
+    if (!unreadOnly) return filteredConversations
+    return filteredConversations.filter((c) => (c.unreadCount || 0) > 0)
+  }, [filteredConversations, unreadOnly])
+
   return (
-    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 px-4 py-6 md:px-6 lg:px-8" id="conversations-page">
-      <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm sm:my-4 sm:h-[calc(100vh-6rem)]">
+    <main className="w-full flex-1 min-w-0 bg-[#eef2f8] dark:bg-slate-900 p-2 sm:p-4 md:px-6 md:py-6 lg:px-8" id="conversations-page">
+      <div className="flex h-[calc(100dvh-4rem)] sm:h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)] w-full overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
 
         <div data-guide="conversations-thread-list" className={`flex w-full flex-col border-r border-slate-200 dark:border-slate-800 md:w-90 md:shrink-0 lg:w-95 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
-          <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Conversations</h1>
+          <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-4">
+            {/* Row 1: Header Title + Guide Trigger (left) & Unread Filter toggle (right) */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 truncate">Conversations</h1>
                 <ComponentGuideTrigger guideId="conversations-thread-list" />
               </div>
-              <button onClick={() => { setUnreadOnly(!unreadOnly); loadConversations() }} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${unreadOnly ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
-                <FiFilter /> Unread
+              <button
+                type="button"
+                onClick={() => setUnreadOnly(!unreadOnly)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition cursor-pointer select-none shrink-0 ${
+                  unreadOnly
+                    ? 'bg-blue-600 text-white shadow-xs dark:bg-blue-600 dark:text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                }`}
+                aria-pressed={unreadOnly}
+                title="Filter unread conversations"
+              >
+                <FiFilter className="text-xs" />
+                <span>Unread</span>
               </button>
             </div>
-            <div className="relative mt-3">
+
+            {/* Row 2: Full-width Segmented Status Filter Tabs (All / Active / Locked) */}
+            <div className="mt-3 flex w-full items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800 text-xs font-medium" role="tablist" aria-label="Conversation status filter">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === 'all'}
+                onClick={() => setStatusFilter('all')}
+                className={`flex-1 rounded-lg py-1.5 text-center transition cursor-pointer font-medium ${
+                  statusFilter === 'all'
+                    ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100 font-semibold'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === 'active'}
+                onClick={() => setStatusFilter('active')}
+                className={`flex-1 rounded-lg py-1.5 text-center transition cursor-pointer font-medium ${
+                  statusFilter === 'active'
+                    ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100 font-semibold'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === 'locked'}
+                onClick={() => setStatusFilter('locked')}
+                className={`flex-1 rounded-lg py-1.5 text-center transition cursor-pointer font-medium ${
+                  statusFilter === 'locked'
+                    ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-slate-100 font-semibold'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                Locked
+              </button>
+            </div>
+
+            {/* Row 3: Search input */}
+            <div className="relative mt-2.5">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search conversations..." className="w-full rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/60 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/20" aria-label="Search conversations" id="conversations-search" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search conversations..."
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/60 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/20"
+                aria-label="Search conversations"
+                id="conversations-search"
+              />
             </div>
           </header>
 
@@ -86,11 +158,11 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                 <p className="text-sm font-medium text-red-700">{conversationsError}</p>
                 <button type="button" onClick={loadConversations} className="mt-2 text-xs font-semibold text-red-600 underline hover:text-red-800">Try again</button>
               </div>
-            ) : filteredConversations.length === 0 ? (
+            ) : displayConversations.length === 0 ? (
               searchQuery ? <div className="p-6 text-center text-sm text-slate-500">No conversations matching "{searchQuery}"</div> : <ConversationEmptyState variant="no-conversations" />
             ) : (
               <div className="space-y-0.5">
-                {filteredConversations.map((conversation) => (
+                {displayConversations.map((conversation) => (
                   <ConversationListItem key={conversation.reportId} conversation={conversation} isActive={activeConversation?.reportId === conversation.reportId} onClick={() => handleSelectConversation(conversation)} />
                 ))}
               </div>
@@ -106,7 +178,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                   <button
                     type="button"
                     onClick={() => setMobileShowChat(false)}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg transition hover:bg-white/10 md:hidden"
+                    className="grid h-9 w-9 sm:h-8 sm:w-8 shrink-0 place-items-center rounded-lg transition hover:bg-white/10 md:hidden cursor-pointer"
                     aria-label="Back to conversations list"
                   >
                     <FiArrowLeft className="text-base" />
@@ -127,10 +199,14 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-blue-100 truncate flex items-center gap-1.5">
-                      Report {activeConversation.reportNumber || (activeConversation.reportId ? `${String(activeConversation.reportId).slice(0, 8)}…` : '')}
-                      {activeConversation.category ? ` · ${activeConversation.category}` : ''}
-                    </p>
+                    <div className="text-xs text-blue-100 flex items-center gap-1.5 min-w-0">
+                      <span className="truncate">Report {activeConversation.reportNumber || (activeConversation.reportId ? `${String(activeConversation.reportId).slice(0, 8)}…` : '')}{activeConversation.category ? ` · ${activeConversation.category}` : ''}</span>
+                      {activeConversation.isLocked ? (
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${String(activeConversation.status || '').toLowerCase() === 'resolved' ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30' : 'bg-rose-500/30 text-rose-200 border border-rose-400/30'}`}>
+                          {activeConversation.status || 'Locked'}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
@@ -140,17 +216,17 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                     <button
                       type="button"
                       onClick={() => onViewReport(mapBackendReportToUiRow(activeConversation.rawReport))}
-                      className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors border border-white/15"
+                      className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors border border-white/15 cursor-pointer"
                       title="View full report details"
                     >
                       <FiExternalLink className="text-xs" />
-                      View Report
+                      <span className="hidden sm:inline">View Report</span>
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => { loadMessages(activeConversation.reportId) }}
-                    className="p-1.5 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors"
+                    className="p-2 sm:p-1.5 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                     title="Refresh messages"
                   >
                     <FiRefreshCw className="text-sm" />
@@ -159,13 +235,25 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
               </header>
 
               <ReportChatThread messages={messages} loading={chatLoading} error={chatError} profileId={profile?.id} />
-              {isUserTyping && (
+              {!activeConversation.isLocked && isUserTyping && (
                 <div className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800/80 text-xs italic text-slate-500 dark:text-slate-400 font-medium">
                   {activeConversation.userEmail || activeConversation.userName || 'User'} is typing...
                 </div>
               )}
 
-              <ReportChatComposer onSend={handleSend} onTyping={handleComposerTyping} disabled={sending || chatLoading} />
+              {activeConversation.isLocked ? (
+                <div className="border-t border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-800 dark:bg-slate-900/90">
+                  <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    <FiLock className="text-sm text-slate-400" />
+                    <span>Report is {activeConversation.status || 'Locked'} · Chat History is Read-Only</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                    This report has been finalized. New messages cannot be sent.
+                  </p>
+                </div>
+              ) : (
+                <ReportChatComposer onSend={handleSend} onTyping={handleComposerTyping} disabled={sending || chatLoading} />
+              )}
             </>
           ) : <ConversationEmptyState variant="select" />}
         </div>
@@ -173,3 +261,4 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
     </main>
   )
 }
+

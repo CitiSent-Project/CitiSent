@@ -100,7 +100,7 @@ describe('useConversationsState', () => {
 
     await act(async () => root.render(createElement(HookHarness)))
 
-    expect(mocks.listConversations).toHaveBeenCalledWith('access-token')
+    expect(mocks.listConversations).toHaveBeenCalledWith('access-token', { includeLocked: true })
     expect(mocks.joinReportRoom).toHaveBeenCalledWith('access-token', 'report-1')
     expect(socket.on).toHaveBeenCalledTimes(4)
     expect(latestState.filteredConversations).toEqual([conversation])
@@ -114,5 +114,46 @@ describe('useConversationsState', () => {
     root = null
 
     expect(socket.off).toHaveBeenCalledTimes(4)
+  })
+
+  it('filters conversations by status and prevents sending messages when conversation is locked', async () => {
+    const activeConv = {
+      reportId: 'rep-active',
+      userName: 'Active Citizen',
+      category: 'Health',
+      isLocked: false,
+      status: 'In Progress',
+      unreadCount: 0,
+    }
+    const lockedConv = {
+      reportId: 'rep-locked',
+      userName: 'Resolved Citizen',
+      category: 'Sanitation',
+      isLocked: true,
+      status: 'Resolved',
+      unreadCount: 0,
+    }
+
+    mocks.mapConversations.mockReturnValue([activeConv, lockedConv])
+
+    await act(async () => root.render(createElement(HookHarness)))
+
+    expect(latestState.filteredConversations).toHaveLength(2)
+
+    // Filter to active only
+    await act(async () => latestState.setStatusFilter('active'))
+    expect(latestState.filteredConversations).toEqual([activeConv])
+
+    // Filter to locked only
+    await act(async () => latestState.setStatusFilter('locked'))
+    expect(latestState.filteredConversations).toEqual([lockedConv])
+
+    // Select locked conversation and attempt to send
+    await act(async () => latestState.handleSelectConversation(lockedConv))
+    let sendResult
+    await act(async () => {
+      sendResult = await latestState.handleSend('Should not send')
+    })
+    expect(sendResult).toBe(false)
   })
 })

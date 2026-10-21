@@ -643,7 +643,7 @@ export const adminRepository = {
     };
   },
 
-  async listConversations({ actor, accessToken, readerId, limit = 50, offset = 0 }) {
+  async listConversations({ actor, accessToken, readerId, limit = 50, offset = 0, status, includeLocked }) {
     const db = getDb(accessToken);
     const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 100);
     const safeOffset = Math.max(Number(offset) || 0, 0);
@@ -651,9 +651,22 @@ export const adminRepository = {
     let reportsQuery = db
       .from(REPORTS_TABLE)
       .select("*")
-      .not("status", "in", "(resolved,rejected)")
       .order("updated_at", { ascending: false })
       .range(safeOffset, safeOffset + safeLimit - 1);
+
+    if (status === "resolved") {
+      reportsQuery = reportsQuery.eq("status", "resolved");
+    } else if (status === "rejected") {
+      reportsQuery = reportsQuery.eq("status", "rejected");
+    } else if (status === "locked") {
+      reportsQuery = reportsQuery.in("status", ["resolved", "rejected"]);
+    } else if (status === "all" || includeLocked === true) {
+      // Include all reports without filtering
+    } else {
+      // Default: active reports only (not resolved or rejected)
+      reportsQuery = reportsQuery.not("status", "in", "(resolved,rejected)");
+    }
+
     reportsQuery = applyDepartmentScope(reportsQuery, actor);
 
     const { data: reports, error: reportsError } = await reportsQuery;

@@ -936,12 +936,16 @@ export const adminService = {
     return response;
   },
 
-  async listConversations({ actor, accessToken }) {
+  async listConversations({ actor, accessToken, limit, offset, status, includeLocked }) {
     const [result, departmentCatalog] = await Promise.all([
       adminRepository.listConversations({
         actor,
         accessToken,
         readerId: actor.id,
+        limit,
+        offset,
+        status,
+        includeLocked,
       }),
       departmentsService.listDepartments({
         accessToken,

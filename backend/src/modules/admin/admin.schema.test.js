@@ -9,6 +9,7 @@ import {
   bulkUnbanUsersSchema,
   listAdminReportsSchema,
   listAdminUsersSchema,
+  listAdminConversationsSchema,
 } from "./admin.schema.js";
 
 function createPayload(overrides = {}) {
@@ -173,3 +174,30 @@ test("listAdminUsersSchema enforces max limit of 100", () => {
     }),
   );
 });
+
+test("listAdminConversationsSchema accepts status and includeLocked query parameters", () => {
+  const parsedActive = listAdminConversationsSchema.parse({
+    query: { status: "active", includeLocked: "true" },
+  });
+  assert.equal(parsedActive.query.status, "active");
+  assert.equal(parsedActive.query.includeLocked, true);
+
+  const parsedResolved = listAdminConversationsSchema.parse({
+    query: { status: "resolved", includeLocked: false },
+  });
+  assert.equal(parsedResolved.query.status, "resolved");
+  assert.equal(parsedResolved.query.includeLocked, false);
+
+  const parsedDefault = listAdminConversationsSchema.parse({ query: {} });
+  assert.equal(parsedDefault.query.limit, 50);
+  assert.equal(parsedDefault.query.offset, 0);
+  assert.equal(parsedDefault.query.status, undefined);
+  assert.equal(parsedDefault.query.includeLocked, undefined);
+
+  assert.throws(() =>
+    listAdminConversationsSchema.parse({
+      query: { status: "invalid_status" },
+    }),
+  );
+});
+

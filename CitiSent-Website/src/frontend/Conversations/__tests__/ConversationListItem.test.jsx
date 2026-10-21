@@ -90,4 +90,37 @@ describe('ConversationListItem', () => {
     })
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
+
+  it('renders status badge for locked (Resolved/Rejected) conversations', async () => {
+    const resolvedConv = {
+      reportId: 'rep-resolved',
+      reportNumber: 'CVC-1001',
+      userName: 'john@example.com',
+      lastMessage: 'All clear now',
+      isLocked: true,
+      status: 'Resolved',
+    }
+
+    await act(async () => {
+      root.render(<ConversationListItem conversation={resolvedConv} isActive={false} onClick={() => {}} />)
+    })
+
+    expect(container.textContent).toContain('Resolved')
+
+    const rejectedConv = {
+      reportId: 'rep-rejected',
+      reportNumber: 'CVC-1002',
+      userName: 'mark@example.com',
+      lastMessage: 'Invalid report',
+      isLocked: true,
+      status: 'Rejected',
+    }
+
+    await act(async () => {
+      root.render(<ConversationListItem conversation={rejectedConv} isActive={false} onClick={() => {}} />)
+    })
+
+    expect(container.textContent).toContain('Rejected')
+  })
 })
+

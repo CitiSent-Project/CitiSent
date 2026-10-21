@@ -153,6 +153,10 @@ export const adminController = {
     const result = await adminService.listConversations({
       actor: req.actor,
       accessToken: req.accessToken,
+      limit: req.query?.limit,
+      offset: req.query?.offset,
+      status: req.query?.status,
+      includeLocked: req.query?.includeLocked,
     });
 
     return res.status(StatusCodes.OK).json({

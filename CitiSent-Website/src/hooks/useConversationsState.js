@@ -37,6 +37,7 @@ export function useConversationsState({ profile, onSyncConversations }) {
   const [conversationsLoading, setConversationsLoading] = useState(true)
   const [conversationsError, setConversationsError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [activeConversation, setActiveConversation] = useState(null)
   const conversationsRef = useRef([])
   const processedMessagesRef = useRef(new Set())
@@ -48,10 +49,6 @@ export function useConversationsState({ profile, onSyncConversations }) {
   const [mobileShowChat, setMobileShowChat] = useState(false)
   const typingTimerRef = useRef(null)
   const activeConversationRef = useRef(activeConversation)
-
-  useEffect(() => {
-    activeConversationRef.current = activeConversation
-  }, [activeConversation])
 
   useEffect(() => {
     activeConversationRef.current = activeConversation
@@ -73,7 +70,7 @@ export function useConversationsState({ profile, onSyncConversations }) {
     setConversationsLoading(true)
     setConversationsError('')
     try {
-      const response = await reportsApiService.listConversations(token)
+      const response = await reportsApiService.listConversations(token, { includeLocked: true })
       const sorted = sortConversations(mapBackendConversationsResponse(response))
       setConversations(sorted)
 
@@ -250,7 +247,7 @@ export function useConversationsState({ profile, onSyncConversations }) {
   }, [profile?.id, token])
 
   const handleSend = useCallback(async (content) => {
-    if (!content.trim() || !activeConversation?.reportId) return false
+    if (!content.trim() || !activeConversation?.reportId || activeConversation?.isLocked) return false
 
     const reportId = activeConversation.reportId
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
@@ -326,14 +323,19 @@ export function useConversationsState({ profile, onSyncConversations }) {
   }, [])
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return conversations
-    const query = searchQuery.toLowerCase()
-    return conversations.filter((conversation) =>
-      conversation.userName.toLowerCase().includes(query) ||
-      conversation.category.toLowerCase().includes(query) ||
-      conversation.reportNumber.toLowerCase().includes(query)
-    )
-  }, [conversations, searchQuery])
+    return conversations.filter((conversation) => {
+      if (statusFilter === 'active' && conversation.isLocked) return false
+      if (statusFilter === 'locked' && !conversation.isLocked) return false
+      if (!searchQuery.trim()) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        conversation.userName.toLowerCase().includes(query) ||
+        conversation.category.toLowerCase().includes(query) ||
+        conversation.reportNumber.toLowerCase().includes(query) ||
+        String(conversation.status || '').toLowerCase().includes(query)
+      )
+    })
+  }, [conversations, searchQuery, statusFilter])
 
   const totalUnread = useMemo(
     () => conversations.reduce((sum, conversation) => sum + (conversation.unreadCount || 0), 0),
@@ -359,6 +361,8 @@ export function useConversationsState({ profile, onSyncConversations }) {
     sending,
     setMobileShowChat,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     totalUnread,
   }
 }

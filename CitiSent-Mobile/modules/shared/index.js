@@ -11,6 +11,7 @@ export { default as SkeletonBlock } from "../../components/ui/SkeletonBlock";
 export { default as AppKeyboardAvoidingView } from "../../components/ui/AppKeyboardAvoidingView";
 export { default as FeedbackModal } from "../../components/ui/FeedbackModal";
 export { default as ConfirmationModal } from "../../components/ui/ConfirmationModal";
+export { default as Toast } from "../../components/ui/toaster";
 
 export { useFetch } from "../../hooks/useFetch";
 export { default as usePullToRefresh } from "../../hooks/usePullToRefresh";

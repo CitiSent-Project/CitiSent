@@ -10,7 +10,7 @@ import {
   SectionHeader,
   reportsApi,
 } from "../../modules/home";
-import { RefreshableScrollView, usePullToRefresh, Colors, ConfirmationModal } from "../../modules/shared";
+import { RefreshableScrollView, usePullToRefresh, Colors, ConfirmationModal, Toast } from "../../modules/shared";
 import { AuthCityFooter, authApi } from "../../modules/auth";
 import YourLatestReportSection from "../../components/home/YourLatestReportSection";
 
@@ -18,6 +18,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const [latestReport, setLatestReport] = useState(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [toastState, setToastState] = useState({ visible: false, number: "" });
+
+  const handleHotlineCopied = useCallback((number) => {
+    setToastState({ visible: true, number });
+  }, []);
 
   const loadLatestReport = useCallback(async () => {
     const report = await reportsApi.getLatestHomeReport();
@@ -77,7 +82,7 @@ export default function HomeScreen() {
 
           <View className="px-4">
             <SectionHeader title="Emergency Hotlines" />
-            <EmergencyServicesRow />
+            <EmergencyServicesRow onCopied={handleHotlineCopied} />
 
             <YourLatestReportSection title="Your Latest Report(s)" />
             <LatestReportCard report={latestReport ?? undefined} />
@@ -86,6 +91,15 @@ export default function HomeScreen() {
           </View>
         </View>
       </RefreshableScrollView>
+
+      {/* Toast notification for hotline copy */}
+      <Toast
+        visible={toastState.visible}
+        message="Number copied!"
+        submessage={toastState.number}
+        onDismiss={() => setToastState((prev) => ({ ...prev, visible: false }))}
+        bottomOffset={Platform.OS === "ios" ? 105 : 95}
+      />
 
       {/* Android back button logout confirmation */}
       <ConfirmationModal

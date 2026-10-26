@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useModalAccessibility } from '../../hooks/shared/useModalAccessibility'
 import { DropdownButton } from '../ui/DropdownButton'
 import { Spinner } from '../ui/Spinner'
 import { ModalShell } from '../ui/ModalShell'
 import { getStructuredInputError } from '../../utils/structuredInputValidation'
+import { fetchStoTomasBatangasBarangays } from '../../services/locationData'
 
 const initialForm = {
   fname: '',
@@ -22,7 +23,39 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
   const [form, setForm] = useState(initialForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [inputError, setInputError] = useState('')
+  const [barangayOptions, setBarangayOptions] = useState([])
+  const [isLoadingBarangays, setIsLoadingBarangays] = useState(false)
   const dialogRef = useRef(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadBarangays() {
+      setIsLoadingBarangays(true)
+      try {
+        const barangays = await fetchStoTomasBatangasBarangays()
+        if (isMounted) {
+          setBarangayOptions(barangays)
+        }
+      } catch {
+        if (isMounted) {
+          setBarangayOptions([])
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingBarangays(false)
+        }
+      }
+    }
+
+    if (isOpen) {
+      loadBarangays()
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [isOpen])
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return
@@ -68,6 +101,11 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
       return
     }
 
+    if (!form.barangay) {
+      setInputError('Select a barangay before saving this admin account.')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const submitted = await onSubmit(form)
@@ -83,6 +121,15 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
     value: department.id,
     label: department.label,
   }))
+
+  const barangayDropdownOptions = useMemo(
+    () =>
+      barangayOptions.map((name) => ({
+        value: name,
+        label: name,
+      })),
+    [barangayOptions]
+  )
 
   return (
     <ModalShell
@@ -198,15 +245,20 @@ export function AddAdminFormModal({ isOpen, onClose, onSubmit, departmentOptions
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Barangay</label>
-            <input
-              type="text"
-              required
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300" htmlFor="new-admin-barangay">
+              Barangay <span aria-hidden="true">*</span>
+            </label>
+            <DropdownButton
+              className="w-full"
+              id="new-admin-barangay"
+              name="barangay"
+              ariaLabel="Select barangay (required)"
+              ariaInvalid={!form.barangay && Boolean(inputError)}
               value={form.barangay}
-              onChange={(event) => updateField('barangay', event.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 transition focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
-              placeholder="San Isidro Norte"
-              disabled={isSubmitting}
+              onChange={(value) => updateField('barangay', value)}
+              options={barangayDropdownOptions}
+              placeholder={isLoadingBarangays ? 'Loading barangays...' : 'Select a barangay'}
+              disabled={isSubmitting || isLoadingBarangays}
             />
           </div>
           <div>

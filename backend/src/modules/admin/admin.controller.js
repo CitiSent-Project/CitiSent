@@ -362,4 +362,24 @@ export const adminController = {
       data: result,
     });
   },
+
+  async listFeedback(req, res) {
+    const result = await adminService.listFeedback({
+      actor: req.actor,
+      accessToken: req.accessToken,
+      limit: req.query.limit,
+      offset: req.query.offset,
+      rating: req.query.rating,
+      satisfaction: req.query.satisfaction,
+      departmentId: req.query.departmentId,
+      search: req.query.search,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: result.items,
+      stats: result.stats,
+      pagination: result.pagination,
+    });
+  },
 };

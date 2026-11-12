@@ -13,6 +13,7 @@ import {
 	FiChevronDown,
 	FiChevronUp,
 	FiX,
+	FiStar,
 } from 'react-icons/fi'
 import {
 	Activity01Icon,
@@ -55,6 +56,7 @@ const navItems = [
 			{ label: 'By Category', pageKey: APP_PAGES.REPORTS_BY_CATEGORY, icon: Layers01Icon },
 			{ label: 'By Urgency Levels', pageKey: APP_PAGES.REPORTS_BY_URGENCY, icon: Alert01Icon },
 			{ label: 'History', pageKey: APP_PAGES.REPORTS_HISTORY, icon: Clock01Icon },
+			{ label: 'Resident Feedback', pageKey: APP_PAGES.REPORTS_FEEDBACK, icon: FiStar },
 		],
 	},
 	{

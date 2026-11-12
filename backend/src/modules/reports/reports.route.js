@@ -7,7 +7,9 @@ import {
   createReportSchema,
   deleteReportSchema,
   getReportByIdSchema,
+  getReportFeedbackSchema,
   listReportsSchema,
+  submitReportFeedbackSchema,
   updateReportSchema,
 } from "./reports.schema.js";
 import { reportsController } from "./reports.controller.js";
@@ -61,6 +63,20 @@ reportsRouter.delete(
   requireAuth,
   validateRequest(deleteReportSchema),
   asyncHandler(reportsController.remove),
+);
+
+reportsRouter.get(
+  "/:reportId/feedback",
+  requireAuth,
+  validateRequest(getReportFeedbackSchema),
+  asyncHandler(reportsController.getFeedback),
+);
+
+reportsRouter.post(
+  "/:reportId/feedback",
+  requireAuth,
+  validateRequest(submitReportFeedbackSchema),
+  asyncHandler(reportsController.submitFeedback),
 );
 
 reportsRouter.use("/:reportId/messages", reportMessagesRouter);

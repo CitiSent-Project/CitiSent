@@ -23,6 +23,7 @@ import {
   getAdminReportByIdSchema,
   getAdminNoteSuggestionsSchema,
   getAdminUserByIdSchema,
+  listAdminFeedbackSchema,
   listAdminReportsSchema,
   listAdminConversationsSchema,
   listAdminUsersSchema,
@@ -222,6 +223,13 @@ adminRouter.get(
   requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
   validateRequest(getDashboardRecentUsersSchema),
   asyncHandler(adminController.getDashboardRecentUsers),
+);
+
+adminRouter.get(
+  "/feedback",
+  requireRole([USER_ROLES.SUPERADMIN, USER_ROLES.OFFICE_ADMIN]),
+  validateRequest(listAdminFeedbackSchema),
+  asyncHandler(adminController.listFeedback),
 );
 
 export { adminRouter };

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle, FiSearch } from "react-icons/fi";
+import { FiDownload, FiCalendar, FiEye, FiCheckCircle, FiXCircle, FiGrid, FiSmile, FiAlertTriangle, FiSearch, FiStar } from "react-icons/fi";
 import { TableLoader } from '../ui/TableLoader';
 import { Pagination } from '../ui/Pagination';
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState';
@@ -344,6 +344,7 @@ export function ReportHistoryTable({
               <th className="px-3.5 py-2.5 hidden md:table-cell">Location</th>
               <th className="px-3.5 py-2.5">Urgency</th>
               <th className="px-3.5 py-2.5">Outcome</th>
+              <th className="px-3.5 py-2.5">Feedback</th>
               <th className="px-3.5 py-2.5 hidden lg:table-cell">Date Submitted</th>
               <th className="px-3.5 py-2.5 hidden lg:table-cell">Date Completed</th>
               <th className="px-3.5 py-2.5 text-right">Action</th>
@@ -356,7 +357,7 @@ export function ReportHistoryTable({
             label="Loading history logs..."
             refreshText="Refreshing history logs..."
             rows={1}
-            columns={8}
+            columns={9}
             cellClassName="h-3.5 w-20"
           />
           <TableLoader
@@ -366,14 +367,14 @@ export function ReportHistoryTable({
             variant="skeleton"
             label="Loading history logs..."
             rows={5}
-            columns={8}
+            columns={9}
             cellClassName="h-3.5 w-20"
           />
           {!isInitialLoading && (
           <tbody>
             {visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3.5 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                <td colSpan={9} className="px-3.5 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
                   {selectedMonth ? `No historical reports found for ${selectedMonth}.` : "No historical reports found."}
                 </td>
               </tr>
@@ -412,6 +413,22 @@ export function ReportHistoryTable({
                       >
                         {normalizedStatus}
                       </span>
+                    </td>
+                    <td className="px-3.5 py-2">
+                      {normalizedStatus === 'Resolved' ? (
+                        row.feedback?.rating ? (
+                          <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-300">
+                            <FiStar className="fill-amber-400 text-amber-400 text-[11px]" />
+                            {row.feedback.rating}/5
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                            Awaiting
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-[11px] text-slate-300 dark:text-slate-600">—</span>
+                      )}
                     </td>
                     <td className="px-3.5 py-2 hidden lg:table-cell text-slate-500 font-numeric text-xs dark:text-slate-400">
                       {row.date || 'N/A'}

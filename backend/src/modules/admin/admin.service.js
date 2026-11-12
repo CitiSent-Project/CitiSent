@@ -14,6 +14,7 @@ import {
 } from "../../shared/data/departments.js";
 import {
   mapReportStatusInputToPersisted,
+  toAdminFeedbackItemResponse,
   toAdminReportResponse,
   toOfficeAdminResponse,
   toAdminUserResponse,
@@ -329,7 +330,10 @@ async function createCitizenStatusNotification({
   const truncatedDesc = reportRow.description && reportRow.description.length > 60
     ? reportRow.description.slice(0, 60) + "..."
     : reportRow.description || "No description provided";
-  const finalMessage = `Your report has been ${statusLabel.toLowerCase()}. Open this to see the full details.`;
+  const finalMessage =
+    nextStatus === "resolved"
+      ? "Your report has been resolved by the assigned office. You can now rate the solution and share your feedback in My Reports."
+      : `Your report has been ${statusLabel.toLowerCase()}. Open this to see the full details.`;
 
   await notificationsRepository.createNotification({
     accessToken,
@@ -345,6 +349,7 @@ async function createCitizenStatusNotification({
       reportId: reportRow.id,
       issueType: reportRow.issue_type,
       reportDescription: reportRow.description || null,
+      feedbackAvailable: nextStatus === "resolved",
     },
   });
 
@@ -1693,5 +1698,191 @@ export const adminService = {
       email: profile?.email || null,
       joinedAt: profile?.created_at || null,
     }));
+  },
+
+  async listFeedback({
+    actor,
+    accessToken,
+    limit = 100,
+    offset = 0,
+    rating,
+    satisfaction,
+    departmentId,
+    search,
+  }) {
+    const safeLimit = Math.min(Math.max(Number(limit) || 100, 1), 500);
+    const safeOffset = Math.max(Number(offset) || 0, 0);
+
+    const [rawResult, departmentCatalog] = await Promise.all([
+      adminRepository.listResolvedReportsAndFeedback({
+        actor,
+        accessToken,
+      }),
+      departmentsService.listDepartments({
+        accessToken,
+        includeInactive: true,
+      }),
+    ]);
+
+    const departmentLookup = buildDepartmentLookup(departmentCatalog);
+    const resolvedReports = (rawResult.resolvedReports || []).map((row) =>
+      applyDepartmentMetadataToReportRow(row, departmentLookup),
+    );
+    const reporterProfilesByUserId = rawResult.reporterProfilesByUserId || {};
+
+    // Filter resolved reports by optional departmentId filter (useful for Superadmin)
+    const filteredResolvedReports = departmentId
+      ? resolvedReports.filter((row) => {
+          const candidates = buildDepartmentCandidates(departmentId).map((item) =>
+            String(item || "").trim().toLowerCase(),
+          );
+          const rowCandidates = [
+            row.department_slug,
+            row.department_name,
+            row.issue_type,
+          ]
+            .filter(Boolean)
+            .map((item) => String(item).trim().toLowerCase());
+          return rowCandidates.some((val) => candidates.includes(val));
+        })
+      : resolvedReports;
+
+    const resolvedReportsById = new Map();
+    for (const reportRow of filteredResolvedReports) {
+      if (reportRow?.id) {
+        resolvedReportsById.set(String(reportRow.id), reportRow);
+      }
+    }
+
+    // Scope feedback items strictly to the department-scoped resolved reports
+    const scopedFeedbackItems = [];
+    for (const feedback of rawResult.feedbackList || []) {
+      const reportIdKey = String(feedback.reportId || feedback.report_id || "");
+      const matchingReport = resolvedReportsById.get(reportIdKey);
+      if (!matchingReport) {
+        continue;
+      }
+
+      const mappedItem = toAdminFeedbackItemResponse({
+        feedback,
+        reportRow: matchingReport,
+        reporterProfile: reporterProfilesByUserId[matchingReport.user_id] || null,
+      });
+
+      if (mappedItem) {
+        scopedFeedbackItems.push(mappedItem);
+      }
+    }
+
+    // Compute overall statistics across all scoped feedback items (before rating/search table filters)
+    const totalFeedback = scopedFeedbackItems.length;
+    const totalResolvedReports = filteredResolvedReports.length;
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let ratingSum = 0;
+    let satisfiedCount = 0;
+    let unsatisfiedCount = 0;
+    let unansweredSatisfactionCount = 0;
+
+    for (const item of scopedFeedbackItems) {
+      const r = Number(item.rating);
+      if (r >= 1 && r <= 5) {
+        ratingDistribution[r] = (ratingDistribution[r] || 0) + 1;
+        ratingSum += r;
+      }
+
+      if (item.isSatisfied === true) {
+        satisfiedCount += 1;
+      } else if (item.isSatisfied === false) {
+        unsatisfiedCount += 1;
+      } else {
+        unansweredSatisfactionCount += 1;
+      }
+    }
+
+    const averageRating =
+      totalFeedback > 0 ? Number((ratingSum / totalFeedback).toFixed(2)) : 0;
+    const answeredSatisfactionTotal = satisfiedCount + unsatisfiedCount;
+    const satisfactionRate =
+      answeredSatisfactionTotal > 0
+        ? Number(((satisfiedCount / answeredSatisfactionTotal) * 100).toFixed(1))
+        : totalFeedback > 0
+          ? Number(
+              (
+                (scopedFeedbackItems.filter((item) => item.rating >= 4).length /
+                  totalFeedback) *
+                100
+              ).toFixed(1),
+            )
+          : 0;
+    const responseRate =
+      totalResolvedReports > 0
+        ? Number(((totalFeedback / totalResolvedReports) * 100).toFixed(1))
+        : 0;
+
+    // Apply item-level filters (rating, satisfaction, search)
+    const normalizedSearch = String(search || "")
+      .trim()
+      .toLowerCase();
+
+    const filteredItems = scopedFeedbackItems.filter((item) => {
+      if (rating !== undefined && rating !== null && Number(item.rating) !== Number(rating)) {
+        return false;
+      }
+
+      if (satisfaction === "satisfied" && item.isSatisfied !== true) {
+        return false;
+      }
+      if (satisfaction === "unsatisfied" && item.isSatisfied !== false) {
+        return false;
+      }
+      if (satisfaction === "unanswered" && item.isSatisfied !== null) {
+        return false;
+      }
+
+      if (normalizedSearch) {
+        const haystack = [
+          item.reportNumber,
+          item.reportId,
+          item.comment,
+          item.departmentLabel,
+          item.issueType,
+          item.location,
+          item.description,
+          item.reporter?.fullName,
+          item.reporter?.email,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!haystack.includes(normalizedSearch)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    const paginatedItems = filteredItems.slice(safeOffset, safeOffset + safeLimit);
+
+    return {
+      items: paginatedItems,
+      stats: {
+        totalFeedback,
+        totalResolvedReports,
+        responseRate,
+        averageRating,
+        satisfiedCount,
+        unsatisfiedCount,
+        unansweredSatisfactionCount,
+        satisfactionRate,
+        ratingDistribution,
+      },
+      pagination: {
+        total: filteredItems.length,
+        limit: safeLimit,
+        offset: safeOffset,
+      },
+    };
   },
 };

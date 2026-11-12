@@ -1,5 +1,6 @@
 import { reportsRepository } from "./reports.repository.js";
-import { toReportResponse } from "./reports.mapper.js";
+import { reportFeedbackRepository } from "./reportFeedback.repository.js";
+import { toReportResponse, toReportFeedbackResponse } from "./reports.mapper.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { AppError } from "../../shared/errors/appError.js";
 import { StatusCodes } from "http-status-codes";
@@ -520,5 +521,98 @@ export const reportsService = {
       userId,
       departmentId: deleted.issue_type || null,
     });
+  },
+
+  async getReportFeedback({ userId, reportId, accessToken }) {
+    const existingReport =
+      typeof reportsRepository.getByIdInternal === "function"
+        ? await reportsRepository.getByIdInternal({ reportId, accessToken })
+        : await reportsRepository.getById({ userId, reportId, accessToken });
+
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (String(existingReport.user_id || "") !== String(userId || "")) {
+      throw new AppError(
+        "Only the resident who originally submitted this report can access its feedback.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    const feedback = await reportFeedbackRepository.getByReportId(
+      reportId,
+      accessToken,
+    );
+
+    return toReportFeedbackResponse(feedback);
+  },
+
+  async submitReportFeedback({
+    userId,
+    reportId,
+    rating,
+    comment = "",
+    isSatisfied = null,
+    accessToken,
+  }) {
+    const existingReport =
+      typeof reportsRepository.getByIdInternal === "function"
+        ? await reportsRepository.getByIdInternal({ reportId, accessToken })
+        : await reportsRepository.getById({ userId, reportId, accessToken });
+
+    if (!existingReport) {
+      throw new AppError("Report not found", StatusCodes.NOT_FOUND);
+    }
+
+    if (String(existingReport.user_id || "") !== String(userId || "")) {
+      throw new AppError(
+        "Only the resident who originally submitted this report can provide feedback.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
+    const normalizedStatus = String(existingReport.status || "")
+      .trim()
+      .toLowerCase();
+    if (normalizedStatus !== "resolved") {
+      throw new AppError(
+        "Feedback can only be submitted once a report has been officially marked as resolved.",
+        StatusCodes.BAD_REQUEST,
+      );
+    }
+
+    const createdFeedback = await reportFeedbackRepository.create(
+      {
+        reportId,
+        userId,
+        rating,
+        isSatisfied,
+        comment,
+      },
+      accessToken,
+    );
+
+    await Promise.all([
+      cacheService.deleteByPrefix(buildReportsUserCachePrefix(userId)),
+      cacheService.deleteByPrefix("admin:reports:"),
+      cacheService.deleteByPrefix("admin:dashboard:"),
+      cacheService.deleteByPrefix("admin:feedback:"),
+    ]);
+
+    emitReportFeedChanged({
+      reportId: existingReport.id,
+      changeType: "feedback_submitted",
+      userId,
+      departmentId: existingReport.issue_type || null,
+    });
+
+    return {
+      feedback: toReportFeedbackResponse(createdFeedback),
+      report: toReportResponse({
+        ...existingReport,
+        feedback: createdFeedback,
+      }),
+    };
   },
 };

@@ -7,6 +7,7 @@ export const APP_PAGES = {
   REPORTS_BY_CATEGORY: 'Reports:By Category',
   REPORTS_BY_URGENCY: 'Reports:By Urgency Levels',
   REPORTS_HISTORY: 'Reports:History',
+  REPORTS_FEEDBACK: 'Reports:Resident Feedback',
   REPORT_DETAIL: 'Report Detail',
   CONVERSATIONS: 'Conversations',
   ADMIN_PROFILE: 'Admin Profile',
@@ -30,6 +31,7 @@ export const REPORT_SECTIONS = {
   CATEGORY: 'category',
   URGENCY: 'urgency',
   HISTORY: 'history',
+  FEEDBACK: 'feedback',
 }
 
 export const SETTINGS_SECTIONS = {
@@ -54,6 +56,7 @@ export const PAGE_ROUTES = {
   [APP_PAGES.REPORTS_BY_CATEGORY]: '/reports/category',
   [APP_PAGES.REPORTS_BY_URGENCY]: '/reports/urgency',
   [APP_PAGES.REPORTS_HISTORY]: '/reports/history',
+  [APP_PAGES.REPORTS_FEEDBACK]: '/reports/feedback',
   [APP_PAGES.REPORT_DETAIL]: '/reports/:id',
   [APP_PAGES.CONVERSATIONS]: '/conversations',
   [APP_PAGES.ADMIN_PROFILE]: '/admin-profile',

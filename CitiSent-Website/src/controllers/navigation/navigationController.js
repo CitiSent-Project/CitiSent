@@ -46,7 +46,7 @@ export function getPageFromPath(pathname = '/') {
   if (reportDetailMatch) {
     const rawId = decodeURIComponent(reportDetailMatch[1])
     // Guard against matching static sub-routes like /reports/category
-    if (!['category', 'urgency', 'history'].includes(rawId)) {
+    if (!['category', 'urgency', 'history', 'feedback'].includes(rawId)) {
       return {
         pageKey: APP_PAGES.REPORT_DETAIL,
         params: { reportId: rawId },

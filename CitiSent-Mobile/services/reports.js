@@ -84,6 +84,33 @@ function resolveAttachment(report) {
   };
 }
 
+function normalizeFeedback(feedback) {
+  if (!feedback || typeof feedback !== "object") {
+    return null;
+  }
+
+  const rating = Number(feedback.rating);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return null;
+  }
+
+  return {
+    id: feedback.id || null,
+    reportId: feedback.reportId || feedback.report_id || null,
+    userId: feedback.userId || feedback.user_id || null,
+    rating: Math.round(rating),
+    isSatisfied:
+      typeof feedback.isSatisfied === "boolean"
+        ? feedback.isSatisfied
+        : typeof feedback.is_satisfied === "boolean"
+          ? feedback.is_satisfied
+          : null,
+    comment: String(feedback.comment ?? "").trim(),
+    createdAt: feedback.createdAt || feedback.created_at || null,
+    updatedAt: feedback.updatedAt || feedback.updated_at || null,
+  };
+}
+
 function mapBackendReportToMyReport(report, index, departments = []) {
   if (!report || typeof report !== "object") {
     return null;
@@ -94,11 +121,14 @@ function mapBackendReportToMyReport(report, index, departments = []) {
 
   return {
     id: report.id || `report-${index + 1}`,
+    reportNumber: report.reportNumber || report.report_number || report.id || `report-${index + 1}`,
     issueType: department?.name || issueType || "Unspecified Issue",
     location: report.location || "Unknown location",
     description: report.description || "No description provided.",
     createdAt:
       report.createdAt || report.created_at || new Date().toISOString(),
+    resolvedAt: report.resolvedAt || report.resolved_at || null,
+    rawStatus: String(report.status || "pending").trim().toLowerCase(),
     status: normalizeStatus(report.status),
     attachment: resolveAttachment(report),
     hasUnreadAdminMessage: Boolean(
@@ -106,6 +136,7 @@ function mapBackendReportToMyReport(report, index, departments = []) {
       report.has_unread_admin_message ??
       false
     ),
+    feedback: normalizeFeedback(report.feedback),
   };
 }
 
@@ -224,6 +255,26 @@ export const reportsApi = {
     if (description) payload.description = description;
 
     return api.patch(`/reports/${reportId}`, payload);
+  },
+  getReportFeedback: async (reportId) => {
+    if (!reportId) throw new Error("Missing report ID");
+    const response = await api.get(`/reports/${reportId}/feedback`);
+    return normalizeFeedback(response?.data ?? response);
+  },
+  submitReportFeedback: async (reportId, { rating, comment = "", isSatisfied = null }) => {
+    if (!reportId) throw new Error("Missing report ID");
+    const payload = {
+      rating: Number(rating),
+      comment: String(comment ?? "").trim(),
+      ...(typeof isSatisfied === "boolean" ? { isSatisfied } : { isSatisfied: null }),
+    };
+    const response = await api.post(`/reports/${reportId}/feedback`, payload);
+    return {
+      feedback: normalizeFeedback(response?.data ?? response?.feedback ?? response),
+      message:
+        response?.message ||
+        "Thank you! Your feedback on the government solution has been submitted.",
+    };
   },
   createReport: async ({
     issueType,

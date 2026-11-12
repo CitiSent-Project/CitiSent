@@ -414,15 +414,9 @@ export function ResidentFeedback({
         {/* Page Header */}
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Resident Feedback on Solutions
-              </h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                <FiStar className="fill-amber-400 text-amber-500 text-xs" />
-                Service Evaluation
-              </span>
-            </div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Resident Feedback on Solutions
+            </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Monitor citizen ratings, satisfaction levels, and written reviews for resolved community reports.
             </p>
@@ -596,10 +590,10 @@ export function ResidentFeedback({
         </section>
 
         {/* Filters Bar */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-wrap items-center gap-2.5 w-full">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs min-w-0 max-w-full dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-wrap items-center gap-2.5 w-full min-w-0">
             {/* Search Input */}
-            <div className="flex flex-1 sm:flex-initial sm:w-72 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/30 transition-colors dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex w-full sm:w-72 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600/30 transition-colors min-w-0 dark:border-slate-800 dark:bg-slate-900">
               <FiSearch className="text-slate-400 shrink-0 dark:text-slate-500 text-xs" />
               <input
                 type="text"
@@ -621,7 +615,7 @@ export function ResidentFeedback({
             </div>
 
             {/* Star Rating Filter Group */}
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50/80 p-0.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex max-w-full flex-wrap items-center rounded-lg border border-slate-200 bg-slate-50/80 p-0.5 text-xs font-medium dark:border-slate-800 dark:bg-slate-900">
               {['all', '5', '4', '3', '2', '1'].map((starOpt) => {
                 const active = String(ratingFilter) === starOpt
                 return (
@@ -653,26 +647,31 @@ export function ResidentFeedback({
             </div>
 
             {/* Satisfaction Filter */}
-            <select
-              aria-label="Filter by resident satisfaction"
-              value={satisfactionFilter}
-              onChange={(e) => setSatisfactionFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-            >
-              <option value="all">Satisfaction: All</option>
-              <option value="satisfied">Satisfied Only</option>
-              <option value="unsatisfied">Not Satisfied Only</option>
-              <option value="unanswered">No Satisfaction Answer</option>
-            </select>
+            <div className="relative flex items-center w-full sm:w-auto min-w-0 max-w-full">
+              <select
+                aria-label="Filter by resident satisfaction"
+                value={satisfactionFilter}
+                onChange={(e) => setSatisfactionFilter(e.target.value)}
+                className="w-full sm:w-auto max-w-full appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-7 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer truncate transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              >
+                <option value="all">Satisfaction: All</option>
+                <option value="satisfied">Satisfied Only</option>
+                <option value="unsatisfied">Not Satisfied Only</option>
+                <option value="unanswered">No Satisfaction Answer</option>
+              </select>
+              <span className="pointer-events-none absolute right-2.5 text-[9px] text-slate-400">
+                ▼
+              </span>
+            </div>
 
             {/* Department Filter */}
-            <div className="relative flex items-center">
+            <div className="relative flex items-center w-full sm:w-auto min-w-0 max-w-full">
               <FiGrid className="pointer-events-none absolute left-2.5 text-xs text-blue-500 z-10" />
               <select
                 aria-label="Filter feedback by department"
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-7 pr-6 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                className="w-full sm:w-auto max-w-full appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-7 pr-8 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer truncate transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               >
                 {availableDepartments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -680,7 +679,7 @@ export function ResidentFeedback({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2 text-[9px] text-slate-400">
+              <span className="pointer-events-none absolute right-2.5 text-[9px] text-slate-400">
                 ▼
               </span>
             </div>

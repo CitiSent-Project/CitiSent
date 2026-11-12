@@ -9,6 +9,7 @@ import { reportsApi } from "../../services/reports";
 import FeedbackModal from "../../components/ui/FeedbackModal";
 import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import ReportDiscussionModal from "../../components/myReports/ReportDiscussionModal";
+import SolutionFeedbackModal from "../../components/myReports/SolutionFeedbackModal";
 import { getAuthUser } from "../../services/authSession";
 import { useAdminMessageState } from "../../contexts/AdminMessageContext";
 
@@ -38,6 +39,7 @@ export default function ReportsMadePage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [editingReportId, setEditingReportId] = useState(null);
   const [discussionReport, setDiscussionReport] = useState(null);
+  const [solutionFeedbackReport, setSolutionFeedbackReport] = useState(null);
 
   // Delete state
   const [confirmDeleteReport, setConfirmDeleteReport] = useState(null);
@@ -142,6 +144,12 @@ export default function ReportsMadePage() {
    */
   const handleDiscussionClose = () => {
     setDiscussionReport(null);
+  };
+
+  const handleSubmitSolutionFeedback = async (reportId, payload) => {
+    const result = await reportsApi.submitReportFeedback(reportId, payload);
+    await reloadMyReports();
+    return result;
   };
 
   // When saving, close the edit modal and perform api call
@@ -292,6 +300,9 @@ export default function ReportsMadePage() {
                   onOpenDiscussion={(rep) => {
                     setDiscussionReport(rep);
                   }}
+                  onOpenFeedback={(rep) => {
+                    setSolutionFeedbackReport(rep);
+                  }}
                 />
                 <View className="mb-0 flex-row justify-between items-center gap-2">
                   {normalizeStatus(report.status) === "pending" ? (
@@ -378,6 +389,13 @@ export default function ReportsMadePage() {
         report={discussionReport}
         onClose={handleDiscussionClose}
         onMarkRead={handleMarkRead}
+      />
+
+      <SolutionFeedbackModal
+        visible={Boolean(solutionFeedbackReport)}
+        report={solutionFeedbackReport}
+        onClose={() => setSolutionFeedbackReport(null)}
+        onSubmitFeedback={handleSubmitSolutionFeedback}
       />
 
       <ConfirmationModal

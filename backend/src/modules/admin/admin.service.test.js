@@ -181,3 +181,118 @@ test("adminService.listReports includes resolvedAt on mapped report items", asyn
   }
 });
 
+test("adminService.listFeedback aggregates ratings, satisfaction statistics, and scopes items to resolved reports", async () => {
+  const originals = {
+    listResolvedReportsAndFeedback: adminRepository.listResolvedReportsAndFeedback,
+    listDepartments: departmentsService.listDepartments,
+  };
+
+  try {
+    departmentsService.listDepartments = async () => [
+      { id: "dept-1", slug: "engineering", name: "City Engineering Office" },
+    ];
+
+    adminRepository.listResolvedReportsAndFeedback = async () => ({
+      resolvedReports: [
+        {
+          id: "rep-1",
+          report_number: "ENG-0001",
+          issue_type: "engineering",
+          location: "Poblacion I",
+          description: "Pothole repair",
+          status: "resolved",
+          sentiment_label: "High",
+          resolved_at: "2026-11-12T10:00:00.000Z",
+          created_at: "2026-11-10T08:00:00.000Z",
+          user_id: "u1",
+        },
+        {
+          id: "rep-2",
+          report_number: "ENG-0002",
+          issue_type: "engineering",
+          location: "San Vicente",
+          description: "Broken streetlight",
+          status: "resolved",
+          sentiment_label: "Medium",
+          resolved_at: "2026-11-12T12:00:00.000Z",
+          created_at: "2026-11-11T08:00:00.000Z",
+          user_id: "u2",
+        },
+        {
+          id: "rep-3",
+          report_number: "ENG-0003",
+          issue_type: "engineering",
+          location: "Sta. Clara",
+          description: "Drainage clog",
+          status: "resolved",
+          sentiment_label: "Low",
+          resolved_at: "2026-11-12T14:00:00.000Z",
+          created_at: "2026-11-11T09:00:00.000Z",
+          user_id: "u3",
+        },
+      ],
+      feedbackList: [
+        {
+          id: "fb-1",
+          reportId: "rep-1",
+          userId: "u1",
+          rating: 5,
+          isSatisfied: true,
+          comment: "Pothole was fixed properly.",
+          createdAt: "2026-11-12T11:00:00.000Z",
+        },
+        {
+          id: "fb-2",
+          reportId: "rep-2",
+          userId: "u2",
+          rating: 3,
+          isSatisfied: false,
+          comment: "Took a little longer than expected.",
+          createdAt: "2026-11-12T13:00:00.000Z",
+        },
+        {
+          id: "fb-other-dept",
+          reportId: "rep-outside-scope",
+          userId: "u99",
+          rating: 1,
+          isSatisfied: false,
+          comment: "Should not appear for this department",
+          createdAt: "2026-11-12T15:00:00.000Z",
+        },
+      ],
+      reporterProfilesByUserId: {
+        u1: { email: "resident1@test.com", fname: "Juan", lname: "Dela Cruz" },
+        u2: { email: "resident2@test.com", fname: "Maria", lname: "Santos" },
+      },
+    });
+
+    const result = await adminService.listFeedback({
+      actor: { role: "Office Admin", departmentId: "engineering" },
+      accessToken: "token",
+    });
+
+    assert.equal(result.items.length, 2);
+    assert.equal(result.stats.totalFeedback, 2);
+    assert.equal(result.stats.totalResolvedReports, 3);
+    assert.equal(result.stats.averageRating, 4);
+    assert.equal(result.stats.satisfiedCount, 1);
+    assert.equal(result.stats.unsatisfiedCount, 1);
+    assert.equal(result.stats.satisfactionRate, 50);
+    assert.equal(result.stats.responseRate, 66.7);
+    assert.deepEqual(result.stats.ratingDistribution, { 1: 0, 2: 0, 3: 1, 4: 0, 5: 1 });
+
+    // Filtered query check (rating = 5)
+    const filteredResult = await adminService.listFeedback({
+      actor: { role: "Office Admin", departmentId: "engineering" },
+      accessToken: "token",
+      rating: 5,
+    });
+    assert.equal(filteredResult.items.length, 1);
+    assert.equal(filteredResult.items[0].reportNumber, "ENG-0001");
+  } finally {
+    adminRepository.listResolvedReportsAndFeedback = originals.listResolvedReportsAndFeedback;
+    departmentsService.listDepartments = originals.listDepartments;
+  }
+});
+
+

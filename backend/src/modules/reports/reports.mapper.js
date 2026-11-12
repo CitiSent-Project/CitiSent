@@ -1,3 +1,35 @@
+export function toReportFeedbackResponse(feedback) {
+  if (!feedback) {
+    return null;
+  }
+
+  const rating = Number(feedback.rating);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return null;
+  }
+
+  return {
+    id: feedback.id || null,
+    reportId: feedback.reportId || feedback.report_id || null,
+    userId: feedback.userId || feedback.user_id || null,
+    rating: Math.round(rating),
+    isSatisfied:
+      typeof feedback.isSatisfied === "boolean"
+        ? feedback.isSatisfied
+        : typeof feedback.is_satisfied === "boolean"
+          ? feedback.is_satisfied
+          : null,
+    comment: String(feedback.comment ?? "").trim(),
+    createdAt: feedback.createdAt || feedback.created_at || null,
+    updatedAt:
+      feedback.updatedAt ||
+      feedback.updated_at ||
+      feedback.createdAt ||
+      feedback.created_at ||
+      null,
+  };
+}
+
 export function toReportResponse(reportRow) {
   return {
     id: reportRow.id,
@@ -12,6 +44,7 @@ export function toReportResponse(reportRow) {
     emotionLevel: reportRow.emotion_level ?? null,
     aiSummary: reportRow.ai_summary ?? null,
     attachmentUrl: reportRow.attachment_url,
+    resolvedAt: reportRow.resolved_at ?? null,
     createdAt: reportRow.created_at,
     updatedAt: reportRow.updated_at,
     userId: reportRow.user_id,
@@ -20,6 +53,7 @@ export function toReportResponse(reportRow) {
       reportRow.hasUnreadAdminMessage ??
       false
     ),
+    feedback: toReportFeedbackResponse(reportRow.feedback),
   };
 }
 

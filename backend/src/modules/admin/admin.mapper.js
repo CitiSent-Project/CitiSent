@@ -7,6 +7,7 @@ import {
   resolveDepartmentLabel,
 } from "../../shared/data/departments.js";
 import { composeFullName } from "../../shared/utils/name.js";
+import { toReportFeedbackResponse } from "../reports/reports.mapper.js";
 
 const STATUS_LABELS = Object.freeze({
   pending: "Pending",
@@ -175,6 +176,57 @@ export function toAdminReportResponse({ reportRow, reporterProfile }) {
       id: reportRow?.user_id || null,
       displayId: reporterProfile?.display_id ? String(reporterProfile.display_id) : null,
       email: isGuest ? null : (reporterProfile?.email || null),
+      fullName: resolveReporterName(reporterProfile),
+    },
+    feedback: toReportFeedbackResponse(reportRow?.feedback),
+  };
+}
+
+export function toAdminFeedbackItemResponse({
+  feedback,
+  reportRow,
+  reporterProfile,
+}) {
+  const normalizedFeedback = toReportFeedbackResponse(feedback);
+  if (!normalizedFeedback) {
+    return null;
+  }
+
+  const reportResponse = reportRow
+    ? toAdminReportResponse({ reportRow, reporterProfile })
+    : null;
+
+  return {
+    id: normalizedFeedback.id,
+    reportId: normalizedFeedback.reportId || reportRow?.id || null,
+    reportNumber:
+      reportResponse?.reportNumber ||
+      reportRow?.report_number ||
+      normalizedFeedback.reportId ||
+      null,
+    userId: normalizedFeedback.userId || reportRow?.user_id || null,
+    rating: normalizedFeedback.rating,
+    isSatisfied: normalizedFeedback.isSatisfied,
+    comment: normalizedFeedback.comment,
+    createdAt: normalizedFeedback.createdAt,
+    updatedAt: normalizedFeedback.updatedAt,
+    issueType: reportResponse?.issueType || reportRow?.issue_type || "",
+    departmentId: reportResponse?.departmentId || "",
+    departmentLabel: reportResponse?.departmentLabel || "Unassigned",
+    location: reportResponse?.location || reportRow?.location || "",
+    description: reportResponse?.description || reportRow?.description || "",
+    urgency: reportResponse?.urgency || "Low",
+    emotionLevel: reportResponse?.emotionLevel || "Neutral",
+    status: reportResponse?.status || "resolved",
+    statusLabel: reportResponse?.statusLabel || "Resolved",
+    resolvedAt: reportResponse?.resolvedAt || null,
+    reportCreatedAt: reportResponse?.createdAt || null,
+    reporter: reportResponse?.reporter || {
+      id: normalizedFeedback.userId || null,
+      displayId: reporterProfile?.display_id
+        ? String(reporterProfile.display_id)
+        : null,
+      email: reporterProfile?.email || null,
       fullName: resolveReporterName(reporterProfile),
     },
   };

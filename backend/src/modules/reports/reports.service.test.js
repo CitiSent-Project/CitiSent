@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { logger } from "../../config/logger.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { reportsRepository } from "./reports.repository.js";
+import { reportFeedbackRepository } from "./reportFeedback.repository.js";
 import {
   REPORT_URGENCY_FALLBACK,
   reportsSentimentClient,
@@ -422,5 +423,159 @@ test("createReport skips database insert when request is aborted", async (t) => 
   assert.equal(result, null);
   assert.equal(repositoryCreateCalled, false, "Repository create must be aborted if request connection closed");
 });
+
+test("submitReportFeedback saves feedback for original reporter's resolved report", async (t) => {
+  const originalGetByIdInternal = reportsRepository.getByIdInternal;
+  const originalFeedbackCreate = reportFeedbackRepository.create;
+  const originalDeleteByPrefix = cacheService.deleteByPrefix;
+
+  const deletedPrefixes = [];
+  cacheService.deleteByPrefix = async (prefix) => {
+    deletedPrefixes.push(prefix);
+  };
+
+  reportsRepository.getByIdInternal = async () =>
+    createReportRow({
+      id: "report-resolved-1",
+      user_id: "resident-1",
+      status: "resolved",
+      issue_type: "engineering",
+    });
+
+  let capturedInput = null;
+  reportFeedbackRepository.create = async (input) => {
+    capturedInput = input;
+    return {
+      id: "fb-1",
+      reportId: input.reportId,
+      userId: input.userId,
+      rating: input.rating,
+      isSatisfied: input.isSatisfied,
+      comment: input.comment,
+      createdAt: "2026-11-12T18:00:00.000Z",
+      updatedAt: "2026-11-12T18:00:00.000Z",
+    };
+  };
+
+  t.after(() => {
+    reportsRepository.getByIdInternal = originalGetByIdInternal;
+    reportFeedbackRepository.create = originalFeedbackCreate;
+    cacheService.deleteByPrefix = originalDeleteByPrefix;
+  });
+
+  const result = await reportsService.submitReportFeedback({
+    userId: "resident-1",
+    reportId: "report-resolved-1",
+    rating: 5,
+    isSatisfied: true,
+    comment: "Fixed quickly and cleanly!",
+    accessToken: "token-123",
+  });
+
+  assert.equal(capturedInput.rating, 5);
+  assert.equal(capturedInput.isSatisfied, true);
+  assert.equal(capturedInput.comment, "Fixed quickly and cleanly!");
+  assert.equal(result.feedback.rating, 5);
+  assert.equal(result.feedback.isSatisfied, true);
+  assert.equal(result.report.feedback.id, "fb-1");
+  assert.ok(deletedPrefixes.includes(buildReportsUserCachePrefix("resident-1")));
+  assert.ok(deletedPrefixes.includes("admin:reports:"));
+});
+
+test("submitReportFeedback rejects feedback from a user who did not submit the report", async (t) => {
+  const originalGetByIdInternal = reportsRepository.getByIdInternal;
+  reportsRepository.getByIdInternal = async () =>
+    createReportRow({
+      id: "report-resolved-1",
+      user_id: "resident-owner",
+      status: "resolved",
+    });
+
+  t.after(() => {
+    reportsRepository.getByIdInternal = originalGetByIdInternal;
+  });
+
+  await assert.rejects(
+    () =>
+      reportsService.submitReportFeedback({
+        userId: "other-resident",
+        reportId: "report-resolved-1",
+        rating: 4,
+        comment: "Trying to rate someone else's report",
+        accessToken: "token-123",
+      }),
+    (err) => err?.statusCode === 403 && /originally submitted/i.test(err.message),
+  );
+});
+
+test("submitReportFeedback rejects reports that are not resolved (pending, in_review, rejected)", async (t) => {
+  const originalGetByIdInternal = reportsRepository.getByIdInternal;
+
+  t.after(() => {
+    reportsRepository.getByIdInternal = originalGetByIdInternal;
+  });
+
+  for (const status of ["pending", "in_review", "rejected"]) {
+    reportsRepository.getByIdInternal = async () =>
+      createReportRow({
+        id: `report-${status}`,
+        user_id: "resident-1",
+        status,
+      });
+
+    await assert.rejects(
+      () =>
+        reportsService.submitReportFeedback({
+          userId: "resident-1",
+          reportId: `report-${status}`,
+          rating: 3,
+          comment: "Too early",
+          accessToken: "token-123",
+        }),
+      (err) => err?.statusCode === 400 && /resolved/i.test(err.message),
+    );
+  }
+});
+
+test("submitReportFeedback rejects duplicate feedback submission on the same report", async (t) => {
+  const originalGetByIdInternal = reportsRepository.getByIdInternal;
+  const originalGetClient = reportFeedbackRepository.getClient;
+
+  reportsRepository.getByIdInternal = async () =>
+    createReportRow({
+      id: "report-resolved-dup",
+      user_id: "resident-1",
+      status: "resolved",
+    });
+
+  const originalGetByReportId = reportFeedbackRepository.getByReportId;
+  reportFeedbackRepository.getByReportId = async () => ({
+    id: "fb-existing",
+    reportId: "report-resolved-dup",
+    userId: "resident-1",
+    rating: 5,
+    isSatisfied: true,
+    comment: "Already submitted",
+  });
+
+  t.after(() => {
+    reportsRepository.getByIdInternal = originalGetByIdInternal;
+    reportFeedbackRepository.getClient = originalGetClient;
+    reportFeedbackRepository.getByReportId = originalGetByReportId;
+  });
+
+  await assert.rejects(
+    () =>
+      reportsService.submitReportFeedback({
+        userId: "resident-1",
+        reportId: "report-resolved-dup",
+        rating: 2,
+        comment: "Duplicate attempt",
+        accessToken: "token-123",
+      }),
+    (err) => err?.statusCode === 409 && /already been submitted/i.test(err.message),
+  );
+});
+
 
 

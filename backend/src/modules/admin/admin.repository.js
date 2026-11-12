@@ -9,6 +9,7 @@ import { USER_ROLES, isSuperadmin } from "../../shared/auth/roleAccess.js";
 import { buildDepartmentCandidates } from "../../shared/data/departments.js";
 import { cacheService } from "../../shared/cache/cacheService.js";
 import { generate6DigitId, isValid6DigitId } from "../../shared/utils/idGenerator.js";
+import { reportFeedbackRepository } from "../reports/reportFeedback.repository.js";
 
 const PROFILES_TABLE = "profiles";
 const BANNED_USERS_TABLE = "banned_users";
@@ -636,8 +637,20 @@ export const adminRepository = {
       }
     }
 
+    const reportRows = data || [];
+    const reportIds = reportRows.map((row) => row.id).filter(Boolean);
+    const feedbackByReportId = await reportFeedbackRepository.getByReportIds(
+      reportIds,
+      accessToken,
+    );
+
+    const enrichedRows = reportRows.map((row) => ({
+      ...row,
+      feedback: feedbackByReportId.get(String(row.id)) || null,
+    }));
+
     return {
-      rows: data || [],
+      rows: enrichedRows,
       count: count || 0,
       reporterProfilesByUserId,
     };
@@ -762,11 +775,17 @@ export const adminRepository = {
       return null;
     }
 
-    const reporterProfilesByUserId = await loadReporterProfiles(db, [data]);
-    const enrichedData = await enrichWithSignedUrl(db, data);
+    const [reporterProfilesByUserId, enrichedData, feedback] = await Promise.all([
+      loadReporterProfiles(db, [data]),
+      enrichWithSignedUrl(db, data),
+      reportFeedbackRepository.getByReportId(reportId, accessToken),
+    ]);
 
     return {
-      row: enrichedData,
+      row: {
+        ...enrichedData,
+        feedback: feedback || null,
+      },
       reporterProfile: reporterProfilesByUserId[data.user_id] || null,
     };
   },
@@ -797,10 +816,16 @@ export const adminRepository = {
       return null;
     }
 
-    const reporterProfilesByUserId = await loadReporterProfiles(db, [data]);
+    const [reporterProfilesByUserId, feedback] = await Promise.all([
+      loadReporterProfiles(db, [data]),
+      reportFeedbackRepository.getByReportId(reportId, accessToken),
+    ]);
 
     return {
-      row: data,
+      row: {
+        ...data,
+        feedback: feedback || null,
+      },
       reporterProfile: reporterProfilesByUserId[data.user_id] || null,
     };
   },
@@ -1064,5 +1089,40 @@ export const adminRepository = {
     }
 
     return data || [];
+  },
+
+  async listResolvedReportsAndFeedback({ actor, accessToken }) {
+    const db = getDb(accessToken);
+
+    let reportsQuery = db
+      .from(REPORTS_TABLE)
+      .select(
+        "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,resolved_at,updated_at,user_id",
+      )
+      .eq("status", "resolved")
+      .order("resolved_at", { ascending: false });
+
+    reportsQuery = applyDepartmentScope(reportsQuery, actor);
+
+    const [reportsResult, allFeedback] = await Promise.all([
+      reportsQuery,
+      reportFeedbackRepository.listAllFeedback(accessToken),
+    ]);
+
+    if (reportsResult.error) {
+      throw toGatewayError(
+        "Failed to fetch resolved reports for feedback management",
+        reportsResult.error,
+      );
+    }
+
+    const resolvedReports = reportsResult.data || [];
+    const reporterProfilesByUserId = await loadReporterProfiles(db, resolvedReports);
+
+    return {
+      resolvedReports,
+      feedbackList: allFeedback || [],
+      reporterProfilesByUserId,
+    };
   },
 };

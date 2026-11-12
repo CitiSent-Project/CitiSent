@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { createAdminSupabaseClient, createUserSupabaseClient, supabase } from "../../config/supabase.js";
 import { AppError } from "../../shared/errors/appError.js";
+import { reportFeedbackRepository } from "./reportFeedback.repository.js";
 
 const TABLE_NAME = "reports";
 
@@ -21,7 +22,7 @@ async function enrichWithSignedUrl(db, row) {
   return row;
 }
 
-const REPORT_SELECT_COLUMNS = "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,created_at,updated_at,user_id";
+const REPORT_SELECT_COLUMNS = "id,report_number,issue_type,description,location,latitude,longitude,status,sentiment_label,emotion_level,ai_summary,attachment_url,resolved_at,created_at,updated_at,user_id";
 
 export const reportsRepository = {
   async list({ userId, limit, offset, status, accessToken }) {
@@ -57,6 +58,10 @@ export const reportsRepository = {
     }
 
     const reportIds = rows.map((r) => r.id);
+    const feedbackByReportId = await reportFeedbackRepository.getByReportIds(
+      reportIds,
+      accessToken,
+    );
 
     // Batch query messages in user's reports where sender is not the user
     const { data: messages, error: messagesError } = await db
@@ -71,6 +76,7 @@ export const reportsRepository = {
         return {
           ...enrichedRow,
           has_unread_admin_message: false,
+          feedback: feedbackByReportId.get(String(r.id)) || null,
         };
       }));
       return {
@@ -109,6 +115,7 @@ export const reportsRepository = {
       return {
         ...enrichedRow,
         has_unread_admin_message: unreadByReportId.has(String(r.id)),
+        feedback: feedbackByReportId.get(String(r.id)) || null,
       };
     }));
 
@@ -307,7 +314,39 @@ export const reportsRepository = {
       );
     }
 
-    return enrichWithSignedUrl(db, data);
+    if (!data) {
+      return null;
+    }
+
+    const [enrichedRow, feedback] = await Promise.all([
+      enrichWithSignedUrl(db, data),
+      reportFeedbackRepository.getByReportId(reportId, accessToken),
+    ]);
+
+    return {
+      ...enrichedRow,
+      feedback: feedback || null,
+    };
+  },
+
+  async getByIdInternal({ reportId, accessToken }) {
+    const db = getDbClient(accessToken);
+
+    const { data, error } = await db
+      .from(TABLE_NAME)
+      .select("*")
+      .eq("id", reportId)
+      .maybeSingle();
+
+    if (error) {
+      throw new AppError(
+        "Failed to fetch report",
+        StatusCodes.BAD_GATEWAY,
+        error,
+      );
+    }
+
+    return data || null;
   },
 
   async updateById({ userId, reportId, payload, accessToken }) {

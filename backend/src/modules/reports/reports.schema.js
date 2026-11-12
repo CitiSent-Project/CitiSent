@@ -88,3 +88,32 @@ export const deleteReportSchema = z.object({
   query: z.object({}).optional().default({}),
   body: z.object({}).optional().default({}),
 });
+
+export const getReportFeedbackSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({}).optional().default({}),
+  body: z.object({}).optional().default({}),
+});
+
+export const submitReportFeedbackSchema = z.object({
+  params: z.object({
+    reportId: reportIdSchema,
+  }),
+  query: z.object({}).optional().default({}),
+  body: z.object({
+    rating: z.coerce
+      .number()
+      .int("Rating must be a whole number.")
+      .min(1, "Rating must be between 1 and 5 stars.")
+      .max(5, "Rating must be between 1 and 5 stars."),
+    comment: z
+      .string()
+      .trim()
+      .max(2000, "Feedback comment must not exceed 2000 characters.")
+      .optional()
+      .default(""),
+    isSatisfied: z.boolean().nullable().optional(),
+  }),
+});

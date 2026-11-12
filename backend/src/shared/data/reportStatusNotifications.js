@@ -18,7 +18,8 @@ const STATUS_NOTIFICATION_CONTENT = Object.freeze({
     statusLabel: "Resolved",
     eventType: "report_resolved",
     title: "Report Resolved",
-    message: "Your report has been resolved. Open the app to review details.",
+    message:
+      "Your report has been resolved by the assigned office. Open the app to review the solution and share your feedback.",
   }),
   rejected: Object.freeze({
     statusCode: "rejected",

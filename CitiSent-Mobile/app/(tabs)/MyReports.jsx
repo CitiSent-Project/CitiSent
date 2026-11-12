@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Text, View, Pressable, ActivityIndicator } from "react-native";
 import {
   MyReportsList,
@@ -9,6 +10,8 @@ import {
 } from "../../modules/myReports";
 import { RefreshableScrollView, usePullToRefresh, Colors } from "../../modules/shared";
 import { AuthCityFooter } from "../../modules/auth";
+import SolutionFeedbackModal from "../../components/myReports/SolutionFeedbackModal";
+import { reportsApi } from "../../services/reports";
 
 export default function MyReportsScreen() {
   const {
@@ -21,6 +24,13 @@ export default function MyReportsScreen() {
     loadMore,
   } = useMyReports();
   const { refreshing, onRefresh } = usePullToRefresh(reloadMyReports);
+  const [feedbackReport, setFeedbackReport] = useState(null);
+
+  const handleSubmitSolutionFeedback = async (reportId, payload) => {
+    const result = await reportsApi.submitReportFeedback(reportId, payload);
+    await reloadMyReports();
+    return result;
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: Colors.screen.tabs }}>
@@ -44,7 +54,10 @@ export default function MyReportsScreen() {
               Track the status and details of every concern you have submitted.
             </Text>
 
-            <MyReportsList reports={reports} />
+            <MyReportsList
+              reports={reports}
+              onOpenFeedback={(report) => setFeedbackReport(report)}
+            />
 
             {hasMore && (
               <View className="my-5 pb-10 items-center">
@@ -76,6 +89,13 @@ export default function MyReportsScreen() {
           </>
         )}
       </RefreshableScrollView>
+
+      <SolutionFeedbackModal
+        visible={Boolean(feedbackReport)}
+        report={feedbackReport}
+        onClose={() => setFeedbackReport(null)}
+        onSubmitFeedback={handleSubmitSolutionFeedback}
+      />
     </View>
   );
 }

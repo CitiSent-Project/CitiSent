@@ -181,6 +181,23 @@ export default function NotificationDetailsModal({ visible, notification, onClos
                     ) : null}
                   </View>
                 ) : null}
+
+                {notification.meta.status.toLowerCase() === "resolved" && (
+                  <View
+                    className="mt-3 flex-row items-center gap-2 rounded-xl border px-3 py-2.5"
+                    style={{
+                      backgroundColor: Colors.ui.infoSurface || "#EFF6FF",
+                      borderColor: Colors.ui.infoSurfaceBorder || "#DBEAFE",
+                    }}
+                  >
+                    <Ionicons name="star" size={16} color="#F59E0B" />
+                    <Text className="flex-1 text-xs leading-4" style={{ color: Colors.text.infoHeading || "#1E3A8A" }}>
+                      Feedback is now open for this resolved concern. Visit{" "}
+                      <Text className="font-bold">My Reports</Text> or{" "}
+                      <Text className="font-bold">Manage Reports</Text> to rate the government&apos;s solution.
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (
               <View className="rounded-xl border border-slate-100 bg-slate-50 p-4">

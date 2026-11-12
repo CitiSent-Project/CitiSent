@@ -30,6 +30,33 @@ function resolveDepartment(departmentId, departmentLabel, issueType) {
   }
 }
 
+function mapReportFeedback(feedback) {
+  if (!feedback || typeof feedback !== 'object') {
+    return null
+  }
+
+  const rating = Number(feedback.rating)
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return null
+  }
+
+  return {
+    id: feedback.id || null,
+    reportId: feedback.reportId || feedback.report_id || null,
+    userId: feedback.userId || feedback.user_id || null,
+    rating: Math.round(rating),
+    isSatisfied:
+      typeof feedback.isSatisfied === 'boolean'
+        ? feedback.isSatisfied
+        : typeof feedback.is_satisfied === 'boolean'
+          ? feedback.is_satisfied
+          : null,
+    comment: String(feedback.comment ?? '').trim(),
+    createdAt: feedback.createdAt || feedback.created_at || null,
+    updatedAt: feedback.updatedAt || feedback.updated_at || null,
+  }
+}
+
 export function mapBackendReportToUiRow(payload = {}) {
   const department = resolveDepartment(
     payload.departmentId,
@@ -76,6 +103,7 @@ export function mapBackendReportToUiRow(payload = {}) {
         ? payload.updatedAt || payload.updated_at || null
         : null),
     updatedAt: payload.updatedAt || payload.updated_at || '',
+    feedback: mapReportFeedback(payload.feedback),
   }
 }
 

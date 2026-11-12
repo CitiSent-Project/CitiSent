@@ -113,4 +113,35 @@ export const reportsController = {
 
     return res.status(StatusCodes.NO_CONTENT).send();
   },
+
+  async getFeedback(req, res) {
+    const feedback = await reportsService.getReportFeedback({
+      userId: req.user.id,
+      reportId: req.params.reportId,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      data: feedback,
+    });
+  },
+
+  async submitFeedback(req, res) {
+    const result = await reportsService.submitReportFeedback({
+      userId: req.user.id,
+      reportId: req.params.reportId,
+      rating: req.body.rating,
+      comment: req.body.comment,
+      isSatisfied: req.body.isSatisfied,
+      accessToken: req.accessToken,
+    });
+
+    return res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: "Thank you! Your feedback on the government solution has been submitted.",
+      data: result.feedback,
+      report: result.report,
+    });
+  },
 };

@@ -331,10 +331,10 @@ export function LoginPage({
             whileHover={submitting || lockoutSeconds > 0 ? {} : { scale: 1.01 }}
             whileTap={submitting || lockoutSeconds > 0 ? {} : { scale: 0.985 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={`group relative flex h-12 w-full items-center justify-center gap-2.5 rounded-xl px-5 text-base sm:text-lg font-semibold text-white transition-all duration-200 select-none ${
+            className={`group relative flex h-12 w-full items-center justify-center gap-2.5 rounded-xl px-5 text-base sm:text-lg font-semibold transition-all duration-200 select-none ${
               submitting || lockoutSeconds > 0
-                ? 'cursor-not-allowed bg-gradient-to-b from-[#184277] to-[#102e54] border border-white/15 opacity-85 shadow-none'
-                : 'cursor-pointer bg-gradient-to-b from-[#21569c] to-[#164077] hover:from-[#2662b0] hover:to-[#1a4b8c] active:from-[#18447d] active:to-[#123666] border border-white/25 hover:border-cyan-200/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_6px_18px_rgba(10,32,64,0.4)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_8px_24px_rgba(10,32,64,0.5)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.35)]'
+                ? 'cursor-not-allowed bg-white/[0.12] border border-white/20 text-white/50 shadow-none'
+                : 'cursor-pointer bg-gradient-to-b from-[#21569c] to-[#164077] hover:from-[#2662b0] hover:to-[#1a4b8c] active:from-[#18447d] active:to-[#123666] border border-white/25 hover:border-cyan-200/40 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_6px_18px_rgba(10,32,64,0.4)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_8px_24px_rgba(10,32,64,0.5)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.35)]'
             } focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/50`}
           >
             {submitting ? (

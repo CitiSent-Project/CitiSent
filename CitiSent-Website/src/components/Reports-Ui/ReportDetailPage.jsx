@@ -146,7 +146,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Email</p>
-                  <p className="mt-1 break-all font-medium text-slate-900 dark:text-slate-200">{fullReport.reporter?.email || fullReport.email}</p>
+                  <p className="mt-1 break-all font-medium text-slate-900 dark:text-slate-200">{fullReport.isGuest ? 'Guest' : (fullReport.reporter?.email || fullReport.email || 'Guest')}</p>
                 </div>
                 <div className="group rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-700 dark:hover:bg-slate-800">
                   <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</p>

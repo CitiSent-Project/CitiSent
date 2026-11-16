@@ -165,10 +165,10 @@ function UsersTableRow({
       {/* User Details — avatar + email/id */}
       <div className="flex min-w-0 items-center gap-2.5 ml-7 pr-10 lg:ml-0 lg:pr-0">
         <div className="shrink-0">
-          <UserInitialsAvatar name={user.email || user.username || user.id} />
+          <UserInitialsAvatar name={user.isGuest ? 'Guest' : (user.email || user.username || user.id)} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs sm:text-sm font-medium text-slate-900 dark:text-white">{user.email || user.username || 'No Email'}</p>
+          <p className="truncate text-xs sm:text-sm font-medium text-slate-900 dark:text-white">{user.isGuest ? 'Guest' : (user.email || user.username || 'No Email')}</p>
           <p className="truncate text-[11px] font-numeric text-slate-500 dark:text-slate-400">ID: {user.displayId || user.id}</p>
         </div>
       </div>

@@ -15,6 +15,7 @@ import { ADMIN_STORAGE_KEYS } from '../../models/data'
 import { getStorageSchemaRule } from '../../models/storageSchemaModel'
 import { Pagination } from '../../components/ui/Pagination'
 import { useReportPaginationState } from '../../hooks/reports/useReportPaginationState'
+import { GUEST_LABEL, isGuestUser } from '../../models/nameModel'
 
 function formatReportId(reportNum, id) {
   const value = String(reportNum || id || '').trim()
@@ -105,6 +106,11 @@ export function ResidentFeedback({
     if (feedbackItems.length > 0) {
       return feedbackItems.map((item) => {
         const matchingReport = reportsById.get(String(item.reportId || '')) || null
+        const isGuest =
+          isGuestUser(item) ||
+          isGuestUser(item.reporter) ||
+          isGuestUser(matchingReport) ||
+          (!item.reporter?.email && !matchingReport?.email)
         return {
           id: item.id || `${item.reportId}-feedback`,
           reportId: item.reportId,
@@ -126,14 +132,13 @@ export function ResidentFeedback({
           description: item.description || matchingReport?.message || '',
           urgency: item.urgency || matchingReport?.urgency || 'Low',
           resolvedAt: item.resolvedAt || matchingReport?.resolvedAt || null,
-          reporterName:
-            item.reporter?.fullName ||
-            matchingReport?.name ||
-            'Resident',
-          reporterEmail:
-            item.reporter?.email ||
-            matchingReport?.email ||
-            'Anonymous',
+          isGuest,
+          reporterName: isGuest
+            ? GUEST_LABEL
+            : (item.reporter?.fullName || matchingReport?.name || 'Resident'),
+          reporterEmail: isGuest
+            ? GUEST_LABEL
+            : (item.reporter?.email || matchingReport?.email || GUEST_LABEL),
           matchingReport,
         }
       })
@@ -142,23 +147,27 @@ export function ResidentFeedback({
     // Fallback: derive from rows that already have feedback attached
     return rows
       .filter((row) => row?.feedback && Number(row.feedback.rating) >= 1)
-      .map((row) => ({
-        id: row.feedback.id || `${row.id}-feedback`,
-        reportId: row.id,
-        reportNumber: row.reportNum || row.reportNumber || row.id,
-        rating: Number(row.feedback.rating),
-        comment: String(row.feedback.comment ?? '').trim(),
-        createdAt: row.feedback.createdAt || row.resolvedAt || row.updatedAt,
-        departmentLabel: row.category || row.issueType || 'Unassigned',
-        issueType: row.issueType || row.category || '',
-        location: row.location || 'Sto. Tomas, Batangas',
-        description: row.message || '',
-        urgency: row.urgency || 'Low',
-        resolvedAt: row.resolvedAt || null,
-        reporterName: row.name || 'Resident',
-        reporterEmail: row.email || 'Anonymous',
-        matchingReport: row,
-      }))
+      .map((row) => {
+        const isGuest = isGuestUser(row) || isGuestUser(row?.reporter)
+        return {
+          id: row.feedback.id || `${row.id}-feedback`,
+          reportId: row.id,
+          reportNumber: row.reportNum || row.reportNumber || row.id,
+          rating: Number(row.feedback.rating),
+          comment: String(row.feedback.comment ?? '').trim(),
+          createdAt: row.feedback.createdAt || row.resolvedAt || row.updatedAt,
+          departmentLabel: row.category || row.issueType || 'Unassigned',
+          issueType: row.issueType || row.category || '',
+          location: row.location || 'Sto. Tomas, Batangas',
+          description: row.message || '',
+          urgency: row.urgency || 'Low',
+          resolvedAt: row.resolvedAt || null,
+          isGuest,
+          reporterName: isGuest ? GUEST_LABEL : (row.name || 'Resident'),
+          reporterEmail: isGuest ? GUEST_LABEL : (row.email || GUEST_LABEL),
+          matchingReport: row,
+        }
+      })
   }, [feedbackItems, rows])
 
   // Available departments for filtering
@@ -233,21 +242,21 @@ export function ResidentFeedback({
     const baseItems =
       departmentFilter !== 'All' && departmentFilter !== 'All Departments'
         ? mergedFeedbackRows.filter(
-            (item) => item.departmentLabel === departmentFilter,
-          )
+          (item) => item.departmentLabel === departmentFilter,
+        )
         : mergedFeedbackRows
 
     const totalFeedback = baseItems.length
     const resolvedReportsCount =
       departmentFilter !== 'All' && departmentFilter !== 'All Departments'
         ? rows.filter(
-            (r) =>
-              r.status === 'Resolved' &&
-              (r.category === departmentFilter ||
-                r.issueType === departmentFilter),
-          ).length
+          (r) =>
+            r.status === 'Resolved' &&
+            (r.category === departmentFilter ||
+              r.issueType === departmentFilter),
+        ).length
         : serverStats?.totalResolvedReports ??
-          rows.filter((r) => r.status === 'Resolved').length
+        rows.filter((r) => r.status === 'Resolved').length
 
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
     let ratingSum = 0
@@ -336,7 +345,7 @@ export function ResidentFeedback({
       const line = [
         `"${item.reportNumber || item.reportId}"`,
         `"${item.departmentLabel || ''}"`,
-        `"${item.reporterEmail || 'Anonymous'}"`,
+        `"${item.isGuest ? 'Guest' : (item.reporterEmail || 'Guest')}"`,
         `"${item.rating}"`,
         `"${escapedComment}"`,
         `"${item.location || ''}"`,
@@ -437,11 +446,10 @@ export function ResidentFeedback({
               {[1, 2, 3, 4, 5].map((star) => (
                 <FiStar
                   key={star}
-                  className={`text-sm ${
-                    star <= Math.round(computedStats.averageRating)
+                  className={`text-sm ${star <= Math.round(computedStats.averageRating)
                       ? 'fill-amber-400 text-amber-400'
                       : 'text-slate-200 dark:text-slate-700'
-                  }`}
+                    }`}
                 />
               ))}
               <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -544,11 +552,10 @@ export function ResidentFeedback({
                     key={starOpt}
                     type="button"
                     onClick={() => setRatingFilter(starOpt)}
-                    className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors cursor-pointer ${
-                      active
+                    className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors cursor-pointer ${active
                         ? 'bg-blue-600 text-white font-semibold'
                         : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     {starOpt === 'all' ? (
                       'All Stars'
@@ -556,9 +563,8 @@ export function ResidentFeedback({
                       <>
                         <span>{starOpt}</span>
                         <FiStar
-                          className={`text-[10px] ${
-                            active ? 'fill-white text-white' : 'fill-amber-400 text-amber-400'
-                          }`}
+                          className={`text-[10px] ${active ? 'fill-white text-white' : 'fill-amber-400 text-amber-400'
+                            }`}
                         />
                       </>
                     )}
@@ -647,11 +653,10 @@ export function ResidentFeedback({
                         {[1, 2, 3, 4, 5].map((star) => (
                           <FiStar
                             key={star}
-                            className={`text-xs ${
-                              star <= item.rating
+                            className={`text-xs ${star <= item.rating
                                 ? 'fill-amber-400 text-amber-400'
                                 : 'text-slate-200 dark:text-slate-700'
-                            }`}
+                              }`}
                           />
                         ))}
                         <span className="ml-1 font-numeric font-bold text-slate-800 dark:text-slate-200">
@@ -671,7 +676,7 @@ export function ResidentFeedback({
                       )}
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <p className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px]">
+                      <p className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-40">
                         {item.reporterEmail || item.reporterName}
                       </p>
                       <p className="mt-0.5 font-numeric text-[11px] text-slate-400 dark:text-slate-500">

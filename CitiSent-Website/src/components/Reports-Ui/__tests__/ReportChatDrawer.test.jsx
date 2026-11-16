@@ -178,5 +178,42 @@ describe('Report chat drawer', () => {
     expect(container.textContent).toContain('This report is finalized. New messages cannot be sent.')
     expect(container.querySelector('textarea')).toBeNull()
   })
+
+  it('displays Guest in ReportDetailPage email field and ReportChatDrawer header when report.isGuest is true', async () => {
+    api.listReportMessages.mockResolvedValue({ data: [] })
+    api.markReportMessagesRead.mockResolvedValue({ data: [] })
+    api.getReportById.mockResolvedValue({
+      data: {
+        id: report.id,
+        reportNumber: 'ctmd-0002',
+        status: 'pending',
+        reporter: {
+          id: 'guest-1',
+          email: null,
+          fullName: 'Guest',
+        },
+      },
+    })
+
+    const guestReport = {
+      ...report,
+      reportNum: 'ctmd-0002',
+      isGuest: true,
+      name: 'Guest',
+      email: 'guest_07fa240d_1790746307636@citisent.guest',
+    }
+
+    await render(<ReportDetailPage report={guestReport} profile={profile} onBackToReports={vi.fn()} onUpdateStatus={vi.fn()} />)
+
+    expect(container.textContent).toContain('Guest')
+    expect(container.textContent).not.toContain('guest_07fa240d_1790746307636@citisent.guest')
+    expect(container.textContent).not.toContain('unknown@citisent.gov')
+
+    const talkButton = Array.from(container.querySelectorAll('button')).find((button) => button.textContent.includes('Talk to User'))
+    await act(async () => { talkButton.click() })
+
+    const drawerHeading = container.querySelector('aside h2')
+    expect(drawerHeading.textContent).toBe('Guest')
+  })
 })
 

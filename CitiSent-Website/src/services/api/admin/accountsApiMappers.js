@@ -10,7 +10,7 @@ function formatDate(value) {
   })
 }
 
-import { composeFullName, splitFullName } from '../../../models/nameModel'
+import { composeFullName, GUEST_LABEL, isGuestUser, splitFullName } from '../../../models/nameModel'
 
 const BACKEND_TO_UI_USER_STATUS = {
   active: 'Active',
@@ -70,16 +70,19 @@ export function mapBackendUserToUiRow(payload = {}) {
     mname: payload.mname,
     lname: payload.lname,
   })
+  const isGuest = isGuestUser(payload)
 
   return {
     id: payload.id || '',
     displayId: payload.displayId || payload.display_id || '',
-    name:
-      derivedFullName || payload.fullName || payload.username || payload.email || 'Unknown User',
+    isGuest,
+    name: isGuest
+      ? GUEST_LABEL
+      : (derivedFullName || payload.fullName || payload.username || payload.email || 'Unknown User'),
     fname: payload.fname || '',
     mname: payload.mname || '',
     lname: payload.lname || '',
-    email: payload.email || 'Not available',
+    email: isGuest ? GUEST_LABEL : (payload.email || 'Not available'),
     barangay: payload.barangay || '',
     city: payload.city || '',
     province: payload.province || '',

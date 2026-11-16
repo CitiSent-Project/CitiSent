@@ -1,3 +1,55 @@
+export const GUEST_LABEL = 'Guest'
+
+export function isGuestEmail(email) {
+  const normalized = String(email ?? '').trim().toLowerCase()
+  if (!normalized) {
+    return false
+  }
+
+  return (
+    normalized.endsWith('@citisent.guest') ||
+    normalized === 'unknown@citisent.gov' ||
+    normalized === 'guest'
+  )
+}
+
+export function isGuestUser(record = {}) {
+  if (!record || typeof record !== 'object') {
+    return false
+  }
+
+  if (record.isGuest === true || record.is_guest === true) {
+    return true
+  }
+
+  const role = String(record.role || '').trim().toLowerCase()
+  const accountType = String(record.accountType || record.account_type || '').trim().toLowerCase()
+  if (role === 'guest' || accountType === 'guest') {
+    return true
+  }
+
+  const email = record.email ?? record.userEmail ?? record.reporterEmail ?? ''
+  if (isGuestEmail(email)) {
+    return true
+  }
+
+  const nameCandidate = String(
+    record.fullName || record.name || record.username || ''
+  )
+    .trim()
+    .toLowerCase()
+
+  if (
+    nameCandidate === 'guest' ||
+    nameCandidate === 'guest user' ||
+    nameCandidate.startsWith('guest_')
+  ) {
+    return true
+  }
+
+  return false
+}
+
 export function normalizeNamePart(value) {
   if (value === undefined || value === null) {
     return ''

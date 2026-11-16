@@ -1,4 +1,4 @@
-import { composeFullName } from '../../../models/nameModel'
+import { composeFullName, GUEST_LABEL, isGuestUser } from '../../../models/nameModel'
 import { isSuperadmin } from '../../../models/roleAccessModel'
 
 function formatDate(value) {
@@ -162,8 +162,12 @@ export function mapDashboardRecentAdmins(payload = []) {
 export function mapDashboardRecentUsers(payload = []) {
   const rows = Array.isArray(payload) ? payload : []
 
-  return rows.map((row) => ({
-    email: row.email || row.username || 'Unknown User',
-    joined: formatDate(row.joinedAt),
-  }))
+  return rows.map((row) => {
+    const isGuest = isGuestUser(row)
+    return {
+      isGuest,
+      email: isGuest ? GUEST_LABEL : (row.email || row.username || 'Unknown User'),
+      joined: formatDate(row.joinedAt),
+    }
+  })
 }

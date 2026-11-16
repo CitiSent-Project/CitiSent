@@ -21,6 +21,24 @@ function normalizeLoginIdentifier(payload = {}) {
   return candidate.includes('@') ? candidate.toLowerCase() : candidate
 }
 
+function isLocalhostEnvironment() {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const hostname = String(window.location.hostname).trim().toLowerCase()
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+  }
+
+  return Boolean(import.meta.env?.DEV)
+}
+
+function isLocalOtpEmailDeliveryFailure(error) {
+  const status = Number(error?.status || 0)
+  const message = String(error?.message || error?.debugMessage || '').toLowerCase()
+  return (
+    status === 503 ||
+    message.includes('failed to deliver verification code email')
+  )
+}
+
 function buildRegistrationUsername(payload = {}) {
   const emailLocalPart = String(payload.email || '')
     .trim()
@@ -123,20 +141,26 @@ export function useAuthSession({
       performance.mark('requestStarted')
 
       if (typeof authApiService.adminChallenge === 'function') {
-        const challengeResponse = await authApiService.adminChallenge({
-          identifier: loginIdentifier,
-          password: payload.password,
-        })
+        try {
+          const challengeResponse = await authApiService.adminChallenge({
+            identifier: loginIdentifier,
+            password: payload.password,
+          })
 
-        if (challengeResponse?.data?.requireOtp) {
-          performance.finish()
-          return {
-            ok: true,
-            requireOtp: true,
-            tempToken: challengeResponse.data.tempToken,
-            email: challengeResponse.data.email,
-            maskedEmail: challengeResponse.data.maskedEmail,
-            resendCooldownSeconds: challengeResponse.data.resendCooldownSeconds || 60,
+          if (challengeResponse?.data?.requireOtp) {
+            performance.finish()
+            return {
+              ok: true,
+              requireOtp: true,
+              tempToken: challengeResponse.data.tempToken,
+              email: challengeResponse.data.email,
+              maskedEmail: challengeResponse.data.maskedEmail,
+              resendCooldownSeconds: challengeResponse.data.resendCooldownSeconds || 60,
+            }
+          }
+        } catch (challengeError) {
+          if (!isLocalhostEnvironment() || !isLocalOtpEmailDeliveryFailure(challengeError)) {
+            throw challengeError
           }
         }
       }

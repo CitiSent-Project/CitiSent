@@ -202,7 +202,7 @@ export function UserProfilePage({ user, onBackToUsers, onViewReport }) {
 
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Email</p>
-            <p className="text-slate-900 dark:text-slate-100 break-all">{displayUser.email}</p>
+            <p className="text-slate-900 dark:text-slate-100 break-all">{displayUser.isGuest ? 'Guest' : displayUser.email}</p>
           </div>
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</p>

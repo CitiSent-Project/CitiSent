@@ -133,7 +133,6 @@ export const reportsController = {
       reportId: req.params.reportId,
       rating: req.body.rating,
       comment: req.body.comment,
-      isSatisfied: req.body.isSatisfied,
       accessToken: req.accessToken,
     });
 

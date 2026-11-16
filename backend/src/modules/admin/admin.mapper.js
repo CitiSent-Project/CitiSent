@@ -206,7 +206,6 @@ export function toAdminFeedbackItemResponse({
       null,
     userId: normalizedFeedback.userId || reportRow?.user_id || null,
     rating: normalizedFeedback.rating,
-    isSatisfied: normalizedFeedback.isSatisfied,
     comment: normalizedFeedback.comment,
     createdAt: normalizedFeedback.createdAt,
     updatedAt: normalizedFeedback.updatedAt,

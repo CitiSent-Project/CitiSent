@@ -45,12 +45,6 @@ function mapReportFeedback(feedback) {
     reportId: feedback.reportId || feedback.report_id || null,
     userId: feedback.userId || feedback.user_id || null,
     rating: Math.round(rating),
-    isSatisfied:
-      typeof feedback.isSatisfied === 'boolean'
-        ? feedback.isSatisfied
-        : typeof feedback.is_satisfied === 'boolean'
-          ? feedback.is_satisfied
-          : null,
     comment: String(feedback.comment ?? '').trim(),
     createdAt: feedback.createdAt || feedback.created_at || null,
     updatedAt: feedback.updatedAt || feedback.updated_at || null,

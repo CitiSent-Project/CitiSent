@@ -1,4 +1,4 @@
-import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle, FiRefreshCw, FiStar, FiThumbsUp, FiThumbsDown } from 'react-icons/fi'
+import { FiChevronRight, FiCheckCircle, FiClock, FiAlertCircle, FiFileText, FiCpu, FiImage, FiX, FiAlertTriangle, FiMessageCircle, FiRefreshCw, FiStar } from 'react-icons/fi'
 import {
   REPORT_STATUS_BADGE_CLASSES,
   REPORT_STATUS_OPTIONS,
@@ -438,7 +438,7 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
 
                 {fullReport.feedback ? (
                   <div className="space-y-4">
-                    {/* Star Rating & Satisfaction Row */}
+                    {/* Star Rating Row */}
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-0.5">
@@ -457,28 +457,6 @@ export function ReportDetailPage({ report, profile, onBackToReports, onUpdateSta
                           {fullReport.feedback.rating} / 5
                         </span>
                       </div>
-
-                      {typeof fullReport.feedback.isSatisfied === 'boolean' && (
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            fullReport.feedback.isSatisfied
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-                              : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
-                          }`}
-                        >
-                          {fullReport.feedback.isSatisfied ? (
-                            <>
-                              <FiThumbsUp className="text-xs" />
-                              Satisfied with Solution
-                            </>
-                          ) : (
-                            <>
-                              <FiThumbsDown className="text-xs" />
-                              Not Satisfied with Solution
-                            </>
-                          )}
-                        </span>
-                      )}
                     </div>
 
                     {/* Written Comment */}

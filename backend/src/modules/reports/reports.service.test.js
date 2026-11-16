@@ -450,7 +450,6 @@ test("submitReportFeedback saves feedback for original reporter's resolved repor
       reportId: input.reportId,
       userId: input.userId,
       rating: input.rating,
-      isSatisfied: input.isSatisfied,
       comment: input.comment,
       createdAt: "2026-11-12T18:00:00.000Z",
       updatedAt: "2026-11-12T18:00:00.000Z",
@@ -467,16 +466,13 @@ test("submitReportFeedback saves feedback for original reporter's resolved repor
     userId: "resident-1",
     reportId: "report-resolved-1",
     rating: 5,
-    isSatisfied: true,
     comment: "Fixed quickly and cleanly!",
     accessToken: "token-123",
   });
 
   assert.equal(capturedInput.rating, 5);
-  assert.equal(capturedInput.isSatisfied, true);
   assert.equal(capturedInput.comment, "Fixed quickly and cleanly!");
   assert.equal(result.feedback.rating, 5);
-  assert.equal(result.feedback.isSatisfied, true);
   assert.equal(result.report.feedback.id, "fb-1");
   assert.ok(deletedPrefixes.includes(buildReportsUserCachePrefix("resident-1")));
   assert.ok(deletedPrefixes.includes("admin:reports:"));
@@ -554,7 +550,6 @@ test("submitReportFeedback rejects duplicate feedback submission on the same rep
     reportId: "report-resolved-dup",
     userId: "resident-1",
     rating: 5,
-    isSatisfied: true,
     comment: "Already submitted",
   });
 

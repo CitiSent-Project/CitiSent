@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Modal,
   Pressable,
@@ -9,9 +9,25 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  LayoutAnimation,
+  UIManager,
+  Dimensions,
+  StatusBar as RNStatusBar,
+  useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, formatDateTime } from "../../modules/shared";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  try {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  } catch {}
+}
 
 const RATING_LABELS = {
   1: "Poor",
@@ -27,28 +43,152 @@ export default function SolutionFeedbackModal({
   onClose,
   onSubmitFeedback,
 }) {
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const topInset = Math.max(
+    insets.top,
+    Platform.OS === "android" ? RNStatusBar.currentHeight || 24 : 0,
+  );
+
   const existingFeedback = report?.feedback || null;
   const [rating, setRating] = useState(0);
-  const [isSatisfied, setIsSatisfied] = useState(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [submittedResult, setSubmittedResult] = useState(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [androidBottomOffset, setAndroidBottomOffset] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  const scrollViewRef = useRef(null);
+  const inputRef = useRef(null);
+  const isInputFocusedRef = useRef(false);
+  const feedbackSectionYRef = useRef(0);
+  const commentContentHeightRef = useRef(0);
+  const containerHeightRef = useRef(0);
+  const scrollTimersRef = useRef([]);
+
+  const clearScrollTimers = useCallback(() => {
+    scrollTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+    scrollTimersRef.current = [];
+  }, []);
+
+  const scrollToFeedbackInput = useCallback(
+    (animated = true) => {
+      clearScrollTimers();
+
+      const performScroll = () => {
+        if (!scrollViewRef.current) return;
+        scrollViewRef.current.scrollToEnd({ animated });
+      };
+
+      scrollTimersRef.current.push(setTimeout(performScroll, 60));
+      scrollTimersRef.current.push(setTimeout(performScroll, 220));
+    },
+    [clearScrollTimers],
+  );
+
+  useEffect(() => {
+    return () => {
+      clearScrollTimers();
+    };
+  }, [clearScrollTimers]);
 
   useEffect(() => {
     if (visible) {
       setRating(existingFeedback?.rating || 0);
-      setIsSatisfied(
-        typeof existingFeedback?.isSatisfied === "boolean"
-          ? existingFeedback.isSatisfied
-          : null,
-      );
       setComment(existingFeedback?.comment || "");
       setErrorMessage("");
       setIsSubmitting(false);
       setSubmittedResult(null);
+      commentContentHeightRef.current = 0;
+    } else {
+      clearScrollTimers();
+      isInputFocusedRef.current = false;
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+      setAndroidBottomOffset(0);
+      Keyboard.dismiss();
     }
-  }, [visible, report?.id, existingFeedback]);
+  }, [visible, report?.id, existingFeedback, clearScrollTimers]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const handleKeyboardShow = (e) => {
+      const endCoords = e?.endCoordinates;
+      const rawHeight = endCoords?.height || 0;
+      const screenY = endCoords?.screenY;
+      const screenH = Math.max(
+        Dimensions.get("screen").height,
+        Dimensions.get("window").height,
+        windowHeight,
+      );
+      const measuredContainerH = containerHeightRef.current || windowHeight;
+
+      let nextAndroidOffset = 0;
+      if (Platform.OS === "android") {
+        if (typeof screenY === "number" && screenY > 0) {
+          if (measuredContainerH > screenY + 20) {
+            nextAndroidOffset = Math.max(0, measuredContainerH - screenY);
+          } else {
+            nextAndroidOffset = 0;
+          }
+        } else if (rawHeight > 0) {
+          nextAndroidOffset = rawHeight + (insets.bottom || 0);
+        }
+      }
+
+      const effectiveKbHeight =
+        rawHeight > 0
+          ? rawHeight
+          : typeof screenY === "number" && screenY > 0 && screenY < screenH
+            ? screenH - screenY
+            : nextAndroidOffset;
+
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(true);
+      setKeyboardHeight(effectiveKbHeight);
+      setAndroidBottomOffset(nextAndroidOffset);
+
+      if (isInputFocusedRef.current) {
+        scrollToFeedbackInput(true);
+      }
+    };
+
+    const handleKeyboardHide = () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+      setAndroidBottomOffset(0);
+    };
+
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const subscriptions = [
+      Keyboard.addListener(showEvent, handleKeyboardShow),
+      Keyboard.addListener(hideEvent, handleKeyboardHide),
+    ];
+
+    if (Platform.OS === "android") {
+      try {
+        subscriptions.push(
+          Keyboard.addListener("keyboardWillShow", handleKeyboardShow),
+        );
+        subscriptions.push(
+          Keyboard.addListener("keyboardWillHide", handleKeyboardHide),
+        );
+      } catch {}
+    }
+
+    return () => {
+      subscriptions.forEach((sub) => sub.remove());
+    };
+  }, [visible, insets.bottom, windowHeight, scrollToFeedbackInput]);
 
   if (!report) return null;
 
@@ -59,13 +199,48 @@ export default function SolutionFeedbackModal({
   const displayFeedback = submittedResult || existingFeedback;
   const isReadOnly = Boolean(displayFeedback);
 
-  const handleToggleSatisfied = (value) => {
-    if (isReadOnly || isSubmitting) return;
-    setIsSatisfied((prev) => (prev === value ? null : value));
+  const effectiveContainerHeight = containerHeight > 0 ? containerHeight : windowHeight;
+  const visibleAreaHeight = keyboardVisible
+    ? Platform.OS === "ios"
+      ? windowHeight - keyboardHeight
+      : effectiveContainerHeight - androidBottomOffset
+    : effectiveContainerHeight;
+
+  const availableHeight = keyboardVisible
+    ? Math.max(250, visibleAreaHeight - topInset - 8)
+    : Math.min(windowHeight * 0.9, effectiveContainerHeight - topInset - 16);
+
+  const handleCloseModal = () => {
+    if (isSubmitting) return;
+    Keyboard.dismiss();
+    onClose?.();
+  };
+
+  const handleBackdropPress = () => {
+    if (keyboardVisible || isInputFocusedRef.current) {
+      Keyboard.dismiss();
+    }
+  };
+
+  const handleCommentSizeChange = (event) => {
+    const newHeight = event?.nativeEvent?.contentSize?.height || 0;
+    if (newHeight <= commentContentHeightRef.current) {
+      commentContentHeightRef.current = newHeight;
+      return;
+    }
+    commentContentHeightRef.current = newHeight;
+
+    if (isInputFocusedRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 50);
+    }
   };
 
   const handleSubmit = async () => {
     if (isReadOnly || isSubmitting) return;
+
+    Keyboard.dismiss();
 
     if (!isCompletedReport) {
       setErrorMessage(
@@ -85,13 +260,11 @@ export default function SolutionFeedbackModal({
     try {
       const result = await onSubmitFeedback?.(report.id, {
         rating,
-        isSatisfied,
         comment: comment.trim(),
       });
 
       const savedFeedback = result?.feedback || {
         rating,
-        isSatisfied,
         comment: comment.trim(),
         createdAt: new Date().toISOString(),
       };
@@ -110,19 +283,62 @@ export default function SolutionFeedbackModal({
     <Modal
       visible={visible}
       transparent
+      statusBarTranslucent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={() => {
+        if (keyboardVisible || isInputFocusedRef.current) {
+          Keyboard.dismiss();
+          return;
+        }
+        handleCloseModal();
+      }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 justify-end bg-black/50"
+      <View
+        className="flex-1 bg-black/50"
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0) {
+            containerHeightRef.current = h;
+            setContainerHeight(h);
+          }
+        }}
       >
-        <View className="max-h-[90%] w-full rounded-t-3xl bg-white shadow-2xl overflow-hidden">
-          {/* Header */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={0}
+          className="flex-1 justify-end"
+          style={{
+            paddingBottom: Platform.OS === "android" ? androidBottomOffset : 0,
+          }}
+        >
+          {/* Backdrop tap area: dismisses keyboard without accidentally closing the form */}
+          <Pressable
+            className="flex-1 w-full"
+            onPress={handleBackdropPress}
+            accessibilityLabel="Dismiss keyboard"
+          />
+
           <View
-            className="flex-row items-center justify-between border-b px-5 py-4"
-            style={{ borderColor: Colors.borderSoft || "#E2E8F0" }}
+            className="w-full rounded-t-3xl bg-white shadow-2xl overflow-hidden"
+            style={{
+              maxHeight: availableHeight,
+              flexShrink: 1,
+            }}
           >
+            {/* Header */}
+            <Pressable
+              onPress={() => {
+                if (keyboardVisible || isInputFocusedRef.current) {
+                  Keyboard.dismiss();
+                }
+              }}
+              className="flex-row items-center justify-between border-b px-5"
+              style={{
+                borderColor: Colors.borderSoft || "#E2E8F0",
+                paddingVertical: keyboardVisible ? 10 : 16,
+                flexShrink: 0,
+              }}
+            >
             <View className="flex-row items-center gap-2.5 flex-1 pr-2">
               <View
                 className="h-9 w-9 items-center justify-center rounded-full"
@@ -156,7 +372,7 @@ export default function SolutionFeedbackModal({
             </View>
 
             <Pressable
-              onPress={onClose}
+              onPress={handleCloseModal}
               disabled={isSubmitting}
               className="rounded-full p-1.5"
               style={{ backgroundColor: Colors.ui?.neutralSoft || "#E2E8F0" }}
@@ -167,12 +383,26 @@ export default function SolutionFeedbackModal({
                 color={Colors.text?.secondary || "#6B7280"}
               />
             </Pressable>
-          </View>
+          </Pressable>
 
           <ScrollView
-            className="px-5 py-4"
+            ref={scrollViewRef}
+            className="px-5"
+            style={{ flexGrow: 0, flexShrink: 1 }}
+            contentContainerStyle={{
+              paddingTop: 16,
+              paddingBottom: keyboardVisible ? 20 : 16,
+            }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={
+              Platform.OS === "ios" ? "interactive" : "on-drag"
+            }
+            onLayout={() => {
+              if (isInputFocusedRef.current && keyboardVisible) {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }
+            }}
           >
             {/* Confirmation Banner after fresh submission */}
             {submittedResult && (
@@ -243,7 +473,12 @@ export default function SolutionFeedbackModal({
             )}
 
             {/* Report Summary Card */}
-            <View
+            <Pressable
+              onPress={() => {
+                if (keyboardVisible || isInputFocusedRef.current) {
+                  Keyboard.dismiss();
+                }
+              }}
               className="mb-4 rounded-xl border px-3.5 py-3"
               style={{
                 backgroundColor: Colors.ui?.slateSoft || "#F8FAFC",
@@ -284,7 +519,7 @@ export default function SolutionFeedbackModal({
               >
                 {report.description}
               </Text>
-            </View>
+            </Pressable>
 
             {/* 1. Star Rating Section */}
             <View className="mb-5">
@@ -363,135 +598,19 @@ export default function SolutionFeedbackModal({
               )}
             </View>
 
-            {/* 2. Optional Satisfaction Question */}
-            <View className="mb-5">
-              <Text
-                className="text-xs font-bold uppercase tracking-wide mb-1"
-                style={{ color: Colors.text?.fieldLabel || "#374151" }}
-              >
-                2. Overall Solution Satisfaction (Optional)
-              </Text>
-              <Text
-                className="text-xs mb-3"
-                style={{ color: Colors.text?.secondary || "#6B7280" }}
-              >
-                Are you satisfied with the solution provided by the government
-                employee?
-              </Text>
-
-              <View className="flex-row gap-3">
-                <Pressable
-                  disabled={isReadOnly || isSubmitting}
-                  onPress={() => handleToggleSatisfied(true)}
-                  className="flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 px-3"
-                  style={{
-                    borderColor:
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === true
-                        ? "#16A34A"
-                        : Colors.border || "#E5E7EB",
-                    backgroundColor:
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === true
-                        ? "#DCFCE7"
-                        : "#FFFFFF",
-                  }}
-                >
-                  <Ionicons
-                    name={
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === true
-                        ? "thumbs-up"
-                        : "thumbs-up-outline"
-                    }
-                    size={16}
-                    color={
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === true
-                        ? "#15803D"
-                        : Colors.text?.secondary || "#6B7280"
-                    }
-                  />
-                  <Text
-                    className="text-xs font-bold"
-                    style={{
-                      color:
-                        (isReadOnly
-                          ? displayFeedback.isSatisfied
-                          : isSatisfied) === true
-                          ? "#15803D"
-                          : Colors.text?.body || "#334155",
-                    }}
-                  >
-                    Yes, Satisfied
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  disabled={isReadOnly || isSubmitting}
-                  onPress={() => handleToggleSatisfied(false)}
-                  className="flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 px-3"
-                  style={{
-                    borderColor:
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === false
-                        ? "#DC2626"
-                        : Colors.border || "#E5E7EB",
-                    backgroundColor:
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === false
-                        ? "#FEE2E2"
-                        : "#FFFFFF",
-                  }}
-                >
-                  <Ionicons
-                    name={
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === false
-                        ? "thumbs-down"
-                        : "thumbs-down-outline"
-                    }
-                    size={16}
-                    color={
-                      (isReadOnly
-                        ? displayFeedback.isSatisfied
-                        : isSatisfied) === false
-                        ? "#B91C1C"
-                        : Colors.text?.secondary || "#6B7280"
-                    }
-                  />
-                  <Text
-                    className="text-xs font-bold"
-                    style={{
-                      color:
-                        (isReadOnly
-                          ? displayFeedback.isSatisfied
-                          : isSatisfied) === false
-                          ? "#B91C1C"
-                          : Colors.text?.body || "#334155",
-                    }}
-                  >
-                    No, Unsatisfied
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* 3. Written Feedback Text Field */}
-            <View className="mb-4">
+            {/* 2. Written Feedback Text Field */}
+            <View
+              className="mb-4"
+              onLayout={(e) => {
+                feedbackSectionYRef.current = e.nativeEvent.layout.y;
+              }}
+            >
               <View className="flex-row items-center justify-between mb-1">
                 <Text
                   className="text-xs font-bold uppercase tracking-wide"
                   style={{ color: Colors.text?.fieldLabel || "#374151" }}
                 >
-                  3. Written Feedback & Experience
+                  2. Written Feedback & Experience
                 </Text>
                 {!isReadOnly && (
                   <Text
@@ -530,10 +649,20 @@ export default function SolutionFeedbackModal({
                     the service can be improved.
                   </Text>
                   <TextInput
+                    ref={inputRef}
                     value={comment}
                     onChangeText={setComment}
+                    onFocus={() => {
+                      isInputFocusedRef.current = true;
+                      scrollToFeedbackInput(true);
+                    }}
+                    onBlur={() => {
+                      isInputFocusedRef.current = false;
+                    }}
+                    onContentSizeChange={handleCommentSizeChange}
                     editable={!isSubmitting}
                     multiline
+                    scrollEnabled={false}
                     maxLength={2000}
                     numberOfLines={4}
                     textAlignVertical="top"
@@ -576,12 +705,19 @@ export default function SolutionFeedbackModal({
 
           {/* Footer Action Buttons */}
           <View
-            className="border-t px-5 py-4 flex-row gap-3"
-            style={{ borderColor: Colors.borderSoft || "#E2E8F0" }}
+            className="border-t px-5 flex-row gap-3"
+            style={{
+              borderColor: Colors.borderSoft || "#E2E8F0",
+              paddingTop: keyboardVisible ? 10 : 14,
+              paddingBottom: keyboardVisible
+                ? 10
+                : Math.max(insets.bottom, 16),
+              flexShrink: 0,
+            }}
           >
             {isReadOnly ? (
               <Pressable
-                onPress={onClose}
+                onPress={handleCloseModal}
                 className="flex-1 items-center justify-center rounded-xl py-3.5"
                 style={{ backgroundColor: Colors.primaryStrong }}
               >
@@ -590,7 +726,7 @@ export default function SolutionFeedbackModal({
             ) : (
               <>
                 <Pressable
-                  onPress={onClose}
+                  onPress={handleCloseModal}
                   disabled={isSubmitting}
                   className="rounded-xl border px-5 py-3.5 items-center justify-center"
                   style={{
@@ -634,7 +770,8 @@ export default function SolutionFeedbackModal({
             )}
           </View>
         </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

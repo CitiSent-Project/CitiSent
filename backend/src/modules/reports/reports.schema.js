@@ -114,6 +114,5 @@ export const submitReportFeedbackSchema = z.object({
       .max(2000, "Feedback comment must not exceed 2000 characters.")
       .optional()
       .default(""),
-    isSatisfied: z.boolean().nullable().optional(),
   }),
 });

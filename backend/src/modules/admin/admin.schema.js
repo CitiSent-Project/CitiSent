@@ -334,7 +334,6 @@ export const listAdminFeedbackSchema = z.object({
     limit: z.coerce.number().int().min(1).max(500).default(100),
     offset: z.coerce.number().int().min(0).default(0),
     rating: z.coerce.number().int().min(1).max(5).optional(),
-    satisfaction: z.enum(["satisfied", "unsatisfied", "unanswered"]).optional(),
     departmentId: z.string().trim().min(1).max(120).optional(),
     search: z.string().trim().min(1).max(200).optional(),
   }),

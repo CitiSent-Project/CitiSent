@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   FiStar,
-  FiThumbsUp,
-  FiThumbsDown,
   FiSearch,
   FiRefreshCw,
   FiEye,
@@ -51,7 +49,6 @@ export function ResidentFeedback({
   // Filter states
   const [searchTerm, setSearchTerm] = useState('')
   const [ratingFilter, setRatingFilter] = useState('all')
-  const [satisfactionFilter, setSatisfactionFilter] = useState('all')
   const [departmentFilter, setDepartmentFilter] = useState('All')
 
   const loadFeedback = useCallback(async () => {
@@ -117,8 +114,6 @@ export function ResidentFeedback({
             matchingReport?.reportNumber ||
             item.reportId,
           rating: Number(item.rating || 0),
-          isSatisfied:
-            typeof item.isSatisfied === 'boolean' ? item.isSatisfied : null,
           comment: String(item.comment ?? '').trim(),
           createdAt: item.createdAt || item.updatedAt || null,
           departmentLabel:
@@ -152,10 +147,6 @@ export function ResidentFeedback({
         reportId: row.id,
         reportNumber: row.reportNum || row.reportNumber || row.id,
         rating: Number(row.feedback.rating),
-        isSatisfied:
-          typeof row.feedback.isSatisfied === 'boolean'
-            ? row.feedback.isSatisfied
-            : null,
         comment: String(row.feedback.comment ?? '').trim(),
         createdAt: row.feedback.createdAt || row.resolvedAt || row.updatedAt,
         departmentLabel: row.category || row.issueType || 'Unassigned',
@@ -204,16 +195,6 @@ export function ResidentFeedback({
           }
         }
 
-        if (satisfactionFilter === 'satisfied' && item.isSatisfied !== true) {
-          return false
-        }
-        if (satisfactionFilter === 'unsatisfied' && item.isSatisfied !== false) {
-          return false
-        }
-        if (satisfactionFilter === 'unanswered' && item.isSatisfied !== null) {
-          return false
-        }
-
         if (normalizedSearch) {
           const haystack = [
             item.reportNumber,
@@ -244,11 +225,10 @@ export function ResidentFeedback({
     mergedFeedbackRows,
     departmentFilter,
     ratingFilter,
-    satisfactionFilter,
     searchTerm,
   ])
 
-  // Compute statistics fromdepartment-scoped rows (or serverStats)
+  // Compute statistics from department-scoped rows (or serverStats)
   const computedStats = useMemo(() => {
     const baseItems =
       departmentFilter !== 'All' && departmentFilter !== 'All Departments'
@@ -271,8 +251,6 @@ export function ResidentFeedback({
 
     const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
     let ratingSum = 0
-    let satisfiedCount = 0
-    let unsatisfiedCount = 0
 
     baseItems.forEach((item) => {
       const r = Number(item.rating)
@@ -280,25 +258,10 @@ export function ResidentFeedback({
         distribution[r] = (distribution[r] || 0) + 1
         ratingSum += r
       }
-      if (item.isSatisfied === true) satisfiedCount += 1
-      if (item.isSatisfied === false) unsatisfiedCount += 1
     })
 
     const averageRating =
       totalFeedback > 0 ? Number((ratingSum / totalFeedback).toFixed(2)) : 0
-    const answeredTotal = satisfiedCount + unsatisfiedCount
-    const satisfactionRate =
-      answeredTotal > 0
-        ? Number(((satisfiedCount / answeredTotal) * 100).toFixed(1))
-        : totalFeedback > 0
-          ? Number(
-              (
-                (baseItems.filter((i) => i.rating >= 4).length /
-                  totalFeedback) *
-                100
-              ).toFixed(1),
-            )
-          : 0
     const responseRate =
       resolvedReportsCount > 0
         ? Number(((totalFeedback / resolvedReportsCount) * 100).toFixed(1))
@@ -309,9 +272,6 @@ export function ResidentFeedback({
       totalResolvedReports: resolvedReportsCount,
       responseRate,
       averageRating,
-      satisfiedCount,
-      unsatisfiedCount,
-      satisfactionRate,
       ratingDistribution: distribution,
     }
   }, [mergedFeedbackRows, departmentFilter, rows, serverStats])
@@ -351,7 +311,6 @@ export function ResidentFeedback({
         id: item.id,
         reportId: item.reportId,
         rating: item.rating,
-        isSatisfied: item.isSatisfied,
         comment: item.comment,
         createdAt: item.createdAt,
       },
@@ -366,7 +325,6 @@ export function ResidentFeedback({
       'Department',
       'Resident Email',
       'Star Rating (1-5)',
-      'Satisfaction',
       'Resident Comment',
       'Location',
       'Submitted At',
@@ -374,19 +332,12 @@ export function ResidentFeedback({
     const csvLines = [headers.join(',')]
 
     filteredRows.forEach((item) => {
-      const satisfactionLabel =
-        item.isSatisfied === true
-          ? 'Satisfied'
-          : item.isSatisfied === false
-            ? 'Not Satisfied'
-            : 'Not Specified'
       const escapedComment = String(item.comment || '').replace(/"/g, '""')
       const line = [
         `"${item.reportNumber || item.reportId}"`,
         `"${item.departmentLabel || ''}"`,
         `"${item.reporterEmail || 'Anonymous'}"`,
         `"${item.rating}"`,
-        `"${satisfactionLabel}"`,
         `"${escapedComment}"`,
         `"${item.location || ''}"`,
         `"${formatDateTimeLabel(item.createdAt)}"`,
@@ -418,7 +369,7 @@ export function ResidentFeedback({
               Resident Feedback on Solutions
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Monitor citizen ratings, satisfaction levels, and written reviews for resolved community reports.
+              Monitor citizen ratings and written reviews for resolved community reports.
             </p>
           </div>
 
@@ -463,7 +414,7 @@ export function ResidentFeedback({
         )}
 
         {/* Overview Statistics Grid */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {/* Card 1: Average Star Rating */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
             <div className="flex items-center justify-between">
@@ -499,37 +450,7 @@ export function ResidentFeedback({
             </div>
           </div>
 
-          {/* Card 2: Resident Satisfaction Rate */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Resident Satisfaction
-              </span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-                <FiThumbsUp className="text-lg" />
-              </span>
-            </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="font-numeric text-3xl font-extrabold text-slate-900 dark:text-white">
-                {computedStats.satisfactionRate}%
-              </span>
-              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                positive
-              </span>
-            </div>
-            <div className="mt-2 flex items-center gap-3 text-xs">
-              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
-                <FiThumbsUp className="text-[11px]" />
-                {computedStats.satisfiedCount} Satisfied
-              </span>
-              <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
-                <FiThumbsDown className="text-[11px]" />
-                {computedStats.unsatisfiedCount} Unsatisfied
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: Total Feedback & Response Rate */}
+          {/* Card 2: Total Feedback & Response Rate */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -555,8 +476,8 @@ export function ResidentFeedback({
             </p>
           </div>
 
-          {/* Card 4: 1–5 Star Rating Breakdown */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-800/90">
+          {/* Card 3: 1–5 Star Rating Breakdown */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:col-span-2 xl:col-span-1 dark:border-slate-800 dark:bg-slate-800/90">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Rating Breakdown
             </span>
@@ -646,24 +567,6 @@ export function ResidentFeedback({
               })}
             </div>
 
-            {/* Satisfaction Filter */}
-            <div className="relative flex items-center w-full sm:w-auto min-w-0 max-w-full">
-              <select
-                aria-label="Filter by resident satisfaction"
-                value={satisfactionFilter}
-                onChange={(e) => setSatisfactionFilter(e.target.value)}
-                className="w-full sm:w-auto max-w-full appearance-none rounded-lg border border-slate-200 bg-white py-1.5 pl-3 pr-7 text-xs font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer truncate transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-              >
-                <option value="all">Satisfaction: All</option>
-                <option value="satisfied">Satisfied Only</option>
-                <option value="unsatisfied">Not Satisfied Only</option>
-                <option value="unanswered">No Satisfaction Answer</option>
-              </select>
-              <span className="pointer-events-none absolute right-2.5 text-[9px] text-slate-400">
-                ▼
-              </span>
-            </div>
-
             {/* Department Filter */}
             <div className="relative flex items-center w-full sm:w-auto min-w-0 max-w-full">
               <FiGrid className="pointer-events-none absolute left-2.5 text-xs text-blue-500 z-10" />
@@ -694,7 +597,6 @@ export function ResidentFeedback({
                 <th className="px-4 py-3 w-32">Report #</th>
                 <th className="px-4 py-3">Department & Location</th>
                 <th className="px-4 py-3 w-36">Star Rating</th>
-                <th className="px-4 py-3 w-36">Satisfaction</th>
                 <th className="px-4 py-3">Resident Comment</th>
                 <th className="px-4 py-3 w-44">Resident & Date</th>
                 <th className="px-4 py-3 text-right w-28">Action</th>
@@ -704,7 +606,7 @@ export function ResidentFeedback({
               {showSkeleton ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/60">
-                    <td colSpan={7} className="px-4 py-4">
+                    <td colSpan={6} className="px-4 py-4">
                       <div className="h-4 w-full animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
                     </td>
                   </tr>
@@ -712,7 +614,7 @@ export function ResidentFeedback({
               ) : visibleRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-sm text-slate-400 dark:text-slate-500"
                   >
                     No resident feedback records match the selected filters.
@@ -756,23 +658,6 @@ export function ResidentFeedback({
                           {item.rating}/5
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {item.isSatisfied === true ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
-                          <FiThumbsUp className="text-[10px]" />
-                          Satisfied
-                        </span>
-                      ) : item.isSatisfied === false ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800">
-                          <FiThumbsDown className="text-[10px]" />
-                          Unsatisfied
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                          Not specified
-                        </span>
-                      )}
                     </td>
                     <td className="px-4 py-3 align-top max-w-md">
                       {item.comment ? (
@@ -847,17 +732,6 @@ export function ResidentFeedback({
                       <FiStar className="fill-amber-400 text-amber-400 text-xs" />
                       {item.rating} / 5
                     </div>
-                    {typeof item.isSatisfied === 'boolean' && (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          item.isSatisfied
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
-                        }`}
-                      >
-                        {item.isSatisfied ? 'Satisfied' : 'Unsatisfied'}
-                      </span>
-                    )}
                   </div>
                 </div>
 

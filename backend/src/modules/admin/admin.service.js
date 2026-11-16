@@ -1706,7 +1706,6 @@ export const adminService = {
     limit = 100,
     offset = 0,
     rating,
-    satisfaction,
     departmentId,
     search,
   }) {
@@ -1779,9 +1778,6 @@ export const adminService = {
     const totalResolvedReports = filteredResolvedReports.length;
     const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let ratingSum = 0;
-    let satisfiedCount = 0;
-    let unsatisfiedCount = 0;
-    let unansweredSatisfactionCount = 0;
 
     for (const item of scopedFeedbackItems) {
       const r = Number(item.rating);
@@ -1789,53 +1785,22 @@ export const adminService = {
         ratingDistribution[r] = (ratingDistribution[r] || 0) + 1;
         ratingSum += r;
       }
-
-      if (item.isSatisfied === true) {
-        satisfiedCount += 1;
-      } else if (item.isSatisfied === false) {
-        unsatisfiedCount += 1;
-      } else {
-        unansweredSatisfactionCount += 1;
-      }
     }
 
     const averageRating =
       totalFeedback > 0 ? Number((ratingSum / totalFeedback).toFixed(2)) : 0;
-    const answeredSatisfactionTotal = satisfiedCount + unsatisfiedCount;
-    const satisfactionRate =
-      answeredSatisfactionTotal > 0
-        ? Number(((satisfiedCount / answeredSatisfactionTotal) * 100).toFixed(1))
-        : totalFeedback > 0
-          ? Number(
-              (
-                (scopedFeedbackItems.filter((item) => item.rating >= 4).length /
-                  totalFeedback) *
-                100
-              ).toFixed(1),
-            )
-          : 0;
     const responseRate =
       totalResolvedReports > 0
         ? Number(((totalFeedback / totalResolvedReports) * 100).toFixed(1))
         : 0;
 
-    // Apply item-level filters (rating, satisfaction, search)
+    // Apply item-level filters (rating, search)
     const normalizedSearch = String(search || "")
       .trim()
       .toLowerCase();
 
     const filteredItems = scopedFeedbackItems.filter((item) => {
       if (rating !== undefined && rating !== null && Number(item.rating) !== Number(rating)) {
-        return false;
-      }
-
-      if (satisfaction === "satisfied" && item.isSatisfied !== true) {
-        return false;
-      }
-      if (satisfaction === "unsatisfied" && item.isSatisfied !== false) {
-        return false;
-      }
-      if (satisfaction === "unanswered" && item.isSatisfied !== null) {
         return false;
       }
 
@@ -1872,10 +1837,6 @@ export const adminService = {
         totalResolvedReports,
         responseRate,
         averageRating,
-        satisfiedCount,
-        unsatisfiedCount,
-        unansweredSatisfactionCount,
-        satisfactionRate,
         ratingDistribution,
       },
       pagination: {

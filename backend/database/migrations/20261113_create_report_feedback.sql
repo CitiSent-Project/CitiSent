@@ -10,17 +10,17 @@ CREATE TABLE IF NOT EXISTS public.report_feedback (
   report_id UUID NOT NULL UNIQUE REFERENCES public.reports(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  is_satisfied BOOLEAN NULL,
   comment TEXT NULL CHECK (comment IS NULL OR char_length(comment) <= 2000),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
+ALTER TABLE public.report_feedback DROP COLUMN IF EXISTS is_satisfied;
+
 COMMENT ON TABLE public.report_feedback IS 'Stores resident feedback and 1-5 star ratings evaluating government solutions for resolved reports';
 COMMENT ON COLUMN public.report_feedback.report_id IS 'Foreign key to public.reports(id); UNIQUE constraint enforces at most one feedback submission per report';
 COMMENT ON COLUMN public.report_feedback.user_id IS 'Foreign key to auth.users(id); the resident who originally submitted the report';
 COMMENT ON COLUMN public.report_feedback.rating IS 'Resident star rating from 1 (Poor) to 5 (Excellent)';
-COMMENT ON COLUMN public.report_feedback.is_satisfied IS 'Optional resident response indicating whether they are satisfied with the solution provided';
 COMMENT ON COLUMN public.report_feedback.comment IS 'Written resident feedback explaining their experience with the government resolution';
 
 -- 2. Create indexes for fast lookups and analytics aggregation
@@ -83,17 +83,12 @@ CREATE POLICY "report_feedback_select_admin"
   );
 
 -- 4. Backfill any existing structured feedback stored in public.report_comments (if applicable)
-INSERT INTO public.report_feedback (id, report_id, user_id, rating, is_satisfied, comment, created_at, updated_at)
+INSERT INTO public.report_feedback (id, report_id, user_id, rating, comment, created_at, updated_at)
 SELECT
   rc.id,
   rc.report_id,
   rc.author_user_id,
   ((rc.body::jsonb) ->> 'rating')::smallint,
-  CASE
-    WHEN (rc.body::jsonb) ->> 'isSatisfied' = 'true' THEN TRUE
-    WHEN (rc.body::jsonb) ->> 'isSatisfied' = 'false' THEN FALSE
-    ELSE NULL
-  END,
   NULLIF((rc.body::jsonb) ->> 'comment', ''),
   rc.created_at,
   rc.updated_at

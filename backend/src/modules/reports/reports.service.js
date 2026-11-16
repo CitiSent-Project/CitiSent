@@ -553,7 +553,6 @@ export const reportsService = {
     reportId,
     rating,
     comment = "",
-    isSatisfied = null,
     accessToken,
   }) {
     const existingReport =
@@ -587,7 +586,6 @@ export const reportsService = {
         reportId,
         userId,
         rating,
-        isSatisfied,
         comment,
       },
       accessToken,

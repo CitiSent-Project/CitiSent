@@ -370,7 +370,6 @@ export const adminController = {
       limit: req.query.limit,
       offset: req.query.offset,
       rating: req.query.rating,
-      satisfaction: req.query.satisfaction,
       departmentId: req.query.departmentId,
       search: req.query.search,
     });

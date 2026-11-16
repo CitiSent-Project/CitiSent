@@ -99,12 +99,6 @@ function normalizeFeedback(feedback) {
     reportId: feedback.reportId || feedback.report_id || null,
     userId: feedback.userId || feedback.user_id || null,
     rating: Math.round(rating),
-    isSatisfied:
-      typeof feedback.isSatisfied === "boolean"
-        ? feedback.isSatisfied
-        : typeof feedback.is_satisfied === "boolean"
-          ? feedback.is_satisfied
-          : null,
     comment: String(feedback.comment ?? "").trim(),
     createdAt: feedback.createdAt || feedback.created_at || null,
     updatedAt: feedback.updatedAt || feedback.updated_at || null,
@@ -261,12 +255,11 @@ export const reportsApi = {
     const response = await api.get(`/reports/${reportId}/feedback`);
     return normalizeFeedback(response?.data ?? response);
   },
-  submitReportFeedback: async (reportId, { rating, comment = "", isSatisfied = null }) => {
+  submitReportFeedback: async (reportId, { rating, comment = "" }) => {
     if (!reportId) throw new Error("Missing report ID");
     const payload = {
       rating: Number(rating),
       comment: String(comment ?? "").trim(),
-      ...(typeof isSatisfied === "boolean" ? { isSatisfied } : { isSatisfied: null }),
     };
     const response = await api.post(`/reports/${reportId}/feedback`, payload);
     return {

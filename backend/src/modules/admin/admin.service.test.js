@@ -181,7 +181,7 @@ test("adminService.listReports includes resolvedAt on mapped report items", asyn
   }
 });
 
-test("adminService.listFeedback aggregates ratings, satisfaction statistics, and scopes items to resolved reports", async () => {
+test("adminService.listFeedback aggregates ratings and scopes items to resolved reports", async () => {
   const originals = {
     listResolvedReportsAndFeedback: adminRepository.listResolvedReportsAndFeedback,
     listDepartments: departmentsService.listDepartments,
@@ -237,7 +237,6 @@ test("adminService.listFeedback aggregates ratings, satisfaction statistics, and
           reportId: "rep-1",
           userId: "u1",
           rating: 5,
-          isSatisfied: true,
           comment: "Pothole was fixed properly.",
           createdAt: "2026-11-12T11:00:00.000Z",
         },
@@ -246,7 +245,6 @@ test("adminService.listFeedback aggregates ratings, satisfaction statistics, and
           reportId: "rep-2",
           userId: "u2",
           rating: 3,
-          isSatisfied: false,
           comment: "Took a little longer than expected.",
           createdAt: "2026-11-12T13:00:00.000Z",
         },
@@ -255,7 +253,6 @@ test("adminService.listFeedback aggregates ratings, satisfaction statistics, and
           reportId: "rep-outside-scope",
           userId: "u99",
           rating: 1,
-          isSatisfied: false,
           comment: "Should not appear for this department",
           createdAt: "2026-11-12T15:00:00.000Z",
         },
@@ -275,9 +272,6 @@ test("adminService.listFeedback aggregates ratings, satisfaction statistics, and
     assert.equal(result.stats.totalFeedback, 2);
     assert.equal(result.stats.totalResolvedReports, 3);
     assert.equal(result.stats.averageRating, 4);
-    assert.equal(result.stats.satisfiedCount, 1);
-    assert.equal(result.stats.unsatisfiedCount, 1);
-    assert.equal(result.stats.satisfactionRate, 50);
     assert.equal(result.stats.responseRate, 66.7);
     assert.deepEqual(result.stats.ratingDistribution, { 1: 0, 2: 0, 3: 1, 4: 0, 5: 1 });
 

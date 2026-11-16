@@ -74,22 +74,6 @@ export default function MyReportCard({
                 </View>
               </View>
 
-              {typeof feedback.isSatisfied === "boolean" && (
-                <View className="mt-1.5 flex-row items-center gap-1">
-                  <Ionicons
-                    name={feedback.isSatisfied ? "thumbs-up" : "thumbs-down"}
-                    size={12}
-                    color={feedback.isSatisfied ? "#15803D" : "#B91C1C"}
-                  />
-                  <Text
-                    className="text-[11px] font-bold"
-                    style={{ color: feedback.isSatisfied ? "#15803D" : "#B91C1C" }}
-                  >
-                    {feedback.isSatisfied ? "Satisfied with solution" : "Not satisfied with solution"}
-                  </Text>
-                </View>
-              )}
-
               {Boolean(feedback.comment) && (
                 <Text
                   className="mt-1.5 text-xs leading-4"

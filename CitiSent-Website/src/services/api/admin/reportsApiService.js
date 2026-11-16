@@ -49,15 +49,12 @@ export const reportsApiService = {
     const query = params.toString()
     return apiClient.get(`/admin/conversations${query ? `?${query}` : ''}`, { token })
   },
-  listFeedback: (token, { limit = 200, offset = 0, rating, satisfaction, departmentId, search } = {}) => {
+  listFeedback: (token, { limit = 200, offset = 0, rating, departmentId, search } = {}) => {
     const params = new URLSearchParams()
     if (limit) params.set('limit', String(limit))
     if (offset !== undefined) params.set('offset', String(offset))
     if (rating !== undefined && rating !== null && rating !== '' && rating !== 'all') {
       params.set('rating', String(rating))
-    }
-    if (satisfaction && satisfaction !== 'all') {
-      params.set('satisfaction', String(satisfaction))
     }
     if (departmentId && departmentId !== 'all' && departmentId !== 'All') {
       params.set('departmentId', String(departmentId))

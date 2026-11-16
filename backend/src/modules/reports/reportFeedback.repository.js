@@ -50,8 +50,6 @@ function parseCommentFallbackRow(row) {
       report_id: row.report_id,
       user_id: row.author_user_id,
       rating: numericRating,
-      is_satisfied:
-        typeof parsed.isSatisfied === "boolean" ? parsed.isSatisfied : null,
       comment: typeof parsed.comment === "string" ? parsed.comment : "",
       created_at: row.created_at,
       updated_at: row.updated_at || row.created_at,
@@ -74,12 +72,6 @@ export function normalizeFeedbackRow(row) {
     reportId: row.report_id || row.reportId,
     userId: row.user_id || row.userId || row.author_user_id || null,
     rating: Math.round(rating),
-    isSatisfied:
-      typeof row.is_satisfied === "boolean"
-        ? row.is_satisfied
-        : typeof row.isSatisfied === "boolean"
-          ? row.isSatisfied
-          : null,
     comment: String(row.comment ?? "").trim(),
     createdAt: row.created_at || row.createdAt || null,
     updatedAt: row.updated_at || row.updatedAt || row.created_at || row.createdAt || null,
@@ -110,7 +102,7 @@ export const reportFeedbackRepository = {
 
     const { data, error } = await db
       .from(FEEDBACK_TABLE)
-      .select("id, report_id, user_id, rating, is_satisfied, comment, created_at, updated_at")
+      .select("id, report_id, user_id, rating, comment, created_at, updated_at")
       .eq("report_id", normalizedReportId)
       .maybeSingle();
 
@@ -168,7 +160,7 @@ export const reportFeedbackRepository = {
 
     const { data, error } = await db
       .from(FEEDBACK_TABLE)
-      .select("id, report_id, user_id, rating, is_satisfied, comment, created_at, updated_at")
+      .select("id, report_id, user_id, rating, comment, created_at, updated_at")
       .in("report_id", uniqueReportIds);
 
     if (!error) {
@@ -212,7 +204,7 @@ export const reportFeedbackRepository = {
 
     const { data, error } = await db
       .from(FEEDBACK_TABLE)
-      .select("id, report_id, user_id, rating, is_satisfied, comment, created_at, updated_at")
+      .select("id, report_id, user_id, rating, comment, created_at, updated_at")
       .order("created_at", { ascending: false });
 
     if (!error) {
@@ -256,13 +248,11 @@ export const reportFeedbackRepository = {
     return results;
   },
 
-  async create({ reportId, userId, rating, isSatisfied = null, comment = "" }, accessToken) {
+  async create({ reportId, userId, rating, comment = "" }, accessToken) {
     const normalizedReportId = String(reportId || "").trim();
     const normalizedUserId = String(userId || "").trim();
     const normalizedRating = Number(rating);
     const normalizedComment = String(comment ?? "").trim();
-    const normalizedSatisfied =
-      typeof isSatisfied === "boolean" ? isSatisfied : null;
 
     const existing = await this.getByReportId(normalizedReportId, accessToken);
     if (existing) {
@@ -280,10 +270,9 @@ export const reportFeedbackRepository = {
         report_id: normalizedReportId,
         user_id: normalizedUserId,
         rating: normalizedRating,
-        is_satisfied: normalizedSatisfied,
         comment: normalizedComment || null,
       })
-      .select("id, report_id, user_id, rating, is_satisfied, comment, created_at, updated_at")
+      .select("id, report_id, user_id, rating, comment, created_at, updated_at")
       .single();
 
     if (!error) {
@@ -309,7 +298,6 @@ export const reportFeedbackRepository = {
     const serializedBody = JSON.stringify({
       __type: FEEDBACK_MARKER_TYPE,
       rating: normalizedRating,
-      isSatisfied: normalizedSatisfied,
       comment: normalizedComment,
     });
 

@@ -152,7 +152,7 @@ export function ReportHistoryTable({
     filteredRows.forEach((row) => {
       const line = [
         `"${row.reportNum || row.id}"`,
-        `"${row.email || 'Anonymous'}"`,
+        `"${row.isGuest ? 'Guest' : (row.email || 'Guest')}"`,
         `"${row.location || ''}"`,
         `"${row.category || row.issueType || ''}"`,
         `"${row.urgency || ''}"`,

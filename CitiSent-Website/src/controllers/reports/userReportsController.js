@@ -1,3 +1,5 @@
+import { GUEST_LABEL, isGuestUser } from '../../models/nameModel'
+
 export const ALL_URGENCY_FILTER = 'All Reports'
 export const REPORT_SORTING_OPTIONS = {
   LATEST_FIRST: 'Latest first',
@@ -35,7 +37,13 @@ export function buildUserReportRows({ userReports = [], users = [], agencies = [
   return userReports.map((report) => {
     const reportNumber = report.reportNumber || report.reportNum || report.id
     const user = usersById[report.userId] || {}
-    const fullName = `${user.firstName || 'Unknown'} ${user.lastName || 'User'}`.trim()
+    const isGuest =
+      isGuestUser(report) ||
+      isGuestUser(user) ||
+      (!user.email && !user.firstName && !user.lastName)
+    const fullName = isGuest
+      ? GUEST_LABEL
+      : `${user.firstName || 'Unknown'} ${user.lastName || 'User'}`.trim()
     const createdAt = Date.parse(report.createdAt)
     const safeCreatedAt = Number.isNaN(createdAt) ? Date.now() : createdAt
 
@@ -44,8 +52,9 @@ export function buildUserReportRows({ userReports = [], users = [], agencies = [
       reportNum: reportNumber,
       reportNumber,
       userId: report.userId,
+      isGuest,
       name: fullName,
-      email: user.email || 'unknown@citisent.gov',
+      email: isGuest ? GUEST_LABEL : (user.email || GUEST_LABEL),
       location: report.reportLocation || 'Not specified',
       date: formatReportDate(report.createdAt || safeCreatedAt),
       dateValue: safeCreatedAt,

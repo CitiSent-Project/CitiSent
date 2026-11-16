@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { mapBackendReportToUiRow } from '../reportsApiMappers'
+import {
+  mapBackendConversationToUi,
+  mapBackendReportToUiRow,
+} from '../reportsApiMappers'
 
 describe('reportsApiMappers', () => {
   it('maps AI-generated urgency from the backend report payload', () => {
@@ -26,6 +29,7 @@ describe('reportsApiMappers', () => {
       reportNum: 'report-101',
       name: 'Citizen One',
       email: 'citizen.one@citisent.gov',
+      isGuest: false,
       location: 'Riverside',
       message: 'Water level is rising quickly near the bridge.',
       urgency: 'Critical',
@@ -34,6 +38,60 @@ describe('reportsApiMappers', () => {
       category: 'Bureau of Fire Protection (BFP) Processing Area',
       resolvedAt: null,
     })
+  })
+
+  it('labels guest report email and name as Guest and sets isGuest: true when isGuest flag or @citisent.guest email is present', () => {
+    const rowFromFlag = mapBackendReportToUiRow({
+      id: 'ctmd-0002',
+      reporter: {
+        id: 'guest-1',
+        isGuest: true,
+        email: 'guest_07fa240d_1790746307636@citisent.guest',
+      },
+    })
+    expect(rowFromFlag.isGuest).toBe(true)
+    expect(rowFromFlag.email).toBe('Guest')
+    expect(rowFromFlag.name).toBe('Guest')
+    expect(rowFromFlag.reporter.email).toBe('Guest')
+
+    const rowFromSyntheticEmail = mapBackendReportToUiRow({
+      id: 'ctmd-0003',
+      reporter: {
+        id: 'guest-2',
+        email: 'guest_60cda8c9_1790746371539@citisent.guest',
+        fullName: 'guest_60cda8c9_1790746371539@citisent.guest',
+      },
+    })
+    expect(rowFromSyntheticEmail.isGuest).toBe(true)
+    expect(rowFromSyntheticEmail.email).toBe('Guest')
+    expect(rowFromSyntheticEmail.name).toBe('Guest')
+
+    const rowFromNullEmail = mapBackendReportToUiRow({
+      id: 'ctmd-0004',
+      reporter: {
+        id: 'guest-3',
+        email: null,
+        fullName: 'Guest',
+      },
+    })
+    expect(rowFromNullEmail.isGuest).toBe(true)
+    expect(rowFromNullEmail.email).toBe('Guest')
+    expect(rowFromNullEmail.name).toBe('Guest')
+  })
+
+  it('labels guest conversation userEmail and userName as Guest when isGuest is true', () => {
+    const conv = mapBackendConversationToUi({
+      id: 'ctmd-0002',
+      reportNumber: 'ctmd-0002',
+      reporter: {
+        id: 'guest-1',
+        email: 'guest_07fa240d_1790746307636@citisent.guest',
+      },
+    })
+
+    expect(conv.isGuest).toBe(true)
+    expect(conv.userEmail).toBe('Guest')
+    expect(conv.userName).toBe('Guest')
   })
 
   it('maps resolvedAt when present, and falls back to updatedAt for resolved reports', () => {

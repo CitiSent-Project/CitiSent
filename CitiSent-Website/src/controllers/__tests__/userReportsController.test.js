@@ -73,12 +73,42 @@ describe('userReportsController', () => {
       userId: 1001,
       name: 'Liam Garcia',
       email: 'liam.garcia@gmail.com',
+      isGuest: false,
       categoryId: 'ctmd',
       category: 'City Traffic Management Division/Impounding Services',
       message: 'Road issue',
       urgency: 'High',
       status: 'Pending',
     })
+  })
+
+  it('labels guest user reports with isGuest: true and email: Guest', () => {
+    const mappedRows = buildUserReportRows({
+      users: [
+        {
+          userId: 'guest-1',
+          isGuest: true,
+          email: 'guest_07fa240d_1790746307636@citisent.guest',
+        },
+      ],
+      userReports: [
+        {
+          reportNum: 'ctmd-0002',
+          userId: 'guest-1',
+          reportDescription: 'Severe traffic congestion',
+          reportCategory: 'ctmd',
+          urgencyType: 'Medium',
+          reportLocation: 'Maharlika Highway',
+          createdAt: '2026-09-30T08:00:00.000Z',
+          status: 'Pending',
+        },
+      ],
+      agencies: [{ id: 'ctmd', label: 'City Traffic Management Division/Impounding Services' }],
+    })
+
+    expect(mappedRows[0].isGuest).toBe(true)
+    expect(mappedRows[0].email).toBe('Guest')
+    expect(mappedRows[0].name).toBe('Guest')
   })
 
   it('returns all rows when superadmin selects all category filter', () => {

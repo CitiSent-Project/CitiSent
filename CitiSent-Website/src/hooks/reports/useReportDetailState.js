@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { notifySuccess, notifyError } from '../../components/ui/toastHelpers'
 import { normalizeReportStatus } from '../../models/reportStatusModel'
+import { GUEST_LABEL, isGuestUser } from '../../models/nameModel'
 import {
   createReportTimelineEntry,
   validateReportStatusChange,
@@ -38,6 +39,21 @@ import { getStorageSchemaRule } from '../../models/storageSchemaModel'
  * @param {object}   params.profile          - Current admin profile.
  * @param {Function} params.onUpdateStatus   - Callback to persist a status change via the orchestrator.
  */
+function normalizeReportGuestFields(reportData) {
+  if (!reportData) return null
+  const isGuest = isGuestUser(reportData) || isGuestUser(reportData.reporter)
+  if (!isGuest) return reportData
+  return {
+    ...reportData,
+    isGuest: true,
+    name: GUEST_LABEL,
+    email: GUEST_LABEL,
+    reporter: reportData.reporter
+      ? { ...reportData.reporter, isGuest: true, email: GUEST_LABEL, fullName: GUEST_LABEL }
+      : { isGuest: true, email: GUEST_LABEL, fullName: GUEST_LABEL },
+  }
+}
+
 export function useReportDetailState({ report, profile, onUpdateStatus }) {
   // ---------------------------------------------------------------------------
   // Access token: read from schema-backed storage (same as the original
@@ -67,19 +83,19 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
   // ---------------------------------------------------------------------------
   // Full Report Fetching (Triggers Audit Log & Resolves Data Minimization)
   // ---------------------------------------------------------------------------
-  const [fullReport, setFullReport] = useState(report || null)
+  const [fullReport, setFullReport] = useState(() => normalizeReportGuestFields(report))
   const [isFetchingFullReport, setIsFetchingFullReport] = useState(false)
 
   // Synchronize fullReport and selectedStatus when report prop changes from parent
   useEffect(() => {
     if (report) {
       setFullReport((prev) => {
-        if (!prev) return report
-        return {
+        if (!prev) return normalizeReportGuestFields(report)
+        return normalizeReportGuestFields({
           ...prev,
           ...report,
           status: report.status || prev.status,
-        }
+        })
       })
       if (report.status) {
         setSelectedStatus(normalizeReportStatus(report.status))
@@ -103,11 +119,13 @@ export function useReportDetailState({ report, profile, onUpdateStatus }) {
               cleanedMapped[key] = value
             }
           }
-          setFullReport((prev) => ({
-            ...prev,
-            ...cleanedMapped,
-            status: prev?.status ? normalizeReportStatus(prev.status) : (cleanedMapped.status || prev?.status),
-          }))
+          setFullReport((prev) =>
+            normalizeReportGuestFields({
+              ...prev,
+              ...cleanedMapped,
+              status: prev?.status ? normalizeReportStatus(prev.status) : (cleanedMapped.status || prev?.status),
+            })
+          )
         }
       })
       .catch((err) => console.error('Failed to fetch full report details:', err))

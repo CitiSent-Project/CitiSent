@@ -70,6 +70,7 @@ function formatConversationTime(dateString) {
 
 export function ConversationListItem({ conversation, isActive, onClick }) {
   const {
+    isGuest,
     userName,
     userEmail,
     reportId,
@@ -82,7 +83,7 @@ export function ConversationListItem({ conversation, isActive, onClick }) {
     category,
   } = conversation || {}
 
-  const userDisplay = userEmail || userName || ''
+  const userDisplay = isGuest ? 'Guest' : (userEmail || userName || '')
   const reportTitle = formatReportTitle(conversation)
   const avatarKey = String(reportNumber || reportId || userDisplay || 'User')
   const colorClass = getAvatarColor(avatarKey)

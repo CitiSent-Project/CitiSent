@@ -27,4 +27,28 @@ describe('UrgencyFeedTable', () => {
     expect(html).toContain('Critical')
     expect(html).toContain('Pending')
   })
+
+  it('renders Guest in the Email column when row.isGuest is true', () => {
+    const html = renderToStaticMarkup(
+      <UrgencyFeedTable
+        rows={[
+          {
+            id: 'ctmd-0002',
+            reportNum: 'ctmd-0002',
+            isGuest: true,
+            email: 'guest_07fa240d_1790746307636@citisent.guest',
+            location: 'Santiago, Maharlika Highway',
+            urgency: 'Medium',
+            emotionLevel: 'Frustrated',
+            status: 'Pending',
+            date: 'September 30, 2026',
+          },
+        ]}
+      />,
+    )
+
+    expect(html).toContain('ctmd-0002')
+    expect(html).toContain('Guest')
+    expect(html).not.toContain('guest_07fa240d_1790746307636@citisent.guest')
+  })
 })

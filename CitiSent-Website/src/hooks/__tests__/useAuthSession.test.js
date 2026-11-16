@@ -6,6 +6,7 @@ vi.mock('../../services/api/auth/authApiService', () => ({
   authApiService: {
     register: vi.fn(),
     login: vi.fn(),
+    adminChallenge: vi.fn(),
   },
 }))
 
@@ -181,6 +182,72 @@ describe('useAuthSession', () => {
     expect(deps.setAuthPage).toHaveBeenCalledTimes(1)
     expect(deps.addActivity).toHaveBeenCalledWith('Logout', 'Signed out from admin workspace')
     expect(deps.notifySuccess).toHaveBeenCalledWith('Logout successful.')
+  })
+
+  it('falls back to direct login on localhost when adminChallenge fails to deliver the OTP email (503)', async () => {
+    const emailDeliveryError = Object.assign(
+      new Error('Failed to deliver verification code email. Please try again.'),
+      { status: 503 }
+    )
+    authApiService.adminChallenge.mockRejectedValueOnce(emailDeliveryError)
+    authApiService.login.mockResolvedValueOnce({
+      data: {
+        token: 'localhost-fallback-token',
+        user: {
+          id: 'admin-1',
+          email: 'admin@citisent.gov',
+          fullName: 'Admin Name',
+          role: 'Superadmin',
+          accountType: 'admin',
+          departmentId: 'all',
+          departmentLabel: 'All Departments',
+        },
+      },
+    })
+
+    const deps = buildDependencies()
+    const { handleLogin } = useAuthSession(deps)
+
+    const result = await handleLogin({
+      identifier: 'admin@citisent.gov',
+      password: 'secret',
+      rememberMe: true,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(authApiService.adminChallenge).toHaveBeenCalledWith({
+      identifier: 'admin@citisent.gov',
+      password: 'secret',
+    })
+    expect(authApiService.login).toHaveBeenCalledWith({
+      email: 'admin@citisent.gov',
+      identifier: 'admin@citisent.gov',
+      password: 'secret',
+    })
+    expect(deps.setAccessToken).toHaveBeenCalledWith('localhost-fallback-token')
+    expect(deps.setIsAuthenticated).toHaveBeenCalledWith(true)
+  })
+
+  it('does not fall back to direct login when adminChallenge rejects with invalid credentials (401)', async () => {
+    const authError = Object.assign(
+      new Error('Incorrect password. Please try again.'),
+      { status: 401 }
+    )
+    authApiService.adminChallenge.mockRejectedValueOnce(authError)
+
+    const deps = buildDependencies()
+    const { handleLogin } = useAuthSession(deps)
+
+    const result = await handleLogin({
+      identifier: 'admin@citisent.gov',
+      password: 'wrong-password',
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.status).toBe(401)
+    expect(result.message).toBe('Incorrect password. Please try again.')
+    expect(authApiService.login).not.toHaveBeenCalled()
+    expect(deps.setIsAuthenticated).not.toHaveBeenCalled()
   })
 
   describe('registration failures', () => {

@@ -1,5 +1,5 @@
 import { normalizeReportStatus } from '../../../models/reportStatusModel'
-import { composeFullName } from '../../../models/nameModel'
+import { composeFullName, GUEST_LABEL, isGuestUser } from '../../../models/nameModel'
 
 const REPORT_STATUS_LABEL_MAP = {
   pending: 'Pending',
@@ -60,10 +60,17 @@ export function mapBackendReportToUiRow(payload = {}) {
   const createdAtVal = payload.createdAt || payload.created_at || ''
   const dateValue = Date.parse(createdAtVal)
   const reporter = payload.reporter || {}
-  const reporterName =
+  const rawEmail = String(reporter.email ?? payload.email ?? '').trim()
+  const rawReporterName =
     composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
     reporter.fullName ||
     ''
+  const isGuest =
+    isGuestUser(payload) ||
+    isGuestUser(reporter) ||
+    (!rawEmail && (!rawReporterName || rawReporterName.trim().toLowerCase() === 'guest'))
+  const reporterName = isGuest ? GUEST_LABEL : (rawReporterName || 'Unknown Reporter')
+  const reporterEmail = isGuest ? GUEST_LABEL : (rawEmail || GUEST_LABEL)
   const normalizedReportStatusVal = normalizeReportStatus(
     REPORT_STATUS_LABEL_MAP[payload.status] || payload.statusLabel || payload.status
   )
@@ -73,8 +80,16 @@ export function mapBackendReportToUiRow(payload = {}) {
     reportNum: payload.reportNumber || payload.id || '',
     reportNumber: payload.reportNumber || payload.id || '',
     userId: reporter.id || '',
-    name: reporterName || 'Unknown Reporter',
-    email: reporter.email || 'unknown@citisent.gov',
+    isGuest,
+    name: reporterName,
+    email: reporterEmail,
+    reporter: {
+      ...reporter,
+      id: reporter.id || payload.userId || null,
+      isGuest,
+      email: reporterEmail,
+      fullName: reporterName,
+    },
     location: payload.location || 'Not specified',
     date: formatDate(createdAtVal),
     dateValue: Number.isNaN(dateValue) ? Date.now() : dateValue,
@@ -163,19 +178,27 @@ export function mapBackendAdminNoteSuggestionsToUi(response = {}) {
 export function mapBackendConversationToUi(payload = {}) {
   const reporter = payload.reporter || payload.user || {}
   const lastMsg = payload.lastMessage || {}
-  const reporterEmail = reporter.email || payload.email || payload.userEmail || ''
-  const reporterName =
-    reporterEmail ||
+  const rawEmail = String(reporter.email || payload.email || payload.userEmail || '').trim()
+  const rawReporterName =
     composeFullName({ fname: reporter.fname, mname: reporter.mname, lname: reporter.lname }) ||
     reporter.fullName ||
     reporter.name ||
-    'User'
+    ''
+  const isGuest =
+    isGuestUser(payload) ||
+    isGuestUser(reporter) ||
+    (!rawEmail && (!rawReporterName || rawReporterName.trim().toLowerCase() === 'guest'))
+  const reporterEmail = isGuest ? GUEST_LABEL : rawEmail
+  const reporterName = isGuest
+    ? GUEST_LABEL
+    : (reporterEmail || rawReporterName || 'User')
 
   return {
     reportId: payload.reportId || payload.id || '',
     reportNumber: payload.reportNumber || payload.reportNum || '',
     userId: reporter.id || payload.userId || '',
-    userName: reporterEmail || reporterName,
+    isGuest,
+    userName: isGuest ? GUEST_LABEL : (reporterEmail || reporterName),
     userEmail: reporterEmail,
     userAvatar: reporter.avatar || reporter.avatarUrl || null,
     lastMessage: lastMsg.content || lastMsg.message || '',

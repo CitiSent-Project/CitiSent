@@ -122,5 +122,24 @@ describe('ConversationListItem', () => {
 
     expect(container.textContent).toContain('Rejected')
   })
+
+  it('displays Guest as the user indicator when conversation.isGuest is true', async () => {
+    const guestConv = {
+      reportId: 'rep-guest-1',
+      reportNumber: 'ctmd-0002',
+      isGuest: true,
+      userEmail: 'guest_07fa240d_1790746307636@citisent.guest',
+      userName: 'guest_07fa240d_1790746307636@citisent.guest',
+      lastMessage: 'Super traffic na po',
+      category: 'City Traffic Management Division',
+    }
+
+    await act(async () => {
+      root.render(<ConversationListItem conversation={guestConv} isActive={false} onClick={() => {}} />)
+    })
+
+    expect(container.textContent).toContain('Guest')
+    expect(container.textContent).not.toContain('guest_07fa240d_1790746307636@citisent.guest')
+  })
 })
 

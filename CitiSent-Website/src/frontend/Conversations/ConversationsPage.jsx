@@ -186,7 +186,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <h2 className="font-semibold text-sm sm:text-base truncate text-white">
-                        {activeConversation.userEmail || activeConversation.userName || 'User'}
+                        {activeConversation.isGuest ? 'Guest' : (activeConversation.userEmail || activeConversation.userName || 'User')}
                       </h2>
                       {activeConversation.isOnline ? (
                         <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-emerald-300">
@@ -237,7 +237,7 @@ export function ConversationsPage({ profile, onViewReport, onSyncConversations }
               <ReportChatThread messages={messages} loading={chatLoading} error={chatError} profileId={profile?.id} />
               {!activeConversation.isLocked && isUserTyping && (
                 <div className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800/80 text-xs italic text-slate-500 dark:text-slate-400 font-medium">
-                  {activeConversation.userEmail || activeConversation.userName || 'User'} is typing...
+                  {activeConversation.isGuest ? 'Guest' : (activeConversation.userEmail || activeConversation.userName || 'User')} is typing...
                 </div>
               )}
 

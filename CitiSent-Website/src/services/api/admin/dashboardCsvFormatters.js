@@ -8,6 +8,8 @@
  * Full names (fname, mname, lname, fullName) are NEVER included in any CSV output.
  */
 
+import { GUEST_LABEL, isGuestUser } from '../../../models/nameModel'
+
 function formatDate(value) {
     if (!value) {
         return 'Not available'
@@ -117,10 +119,13 @@ export function formatRecentUsersCsv(usersRawData) {
     return {
         headers: ['Email', 'Date Joined'],
         keys: ['email', 'joined'],
-        rows: rows.map((row) => ({
-            email: row.email || 'Unknown',
-            joined: formatDate(row.joinedAt),
-        })),
+        rows: rows.map((row) => {
+            const isGuest = isGuestUser(row)
+            return {
+                email: isGuest ? GUEST_LABEL : (row.email || 'Unknown'),
+                joined: formatDate(row.joinedAt),
+            }
+        }),
         filename: 'newly_joined_users',
     }
 }

@@ -192,7 +192,7 @@ export function ReportChatDrawer({ report, profile, token, onClose }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <FiMessageCircle className="shrink-0 text-blue-400 text-xs" />
-              <h2 className="font-semibold text-xs sm:text-sm truncate text-white">{report.email || report.name || 'User'}</h2>
+              <h2 className="font-semibold text-xs sm:text-sm truncate text-white">{report.isGuest ? 'Guest' : (report.email || report.name || 'User')}</h2>
               {report.isOnline ?? report.is_online ? (
                 <span className="shrink-0 flex items-center gap-1 text-[10px] font-medium text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />

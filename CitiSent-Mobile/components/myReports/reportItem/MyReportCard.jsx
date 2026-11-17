@@ -19,10 +19,14 @@ export default function MyReportCard({
 }) {
   const showBadge = Boolean(hasUnreadAdminMessage || unreadCount > 0);
   const normalizedStatus = String(report?.status || "").trim().toLowerCase();
+  const rawStatus = String(report?.rawStatus || "").trim().toLowerCase();
   const isResolved =
     normalizedStatus === "completed" ||
     normalizedStatus === "resolved" ||
-    String(report?.rawStatus || "").trim().toLowerCase() === "resolved";
+    rawStatus === "resolved";
+  const isRejected =
+    normalizedStatus === "rejected" || rawStatus === "rejected";
+  const isChatLocked = isResolved || isRejected;
   const feedback = report?.feedback || null;
 
   return (
@@ -136,12 +140,36 @@ export default function MyReportCard({
             <View className="relative">
               <Pressable
                 onPress={() => onOpenDiscussion(report)}
-                className="flex-row items-center rounded-lg px-2.5 py-1.5 active:opacity-80"
-                style={{ backgroundColor: Colors.primaryStrong }}
+                className={`flex-row items-center rounded-lg px-2.5 py-1.5 active:opacity-80 ${
+                  isChatLocked ? "border" : ""
+                }`}
+                style={
+                  isChatLocked
+                    ? {
+                        backgroundColor: Colors.ui?.slateSoft || "#F1F5F9",
+                        borderColor: Colors.borderMuted || "#CBD5E1",
+                      }
+                    : { backgroundColor: Colors.primaryStrong }
+                }
               >
-                <Ionicons name="chatbubbles-outline" size={14} color="#fff" />
-                <Text className="ml-1 text-xs font-bold text-white">
-                  Chat with Admin
+                <Ionicons
+                  name={
+                    isChatLocked
+                      ? "chatbox-ellipses-outline"
+                      : "chatbubbles-outline"
+                  }
+                  size={14}
+                  color={isChatLocked ? Colors.text?.body || "#334155" : "#fff"}
+                />
+                <Text
+                  className="ml-1 text-xs font-bold"
+                  style={{
+                    color: isChatLocked
+                      ? Colors.text?.body || "#334155"
+                      : "#FFFFFF",
+                  }}
+                >
+                  {isChatLocked ? "View Chat History" : "Chat with Admin"}
                 </Text>
               </Pressable>
               {showBadge && (
@@ -152,8 +180,6 @@ export default function MyReportCard({
               )}
             </View>
           )}
-
-
         </View>
       </View>
     </View>

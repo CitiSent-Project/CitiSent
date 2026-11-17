@@ -358,7 +358,19 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
     }
   };
 
+  const normalizedStatus = String(report?.status || "").trim().toLowerCase();
+  const rawStatus = String(report?.rawStatus || "").trim().toLowerCase();
+  const isResolved =
+    normalizedStatus === "completed" ||
+    normalizedStatus === "resolved" ||
+    rawStatus === "resolved";
+  const isRejected =
+    normalizedStatus === "rejected" || rawStatus === "rejected";
+  const isChatLocked = isResolved || isRejected;
+  const lockedStatusLabel = isRejected ? "Rejected" : "Completed";
+
   const handleInputChange = (text) => {
+    if (isChatLocked) return;
     setInputText(text);
 
     if (report?.id) {
@@ -375,6 +387,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
   };
 
   const handleSendMessage = async () => {
+    if (isChatLocked) return;
     const trimmedText = inputText.trim();
     if (!trimmedText || !report?.id) return;
 
@@ -487,11 +500,34 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
               style={{ borderColor: Colors.ui.headerAvatarDark }}
             >
               <View className="flex-1 pr-2">
-                <View className="flex-row items-center gap-2 mb-0.5">
-                  <Ionicons name="chatbubbles" size={20} color={Colors.icon.primary} />
+                <View className="flex-row items-center gap-2 mb-0.5 flex-wrap">
+                  <Ionicons
+                    name={isChatLocked ? "chatbox-ellipses" : "chatbubbles"}
+                    size={20}
+                    color={Colors.icon.primary}
+                  />
                   <Text className="text-lg font-bold" style={{ color: Colors.text.inverse }}>
-                    Admin Discussion
+                    {isChatLocked ? "Chat History" : "Admin Discussion"}
                   </Text>
+                  {isChatLocked && (
+                    <View
+                      className="rounded-md px-2 py-0.5"
+                      style={{
+                        backgroundColor: isRejected
+                          ? "rgba(244, 63, 94, 0.22)"
+                          : "rgba(16, 185, 129, 0.22)",
+                      }}
+                    >
+                      <Text
+                        className="text-[10px] font-extrabold uppercase tracking-wider"
+                        style={{
+                          color: isRejected ? "#FDA4AF" : "#6EE7B7",
+                        }}
+                      >
+                        {lockedStatusLabel}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <Text className="text-xs font-semibold" style={{ color: Colors.ui.heroSoft }}>
                   Report Ref: #{String(report.id).slice(-8).toUpperCase()} • {report.issueType}
@@ -553,13 +589,19 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
                 className="w-14 h-14 rounded-full items-center justify-center mb-3.5"
                 style={{ backgroundColor: Colors.ui.neutralSoft }}
               >
-                <Ionicons name="chatbubbles-outline" size={28} color={Colors.icon.muted} />
+                <Ionicons
+                  name={isChatLocked ? "chatbox-ellipses-outline" : "chatbubbles-outline"}
+                  size={28}
+                  color={Colors.icon.muted}
+                />
               </View>
               <Text className="text-base font-bold text-center mb-1" style={{ color: Colors.text.secondary }}>
-                Start chatting with Admin
+                {isChatLocked ? "No chat history for this report" : "Start chatting with Admin"}
               </Text>
               <Text className="text-xs text-center" style={{ color: Colors.text.secondary }}>
-                Send a message to get started.
+                {isChatLocked
+                  ? "This report was finalized without any discussion messages."
+                  : "Send a message to get started."}
               </Text>
             </View>
           ) : (
@@ -627,7 +669,7 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
           )}
 
           {/* Typing Indicator Bar */}
-          {isAdminTyping && (
+          {!isChatLocked && isAdminTyping && (
             <View className="px-5 py-1.5 bg-slate-100 flex-row items-center gap-1.5">
               <ActivityIndicator size="small" color={Colors.primary} />
               <Text className="text-xs italic text-slate-500 font-medium">
@@ -636,51 +678,82 @@ export default function ReportDiscussionModal({ visible, report, onClose, onMark
             </View>
           )}
 
-          {/* Input Bar */}
-          <View
-            className="border-t px-4 py-3 flex-row items-center gap-2"
-            style={{
-              backgroundColor: Colors.surface,
-              borderColor: Colors.borderSoft,
-              paddingBottom: keyboardVisible
-                ? 10
-                : Math.max(insets.bottom, 12),
-            }}
-          >
-            <TextInput
-              value={inputText}
-              onChangeText={handleInputChange}
-              placeholder="Type your message to admin..."
-              placeholderTextColor={Colors.icon.muted}
-              className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-2xl"
+          {/* Input Bar or Read-Only Banner */}
+          {isChatLocked ? (
+            <View
+              className="border-t px-5 pt-3.5 items-center justify-center"
               style={{
-                backgroundColor: Colors.ui.slateSoft,
-                borderColor: Colors.borderSoft,
-                color: Colors.text.primary,
-                textAlignVertical: "center",
-              }}
-              multiline
-            />
-
-            <Pressable
-              onPress={handleSendMessage}
-              disabled={sending || !inputText.trim()}
-              className="h-11 w-11 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: inputText.trim() ? Colors.primaryStrong : Colors.ui.neutralSoft
+                backgroundColor: Colors.ui.slateSoft || "#F8FAFC",
+                borderColor: Colors.borderSoft || "#E2E8F0",
+                paddingBottom: Math.max(insets.bottom, 16),
               }}
             >
-              {sending ? (
-                <ActivityIndicator size="small" color={Colors.surface} />
-              ) : (
+              <View className="flex-row items-center justify-center gap-1.5">
                 <Ionicons
-                  name="send"
-                  size={16}
-                  color={inputText.trim() ? Colors.surface : Colors.icon.subtle}
+                  name="lock-closed-outline"
+                  size={14}
+                  color={Colors.text.secondary || "#64748B"}
                 />
-              )}
-            </Pressable>
-          </View>
+                <Text
+                  className="text-xs font-bold text-center"
+                  style={{ color: Colors.text.body || "#334155" }}
+                >
+                  Report is {lockedStatusLabel} · Chat History is Read-Only
+                </Text>
+              </View>
+              <Text
+                className="mt-1 text-[11px] text-center"
+                style={{ color: Colors.text.secondary || "#64748B" }}
+              >
+                This report is finalized. New messages cannot be sent.
+              </Text>
+            </View>
+          ) : (
+            <View
+              className="border-t px-4 py-3 flex-row items-center gap-2"
+              style={{
+                backgroundColor: Colors.surface,
+                borderColor: Colors.borderSoft,
+                paddingBottom: keyboardVisible
+                  ? 10
+                  : Math.max(insets.bottom, 12),
+              }}
+            >
+              <TextInput
+                value={inputText}
+                onChangeText={handleInputChange}
+                placeholder="Type your message to admin..."
+                placeholderTextColor={Colors.icon.muted}
+                className="flex-1 min-h-[44px] max-h-[100px] border px-4 py-2 text-sm rounded-2xl"
+                style={{
+                  backgroundColor: Colors.ui.slateSoft,
+                  borderColor: Colors.borderSoft,
+                  color: Colors.text.primary,
+                  textAlignVertical: "center",
+                }}
+                multiline
+              />
+
+              <Pressable
+                onPress={handleSendMessage}
+                disabled={sending || !inputText.trim()}
+                className="h-11 w-11 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: inputText.trim() ? Colors.primaryStrong : Colors.ui.neutralSoft
+                }}
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color={Colors.surface} />
+                ) : (
+                  <Ionicons
+                    name="send"
+                    size={16}
+                    color={inputText.trim() ? Colors.surface : Colors.icon.subtle}
+                  />
+                )}
+              </Pressable>
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>

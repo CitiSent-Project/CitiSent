@@ -104,6 +104,14 @@ export const reportMessagesService = {
       throw new AppError("Forbidden", StatusCodes.FORBIDDEN);
     }
 
+    const reportStatus = String(access.report.status || "").trim().toLowerCase();
+    if (reportStatus === "resolved" || reportStatus === "rejected") {
+      throw new AppError(
+        "This report is finalized. New messages cannot be sent.",
+        StatusCodes.FORBIDDEN,
+      );
+    }
+
     const created = await reportMessagesRepository.createMessage({
       reportId,
       senderId: actor.id,

@@ -123,4 +123,43 @@ test("sendMessage creates a notification for the other participant", async () =>
   }
 });
 
+test("sendMessage rejects new messages when report status is resolved or rejected", async () => {
+  const originalIsParticipantForReport = reportMessagesRepository.isParticipantForReport;
+  const originalCreateMessage = reportMessagesRepository.createMessage;
+
+  let createMessageCalled = false;
+  reportMessagesRepository.createMessage = async () => {
+    createMessageCalled = true;
+  };
+
+  try {
+    for (const finalizedStatus of ["resolved", "rejected"]) {
+      reportMessagesRepository.isParticipantForReport = async () => ({
+        report: createReport({ status: finalizedStatus }),
+        allowed: true,
+        participantType: "citizen",
+      });
+
+      await assert.rejects(
+        () =>
+          reportMessagesService.sendMessage({
+            actor: { id: "citizen-1" },
+            reportId: "report-1",
+            message: "Attempting to message on a finalized report",
+            accessToken: "token",
+          }),
+        (error) =>
+          error instanceof AppError &&
+          error.statusCode === 403 &&
+          /finalized/i.test(error.message),
+      );
+    }
+
+    assert.equal(createMessageCalled, false);
+  } finally {
+    reportMessagesRepository.isParticipantForReport = originalIsParticipantForReport;
+    reportMessagesRepository.createMessage = originalCreateMessage;
+  }
+});
+
 
